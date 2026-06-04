@@ -89,6 +89,57 @@ if (themeToggle) {
   });
 }
 
+function initializePremiumSpotlight() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  let animationFrame = null;
+  let latestEvent = null;
+  const interactiveSelector = [
+    '.premium-gradient-bg',
+    '.premium-glow-hover',
+    '.premium-card-light',
+    '.spotlight-hover',
+    '.premium-hero',
+    '.hero',
+    '.premium-search',
+    '.hero-search-content',
+    '.property-card',
+    '.education-card',
+    '.education-step',
+    '.service-card',
+    '.trust-card',
+    '.stat-card',
+    '.premium-stats-grid article'
+  ].join(',');
+
+  const updateSpotlight = () => {
+    animationFrame = null;
+    if (!latestEvent) return;
+
+    const pageX = (latestEvent.clientX / window.innerWidth) * 100;
+    const pageY = (latestEvent.clientY / window.innerHeight) * 100;
+    document.body.style.setProperty('--spotlight-x', `${pageX.toFixed(2)}%`);
+    document.body.style.setProperty('--spotlight-y', `${pageY.toFixed(2)}%`);
+
+    if (!(latestEvent.target instanceof Element)) return;
+
+    const target = latestEvent.target.closest(interactiveSelector);
+    if (!target) return;
+
+    const rect = target.getBoundingClientRect();
+    const localX = ((latestEvent.clientX - rect.left) / rect.width) * 100;
+    const localY = ((latestEvent.clientY - rect.top) / rect.height) * 100;
+    target.style.setProperty('--x', `${Math.max(0, Math.min(100, localX)).toFixed(2)}%`);
+    target.style.setProperty('--y', `${Math.max(0, Math.min(100, localY)).toFixed(2)}%`);
+  };
+
+  document.addEventListener('pointermove', (event) => {
+    latestEvent = event;
+    if (!animationFrame) animationFrame = window.requestAnimationFrame(updateSpotlight);
+  }, { passive: true });
+}
+
+initializePremiumSpotlight();
 
 const footerLinks = [
   { href: 'politicas-de-privacidad.html', label: 'Políticas de Privacidad' },
