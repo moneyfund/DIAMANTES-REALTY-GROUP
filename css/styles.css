@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap');
 :root {
   --primary-red: #d32f2f;
   --primary-red-dark: #b71c1c;
@@ -7987,5 +7987,92 @@ body.dark-mode .education-card {
   .education-cta-button {
     transition: none !important;
     transform: none !important;
+  }
+}
+
+
+/* Premium global typography and loader v2 */
+:root {
+  --premium-global-heading: 'Cormorant Garamond', Georgia, serif;
+  --premium-global-body: 'Inter', system-ui, sans-serif;
+  --premium-global-ui: 'Manrope', system-ui, sans-serif;
+}
+
+body { font-family: var(--premium-global-body); }
+h1, h2, h3, h4, h5, h6 { font-family: var(--premium-global-heading) !important; }
+.site-nav a, button, input, select, textarea, .btn, .button, .text-link { font-family: var(--premium-global-ui); }
+
+.premium-preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: grid;
+  place-items: center;
+  background: #FAF9F7;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 520ms ease, visibility 520ms ease;
+}
+
+.premium-preloader.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.premium-preloader-card {
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.premium-preloader-logo {
+  width: min(180px, 45vw);
+  height: auto;
+  object-fit: contain;
+  animation: premiumLoaderLogo 1200ms cubic-bezier(.2,.8,.2,1) both;
+}
+
+.premium-preloader-text {
+  margin: 0;
+  color: #0F172A;
+  font-family: var(--premium-global-ui);
+  font-size: clamp(0.74rem, 2.6vw, 0.96rem);
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  animation: premiumLoaderText 900ms ease 280ms both;
+}
+
+.premium-preloader-line {
+  width: min(190px, 54vw);
+  height: 1px;
+  background: #B89B5E;
+  transform-origin: center;
+  animation: premiumLoaderLine 900ms ease 520ms both;
+}
+
+@keyframes premiumLoaderLogo {
+  0% { opacity: 0; transform: scale(0.94); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes premiumLoaderText {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes premiumLoaderLine {
+  0% { opacity: 0; transform: scaleX(0); }
+  100% { opacity: 1; transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-preloader-logo,
+  .premium-preloader-text,
+  .premium-preloader-line {
+    animation: none;
   }
 }

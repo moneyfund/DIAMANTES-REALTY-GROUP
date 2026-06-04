@@ -9,15 +9,15 @@
   <link rel="icon" type="image/png" href="/assets/logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css?v=3" />
+  <link rel="stylesheet" href="css/premium-home.css?v=1" />
 </head>
 <body class="home-page">
   <header class="site-header">
     <div class="container nav-wrapper">
-      <a class="brand" href="index.html">
+      <a class="brand" href="index.html" aria-label="Diamantes Realty Group - Inicio">
         <img src="assets/logo.png" alt="Logo Diamantes Realty Group" class="brand-logo" />
-        <span>Diamantes Realty Group</span>
       </a>
       <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
       <nav id="mainNav" class="site-nav">
@@ -55,8 +55,12 @@
         <div class="hero-static-content">
           <p class="eyebrow">Diamantes Realty Group</p>
           <p class="hero-license">INVUR-UCBR-PN-N°. 0153-2026</p>
-          <h1>Encuentra La Propiedad Ideal Para Ti</h1>
-          <p class="hero-description">Descubre residencias, terrenos, propiedades comerciales y oportunidades de inversión con asesoría especializada de alto nivel.</p>
+          <h1>Encuentra la propiedad ideal en Nicaragua</h1>
+          <p class="hero-description">Residencias, terrenos, fincas y oportunidades de inversión con asesoría inmobiliaria profesional.</p>
+          <div class="premium-hero-actions">
+            <a class="premium-btn premium-btn-primary" href="propiedades.html">Explorar propiedades</a>
+            <a class="premium-btn premium-btn-secondary" href="https://wa.me/50557251888?text=Hola%2C%20quiero%20hablar%20con%20un%20asesor%20inmobiliario." target="_blank" rel="noopener noreferrer">Hablar con un asesor</a>
+          </div>
         </div>
 
         <div class="hero-search-content">
@@ -97,163 +101,58 @@
       </div>
     </section>
 
-    <section class="section container premium-categories" aria-label="Vitrina premium de categorías">
-      <div class="section-header premium-categories-header">
-        <h2>Categorías destacadas</h2>
-        <div class="coverflow-controls" aria-label="Navegación del carrusel de categorías">
-          <button type="button" class="coverflow-arrow" data-coverflow-prev aria-label="Categoría anterior">←</button>
-          <button type="button" class="coverflow-arrow" data-coverflow-next aria-label="Siguiente categoría">→</button>
-        </div>
-      </div>
-
-      <div class="category-coverflow" id="categoryCoverflow" role="region" aria-roledescription="carousel" aria-label="Categorías inmobiliarias premium">
-        <a class="coverflow-card" href="propiedades.html?tipo=house" data-category-card>
-          <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1400&q=80" alt="Casas modernas premium" />
-          <span class="coverflow-overlay"><strong>Casas</strong><em>Saber más</em></span>
-        </a>
-        <a class="coverflow-card" href="propiedades.html?tipo=apartment" data-category-card>
-          <img src="https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1400&q=80" alt="Apartamentos premium" />
-          <span class="coverflow-overlay"><strong>Apartamentos</strong><em>Saber más</em></span>
-        </a>
-        <a class="coverflow-card" href="propiedades.html?tipo=land" data-category-card>
-          <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1400&q=80" alt="Terrenos con alta plusvalía" />
-          <span class="coverflow-overlay"><strong>Terrenos</strong><em>Saber más</em></span>
-        </a>
-        <a class="coverflow-card" href="propiedades.html?tipo=warehouse" data-category-card>
-          <img src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1400&q=80" alt="Bodegas comerciales" />
-          <span class="coverflow-overlay"><strong>Bodegas</strong><em>Saber más</em></span>
-        </a>
-        <a class="coverflow-card" href="propiedades.html?operacion=alquiler" data-category-card>
-          <img src="https://images.unsplash.com/photo-1560185007-c5ca9d2c014d?auto=format&fit=crop&w=1400&q=80" alt="Propiedades en alquiler" />
-          <span class="coverflow-overlay"><strong>Alquileres</strong><em>Saber más</em></span>
-        </a>
-        <a class="coverflow-card" href="propiedades.html?vista=1" data-category-card>
-          <img src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1400&q=80" alt="Propiedades con vista panorámica" />
-          <span class="coverflow-overlay"><strong>Propiedades con vista</strong><em>Saber más</em></span>
-        </a>
-        <a class="coverflow-card" href="propiedades.html?destacada=1" data-category-card>
-          <img src="https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=1400&q=80" alt="Propiedades exclusivas" />
-          <span class="coverflow-overlay"><strong>Exclusivas</strong><em>Saber más</em></span>
-        </a>
-        <a class="coverflow-card" href="propiedades.html?tipo=inversion" data-category-card>
-          <img src="https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=1400&q=80" alt="Propiedades de inversión" />
-          <span class="coverflow-overlay"><strong>Inversión</strong><em>Saber más</em></span>
-        </a>
+    <section class="premium-stats-section" aria-label="Indicadores corporativos">
+      <div class="container premium-stats-grid">
+        <article><strong>+500</strong><span>Propiedades gestionadas</span></article>
+        <article><strong>+100</strong><span>Clientes asesorados</span></article>
+        <article><strong>+10</strong><span>Departamentos cubiertos</span></article>
+        <article><strong>+5</strong><span>Años de experiencia</span></article>
       </div>
     </section>
 
-    <section class="section section-properties container premium-properties">
-      <div class="section-header section-header-tabs">
-        <h2>Propiedades destacadas</h2>
-        <div class="featured-header-actions">
-          <div class="listing-tabs">
-            <a href="propiedades.html?operacion=venta">Venta</a>
-            <a href="propiedades.html?operacion=alquiler">Alquiler</a>
-          </div>
-          <div class="coverflow-controls" aria-label="Navegación del carrusel de propiedades destacadas">
-            <button type="button" class="coverflow-arrow" data-featured-prev aria-label="Propiedad anterior">←</button>
-            <button type="button" class="coverflow-arrow" data-featured-next aria-label="Siguiente propiedad">→</button>
-          </div>
-        </div>
-      </div>
-      <div id="featuredGrid" class="properties-grid featured-properties-slider" role="region" aria-roledescription="carousel" aria-label="Carrusel de propiedades destacadas"></div>
-    </section>
-
-    <section class="section container editorial-feature">
-      <div class="editorial-grid">
-        <div class="editorial-media">
-          <img src="https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?auto=format&fit=crop&w=1400&q=80" alt="Proyecto residencial premium" />
-        </div>
-        <div class="editorial-copy">
-          <p class="eyebrow">Proyecto editorial</p>
-          <h2>Residencias frente al mar para inversión patrimonial</h2>
-          <p>Proyecto de alta plusvalía con diseño contemporáneo, amenidades premium y gestión integral para compradores locales e internacionales.</p>
-          <ul>
-            <li>Ubicación estratégica y alta demanda</li>
-            <li>Retorno potencial con renta vacacional</li>
-            <li>Acompañamiento legal y financiero</li>
-          </ul>
-          <a href="propiedades.html" class="btn-primary-property">Ver proyecto destacado</a>
-        </div>
-      </div>
-    </section>
-
-    <section class="section section-properties container terrenos-section">
-      <div class="section-header">
-        <h2>Terrenos</h2>
-        <a href="propiedades.html?tipo=terreno" class="text-link">Ver todos</a>
-      </div>
-      <div id="terrenosGrid" class="properties-grid home-matched-properties-grid"></div>
-    </section>
-
-    <section class="section section-properties container alquileres-section">
-      <div class="section-header">
-        <h2>Alquileres</h2>
-        <a href="propiedades.html?operacion=alquiler" class="text-link">Ver todos</a>
-      </div>
-      <div id="alquileresGrid" class="properties-grid"></div>
-    </section>
-
-    <section class="section container agents-highlight">
-      <div class="section-header">
-        <h2>Asesores inmobiliarios</h2>
-        <a href="agentes.html" class="text-link">Ver equipo completo</a>
-      </div>
-      <div class="agents-grid">
-        <article>
-          <img src="assets/placeholder.svg" alt="Agente especialista residencial" />
-          <h3>Especialista residencial</h3>
-          <p>Atención personalizada, estrategia comercial y negociación enfocada en resultados.</p>
-          <a href="agentes.html">Ver perfil público</a>
-        </article>
-        <article>
-          <img src="assets/placeholder.svg" alt="Agente especialista inversión" />
-          <h3>Especialista inversión</h3>
-          <p>Asesoría en plusvalía, rentabilidad y estructuración de portafolios inmobiliarios.</p>
-          <a href="agentes.html">Ver perfil público</a>
-        </article>
-        <article>
-          <img src="assets/placeholder.svg" alt="Agente comercial" />
-          <h3>Especialista comercial</h3>
-          <p>Gestión de activos corporativos y acompañamiento en adquisición de bodegas y oficinas.</p>
-          <a href="agentes.html">Ver perfil público</a>
-        </article>
-      </div>
-    </section>
-
-    <section class="section container sell-premium-block">
-      <div class="sell-grid">
+    <section class="section section-properties container premium-properties-v2">
+      <div class="premium-section-heading">
+        <p class="premium-kicker">Selección exclusiva</p>
         <div>
-          <h2>¿Quieres vender tu propiedad?</h2>
-          <p>Publica con una presentación premium, asesoría profesional y alcance a compradores calificados.</p>
-          <ul>
-            <li>Fotografía y marketing estratégico</li>
-            <li>Difusión multicanal y base de clientes activa</li>
-            <li>Gestión documental y soporte legal</li>
-          </ul>
-          <a href="https://wa.me/50557251888" target="_blank" rel="noopener noreferrer" class="button-outline">Hablar por WhatsApp</a>
+          <h2>Propiedades destacadas</h2>
+          <p>Oportunidades cuidadosamente presentadas para compradores, familias e inversionistas que buscan respaldo profesional.</p>
         </div>
-        <form class="sell-mini-form" action="quieres-vender.html">
-          <label>Nombre completo<input type="text" placeholder="Tu nombre" required /></label>
-          <label>Tipo de propiedad<select><option>Casa</option><option>Apartamento</option><option>Terreno</option><option>Bodega</option></select></label>
-          <label>Agente asignado<select><option>Asignación automática</option><option>Asesor residencial</option><option>Asesor inversión</option></select></label>
-          <button type="submit">Iniciar proceso de venta</button>
-        </form>
+        <a href="propiedades.html" class="premium-text-link">Ver catálogo</a>
+      </div>
+      <div id="featuredGrid" class="properties-grid premium-property-grid" aria-label="Propiedades destacadas"></div>
+    </section>
+
+    <section class="section container premium-services" aria-labelledby="premiumServicesTitle">
+      <div class="premium-section-heading centered">
+        <p class="premium-kicker">Servicios</p>
+        <h2 id="premiumServicesTitle">Soluciones inmobiliarias estratégicas</h2>
+      </div>
+      <div class="premium-services-grid">
+        <article><span aria-hidden="true">⌂</span><h3>Comprar</h3><p>Curaduría de propiedades, visitas coordinadas y acompañamiento en cada etapa de compra.</p></article>
+        <article><span aria-hidden="true">◈</span><h3>Vender</h3><p>Estrategia comercial, presentación premium y gestión con compradores calificados.</p></article>
+        <article><span aria-hidden="true">↗</span><h3>Invertir</h3><p>Análisis de ubicación, plusvalía y oportunidades con visión patrimonial.</p></article>
+        <article><span aria-hidden="true">◎</span><h3>Avalúos</h3><p>Estimaciones profesionales para tomar decisiones con claridad y soporte de mercado.</p></article>
       </div>
     </section>
 
-    <section class="section container reviews-premium">
-      <div class="section-header">
-        <h2>Reseñas y experiencia de clientes</h2>
+    <section class="premium-trust-section" aria-labelledby="premiumTrustTitle">
+      <div class="container premium-trust-grid">
+        <div>
+          <p class="premium-kicker">Confianza Diamantes</p>
+          <h2 id="premiumTrustTitle">Asesoría inmobiliaria con visión, estrategia y respaldo profesional.</h2>
+        </div>
+        <div>
+          <p>Diamantes Realty Group acompaña a compradores, vendedores e inversionistas con una lectura clara del mercado nicaragüense, procesos ordenados y comunicación cercana para proteger cada decisión inmobiliaria.</p>
+          <a href="nosotros.html" class="premium-text-link">Conocer la correduría</a>
+        </div>
       </div>
-      <div class="review-summary">
-        <strong>4.9/5</strong>
-        <span>Basado en 180+ reseñas verificadas</span>
-      </div>
-      <div class="reviews-grid">
-        <article><p>“Servicio impecable, claridad en todo el proceso y resultados rápidos.”</p><small>— Cliente comprador</small></article>
-        <article><p>“Lograron vender nuestra propiedad con una estrategia premium.”</p><small>— Cliente vendedor</small></article>
-        <article><p>“Equipo profesional y excelente acompañamiento legal.”</p><small>— Inversionista</small></article>
+    </section>
+
+    <section class="section container premium-final-cta" aria-label="Contacto final">
+      <div class="premium-final-cta-card">
+        <p class="premium-kicker">Próximo paso</p>
+        <h2>¿Listo para encontrar su próxima propiedad?</h2>
+        <a class="premium-btn premium-btn-primary" href="https://wa.me/50557251888?text=Hola%2C%20quiero%20encontrar%20mi%20pr%C3%B3xima%20propiedad." target="_blank" rel="noopener noreferrer">Contactar ahora</a>
       </div>
     </section>
   </main>
