@@ -1,3 +1,112 @@
+const PRELOADER_MIN_DURATION = 1700;
+const PRELOADER_ROUTE_DELAY = 280;
+
+function createPremiumPreloader() {
+  if (typeof document === 'undefined') return null;
+
+  const existingPreloader = document.getElementById('premiumPreloader');
+  if (existingPreloader) return existingPreloader;
+
+  const preloader = document.createElement('div');
+  preloader.id = 'premiumPreloader';
+  preloader.className = 'premium-preloader';
+  preloader.setAttribute('role', 'status');
+  preloader.setAttribute('aria-live', 'polite');
+  preloader.setAttribute('aria-label', 'Cargando Diamantes Realty Group');
+  preloader.innerHTML = `
+    <div class="premium-preloader__content">
+      <img class="premium-preloader__logo" src="assets/logo.png" alt="Logo Diamantes Realty Group" />
+      <p class="premium-preloader__tagline" aria-label="¡Visita, conoce e invierte en Nicaragua!">
+        ${'¡VISITA, CONOCE E INVIERTE EN NICARAGUA!'.split('').map((letter, index) => `<span style="--letter-index: ${index};">${letter === ' ' ? '&nbsp;' : letter}</span>`).join('')}
+      </p>
+    </div>
+  `;
+
+  document.body.prepend(preloader);
+  return preloader;
+}
+
+function showPremiumPreloader({ routeChange = false } = {}) {
+  const preloader = createPremiumPreloader();
+  if (!preloader) return null;
+
+  preloader.hidden = false;
+  preloader.classList.toggle('is-route-change', routeChange);
+  document.body.classList.add('premium-preloader-active');
+  document.body.classList.remove('premium-preloader-complete');
+
+  window.requestAnimationFrame(() => {
+    preloader.classList.add('is-visible');
+  });
+
+  return preloader;
+}
+
+function hidePremiumPreloader() {
+  const preloader = document.getElementById('premiumPreloader');
+  if (!preloader) return;
+
+  preloader.classList.add('is-leaving');
+  preloader.classList.remove('is-visible', 'is-route-change');
+  document.body.classList.remove('premium-preloader-active');
+  document.body.classList.add('premium-preloader-complete');
+
+  window.setTimeout(() => {
+    preloader.hidden = true;
+    preloader.classList.remove('is-leaving');
+  }, 650);
+}
+
+const premiumPreloaderStartedAt = Date.now();
+showPremiumPreloader();
+
+function completeInitialPremiumPreloader() {
+  const elapsed = Date.now() - premiumPreloaderStartedAt;
+  const remaining = Math.max(PRELOADER_MIN_DURATION - elapsed, 0);
+  window.setTimeout(hidePremiumPreloader, remaining);
+}
+
+if (document.readyState === 'complete') {
+  completeInitialPremiumPreloader();
+} else {
+  window.addEventListener('load', completeInitialPremiumPreloader, { once: true });
+}
+
+window.addEventListener('pageshow', (event) => {
+  if (event.persisted) hidePremiumPreloader();
+});
+
+function initializePremiumRouteTransitions() {
+  document.addEventListener('click', (event) => {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (!(event.target instanceof Element)) return;
+
+    const link = event.target.closest('a[href]');
+    if (!link) return;
+
+    const rawHref = link.getAttribute('href');
+    if (!rawHref || rawHref.startsWith('#')) return;
+    if (link.target && link.target !== '_self') return;
+    if (link.hasAttribute('download')) return;
+    if (/^(mailto:|tel:|sms:|javascript:)/i.test(rawHref)) return;
+
+    const destination = new URL(rawHref, window.location.href);
+    const current = new URL(window.location.href);
+    const isSameOrigin = destination.origin === current.origin;
+    const isSamePage = destination.pathname === current.pathname && destination.search === current.search;
+
+    if (!isSameOrigin || isSamePage) return;
+
+    event.preventDefault();
+    showPremiumPreloader({ routeChange: true });
+    window.setTimeout(() => {
+      window.location.href = destination.href;
+    }, PRELOADER_ROUTE_DELAY);
+  });
+}
+
+initializePremiumRouteTransitions();
+
 const menuToggle = document.getElementById('menuToggle');
 const mainNav = document.getElementById('mainNav');
 const APP_NAME = 'DIAMANTES REALTY GROUP';
