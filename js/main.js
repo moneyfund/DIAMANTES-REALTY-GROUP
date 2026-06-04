@@ -1,3 +1,47 @@
+
+function initializePremiumPreloader() {
+  if (document.getElementById('premiumPreloader')) return;
+
+  const preloader = document.createElement('div');
+  preloader.id = 'premiumPreloader';
+  preloader.className = 'premium-preloader';
+  preloader.setAttribute('role', 'status');
+  preloader.setAttribute('aria-live', 'polite');
+  preloader.innerHTML = `
+    <div class="premium-preloader-card">
+      <img class="premium-preloader-logo" src="assets/logo.png" alt="Diamantes Realty Group" />
+      <p class="premium-preloader-text">¡VISITA, CONOCE E INVIERTE EN NICARAGUA!</p>
+      <span class="premium-preloader-line" aria-hidden="true"></span>
+    </div>
+  `;
+
+  document.body.prepend(preloader);
+
+  let preloaderDismissed = false;
+  let preloaderTimer = null;
+  const hidePreloader = (delay = 0) => {
+    if (preloaderDismissed) return;
+    if (preloaderTimer) window.clearTimeout(preloaderTimer);
+
+    preloaderTimer = window.setTimeout(() => {
+      if (preloaderDismissed) return;
+      preloaderDismissed = true;
+      preloader.classList.add('is-hidden');
+      window.setTimeout(() => preloader.remove(), 620);
+    }, delay);
+  };
+
+  if (document.readyState === 'complete') {
+    hidePreloader(1500);
+  } else {
+    window.addEventListener('load', () => hidePreloader(1500), { once: true });
+    window.setTimeout(() => hidePreloader(0), 2200);
+  }
+
+}
+
+initializePremiumPreloader();
+
 const menuToggle = document.getElementById('menuToggle');
 const mainNav = document.getElementById('mainNav');
 const APP_NAME = 'DIAMANTES REALTY GROUP';
