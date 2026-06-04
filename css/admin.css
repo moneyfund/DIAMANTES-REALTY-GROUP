@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
 :root {
   --color-brand-red: #9e0b0f;
   --color-brand-beige: #f1e6dd;
@@ -6,8 +7,8 @@
   --color-brand-silver: #c0c0c0;
   --color-brand-white: #ffffff;
 
-  --font-heading: Rockwell, "Rockwell Nova", "Roboto Slab", "Bookman Old Style", "Times New Roman", serif;
-  --font-body: "Arial Narrow", "Inter", "Segoe UI", Arial, sans-serif;
+  --font-heading: "Cormorant Garamond", "Times New Roman", serif;
+  --font-body: "Inter", "Segoe UI", Arial, sans-serif;
 
   --bg: var(--color-brand-beige);
   --panel: var(--color-brand-white);
@@ -217,4 +218,23 @@ button:hover { background: var(--accent-hover); transform: translateY(-1px); }
 @media (max-width: 760px) {
   .property-form,
   .button-row { grid-template-columns: 1fr; }
+}
+
+
+/* === Luxury admin typography refresh === */
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+body,
+input,
+select,
+textarea,
+button,
+label {
+  font-family: var(--font-body);
 }
