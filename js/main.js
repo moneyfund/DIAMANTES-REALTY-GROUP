@@ -491,3 +491,64 @@ if (window.inmoFirebase) {
 }
 
 initializeLucideIcons();
+
+function initializeLuxuryRevealAnimations() {
+  const revealItems = Array.from(document.querySelectorAll('.reveal-on-scroll'));
+  if (!revealItems.length) return;
+
+  if (!('IntersectionObserver' in window)) {
+    revealItems.forEach((item) => item.classList.add('is-visible'));
+    return;
+  }
+
+  const observer = new IntersectionObserver((entries, observerRef) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add('is-visible');
+      observerRef.unobserve(entry.target);
+    });
+  }, { threshold: 0.18 });
+
+  revealItems.forEach((item) => observer.observe(item));
+}
+
+function initializeLuxuryCounters() {
+  const counters = Array.from(document.querySelectorAll('[data-counter-target]'));
+  if (!counters.length) return;
+
+  const animateCounter = (counter) => {
+    const target = Number(counter.dataset.counterTarget || 0);
+    const duration = 1350;
+    const startTime = performance.now();
+
+    const update = (now) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      const easedProgress = 1 - Math.pow(1 - progress, 3);
+      counter.textContent = Math.round(target * easedProgress).toLocaleString('en-US');
+
+      if (progress < 1) {
+        requestAnimationFrame(update);
+      }
+    };
+
+    requestAnimationFrame(update);
+  };
+
+  if (!('IntersectionObserver' in window)) {
+    counters.forEach(animateCounter);
+    return;
+  }
+
+  const observer = new IntersectionObserver((entries, observerRef) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      animateCounter(entry.target);
+      observerRef.unobserve(entry.target);
+    });
+  }, { threshold: 0.55 });
+
+  counters.forEach((counter) => observer.observe(counter));
+}
+
+initializeLuxuryRevealAnimations();
+initializeLuxuryCounters();

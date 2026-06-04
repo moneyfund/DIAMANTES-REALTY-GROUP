@@ -338,7 +338,6 @@ function propertyCardTemplate(property) {
   const imageAlt = property.title || property.titulo || 'Imagen de la propiedad';
   const detailUrl = getPropertyDetailUrl(property);
   const locationLabel = property.city || property.ubicacion || 'Ubicación no disponible';
-  const parkingCount = Number(property.parking ?? property.garaje ?? property.garages ?? 0);
 
   return `
     <article class="property-card${featuredClass}">
@@ -346,20 +345,15 @@ function propertyCardTemplate(property) {
         <img class="property-cover-image" src="${imageSrc}" alt="${imageAlt}" loading="lazy" onerror="this.onerror=null;this.src='${PROPERTY_IMAGE_PLACEHOLDER}'">
       </section>
       <div class="property-card-content">
-        <p class="badge">${property.typeLabel || getPropertyTypeLabel(property.tipo) || 'Propiedad'} en ${(property.operationLabel || formatPropertyOperation(property.operacion) || 'Venta').toLowerCase()}</p>
-        <h3>${property.title || property.titulo}</h3>
         <p class="property-location">${locationLabel}</p>
+        <h3>${property.title || property.titulo}</h3>
         <p class="price">${formatDualPrice(getPriceUsd(property))}</p>
         ${status === 'sold' ? '<p class="property-status-tag">VENDIDA</p>' : ''}
         <div class="property-meta property-meta-icons">
           <span>${featureIcon('bedrooms')} ${(property.bedrooms ?? property.habitaciones) || 0} hab.</span>
           <span>${featureIcon('bathrooms')} ${(property.bathrooms ?? property.banos) || 0} baños</span>
-          <span>${featureIcon('parking')} ${parkingCount > 0 ? `${parkingCount} parqueo` : 'Sin parqueo'}</span>
           <span>${featureIcon('area')} ${getAreaDisplay(property)}</span>
-          <span>${featureIcon('location')} ${locationLabel}</span>
-          <span>${featureIcon('type')} ${property.typeLabel || getPropertyTypeLabel(property.tipo) || 'Propiedad'}</span>
         </div>
-        <p class="property-price-area">${formatPricePerArea(getPricePerAreaUsd(property), property.areaUnit)}</p>
         <div class="property-card-actions"><a class="btn-primary-property" href="${detailUrl}">Ver detalle</a></div>
       </div>
     </article>
