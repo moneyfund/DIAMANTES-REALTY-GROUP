@@ -172,6 +172,24 @@
                 <p id="propertyImagesCounter" class="dashboard-helper-text">0 imagen(es) listas</p>
                 <div id="propertyImagesPreview" class="image-preview-grid"></div>
               </div>
+
+              <section class="legal-document-card" aria-labelledby="legalDocumentTitle">
+                <div class="legal-document-heading">
+                  <span class="legal-document-icon" aria-hidden="true">📄</span>
+                  <div>
+                    <p class="dashboard-eyebrow">Archivo privado</p>
+                    <h3 id="legalDocumentTitle">Documentación legal de la propiedad</h3>
+                  </div>
+                </div>
+                <p class="dashboard-helper-text">Sube un único archivo PDF con la documentación legal escaneada de la propiedad. Este archivo será privado y solo visible para administradores/agentes autorizados.</p>
+                <div id="legalDocumentExisting" class="legal-document-existing hidden"></div>
+                <label for="propertyLegalDocument" class="legal-upload-dropzone">
+                  <span>Seleccionar PDF legal</span>
+                  <small>Máximo 20 MB · Solo formato .pdf</small>
+                  <input type="file" id="propertyLegalDocument" accept="application/pdf,.pdf" />
+                </label>
+                <p id="legalDocumentStatus" class="dashboard-helper-text" aria-live="polite"></p>
+              </section>
             </fieldset>
 
             <fieldset class="dashboard-form-section">
