@@ -24,7 +24,10 @@ function formatPrice(price = 0) {
 }
 
 function formatOperation(value = '') {
-  return String(value || '').toLowerCase() === 'alquiler' ? 'Alquiler' : 'Venta';
+  const normalized = propertyUtils.normalizeOperation ? propertyUtils.normalizeOperation(value) : String(value || '').toLowerCase();
+  if (normalized === 'alquiler') return 'Renta';
+  if (normalized === 'venta_renta') return 'Venta/Renta';
+  return 'Venta';
 }
 
 function formatType(type = '') {
@@ -34,6 +37,10 @@ function formatType(type = '') {
 function formatPricePerArea(price = 0, area = 0, unit = 'metros') {
   const perArea = propertyUtils.calculatePricePerArea ? propertyUtils.calculatePricePerArea(price, area) : NaN;
   return propertyUtils.formatPricePerArea ? propertyUtils.formatPricePerArea(perArea, unit) : '';
+}
+
+function getDisplayDetails(property = {}) {
+  return propertyUtils.getPropertyDisplayDetails ? propertyUtils.getPropertyDisplayDetails(property) : [];
 }
 
 function whatsappLink(phone = '', text = '') {
@@ -63,7 +70,7 @@ function normalizeProperty(property = {}, id = '') {
   const description = property.description || property.descripcion || '';
   const image = imageUtils.getCoverImage ? imageUtils.getCoverImage(property) : (property.image || property.imagen || 'assets/placeholder.svg');
 
-  return { id, title, location, price, type, operation, bedrooms, bathrooms, areaValue, areaUnit, description, image };
+  return { ...property, id, title, location, price, type, propertyType: type, operation, bedrooms, bathrooms, areaValue, areaUnit, description, image };
 }
 
 function renderUnavailable(message) {
@@ -102,9 +109,7 @@ function renderSharedProperty(sharedList, property) {
         <p><strong>Precio por área:</strong> ${formatPricePerArea(property.price, property.areaValue, property.areaUnit)}</p>
         <p>${property.description}</p>
         <ul class="checklist property-feature-list">
-          <li>🛏️ ${property.bedrooms} habitaciones</li>
-          <li>🛁 ${property.bathrooms} baños</li>
-          <li>📐 ${property.areaValue || 0} ${property.areaUnit}</li>
+          ${getDisplayDetails(property).map((detail) => `<li><strong>${detail.label}:</strong> ${detail.value}</li>`).join('')}
         </ul>
       </div>
     </div>

@@ -33,143 +33,205 @@
   </header>
 
   <main>
-    <section class="page-banner">
-      <div class="container">
-        <h1>Dashboard de agente</h1>
-        <p>Administra tu perfil y propiedades con Firebase + Firestore.</p>
+    <section class="agent-dashboard-hero">
+      <div class="container agent-dashboard-hero__inner">
+        <div>
+          <p class="dashboard-eyebrow">Panel privado · Diamantes Realty Group</p>
+          <h1>Dashboard premium de agente</h1>
+          <p>Administra tu perfil, inventario, multimedia y listas compartidas desde un espacio profesional conectado a Firebase + Firestore.</p>
+        </div>
+        <div class="dashboard-hero-stats" aria-label="Resumen del panel">
+          <span>Perfil</span>
+          <strong>Propiedades</strong>
+          <span>Listas privadas</span>
+        </div>
       </div>
     </section>
 
-    <section class="section container">
+    <section class="section container agent-dashboard-shell">
       <div id="agentAuthBox" class="dashboard-auth-box"></div>
       <p id="dashboardMessage" class="dashboard-message" aria-live="polite"></p>
 
       <div id="agentDashboard" class="dashboard-layout hidden">
-        <article class="dashboard-card">
-          <h2>Mi perfil</h2>
-          <form id="agentProfileForm" class="dashboard-form">
-            <input type="text" id="agentName" placeholder="Nombre" required />
-            <input type="url" id="agentPhoto" placeholder="URL de foto" />
-            <textarea id="agentDescription" rows="4" placeholder="Descripción profesional"></textarea>
-            <input type="email" id="agentEmail" placeholder="Email" />
-            <input type="tel" id="agentPhone" placeholder="Teléfono" />
-            <input type="url" id="agentInstagram" placeholder="Instagram" />
-            <input type="url" id="agentFacebook" placeholder="Facebook" />
-            <input type="url" id="agentTiktok" placeholder="TikTok" />
-            <input type="url" id="agentWhatsapp" placeholder="WhatsApp" />
-            <button type="submit">Guardar perfil</button>
+        <article class="dashboard-card dashboard-profile-card">
+          <div class="dashboard-card-header">
+            <p class="dashboard-eyebrow">Identidad profesional</p>
+            <h2>Mi perfil</h2>
+            <p>Datos visibles para clientes en fichas públicas, listas y enlaces compartidos.</p>
+          </div>
+          <form id="agentProfileForm" class="dashboard-form dashboard-form--profile">
+            <label>Nombre<input type="text" id="agentName" placeholder="Nombre del agente" required /></label>
+            <label>URL de foto<input type="url" id="agentPhoto" placeholder="https://..." /></label>
+            <label class="form-span-2">Descripción profesional<textarea id="agentDescription" rows="4" placeholder="Especialidad, zonas de cobertura y propuesta de valor"></textarea></label>
+            <label>Email<input type="email" id="agentEmail" placeholder="correo@diamantesrealtygroup.com" /></label>
+            <label>Teléfono<input type="tel" id="agentPhone" placeholder="+505 0000 0000" /></label>
+            <label>Instagram<input type="url" id="agentInstagram" placeholder="https://instagram.com/..." /></label>
+            <label>Facebook<input type="url" id="agentFacebook" placeholder="https://facebook.com/..." /></label>
+            <label>TikTok<input type="url" id="agentTiktok" placeholder="https://tiktok.com/@..." /></label>
+            <label>WhatsApp<input type="url" id="agentWhatsapp" placeholder="https://wa.me/... o número" /></label>
+            <div class="dashboard-form-actions form-span-2"><button type="submit">Guardar perfil</button></div>
           </form>
         </article>
 
-        <article class="dashboard-card">
-          <h2>Agregar / editar propiedad</h2>
-          <form id="propertyForm" class="dashboard-form">
+        <article class="dashboard-card dashboard-property-editor">
+          <div class="dashboard-card-header">
+            <p class="dashboard-eyebrow">Inventario premium</p>
+            <h2>Agregar / editar propiedad</h2>
+            <p>Elige el tipo de propiedad para mostrar solamente los campos que corresponden.</p>
+          </div>
+          <form id="propertyForm" class="dashboard-form property-editor-form">
             <input type="hidden" id="propertyDocId" />
-            <input type="text" id="propertyTitle" placeholder="Título" required />
-            <input type="number" id="propertyPrice" placeholder="Precio (USD)" min="1" step="0.01" required />
-            <p id="propertyDualPricePreview" class="dashboard-helper-text">Precio no disponible</p>
-            <input type="text" id="propertyLocation" placeholder="Ubicación" required />
-            <textarea id="propertyDescription" rows="4" placeholder="Descripción"></textarea>
-            <select id="tipo-propiedad" required>
-              <option value="">Seleccionar tipo</option>
-              <option value="house">Casa</option>
-              <option value="apartment">Apartamento</option>
-              <option value="land">Terreno</option>
-              <option value="warehouse">Bodega</option>
-              <option value="farm">Finca</option>
-              <option value="quinta">Quinta</option>
-              <option value="beach_house">Casa cerca del mar</option>
-            </select>
-            <select id="operacion-propiedad" required>
-              <option value="">Tipo de operación</option>
-              <option value="venta">Venta</option>
-              <option value="alquiler">Alquiler</option>
-            </select>
-            <input type="number" id="propertyBedrooms" placeholder="Habitaciones" min="0" />
-            <input type="number" id="propertyBathrooms" placeholder="Baños" min="0" />
-            <input type="number" id="propertyArea" placeholder="Cantidad de área" min="0.01" step="0.01" required />
-            <select id="propertyAreaUnit" required>
-              <option value="metros">metros</option>
-              <option value="varas">varas</option>
-              <option value="manzanas">manzanas</option>
-            </select>
-            <p id="propertyPricePerAreaPreview" class="dashboard-helper-text">Precio por área no disponible</p>
-            <fieldset class="property-video-fieldset">
-              <legend>Video de la propiedad</legend>
-              <select id="propertyVideoType">
-                <option value="">Seleccionar plataforma (opcional)</option>
-                <option value="youtube">YouTube</option>
-                <option value="tiktok">TikTok</option>
-              </select>
-              <input type="url" id="propertyVideoUrl" placeholder="https://youtube.com/... o https://www.tiktok.com/..." />
-              <p class="dashboard-helper-text">Acepta enlaces públicos válidos de YouTube o TikTok. No se suben archivos de video.</p>
+
+            <fieldset class="dashboard-form-section">
+              <legend><span>01</span> Información general</legend>
+              <div class="dashboard-form-grid">
+                <label class="form-span-2">Título<input type="text" id="propertyTitle" placeholder="Ej: Casa moderna en Carretera Sur" required /></label>
+                <label>Precio USD<input type="number" id="propertyPrice" placeholder="Precio (USD)" min="1" step="0.01" required /></label>
+                <label>Tipo de operación<select id="operacion-propiedad" required>
+                  <option value="">Seleccionar operación</option>
+                  <option value="venta">Venta</option>
+                  <option value="alquiler">Renta</option>
+                  <option value="venta_renta">Venta/Renta</option>
+                </select></label>
+                <p id="propertyDualPricePreview" class="dashboard-helper-text form-span-2">Precio no disponible</p>
+                <label>Tipo de propiedad<select id="tipo-propiedad" required>
+                  <option value="">Seleccionar tipo</option>
+                  <option value="house">Casa</option>
+                  <option value="apartment">Apartamento</option>
+                  <option value="quinta">Quinta</option>
+                  <option value="farm">Finca</option>
+                  <option value="land">Terreno</option>
+                  <option value="commercial">Local comercial</option>
+                  <option value="warehouse">Bodega</option>
+                  <option value="office">Oficina</option>
+                  <option value="investment">Proyecto / inversión</option>
+                  <option value="other">Otro</option>
+                </select></label>
+                <label>Estado de la propiedad<select id="propertyStatus" required>
+                  <option value="available">Disponible</option>
+                  <option value="reserved">Reservada</option>
+                  <option value="sold">Vendida</option>
+                  <option value="rented">Rentada</option>
+                </select></label>
+                <label>Ubicación<input type="text" id="propertyLocation" placeholder="Barrio, zona o referencia" required /></label>
+                <label>Ciudad / Departamento<input type="text" id="propertyCity" placeholder="Managua, Granada, León..." /></label>
+                <label class="form-span-2">Agente responsable<input type="text" id="propertyAgentName" placeholder="Se completa con tu perfil, puedes ajustarlo" /></label>
+                <label class="form-span-2">Descripción<textarea id="propertyDescription" rows="5" placeholder="Describe diferenciales, entorno, accesos y oportunidad comercial"></textarea></label>
+                <fieldset class="dashboard-checkbox-group form-span-2">
+                  <legend>Etiquetas destacadas</legend>
+                  <label><input type="checkbox" name="propertyTags" value="Nuevo ingreso"> Nuevo ingreso</label>
+                  <label><input type="checkbox" name="propertyTags" value="Oportunidad"> Oportunidad</label>
+                  <label><input type="checkbox" name="propertyTags" value="Exclusiva"> Exclusiva</label>
+                  <label><input type="checkbox" name="propertyTags" value="Negociable"> Negociable</label>
+                  <label><input type="checkbox" name="propertyTags" value="Alta plusvalía"> Alta plusvalía</label>
+                </fieldset>
+              </div>
             </fieldset>
-            <div class="dashboard-image-uploader">
-              <h3 class="dashboard-label">Imágenes</h3>
-              <div class="image-mode-selector" role="radiogroup" aria-label="Modo de carga de imágenes">
-                <label><input type="radio" name="imageInputMode" value="url" checked> Agregar por URL</label>
-                <label><input type="radio" name="imageInputMode" value="upload"> Subir archivos</label>
-              </div>
 
-              <div id="imageModeUrl" class="image-mode-panel">
-                <label for="propertyImageUrlInput" class="dashboard-label">URL de imagen</label>
-                <div class="image-url-row">
-                  <input type="url" id="propertyImageUrlInput" placeholder="https://ejemplo.com/imagen.jpg" />
-                  <button type="button" id="addImageUrlBtn" class="button-secondary">Agregar URL</button>
+            <fieldset class="dashboard-form-section">
+              <legend><span>02</span> Características de la propiedad</legend>
+              <p id="dynamicFieldsHint" class="dashboard-helper-text">Selecciona un tipo de propiedad para cargar sus características.</p>
+              <div id="dynamicPropertyFields" class="dashboard-form-grid dynamic-property-fields"></div>
+              <p id="propertyPricePerAreaPreview" class="dashboard-helper-text">Precio por área no disponible</p>
+            </fieldset>
+
+            <fieldset class="dashboard-form-section">
+              <legend><span>03</span> Multimedia</legend>
+              <fieldset class="property-video-fieldset">
+                <legend>Video de la propiedad</legend>
+                <div class="dashboard-form-grid">
+                  <label>Plataforma<select id="propertyVideoType">
+                    <option value="">Seleccionar plataforma (opcional)</option>
+                    <option value="youtube">YouTube</option>
+                    <option value="tiktok">TikTok</option>
+                  </select></label>
+                  <label>Enlace<input type="url" id="propertyVideoUrl" placeholder="https://youtube.com/... o https://www.tiktok.com/..." /></label>
                 </div>
-              </div>
+                <p class="dashboard-helper-text">Acepta enlaces públicos válidos de YouTube o TikTok. No se suben archivos de video.</p>
+                <div id="propertyVideoPreview" class="property-video-preview"></div>
+              </fieldset>
 
-              <div id="imageModeUpload" class="image-mode-panel hidden">
-                <label for="propertyImageFiles" class="dashboard-label">Subir archivos de imagen</label>
-                <input type="file" id="propertyImageFiles" accept="image/*" multiple />
+              <div class="dashboard-image-uploader">
+                <h3 class="dashboard-label">Imágenes por URL o subida de archivos</h3>
+                <div class="image-mode-selector" role="radiogroup" aria-label="Modo de carga de imágenes">
+                  <label><input type="radio" name="imageInputMode" value="url" checked> Agregar por URL</label>
+                  <label><input type="radio" name="imageInputMode" value="upload"> Subir archivos</label>
+                </div>
+                <div id="imageModeUrl" class="image-mode-panel">
+                  <label for="propertyImageUrlInput" class="dashboard-label">URL de imagen</label>
+                  <div class="image-url-row">
+                    <input type="url" id="propertyImageUrlInput" placeholder="https://ejemplo.com/imagen.jpg" />
+                    <button type="button" id="addImageUrlBtn" class="button-secondary">Agregar URL</button>
+                  </div>
+                </div>
+                <div id="imageModeUpload" class="image-mode-panel hidden">
+                  <label for="propertyImageFiles" class="dashboard-label">Subir archivos de imagen</label>
+                  <input type="file" id="propertyImageFiles" accept="image/*" multiple />
+                </div>
+                <p id="propertyUploaderStatus" class="dashboard-helper-text" aria-live="polite"></p>
+                <p id="propertyImagesCounter" class="dashboard-helper-text">0 imagen(es) listas</p>
+                <div id="propertyImagesPreview" class="image-preview-grid"></div>
               </div>
+            </fieldset>
 
-              <p id="propertyUploaderStatus" class="dashboard-helper-text" aria-live="polite"></p>
-              <p id="propertyImagesCounter" class="dashboard-helper-text">0 imagen(es) listas</p>
-              <div id="propertyImagesPreview" class="image-preview-grid"></div>
-            </div>
-            <input type="hidden" id="propertyLat" />
-            <input type="hidden" id="propertyLng" />
-            <p class="map-picker-hint">Haz clic en el mapa para seleccionar la ubicación exacta de la propiedad.</p>
-            <div id="propertyLocationMap" class="dashboard-property-map" aria-label="Mapa para seleccionar coordenadas"></div>
-            <p id="propertyCoordinatesLabel" class="map-picker-coordinates">Sin coordenadas seleccionadas.</p>
-            <div class="dashboard-form-actions">
-              <button type="button" id="propertyFormReset" class="button-secondary">Limpiar</button>
+            <fieldset class="dashboard-form-section">
+              <legend><span>04</span> Ubicación en mapa</legend>
+              <input type="hidden" id="propertyLat" />
+              <input type="hidden" id="propertyLng" />
+              <p class="map-picker-hint">Haz clic en el mapa para seleccionar la ubicación exacta de la propiedad.</p>
+              <div id="propertyLocationMap" class="dashboard-property-map" aria-label="Mapa para seleccionar coordenadas"></div>
+              <p id="propertyCoordinatesLabel" class="map-picker-coordinates">Sin coordenadas seleccionadas.</p>
+            </fieldset>
+
+            <div class="dashboard-form-actions dashboard-sticky-actions">
+              <button type="button" id="propertyFormReset" class="button-secondary">Limpiar formulario</button>
               <button type="submit">Guardar propiedad</button>
             </div>
           </form>
         </article>
       </div>
 
-
-
-      <article id="sharedListsCard" class="dashboard-card hidden">
-        <h2>Listas compartidas</h2>
-        <p class="dashboard-helper-text">Selecciona propiedades activas, crea una lista privada y comparte un enlace único con tu cliente.</p>
-
+      <article id="sharedListsCard" class="dashboard-card shared-dashboard-card hidden">
+        <div class="dashboard-card-header">
+          <p class="dashboard-eyebrow">Curaduría para clientes</p>
+          <h2>Listas compartidas</h2>
+          <p>Selecciona propiedades disponibles, crea una lista privada y comparte un enlace único con tu cliente.</p>
+        </div>
         <form id="sharedListForm" class="dashboard-form shared-list-form">
-          <input type="text" id="sharedListTitle" placeholder="Título de la lista" required />
-          <input type="text" id="sharedListClientName" placeholder="Nombre del cliente (opcional)" />
-          <textarea id="sharedListNotes" rows="3" placeholder="Notas internas (opcional)"></textarea>
+          <div class="dashboard-form-grid">
+            <label>Título de la lista<input type="text" id="sharedListTitle" placeholder="Ej: Opciones para familia Martínez" required /></label>
+            <label>Cliente<input type="text" id="sharedListClientName" placeholder="Nombre del cliente (opcional)" /></label>
+            <label class="form-span-2">Notas internas<textarea id="sharedListNotes" rows="3" placeholder="Notas internas (opcional)"></textarea></label>
+          </div>
           <div class="dashboard-form-actions">
-            <span id="sharedSelectedCounter" class="dashboard-helper-text">0 propiedades seleccionadas</span>
-            <button type="submit" id="createSharedListBtn" class="button-secondary">Crear lista compartida</button>
+            <span id="sharedSelectedCounter" class="shared-selected-counter">0 propiedades seleccionadas</span>
+            <button type="submit" id="createSharedListBtn">Crear lista compartida</button>
           </div>
           <p id="sharedListFeedback" class="dashboard-helper-text" aria-live="polite"></p>
         </form>
-
         <div class="shared-inventory-header">
-          <h3>Inventario disponible</h3>
+          <div>
+            <p class="dashboard-eyebrow">Disponibles para compartir</p>
+            <h3>Inventario disponible</h3>
+          </div>
           <input type="search" id="sharedInventorySearch" placeholder="Buscar por título o ubicación" />
         </div>
         <div id="sharedInventoryList" class="properties-grid"></div>
-
-        <h3>Mis listas creadas</h3>
+        <div class="shared-inventory-header shared-history-heading">
+          <div>
+            <p class="dashboard-eyebrow">Historial</p>
+            <h3>Mis listas creadas</h3>
+          </div>
+        </div>
         <div id="sharedListsHistory" class="shared-history-list"></div>
       </article>
 
       <article id="agentPropertiesCard" class="dashboard-card hidden">
-        <h2>Mis propiedades</h2>
+        <div class="dashboard-card-header">
+          <p class="dashboard-eyebrow">Control de inventario</p>
+          <h2>Mis propiedades</h2>
+          <p>Edita, marca estados o elimina únicamente las propiedades creadas por tu cuenta.</p>
+        </div>
         <div id="agentPropertiesList" class="properties-grid"></div>
       </article>
     </section>

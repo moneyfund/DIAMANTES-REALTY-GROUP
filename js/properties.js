@@ -84,11 +84,13 @@ const getPriceUsd = (property = {}) => propertyUtils.getPriceUsd ? propertyUtils
 const getAreaDisplay = (property = {}) => propertyUtils.getAreaDisplay ? propertyUtils.getAreaDisplay(property) : `${property.area || 0} m²`;
 const getPricePerAreaUsd = (property = {}) => propertyUtils.getPricePerAreaUsd ? propertyUtils.getPricePerAreaUsd(property) : NaN;
 const formatPricePerArea = (value, unit) => propertyUtils.formatPricePerArea ? propertyUtils.formatPricePerArea(value, unit) : '';
+const getPropertyDisplayDetails = (property = {}) => propertyUtils.getPropertyDisplayDetails ? propertyUtils.getPropertyDisplayDetails(property) : [];
 function formatPropertyOperation(value = '') {
   const normalized = normalizePropertyOperation(value);
   const labels = {
     venta: 'Venta',
-    alquiler: 'Alquiler'
+    alquiler: 'Renta',
+    venta_renta: 'Venta/Renta'
   };
   return labels[normalized] || '';
 }
@@ -228,6 +230,7 @@ function normalizeProperty(property = {}, id = '') {
     habitaciones: bedrooms,
     bathrooms,
     banos: bathrooms,
+    propertyType: type,
     area,
     type,
     tipo: type,
@@ -338,7 +341,7 @@ function propertyCardTemplate(property) {
   const imageAlt = property.title || property.titulo || 'Imagen de la propiedad';
   const detailUrl = getPropertyDetailUrl(property);
   const locationLabel = property.city || property.ubicacion || 'Ubicación no disponible';
-  const parkingCount = Number(property.parking ?? property.garaje ?? property.garages ?? 0);
+  const displayDetails = getPropertyDisplayDetails(property).slice(0, 4);
 
   return `
     <article class="property-card${featuredClass}">
@@ -352,10 +355,7 @@ function propertyCardTemplate(property) {
         <p class="price">${formatDualPrice(getPriceUsd(property))}</p>
         ${status === 'sold' ? '<p class="property-status-tag">VENDIDA</p>' : ''}
         <div class="property-meta property-meta-icons">
-          <span>${featureIcon('bedrooms')} ${(property.bedrooms ?? property.habitaciones) || 0} hab.</span>
-          <span>${featureIcon('bathrooms')} ${(property.bathrooms ?? property.banos) || 0} baños</span>
-          <span>${featureIcon('parking')} ${parkingCount > 0 ? `${parkingCount} parqueo` : 'Sin parqueo'}</span>
-          <span>${featureIcon('area')} ${getAreaDisplay(property)}</span>
+          ${displayDetails.map((detail) => `<span>${featureIcon(detail.icon)} ${escapeHtml(detail.value)} ${escapeHtml(detail.label).toLowerCase()}</span>`).join('')}
           <span>${featureIcon('location')} ${locationLabel}</span>
           <span>${featureIcon('type')} ${property.typeLabel || getPropertyTypeLabel(property.tipo) || 'Propiedad'}</span>
         </div>
@@ -621,7 +621,7 @@ async function renderPropertyDetail() {
   const hasAgentLink = Boolean(agent?.id || property.agentId);
   const agentProfileUrl = buildAgentProfileUrl(agent?.id || property.agentId);
   const status = String(property.status || 'available').toLowerCase();
-  const detailParkingCount = Number(property.parking ?? property.garaje ?? property.garages ?? 0);
+  const detailFeatures = getPropertyDisplayDetails(property);
   const propertyVideoMarkup = buildPropertyVideoSectionMarkup(property);
 
   const galleryMarkup = buildGalleryControlsMarkup(galleryImages);
@@ -657,11 +657,8 @@ async function renderPropertyDetail() {
       <div class="detail-extended-block">
         <h2>Características de la propiedad</h2>
         <ul class="checklist property-feature-list">
-          <li>${featureIcon('bedrooms')} ${(property.habitaciones ?? property.bedrooms) || 0} habitaciones</li>
-          <li>${featureIcon('bathrooms')} ${(property.banos ?? property.bathrooms) || 0} baños</li>
-          <li>${featureIcon('parking')} ${detailParkingCount > 0 ? `${detailParkingCount} parqueo(s)` : 'Sin parqueo'}</li>
-          <li>${featureIcon('area')} ${getAreaDisplay(property)}</li>
-          <li>${featureIcon('location')} ${property.ubicacion || property.city || 'Ubicación no disponible'}</li>
+          ${detailFeatures.map((detail) => `<li>${featureIcon(detail.icon)} <strong>${escapeHtml(detail.label)}:</strong> ${escapeHtml(detail.value)}</li>`).join('')}
+          <li>${featureIcon('location')} <strong>Ubicación:</strong> ${property.ubicacion || property.city || 'Ubicación no disponible'}</li>
         </ul>
       </div>
       <div class="detail-extended-footer">
