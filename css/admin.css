@@ -238,3 +238,199 @@ button,
 label {
   font-family: var(--font-body);
 }
+
+/* === Property review approval flow === */
+.review-dashboard {
+  background: linear-gradient(135deg, #ffffff 0%, #fbf7ef 100%);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 18px;
+  box-shadow: 0 20px 45px rgba(11, 31, 58, 0.12);
+  padding: 1.3rem;
+}
+
+.review-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.review-heading h2 { margin: 0.25rem 0; color: #0b1f3a; }
+
+.review-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin: 1rem 0;
+}
+
+.review-stats article {
+  background: #ffffff;
+  border: 1px solid rgba(11, 31, 58, 0.1);
+  border-radius: 14px;
+  padding: 1rem;
+  box-shadow: 0 12px 24px rgba(11, 31, 58, 0.08);
+}
+
+.review-stats span {
+  display: block;
+  color: #0b1f3a;
+  font-size: 1.8rem;
+  font-weight: 800;
+}
+
+.review-stats small { color: #6b7280; font-weight: 700; }
+
+.review-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.review-card {
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid rgba(192, 192, 192, 0.5);
+  border-radius: 18px;
+  box-shadow: 0 18px 35px rgba(11, 31, 58, 0.12);
+}
+
+.review-card > img {
+  width: 100%;
+  height: 190px;
+  object-fit: cover;
+  display: block;
+}
+
+.review-card-body { padding: 1rem; }
+.review-card-body h3 { margin: 0.5rem 0; color: #0b1f3a; }
+
+.review-card-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.publication-pill,
+.publication-status-badge {
+  display: inline-flex;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.publication-pill.pending,
+.publication-pending { background: #fff8e1; color: #8a5a00; border: 1px solid rgba(212, 175, 55, 0.45); }
+.publication-approved { background: #ecfdf3; color: #166534; border: 1px solid rgba(22, 101, 52, 0.25); }
+.publication-rejected { background: #fef2f2; color: #991b1b; border: 1px solid rgba(153, 27, 27, 0.25); }
+.publication-draft { background: #f3f4f6; color: #374151; border: 1px solid rgba(107, 114, 128, 0.25); }
+.publication-archived { background: #eef2ff; color: #3730a3; border: 1px solid rgba(55, 48, 163, 0.25); }
+
+.review-card dl {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0.8rem 0;
+}
+
+.review-card dl div {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 0.5rem;
+}
+
+.review-card dt { color: #6b7280; font-weight: 800; }
+.review-card dd { margin: 0; color: #1f2937; }
+
+.review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.review-actions button { width: auto; padding-inline: 0.9rem; }
+.approve-btn { background: #0b1f3a; border-color: #0b1f3a; }
+.reject-btn { background: #991b1b; border-color: #991b1b; }
+
+.empty-review-state {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 1.2rem;
+  background: #fff;
+  border: 1px dashed rgba(11, 31, 58, 0.2);
+  border-radius: 14px;
+  color: #6b7280;
+}
+
+.review-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  background: rgba(11, 31, 58, 0.58);
+  padding: 1rem;
+}
+
+.review-modal.hidden { display: none; }
+
+.review-modal-card {
+  position: relative;
+  width: min(980px, 96vw);
+  max-height: 90vh;
+  overflow: auto;
+  background: #ffffff;
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  border-radius: 20px;
+  padding: 1.4rem;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+}
+
+.review-modal-close {
+  position: sticky;
+  top: 0;
+  float: right;
+  width: 42px;
+  min-height: 42px;
+  border-radius: 50%;
+  background: #0b1f3a;
+  border-color: #0b1f3a;
+}
+
+.review-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.review-image-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.review-image-grid img {
+  width: 100%;
+  height: 130px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid rgba(192, 192, 192, 0.5);
+}
+
+.rejection-reason {
+  background: #fef2f2;
+  border-left: 4px solid #991b1b;
+  border-radius: 10px;
+  color: #7f1d1d;
+  padding: 0.7rem;
+}
+
+@media (max-width: 760px) {
+  .review-stats,
+  .review-detail-grid { grid-template-columns: 1fr; }
+  .review-card dl div { grid-template-columns: 1fr; }
+}

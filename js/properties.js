@@ -257,6 +257,12 @@ function isFacebookImageUrl(urlString) {
   }
 }
 
+function isPropertyPublic(property = {}) {
+  const publicationStatus = String(property.publicationStatus || '').toLowerCase();
+  if (!publicationStatus && property.publicVisible === true) return true;
+  return publicationStatus === 'approved' && property.publicVisible === true;
+}
+
 function normalizePropertyImageUrl(urlString) {
   const normalized = String(urlString || '').trim();
   if (!normalized) return '';
@@ -281,12 +287,16 @@ function normalizePropertyImageUrl(urlString) {
 }
 
 async function loadPropertiesFromFirestore() {
-  const { db, collection, getDocs } = await getModularFirestore();
-  const snapshot = await getDocs(collection(db, 'properties'));
+  const { db, collection, getDocs, query, where } = await getModularFirestore();
+  const snapshot = await getDocs(query(
+    collection(db, 'properties'),
+    where('publicVisible', '==', true)
+  ));
   const properties = [];
 
   snapshot.forEach((doc) => {
     const property = doc.data();
+    if (!isPropertyPublic(property)) return;
     const propertyId = doc.id;
     properties.push(normalizeProperty(property, propertyId));
   });
@@ -304,8 +314,13 @@ function subscribeToProperties(onUpdate) {
   const db = getFirestoreDb();
   if (!db) return () => {};
 
-  return db.collection('properties').onSnapshot((snapshot) => {
-    const properties = snapshot.docs.map((doc) => normalizeProperty(doc.data(), doc.id));
+  return db.collection('properties')
+    .where('publicVisible', '==', true)
+    .onSnapshot((snapshot) => {
+    const properties = snapshot.docs
+      .map((doc) => ({ raw: doc.data(), id: doc.id }))
+      .filter((entry) => isPropertyPublic(entry.raw))
+      .map((entry) => normalizeProperty(entry.raw, entry.id));
     allProperties = properties;
     onUpdate(properties);
   }, (error) => {
@@ -573,7 +588,9 @@ async function loadPropertyDetailFromFirestore(propertyId) {
     return null;
   }
 
-  return normalizeProperty(propertySnap.data(), propertySnap.id);
+  const data = propertySnap.data();
+  if (!isPropertyPublic(data)) return null;
+  return normalizeProperty(data, propertySnap.id);
 }
 
 async function loadAgentById(agentId) {

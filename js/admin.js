@@ -17,6 +17,9 @@ const list = document.getElementById('propertyList');
 const agentList = document.getElementById('agentList');
 const adminPanel = document.getElementById('adminPanel');
 const accessDeniedPanel = document.getElementById('accessDeniedPanel');
+const reviewList = document.getElementById('reviewList');
+const reviewModal = document.getElementById('reviewModal');
+const reviewModalContent = document.getElementById('reviewModalContent');
 
 const fields = {
   id: document.getElementById('propertyId'),
@@ -72,6 +75,219 @@ function formatCurrency(value) {
     currency: 'USD',
     maximumFractionDigits: 0
   }).format(Number(value) || 0);
+}
+
+
+function escapeHtml(value = '') {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function getPublicationStatus(property = {}) {
+  if (property.publicationStatus) return String(property.publicationStatus).toLowerCase();
+  return property.publicVisible === true ? 'approved' : 'pending_review';
+}
+
+function formatPublicationStatus(value = '') {
+  const labels = {
+    draft: 'Borrador',
+    pending_review: 'Pendiente de revisión',
+    approved: 'Publicada',
+    rejected: 'Rechazada',
+    archived: 'Archivada'
+  };
+  return labels[String(value || '').toLowerCase()] || 'Pendiente de revisión';
+}
+
+function formatDateValue(value) {
+  const date = value?.toDate ? value.toDate() : (value ? new Date(value) : null);
+  if (!date || Number.isNaN(date.getTime())) return 'Sin fecha';
+  return new Intl.DateTimeFormat('es-NI', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+}
+
+function getReviewCounts() {
+  return state.properties.reduce((acc, property) => {
+    const status = getPublicationStatus(property);
+    acc.total += 1;
+    if (status === 'pending_review') acc.pending += 1;
+    if (status === 'approved') acc.approved += 1;
+    if (status === 'rejected') acc.rejected += 1;
+    return acc;
+  }, { pending: 0, approved: 0, rejected: 0, total: 0 });
+}
+
+function updateReviewStats() {
+  const counts = getReviewCounts();
+  const map = {
+    pendingReviewCount: counts.pending,
+    approvedReviewCount: counts.approved,
+    rejectedReviewCount: counts.rejected,
+    totalReviewCount: counts.total
+  };
+  Object.entries(map).forEach(([id, value]) => {
+    const node = document.getElementById(id);
+    if (node) node.textContent = value;
+  });
+}
+
+function getPrimaryImage(property = {}) {
+  const images = getImagesFromProperty(property);
+  return property.coverImage || images[0] || property.image || property.imagen || 'assets/placeholder.svg';
+}
+
+function getPropertyTitle(property = {}) {
+  return property.title || property.titulo || 'Propiedad sin título';
+}
+
+function getPropertyLocation(property = {}) {
+  return property.location || property.ubicacion || [property.city, property.address].filter(Boolean).join(', ') || 'Ubicación no disponible';
+}
+
+function renderReviewList() {
+  if (!reviewList) return;
+  updateReviewStats();
+  const pending = state.properties
+    .filter((property) => getPublicationStatus(property) === 'pending_review')
+    .sort((a, b) => {
+      const aTime = a.submittedAt?.toMillis?.() || a.createdAt?.toMillis?.() || 0;
+      const bTime = b.submittedAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0;
+      return bTime - aTime;
+    });
+
+  if (!pending.length) {
+    reviewList.innerHTML = '<p class="empty-review-state">No hay propiedades pendientes de revisión.</p>';
+    return;
+  }
+
+  reviewList.innerHTML = pending.map((property) => `
+    <article class="review-card">
+      <img src="${escapeHtml(getPrimaryImage(property))}" alt="${escapeHtml(getPropertyTitle(property))}" loading="lazy">
+      <div class="review-card-body">
+        <div class="review-card-title-row">
+          <p class="publication-pill pending">${formatPublicationStatus(getPublicationStatus(property))}</p>
+          <small>${formatDateValue(property.submittedAt || property.createdAt)}</small>
+        </div>
+        <h3>${escapeHtml(getPropertyTitle(property))}</h3>
+        <dl>
+          <div><dt>Tipo</dt><dd>${escapeHtml(property.type || property.tipo || property.propertyType || 'Propiedad')}</dd></div>
+          <div><dt>Operación</dt><dd>${escapeHtml(property.operation || property.operacion || property.tipoOperacion || 'venta')}</dd></div>
+          <div><dt>Precio</dt><dd>${formatCurrency(property.priceUsd ?? property.price ?? property.precio)}</dd></div>
+          <div><dt>Ubicación</dt><dd>${escapeHtml(getPropertyLocation(property))}</dd></div>
+          <div><dt>Agente</dt><dd>${escapeHtml(property.agentName || getAgentNameById(property.agentId))}</dd></div>
+        </dl>
+        <div class="review-actions">
+          <button type="button" class="ghost" data-review-details="${property.id}">Ver detalles</button>
+          <button type="button" class="approve-btn" data-review-approve="${property.id}">Aprobar</button>
+          <button type="button" class="reject-btn" data-review-reject="${property.id}">Rechazar</button>
+        </div>
+      </div>
+    </article>
+  `).join('');
+
+  reviewList.querySelectorAll('[data-review-details]').forEach((button) => {
+    button.addEventListener('click', () => showReviewDetails(button.dataset.reviewDetails));
+  });
+  reviewList.querySelectorAll('[data-review-approve]').forEach((button) => {
+    button.addEventListener('click', () => approveProperty(button.dataset.reviewApprove));
+  });
+  reviewList.querySelectorAll('[data-review-reject]').forEach((button) => {
+    button.addEventListener('click', () => rejectProperty(button.dataset.reviewReject));
+  });
+}
+
+function buildDetailsList(property = {}) {
+  const details = property.propertyDetails || {};
+  return Object.entries(details)
+    .filter(([, value]) => value !== '' && value !== null && value !== undefined)
+    .map(([key, value]) => `<li><strong>${escapeHtml(key)}:</strong> ${escapeHtml(Array.isArray(value) ? value.join(', ') : value)}</li>`)
+    .join('') || '<li>Sin características dinámicas registradas.</li>';
+}
+
+function showReviewDetails(propertyId) {
+  const property = state.properties.find((item) => item.id === propertyId);
+  if (!property || !reviewModal || !reviewModalContent) return;
+  const images = getImagesFromProperty(property);
+  const legalDocument = property.legalDocument;
+  const coordinates = getCoordinates(property);
+  reviewModalContent.innerHTML = `
+    <p class="badge">Solicitud pendiente</p>
+    <h2 id="reviewModalTitle">${escapeHtml(getPropertyTitle(property))}</h2>
+    <div class="review-detail-grid">
+      <section>
+        <h3>Datos generales</h3>
+        <p><strong>Tipo:</strong> ${escapeHtml(property.type || property.tipo || property.propertyType || '')}</p>
+        <p><strong>Operación:</strong> ${escapeHtml(property.operation || property.operacion || property.tipoOperacion || '')}</p>
+        <p><strong>Precio:</strong> ${formatCurrency(property.priceUsd ?? property.price ?? property.precio)}</p>
+        <p><strong>Estado comercial:</strong> ${formatStatus(property.status)}</p>
+        <p><strong>Ubicación:</strong> ${escapeHtml(getPropertyLocation(property))}</p>
+        <p><strong>Descripción:</strong> ${escapeHtml(property.description || property.descripcion || '')}</p>
+        <h3>Características dinámicas</h3>
+        <ul>${buildDetailsList(property)}</ul>
+        <h3>Video</h3>
+        <p>${property.videoUrl ? `<a href="${escapeHtml(property.videoUrl)}" target="_blank" rel="noopener noreferrer">Ver video ${escapeHtml(property.videoType || '')}</a>` : 'Sin video registrado.'}</p>
+      </section>
+      <section>
+        <h3>Imágenes</h3>
+        <div class="review-image-grid">${images.map((url) => `<img src="${escapeHtml(url)}" alt="Imagen de propiedad" loading="lazy">`).join('') || '<p>Sin imágenes.</p>'}</div>
+        <h3>Coordenadas / mapa</h3>
+        <p>${coordinates ? `${formatCoordinate(coordinates.latitude)}, ${formatCoordinate(coordinates.longitude)}` : 'Sin coordenadas.'}</p>
+        <h3>Documentación legal privada</h3>
+        <p>${legalDocument?.fileUrl ? `<a href="${escapeHtml(legalDocument.fileUrl)}" target="_blank" rel="noopener noreferrer">Abrir PDF legal</a>` : 'Sin PDF legal cargado.'}</p>
+        <h3>Datos del agente</h3>
+        <p><strong>Agente:</strong> ${escapeHtml(property.agentName || getAgentNameById(property.agentId))}</p>
+        <p><strong>ID:</strong> ${escapeHtml(property.agentId || '')}</p>
+        <h3>Notas internas</h3>
+        <p>${escapeHtml(property.internalNotes || property.notes || 'Sin notas internas.')}</p>
+      </section>
+    </div>
+    <div class="review-actions modal-actions">
+      <button type="button" data-review-approve="${property.id}">Aprobar</button>
+      <button type="button" class="reject-btn" data-review-reject="${property.id}">Rechazar</button>
+    </div>
+  `;
+  reviewModal.classList.remove('hidden');
+  reviewModalContent.querySelector('[data-review-approve]')?.addEventListener('click', () => approveProperty(property.id));
+  reviewModalContent.querySelector('[data-review-reject]')?.addEventListener('click', () => rejectProperty(property.id));
+}
+
+async function approveProperty(propertyId) {
+  const client = getFirebaseOrNotify();
+  if (!client || !propertyId || !state.user) return;
+  await client.db.collection('properties').doc(propertyId).update({
+    publicationStatus: 'approved',
+    publicVisible: true,
+    approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    approvedBy: state.user.uid,
+    reviewedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    reviewStatus: 'approved'
+  });
+  reviewModal?.classList.add('hidden');
+  alert('Propiedad aprobada y publicada correctamente.');
+}
+
+async function rejectProperty(propertyId) {
+  const client = getFirebaseOrNotify();
+  if (!client || !propertyId || !state.user) return;
+  const reason = window.prompt('Escribe el motivo de rechazo (obligatorio):');
+  if (!reason || !reason.trim()) {
+    alert('El motivo de rechazo es obligatorio.');
+    return;
+  }
+  await client.db.collection('properties').doc(propertyId).update({
+    publicationStatus: 'rejected',
+    publicVisible: false,
+    rejectedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    rejectedBy: state.user.uid,
+    reviewedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    reviewStatus: 'rejected',
+    rejectionReason: reason.trim()
+  });
+  reviewModal?.classList.add('hidden');
+  alert('Propiedad rechazada. El agente podrá corregirla y reenviarla.');
 }
 
 function formatStatus(value) {
@@ -355,6 +571,7 @@ function clearFormState() {
 }
 
 function renderList() {
+  renderReviewList();
   list.innerHTML = '';
 
   if (!state.properties.length) {
@@ -401,6 +618,7 @@ function listenAllProperties() {
   state.unsubscribeProperties = client.db.collection('properties').onSnapshot((snapshot) => {
     state.properties = snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
     renderList();
+    renderReviewList();
   }, (error) => {
     console.error(error);
     console.error('No se pudieron cargar las propiedades.');
@@ -530,6 +748,11 @@ function bindActions() {
 
   document.getElementById('goToLoginBtn')?.addEventListener('click', () => {
     redirectTo('admin-login.html');
+  });
+
+  document.getElementById('reviewModalClose')?.addEventListener('click', () => reviewModal?.classList.add('hidden'));
+  reviewModal?.addEventListener('click', (event) => {
+    if (event.target === reviewModal) reviewModal.classList.add('hidden');
   });
 
   document.getElementById('logoutBtn')?.addEventListener('click', async () => {

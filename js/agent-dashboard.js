@@ -53,6 +53,38 @@ const PROPERTY_STATUS_LABELS = {
   rented: 'Rentada'
 };
 
+const PUBLICATION_STATUS_LABELS = {
+  draft: 'Borrador',
+  pending_review: 'Pendiente de revisión',
+  approved: 'Publicada',
+  rejected: 'Rechazada',
+  archived: 'Archivada'
+};
+
+const PUBLICATION_STATUS_BADGE_CLASS = {
+  draft: 'publication-draft',
+  pending_review: 'publication-pending',
+  approved: 'publication-approved',
+  rejected: 'publication-rejected',
+  archived: 'publication-archived'
+};
+
+function getPublicationStatus(property = {}) {
+  if (property.publicationStatus) return String(property.publicationStatus).toLowerCase();
+  return property.publicVisible === true ? 'approved' : 'pending_review';
+}
+
+function isPubliclyApproved(property = {}) {
+  return getPublicationStatus(property) === 'approved' && property.publicVisible === true;
+}
+
+function getPublicationBadgeMarkup(property = {}) {
+  const publicationStatus = getPublicationStatus(property);
+  const label = PUBLICATION_STATUS_LABELS[publicationStatus] || 'Pendiente de revisión';
+  const className = PUBLICATION_STATUS_BADGE_CLASS[publicationStatus] || 'publication-pending';
+  return `<p class="publication-status-badge ${className}">${label}</p>`;
+}
+
 const DYNAMIC_FIELD_CONFIG = {
   house: [
     ['bedrooms', 'number', 'Habitaciones'], ['bathrooms', 'number', 'Baños'], ['constructionArea', 'number', 'Área de construcción'], ['landArea', 'number', 'Área de terreno'],
@@ -786,12 +818,14 @@ async function guardarPropiedad(data, propertyId = '') {
   const propertyRef = getPropertyDocRef(propertyId);
 
   let existingLegalDocument = null;
+  let existingProperty = null;
   if (propertyId) {
     const current = await getDoc(propertyRef);
     if (!current.exists() || current.data().agentId !== state.user.uid) {
       throw new Error('No tienes permisos para editar esta propiedad.');
     }
-    existingLegalDocument = current.data().legalDocument || null;
+    existingProperty = current.data();
+    existingLegalDocument = existingProperty.legalDocument || null;
   }
 
   await uploadPendingFiles(state.user.uid, propertyRef.id);
@@ -808,9 +842,27 @@ async function guardarPropiedad(data, propertyId = '') {
     : (propertyId ? { video: deleteField(), videoType: deleteField(), videoUrl: deleteField() } : {});
 
   if (propertyId) {
+    const existingPublicationStatus = getPublicationStatus(existingProperty || {});
+    const reviewFields = existingPublicationStatus === 'rejected'
+      ? {
+        publicationStatus: 'pending_review',
+        publicVisible: false,
+        resubmittedAt: serverTimestamp(),
+        submittedAt: serverTimestamp(),
+        reviewStatus: 'pending_review',
+        rejectionReason: '',
+        lastEditedBy: state.user.uid
+      }
+      : {
+        publicationStatus: existingPublicationStatus,
+        publicVisible: existingPublicationStatus === 'approved' ? true : false,
+        lastEditedBy: state.user.uid
+      };
+
     await updateDoc(propertyRef, {
       ...payload,
-      ...videoFields
+      ...videoFields,
+      ...reviewFields
     });
     await applyLegalDocumentChanges(propertyRef, existingLegalDocument);
     return propertyRef;
@@ -819,6 +871,10 @@ async function guardarPropiedad(data, propertyId = '') {
   await setDoc(propertyRef, {
     ...payload,
     ...videoFields,
+    publicationStatus: 'pending_review',
+    publicVisible: false,
+    reviewStatus: 'pending_review',
+    submittedAt: serverTimestamp(),
     createdAt: serverTimestamp()
   }, { merge: true });
 
@@ -910,7 +966,9 @@ function propertyCard(property) {
         <p>${property.location || property.ubicacion || ''}</p>
         <p class="price">${formatDualPrice(property.priceUsd ?? property.price ?? property.precio)}</p>
         <p>${formatPricePerArea(property.pricePerAreaUsd ?? calculatePricePerArea(property.priceUsd ?? property.price ?? property.precio, property.areaValue ?? property.area), property.areaUnit)}</p>
-        <p class="property-status-tag">${statusLabel}</p>
+        <p class="property-status-tag">Estado comercial: ${statusLabel}</p>
+        ${getPublicationBadgeMarkup(property)}
+        ${getPublicationStatus(property) === 'rejected' && property.rejectionReason ? `<p class="rejection-reason"><strong>Motivo:</strong> ${escapeHtml(property.rejectionReason)}</p>` : ''}
         <div class="agent-actions">
           <button type="button" data-edit-property="${property.id}">Editar</button>
           <button type="button" data-sold-property="${property.id}">Marcar vendida</button>
@@ -989,7 +1047,9 @@ async function saveProperty(event) {
       videoData: videoValidation.value
     }, propertyId);
 
-    setMessage(propertyId ? 'Propiedad actualizada correctamente.' : 'Propiedad creada correctamente.', 'success');
+    setMessage(propertyId
+      ? 'Propiedad actualizada correctamente.'
+      : 'Propiedad enviada a revisión. La administración debe aprobarla antes de publicarse en la web.', 'success');
     resetPropertyForm();
   } catch (error) {
     console.error('[AgentDashboard] Error guardando propiedad.', error);
@@ -1192,10 +1252,13 @@ function renderSharedInventory() {
 async function loadShareInventory() {
   if (!state.user) return;
 
-  const snapshot = await getDocs(collection(db, 'properties'));
+  const snapshot = await getDocs(query(
+    collection(db, 'properties'),
+    where('publicVisible', '==', true)
+  ));
   const properties = snapshot.docs
     .map((item) => normalizePropertyForShare(item.data(), item.id))
-    .filter((property) => property.status === 'available');
+    .filter((property) => property.status === 'available' && isPubliclyApproved(property));
 
   state.sharedInventory = properties;
   renderSharedInventory();

@@ -11,6 +11,13 @@ import {
 const imageUtils = window.inmoImageUtils || {};
 const propertyUtils = window.inmoPropertyUtils || {};
 
+function isPropertyPublic(property = {}) {
+  const publicationStatus = String(property.publicationStatus || '').toLowerCase();
+  if (!publicationStatus && property.publicVisible === true) return true;
+  return publicationStatus === 'approved' && property.publicVisible === true;
+}
+
+
 function getParams() {
   const params = new URLSearchParams(window.location.search);
   return {
@@ -156,7 +163,13 @@ async function init() {
     return;
   }
 
-  const property = normalizeProperty(propertySnap.data(), propertySnap.id);
+  const propertyData = propertySnap.data();
+  if (!isPropertyPublic(propertyData)) {
+    renderUnavailable('La propiedad ya no está publicada o no está disponible.');
+    return;
+  }
+
+  const property = normalizeProperty(propertyData, propertySnap.id);
   renderSharedProperty(sharedList, property);
 }
 
