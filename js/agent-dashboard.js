@@ -45,6 +45,71 @@ const formatDualPrice = (usd) => propertyUtils.formatDualPrice ? propertyUtils.f
 const calculatePricePerArea = (priceUsd, areaValue) => propertyUtils.calculatePricePerArea ? propertyUtils.calculatePricePerArea(priceUsd, areaValue) : NaN;
 const formatPricePerArea = (value, unit) => propertyUtils.formatPricePerArea ? propertyUtils.formatPricePerArea(value, unit) : '';
 
+const PROPERTY_STATUS_LABELS = {
+  available: 'Disponible',
+  reserved: 'Reservada',
+  sold: 'Vendida',
+  rented: 'Rentada'
+};
+
+const DYNAMIC_FIELD_CONFIG = {
+  house: [
+    ['bedrooms', 'number', 'Habitaciones'], ['bathrooms', 'number', 'Baños'], ['constructionArea', 'number', 'Área de construcción'], ['landArea', 'number', 'Área de terreno'],
+    ['areaUnit', 'select', 'Unidad de área', ['m²', 'varas²', 'manzanas']], ['levels', 'number', 'Niveles'], ['garage', 'select', 'Garaje', ['Sí', 'No']],
+    ['livingRoom', 'select', 'Sala', ['Sí', 'No']], ['diningRoom', 'select', 'Comedor', ['Sí', 'No']], ['kitchen', 'select', 'Cocina', ['Sí', 'No']],
+    ['patio', 'select', 'Patio', ['Sí', 'No']], ['terrace', 'select', 'Terraza', ['Sí', 'No']], ['laundryArea', 'select', 'Área de lavado', ['Sí', 'No']],
+    ['security', 'text', 'Seguridad'], ['constructionStatus', 'text', 'Estado de construcción'], ['furnished', 'select', 'Amueblada', ['Sí', 'No']]
+  ],
+  apartment: [
+    ['bedrooms', 'number', 'Habitaciones'], ['bathrooms', 'number', 'Baños'], ['constructionArea', 'number', 'Área de construcción'], ['floorLevel', 'text', 'Piso / nivel'],
+    ['parking', 'select', 'Parqueo', ['Sí', 'No']], ['elevator', 'select', 'Ascensor', ['Sí', 'No']], ['security', 'text', 'Seguridad'], ['balcony', 'select', 'Balcón', ['Sí', 'No']],
+    ['furnished', 'select', 'Amueblado', ['Sí', 'No']], ['maintenanceFee', 'number', 'Cuota de mantenimiento'], ['amenities', 'textarea', 'Amenidades']
+  ],
+  quinta: [
+    ['bedrooms', 'number', 'Habitaciones'], ['bathrooms', 'number', 'Baños'], ['constructionArea', 'number', 'Área de construcción'], ['landArea', 'number', 'Área de terreno'],
+    ['areaUnit', 'select', 'Unidad de área', ['m²', 'varas²', 'manzanas']], ['pool', 'select', 'Piscina', ['Sí', 'No']], ['gardens', 'select', 'Jardines', ['Sí', 'No']],
+    ['socialArea', 'select', 'Área social', ['Sí', 'No']], ['mainHouse', 'select', 'Casa principal', ['Sí', 'No']], ['caretakerHouse', 'select', 'Casa de cuidador', ['Sí', 'No']],
+    ['well', 'select', 'Pozo', ['Sí', 'No']], ['vehicleAccess', 'text', 'Acceso vehicular'], ['streetType', 'text', 'Tipo de calle'], ['naturalEnvironment', 'text', 'Entorno natural'],
+    ['potentialUse', 'select', 'Uso potencial', ['Recreativo', 'Familiar', 'Turístico', 'Inversión']]
+  ],
+  farm: [
+    ['totalArea', 'number', 'Área total'], ['areaUnit', 'select', 'Unidad de área', ['manzanas', 'hectáreas', 'm²']], ['currentUse', 'select', 'Uso actual', ['Ganadería', 'Agricultura', 'Forestal', 'Mixto', 'Descanso', 'Inversión']],
+    ['topography', 'select', 'Topografía', ['Plana', 'Semiplana', 'Inclinada', 'Mixta']], ['accessType', 'text', 'Tipo de acceso'], ['streetType', 'text', 'Tipo de calle'],
+    ['potableWater', 'select', 'Agua potable', ['Sí', 'No']], ['electricity', 'select', 'Energía eléctrica', ['Sí', 'No']], ['well', 'select', 'Pozo', ['Sí', 'No']],
+    ['waterSource', 'text', 'Río / quebrada / fuente de agua'], ['fences', 'select', 'Cercas', ['Sí', 'No']], ['paddocks', 'text', 'Potreros'], ['crops', 'text', 'Cultivos'],
+    ['existingInfrastructure', 'textarea', 'Casa o infraestructura existente'], ['documentation', 'textarea', 'Documentación'], ['potentialUse', 'textarea', 'Potencial']
+  ],
+  land: [
+    ['totalArea', 'number', 'Área total'], ['areaUnit', 'select', 'Unidad de área', ['m²', 'varas²', 'manzanas']], ['landType', 'select', 'Tipo de terreno', ['Urbano', 'Semiurbano', 'Rural', 'Semirural']],
+    ['topography', 'select', 'Topografía', ['Plana', 'Semiplana', 'Inclinada', 'Irregular']], ['landShape', 'select', 'Forma del terreno', ['Regular', 'Irregular', 'Rectangular', 'Esquina']],
+    ['soilType', 'text', 'Tipo de suelo'], ['accessType', 'text', 'Acceso'], ['streetType', 'select', 'Tipo de calle', ['Pavimentada', 'Adoquinada', 'Tierra', 'Macadán', 'Concreto hidráulico']],
+    ['availableServices', 'text', 'Servicios disponibles'], ['environment', 'text', 'Entorno'], ['zoneSecurity', 'text', 'Seguridad de la zona'], ['trafficLevel', 'text', 'Nivel de tráfico'],
+    ['potentialUse', 'text', 'Uso potencial'], ['nearbyUrbanDevelopment', 'text', 'Desarrollo urbano cercano'], ['naturalResources', 'text', 'Recursos naturales'], ['vegetationCoverage', 'text', 'Nivel de deforestación o cobertura vegetal']
+  ],
+  commercial: [
+    ['constructionArea', 'number', 'Área de construcción'], ['bathrooms', 'number', 'Baños'], ['commercialFront', 'text', 'Frente comercial'], ['parking', 'select', 'Parqueo', ['Sí', 'No']],
+    ['trafficLevel', 'text', 'Nivel de tráfico'], ['streetType', 'text', 'Tipo de calle'], ['commercialZone', 'text', 'Zona comercial'], ['security', 'text', 'Seguridad'],
+    ['internalWarehouse', 'select', 'Bodega interna', ['Sí', 'No']], ['basicServices', 'text', 'Servicios básicos'], ['permittedUse', 'text', 'Uso permitido'], ['idealFor', 'text', 'Ideal para']
+  ],
+  warehouse: [
+    ['constructionArea', 'number', 'Área de construcción'], ['height', 'text', 'Altura'], ['truckAccess', 'select', 'Acceso para camiones', ['Sí', 'No']], ['internalOffices', 'select', 'Oficinas internas', ['Sí', 'No']],
+    ['bathrooms', 'number', 'Baños'], ['parking', 'select', 'Parqueo', ['Sí', 'No']], ['security', 'text', 'Seguridad'], ['threePhasePower', 'select', 'Energía trifásica', ['Sí', 'No']],
+    ['industrialZone', 'text', 'Zona industrial / comercial'], ['constructionStatus', 'text', 'Estado de construcción']
+  ],
+  office: [
+    ['constructionArea', 'number', 'Área de construcción'], ['privateRooms', 'number', 'Ambientes privados'], ['bathrooms', 'number', 'Baños'], ['parking', 'select', 'Parqueo', ['Sí', 'No']],
+    ['meetingRoom', 'select', 'Sala de reuniones', ['Sí', 'No']], ['reception', 'select', 'Recepción', ['Sí', 'No']], ['security', 'text', 'Seguridad'], ['elevator', 'select', 'Ascensor', ['Sí', 'No']],
+    ['furnished', 'select', 'Amueblada', ['Sí', 'No']], ['connectivity', 'text', 'Internet / conectividad'], ['corporateLocation', 'text', 'Ubicación corporativa']
+  ],
+  investment: [
+    ['totalArea', 'number', 'Área total'], ['areaUnit', 'select', 'Unidad de área', ['m²', 'varas²', 'manzanas', 'hectáreas']], ['projectType', 'text', 'Tipo de proyecto'], ['potentialUse', 'text', 'Uso potencial'],
+    ['existingPermits', 'text', 'Permisos existentes'], ['availableStudies', 'text', 'Estudios disponibles'], ['accesses', 'text', 'Accesos'], ['basicServices', 'text', 'Servicios básicos'],
+    ['capitalGainProjection', 'text', 'Proyección de plusvalía'], ['mainRoadsProximity', 'text', 'Cercanía a vías principales'], ['documentation', 'textarea', 'Documentación'], ['investorIdeal', 'textarea', 'Ideal para inversionistas']
+  ],
+  other: [['specificFeatures', 'textarea', 'Características específicas']]
+};
+
+
 function formatPropertyType(value = '') {
   return getPropertyTypeLabel(value);
 }
@@ -53,7 +118,8 @@ function formatPropertyOperation(value = '') {
   const normalized = String(value || '').trim().toLowerCase();
   const labels = {
     venta: 'Venta',
-    alquiler: 'Alquiler'
+    alquiler: 'Renta',
+    venta_renta: 'Venta/Renta'
   };
   return labels[normalized] || '';
 }
@@ -89,6 +155,104 @@ function getProfilePayload(user) {
     whatsapp: document.getElementById('agentWhatsapp').value.trim(),
     updatedAt: serverTimestamp()
   };
+}
+
+
+function getDynamicFieldsForType(type = '') {
+  return DYNAMIC_FIELD_CONFIG[normalizePropertyType(type)] || [];
+}
+
+function dynamicFieldId(key = '') {
+  return `propertyDetail_${key}`;
+}
+
+function createDynamicFieldMarkup(field = [], value = '') {
+  const [key, inputType, label, options = []] = field;
+  const id = dynamicFieldId(key);
+  const safeValue = escapeHtml(value ?? '');
+  if (inputType === 'select') {
+    return `<label>${label}<select id="${id}" data-detail-key="${key}"><option value="">Seleccionar</option>${options.map((option) => `<option value="${escapeHtml(option)}" ${String(value || '') === option ? 'selected' : ''}>${escapeHtml(option)}</option>`).join('')}</select></label>`;
+  }
+  if (inputType === 'textarea') {
+    return `<label class="form-span-2">${label}<textarea id="${id}" data-detail-key="${key}" rows="3" placeholder="${label}">${safeValue}</textarea></label>`;
+  }
+  const step = inputType === 'number' ? ' min="0" step="0.01"' : '';
+  return `<label>${label}<input type="${inputType}" id="${id}" data-detail-key="${key}" value="${safeValue}" placeholder="${label}"${step}></label>`;
+}
+
+function renderDynamicPropertyFields(prefill = {}) {
+  const type = normalizePropertyType(document.getElementById('tipo-propiedad')?.value || '');
+  const container = document.getElementById('dynamicPropertyFields');
+  const hint = document.getElementById('dynamicFieldsHint');
+  if (!container) return;
+
+  const fields = getDynamicFieldsForType(type);
+  if (!fields.length) {
+    container.innerHTML = '';
+    if (hint) hint.textContent = 'Selecciona un tipo de propiedad para cargar sus características.';
+    return;
+  }
+
+  if (hint) hint.textContent = `Campos activos para ${formatPropertyType(type)}.`;
+  container.innerHTML = fields.map((field) => createDynamicFieldMarkup(field, prefill[field[0]] || '')).join('');
+  container.querySelectorAll('[data-detail-key]').forEach((input) => {
+    input.addEventListener('input', updatePricePerAreaPreview);
+    input.addEventListener('change', updatePricePerAreaPreview);
+  });
+  updatePricePerAreaPreview();
+}
+
+function collectPropertyDetails() {
+  const details = {};
+  document.querySelectorAll('#dynamicPropertyFields [data-detail-key]').forEach((input) => {
+    const key = input.dataset.detailKey;
+    const rawValue = input.value?.trim?.() ?? '';
+    if (rawValue === '') return;
+    details[key] = input.type === 'number' ? Number(rawValue) : rawValue;
+  });
+  return details;
+}
+
+function getSelectedPropertyTags() {
+  return Array.from(document.querySelectorAll('input[name="propertyTags"]:checked')).map((input) => input.value);
+}
+
+function setSelectedPropertyTags(tags = []) {
+  const selected = new Set(Array.isArray(tags) ? tags : []);
+  document.querySelectorAll('input[name="propertyTags"]').forEach((input) => {
+    input.checked = selected.has(input.value);
+  });
+}
+
+function getPrimaryAreaFromDetails(details = {}) {
+  return Number(details.totalArea || details.landArea || details.constructionArea || details.areaValue || 0);
+}
+
+function getAreaUnitFromDetails(details = {}) {
+  return details.areaUnit || '';
+}
+
+function updateVideoPreview() {
+  const preview = document.getElementById('propertyVideoPreview');
+  if (!preview) return;
+  const type = document.getElementById('propertyVideoType')?.value || '';
+  const url = document.getElementById('propertyVideoUrl')?.value || '';
+  const validation = videoUtils.validatePropertyVideoForm
+    ? videoUtils.validatePropertyVideoForm({ type, url })
+    : { valid: Boolean(url), value: { type, url } };
+  if (!url) {
+    preview.innerHTML = '<p class="dashboard-helper-text">Agrega un enlace para previsualizar el video.</p>';
+    return;
+  }
+  if (!validation.valid || !validation.value) {
+    preview.innerHTML = `<p class="dashboard-helper-text uploader-error">${escapeHtml(validation.message || 'Video no válido.')}</p>`;
+    return;
+  }
+  if (validation.value.type === 'youtube' && validation.value.embedUrl) {
+    preview.innerHTML = `<div class="property-video-frame-wrapper"><iframe src="${validation.value.embedUrl}" title="Vista previa del video" allowfullscreen loading="lazy"></iframe></div>`;
+    return;
+  }
+  preview.innerHTML = `<a class="button-outline" href="${escapeHtml(validation.value.url)}" target="_blank" rel="noopener noreferrer">Abrir vista previa de ${validation.value.type}</a>`;
 }
 
 function updateCoordinatesLabel(lat, lng) {
@@ -358,9 +522,18 @@ function getPropertyPayload(user, profileName, images, coverImage, videoData) {
   const price = Number(document.getElementById('propertyPrice').value || 0);
   const description = document.getElementById('propertyDescription').value.trim();
   const type = normalizePropertyType(document.getElementById('tipo-propiedad').value.trim());
-  const areaValue = Number(document.getElementById('propertyArea').value || 0);
-  const areaUnit = document.getElementById('propertyAreaUnit').value.trim();
+  const operation = document.getElementById('operacion-propiedad').value.trim();
+  const status = document.getElementById('propertyStatus')?.value || 'available';
+  const location = document.getElementById('propertyLocation').value.trim();
+  const city = document.getElementById('propertyCity')?.value.trim() || location;
+  const details = collectPropertyDetails();
+  const areaValue = getPrimaryAreaFromDetails(details);
+  const areaUnit = getAreaUnitFromDetails(details);
   const pricePerAreaUsd = calculatePricePerArea(price, areaValue);
+  const bedrooms = Number(details.bedrooms || 0);
+  const bathrooms = Number(details.bathrooms || 0);
+  const tags = getSelectedPropertyTags();
+  const responsibleAgent = document.getElementById('propertyAgentName')?.value.trim() || profileName;
 
   const payload = {
     title,
@@ -374,28 +547,35 @@ function getPropertyPayload(user, profileName, images, coverImage, videoData) {
     coverImage,
     image: coverImage || images[0] || fallbackPhoto,
     imagen: coverImage || images[0] || fallbackPhoto,
-    location: document.getElementById('propertyLocation').value.trim(),
-    ubicacion: document.getElementById('propertyLocation').value.trim(),
+    location,
+    ubicacion: location,
+    city,
+    department: city,
     priceUsd: price,
+    propertyType: type,
     type,
     tipo: type,
-    operation: document.getElementById('operacion-propiedad').value.trim(),
-    operacion: document.getElementById('operacion-propiedad').value.trim(),
-    tipoOperacion: document.getElementById('operacion-propiedad').value.trim(),
-    bedrooms: Number(document.getElementById('propertyBedrooms').value || 0),
-    habitaciones: Number(document.getElementById('propertyBedrooms').value || 0),
-    bathrooms: Number(document.getElementById('propertyBathrooms').value || 0),
-    banos: Number(document.getElementById('propertyBathrooms').value || 0),
-    area: areaValue,
-    areaValue,
+    operationType: operation,
+    operation,
+    operacion: operation,
+    tipoOperacion: operation,
+    status,
+    bedrooms,
+    habitaciones: bedrooms,
+    bathrooms,
+    banos: bathrooms,
+    area: areaValue || null,
+    areaValue: areaValue || null,
     areaUnit,
     pricePerAreaUsd: Number.isFinite(pricePerAreaUsd) ? pricePerAreaUsd : null,
+    propertyDetails: details,
+    highlightedTags: tags,
+    tags,
     lat: Number.isFinite(lat) ? lat : null,
     lng: Number.isFinite(lng) ? lng : null,
     agenteId: user.uid,
     agentId: user.uid,
-    agentName: profileName,
-    status: 'available',
+    agentName: responsibleAgent,
     updatedAt: serverTimestamp()
   };
 
@@ -524,7 +704,10 @@ function resetPropertyForm() {
     state.mapMarker = null;
   }
 
+  setSelectedPropertyTags([]);
+  renderDynamicPropertyFields();
   toggleImageInputMode();
+  updateVideoPreview();
   updatePricePerAreaPreview();
 }
 
@@ -533,16 +716,23 @@ function fillPropertyForm(property) {
   document.getElementById('propertyTitle').value = property.title || property.titulo || '';
   document.getElementById('propertyPrice').value = property.price || property.precio || '';
   document.getElementById('propertyLocation').value = property.location || property.ubicacion || '';
+  document.getElementById('propertyCity').value = property.city || property.department || '';
   document.getElementById('propertyDescription').value = property.description || property.descripcion || '';
-  document.getElementById('tipo-propiedad').value = normalizePropertyType(property.type || property.tipo || '');
-  document.getElementById('operacion-propiedad').value = (property.tipoOperacion || property.operation || property.operacion || '').toLowerCase();
-  document.getElementById('propertyBedrooms').value = property.bedrooms || property.habitaciones || 0;
-  document.getElementById('propertyBathrooms').value = property.bathrooms || property.banos || 0;
-  document.getElementById('propertyArea').value = property.areaValue || property.area || '';
-  document.getElementById('propertyAreaUnit').value = (property.areaUnit || 'metros').toLowerCase();
+  document.getElementById('tipo-propiedad').value = normalizePropertyType(property.propertyType || property.type || property.tipo || '');
+  document.getElementById('operacion-propiedad').value = (property.operationType || property.tipoOperacion || property.operation || property.operacion || '').toLowerCase();
+  document.getElementById('propertyStatus').value = (property.status || 'available').toLowerCase();
+  document.getElementById('propertyAgentName').value = property.agentName || '';
+  const details = { ...(property.propertyDetails || {}) };
+  if (!details.bedrooms) details.bedrooms = property.bedrooms || property.habitaciones || '';
+  if (!details.bathrooms) details.bathrooms = property.bathrooms || property.banos || '';
+  if (!details.totalArea && !details.landArea && !details.constructionArea) details.totalArea = property.areaValue || property.area || '';
+  if (!details.areaUnit) details.areaUnit = property.areaUnit || '';
+  renderDynamicPropertyFields(details);
+  setSelectedPropertyTags(property.highlightedTags || property.tags || []);
   const propertyVideo = videoUtils.getPropertyVideoData ? videoUtils.getPropertyVideoData(property) : null;
   document.getElementById('propertyVideoType').value = propertyVideo?.type || '';
   document.getElementById('propertyVideoUrl').value = propertyVideo?.url || '';
+  updateVideoPreview();
 
   const normalizedImages = imageUtils.getPropertyImages(property);
   state.propertyImages = normalizedImages.map((url) => createImageEntry({ url, source: 'url', status: 'ready' }));
@@ -561,11 +751,13 @@ function fillPropertyForm(property) {
     setPropertyCoordinates(NaN, NaN);
   }
 
+  document.getElementById('propertyForm')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   updatePricePerAreaPreview();
 }
 
 function propertyCard(property) {
-  const statusLabel = String(property.status || 'available').toLowerCase() === 'sold' ? 'VENDIDA' : 'DISPONIBLE';
+  const statusValue = String(property.status || 'available').toLowerCase();
+  const statusLabel = PROPERTY_STATUS_LABELS[statusValue] || 'Disponible';
   const coverImage = imageUtils.getCoverImage(property);
 
   return `
@@ -608,8 +800,9 @@ async function saveProperty(event) {
   const propertyType = document.getElementById('tipo-propiedad')?.value.trim();
   const propertyOperation = document.getElementById('operacion-propiedad')?.value.trim();
   const propertyPrice = Number(document.getElementById('propertyPrice')?.value || 0);
-  const areaValue = Number(document.getElementById('propertyArea')?.value || 0);
-  const areaUnit = document.getElementById('propertyAreaUnit')?.value.trim();
+  const details = collectPropertyDetails();
+  const areaValue = getPrimaryAreaFromDetails(details);
+  const areaUnit = getAreaUnitFromDetails(details);
   const videoType = document.getElementById('propertyVideoType')?.value || '';
   const videoUrl = document.getElementById('propertyVideoUrl')?.value || '';
 
@@ -631,12 +824,13 @@ async function saveProperty(event) {
       throw new Error('Ingresa un precio válido mayor que 0 USD.');
     }
 
-    if (!Number.isFinite(areaValue) || areaValue <= 0) {
-      throw new Error('Ingresa un área válida mayor que 0.');
+    const requiresAreaUnit = getDynamicFieldsForType(propertyType).some(([key]) => key === 'areaUnit');
+    if (requiresAreaUnit && (!Number.isFinite(areaValue) || areaValue <= 0)) {
+      throw new Error('Ingresa un área válida mayor que 0 en las características de la propiedad.');
     }
 
-    if (!areaUnit) {
-      throw new Error('Selecciona la unidad de área de la propiedad.');
+    if (requiresAreaUnit && !areaUnit) {
+      throw new Error('Selecciona la unidad de área en las características de la propiedad.');
     }
 
     const videoValidation = videoUtils.validatePropertyVideoForm
@@ -708,6 +902,8 @@ async function loadProfile(user) {
   document.getElementById('agentFacebook').value = profile.facebook || '';
   document.getElementById('agentTiktok').value = profile.tiktok || '';
   document.getElementById('agentWhatsapp').value = profile.whatsapp || '';
+  const responsibleAgent = document.getElementById('propertyAgentName');
+  if (responsibleAgent && !responsibleAgent.value) responsibleAgent.value = profile.name || user.displayName || '';
   state.agentProfile = profile;
 }
 
@@ -817,7 +1013,7 @@ function renderSharedInventory() {
 
   list.innerHTML = filtered.map((property) => {
     const checked = state.sharedSelectedPropertyIds.has(property.id) ? 'checked' : '';
-    const statusLabel = property.status === 'sold' ? '<span class="property-status-tag">VENDIDA</span>' : '';
+    const statusLabel = property.status !== 'available' ? `<span class="property-status-tag">${PROPERTY_STATUS_LABELS[property.status] || property.status.toUpperCase()}</span>` : '';
     const perArea = formatPricePerArea(calculatePricePerArea(property.price, property.areaValue), property.areaUnit);
 
     return `
@@ -858,7 +1054,7 @@ async function loadShareInventory() {
   const snapshot = await getDocs(collection(db, 'properties'));
   const properties = snapshot.docs
     .map((item) => normalizePropertyForShare(item.data(), item.id))
-    .filter((property) => property.status !== 'sold');
+    .filter((property) => property.status === 'available');
 
   state.sharedInventory = properties;
   renderSharedInventory();
@@ -1065,8 +1261,9 @@ function updatePricePerAreaPreview() {
   const dualPriceNode = document.getElementById('propertyDualPricePreview');
   const perAreaNode = document.getElementById('propertyPricePerAreaPreview');
   const price = Number(document.getElementById('propertyPrice')?.value || 0);
-  const areaValue = Number(document.getElementById('propertyArea')?.value || 0);
-  const areaUnit = document.getElementById('propertyAreaUnit')?.value || '';
+  const details = collectPropertyDetails();
+  const areaValue = getPrimaryAreaFromDetails(details);
+  const areaUnit = getAreaUnitFromDetails(details);
 
   if (dualPriceNode) dualPriceNode.textContent = formatDualPrice(price);
 
@@ -1076,9 +1273,14 @@ function updatePricePerAreaPreview() {
 }
 
 function bindCalculatedFields() {
-  ['propertyPrice', 'propertyArea', 'propertyAreaUnit'].forEach((fieldId) => {
+  ['propertyPrice'].forEach((fieldId) => {
     document.getElementById(fieldId)?.addEventListener('input', updatePricePerAreaPreview);
     document.getElementById(fieldId)?.addEventListener('change', updatePricePerAreaPreview);
+  });
+  document.getElementById('tipo-propiedad')?.addEventListener('change', () => renderDynamicPropertyFields());
+  ['propertyVideoType', 'propertyVideoUrl'].forEach((fieldId) => {
+    document.getElementById(fieldId)?.addEventListener('input', updateVideoPreview);
+    document.getElementById(fieldId)?.addEventListener('change', updateVideoPreview);
   });
 }
 
@@ -1108,7 +1310,9 @@ function init() {
   bindImagePreviewActions();
   bindCalculatedFields();
   toggleImageInputMode();
+  renderDynamicPropertyFields();
   renderImagePreview();
+  updateVideoPreview();
   updatePricePerAreaPreview();
 }
 

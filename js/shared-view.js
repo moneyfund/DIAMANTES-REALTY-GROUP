@@ -30,7 +30,8 @@ function normalizeProperty(property = {}, id = '') {
     id,
     title: property.title || property.titulo || 'Propiedad',
     location: property.location || property.ubicacion || 'Ubicación no disponible',
-    type: propertyUtils.normalizePropertyType ? propertyUtils.normalizePropertyType(property.type || property.tipo || '') : (property.type || property.tipo || ''),
+    type: propertyUtils.normalizePropertyType ? propertyUtils.normalizePropertyType(property.propertyType || property.type || property.tipo || '') : (property.propertyType || property.type || property.tipo || ''),
+    propertyType: propertyUtils.normalizePropertyType ? propertyUtils.normalizePropertyType(property.propertyType || property.type || property.tipo || '') : (property.propertyType || property.type || property.tipo || ''),
     operation: propertyUtils.normalizeOperation ? propertyUtils.normalizeOperation(property.operation || property.operacion || property.tipoOperacion || 'venta') : (property.operation || property.operacion || 'venta'),
     bedrooms: Number(property.bedrooms ?? property.habitaciones ?? 0),
     bathrooms: Number(property.bathrooms ?? property.banos ?? 0),
@@ -42,8 +43,10 @@ function normalizeProperty(property = {}, id = '') {
 }
 
 function formatOperation(value = '') {
-  const normalized = String(value || '').toLowerCase();
-  return normalized === 'alquiler' ? 'Alquiler' : 'Venta';
+  const normalized = propertyUtils.normalizeOperation ? propertyUtils.normalizeOperation(value) : String(value || '').toLowerCase();
+  if (normalized === 'alquiler') return 'Renta';
+  if (normalized === 'venta_renta') return 'Venta/Renta';
+  return 'Venta';
 }
 
 function formatType(type = '') {
@@ -57,6 +60,10 @@ function formatPrice(price = 0) {
 function formatPricePerArea(price = 0, area = 0, unit = 'metros') {
   const perArea = propertyUtils.calculatePricePerArea ? propertyUtils.calculatePricePerArea(price, area) : NaN;
   return propertyUtils.formatPricePerArea ? propertyUtils.formatPricePerArea(perArea, unit) : '';
+}
+
+function getDisplayDetails(property = {}) {
+  return propertyUtils.getPropertyDisplayDetails ? propertyUtils.getPropertyDisplayDetails(property) : [];
 }
 
 function whatsappLink(phone = '', text = '') {
@@ -141,9 +148,7 @@ function renderSharedList(sharedList, properties) {
             <p class="price">${formatPrice(property.price)}</p>
             <p>${formatPricePerArea(property.price, property.areaValue, property.areaUnit)}</p>
             <div class="property-meta property-meta-icons">
-              <span>🛏️ ${property.bedrooms} hab.</span>
-              <span>🛁 ${property.bathrooms} baños</span>
-              <span>📐 ${property.areaValue || 0} ${property.areaUnit}</span>
+              ${getDisplayDetails(property).slice(0, 3).map((detail) => `<span>${detail.label}: ${detail.value}</span>`).join('')}
             </div>
             <div class="agent-actions">
               <a class="button-outline" href="share-property.html?token=${encodeURIComponent(sharedList.token)}&propertyId=${encodeURIComponent(property.id)}">Ver detalle</a>
