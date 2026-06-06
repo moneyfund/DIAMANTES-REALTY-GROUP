@@ -19,7 +19,7 @@ import {
   signInWithPopup,
   signOut
 } from './firebase-services.js';
-import { uploadImage } from './storage-helpers.js';
+import { uploadImage, uploadLegalDocument, validateLegalPdf, deleteStorageFile } from './storage-helpers.js';
 
 const imageUtils = window.inmoImageUtils;
 
@@ -29,6 +29,7 @@ const state = {
   map: null,
   mapMarker: null,
   propertyImages: [],
+  legalDocument: { existing: null, file: null, remove: false },
   isSavingProperty: false,
   sharedSelectedPropertyIds: new Set(),
   sharedInventory: [],
@@ -335,6 +336,136 @@ function setUploaderStatus(message = '') {
   const target = document.getElementById('propertyUploaderStatus');
   if (!target) return;
   target.textContent = message;
+}
+
+function setLegalDocumentStatus(message = '', type = '') {
+  const element = document.getElementById('legalDocumentStatus');
+  if (!element) return;
+  element.textContent = message;
+  element.dataset.type = type;
+}
+
+function escapeHtml(value = '') {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function resetLegalDocumentState() {
+  state.legalDocument = { existing: null, file: null, remove: false };
+  const input = document.getElementById('propertyLegalDocument');
+  if (input) input.value = '';
+  setLegalDocumentStatus('');
+  renderLegalDocumentState();
+}
+
+function renderLegalDocumentState() {
+  const container = document.getElementById('legalDocumentExisting');
+  if (!container) return;
+
+  const { existing, file, remove } = state.legalDocument;
+  if (file) {
+    container.classList.remove('hidden');
+    container.innerHTML = `
+      <div>
+        <strong>PDF seleccionado para subir</strong>
+        <p>${escapeHtml(file.name)}</p>
+      </div>
+      <button type="button" class="button-secondary" data-clear-legal-document>Quitar selección</button>
+    `;
+    return;
+  }
+
+  if (existing && !remove) {
+    const fileName = escapeHtml(existing.fileName || 'documento-legal.pdf');
+    const fileUrl = existing.fileUrl || '#';
+    container.classList.remove('hidden');
+    container.innerHTML = `
+      <div>
+        <strong>Documento legal cargado</strong>
+        <p>${fileName}</p>
+      </div>
+      <div class="legal-document-actions">
+        <a class="button-secondary" href="${fileUrl}" target="_blank" rel="noopener noreferrer">Ver documento</a>
+        <button type="button" class="button-secondary" data-replace-legal-document>Reemplazar PDF</button>
+        <button type="button" class="danger-button" data-remove-legal-document>Eliminar documento</button>
+      </div>
+    `;
+    return;
+  }
+
+  if (existing && remove) {
+    container.classList.remove('hidden');
+    container.innerHTML = `
+      <div>
+        <strong>Documento marcado para eliminar</strong>
+        <p>Se eliminará al guardar los cambios.</p>
+      </div>
+      <button type="button" class="button-secondary" data-undo-remove-legal-document>Conservar documento</button>
+    `;
+    return;
+  }
+
+  container.classList.add('hidden');
+  container.innerHTML = '';
+}
+
+function handleLegalDocumentSelection(event) {
+  const file = event.target.files?.[0] || null;
+  if (!file) return;
+
+  const validation = validateLegalPdf(file);
+  if (!validation.valid) {
+    event.target.value = '';
+    state.legalDocument.file = null;
+    setLegalDocumentStatus(validation.message, 'error');
+    renderLegalDocumentState();
+    return;
+  }
+
+  state.legalDocument.file = file;
+  state.legalDocument.remove = false;
+  setLegalDocumentStatus('PDF válido seleccionado. Se subirá al guardar la propiedad.', 'success');
+  renderLegalDocumentState();
+}
+
+async function applyLegalDocumentChanges(propertyRef, existingLegalDocument = null) {
+  const { file, remove } = state.legalDocument;
+
+  if (remove && existingLegalDocument) {
+    if (existingLegalDocument.storagePath) {
+      try {
+        await deleteStorageFile(existingLegalDocument.storagePath);
+      } catch (error) {
+        console.warn('[AgentDashboard] No se pudo eliminar el PDF legal anterior.', error);
+      }
+    }
+    await updateDoc(propertyRef, { legalDocument: deleteField(), updatedAt: serverTimestamp() });
+    return;
+  }
+
+  if (!file) return;
+
+  if (existingLegalDocument?.storagePath) {
+    try {
+      await deleteStorageFile(existingLegalDocument.storagePath);
+    } catch (error) {
+      console.warn('[AgentDashboard] No se pudo eliminar el PDF legal reemplazado.', error);
+    }
+  }
+
+  const uploaded = await uploadLegalDocument(file, propertyRef.id);
+  await updateDoc(propertyRef, {
+    legalDocument: {
+      ...uploaded,
+      uploadedAt: serverTimestamp(),
+      uploadedBy: state.user.uid
+    },
+    updatedAt: serverTimestamp()
+  });
 }
 
 function getSelectedMode() {
@@ -654,11 +785,13 @@ async function guardarPropiedad(data, propertyId = '') {
 
   const propertyRef = getPropertyDocRef(propertyId);
 
+  let existingLegalDocument = null;
   if (propertyId) {
     const current = await getDoc(propertyRef);
     if (!current.exists() || current.data().agentId !== state.user.uid) {
       throw new Error('No tienes permisos para editar esta propiedad.');
     }
+    existingLegalDocument = current.data().legalDocument || null;
   }
 
   await uploadPendingFiles(state.user.uid, propertyRef.id);
@@ -679,6 +812,7 @@ async function guardarPropiedad(data, propertyId = '') {
       ...payload,
       ...videoFields
     });
+    await applyLegalDocumentChanges(propertyRef, existingLegalDocument);
     return propertyRef;
   }
 
@@ -688,6 +822,7 @@ async function guardarPropiedad(data, propertyId = '') {
     createdAt: serverTimestamp()
   }, { merge: true });
 
+  await applyLegalDocumentChanges(propertyRef, null);
   return propertyRef;
 }
 
@@ -695,6 +830,7 @@ function resetPropertyForm() {
   document.getElementById('propertyForm').reset();
   document.getElementById('propertyDocId').value = '';
   state.propertyImages = [];
+  resetLegalDocumentState();
   setUploaderStatus('');
   setPropertyCoordinates(NaN, NaN);
   renderImagePreview();
@@ -736,6 +872,11 @@ function fillPropertyForm(property) {
 
   const normalizedImages = imageUtils.getPropertyImages(property);
   state.propertyImages = normalizedImages.map((url) => createImageEntry({ url, source: 'url', status: 'ready' }));
+  state.legalDocument = { existing: property.legalDocument || null, file: null, remove: false };
+  const legalInput = document.getElementById('propertyLegalDocument');
+  if (legalInput) legalInput.value = '';
+  setLegalDocumentStatus('');
+  renderLegalDocumentState();
   renderImagePreview();
 
   const coverUrl = imageUtils.getCoverImage(property);
@@ -841,7 +982,7 @@ async function saveProperty(event) {
       throw new Error(videoValidation.message || 'El video configurado no es válido.');
     }
 
-    setMessage('Guardando propiedad e imágenes...', 'info');
+    setMessage('Guardando propiedad, imágenes y documentación legal...', 'info');
 
     await guardarPropiedad({
       agentName: profileName,
@@ -1299,6 +1440,41 @@ function bindImageControls() {
   document.getElementById('propertyImageFiles')?.addEventListener('change', handleFileSelection);
 }
 
+function bindLegalDocumentControls() {
+  document.getElementById('propertyLegalDocument')?.addEventListener('change', handleLegalDocumentSelection);
+  document.getElementById('legalDocumentExisting')?.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+
+    if (target.matches('[data-clear-legal-document]')) {
+      state.legalDocument.file = null;
+      const input = document.getElementById('propertyLegalDocument');
+      if (input) input.value = '';
+      setLegalDocumentStatus('');
+      renderLegalDocumentState();
+    }
+
+    if (target.matches('[data-replace-legal-document]')) {
+      document.getElementById('propertyLegalDocument')?.click();
+    }
+
+    if (target.matches('[data-remove-legal-document]')) {
+      state.legalDocument.file = null;
+      state.legalDocument.remove = true;
+      const input = document.getElementById('propertyLegalDocument');
+      if (input) input.value = '';
+      setLegalDocumentStatus('El documento se eliminará cuando guardes la propiedad.', 'error');
+      renderLegalDocumentState();
+    }
+
+    if (target.matches('[data-undo-remove-legal-document]')) {
+      state.legalDocument.remove = false;
+      setLegalDocumentStatus('');
+      renderLegalDocumentState();
+    }
+  });
+}
+
 function init() {
   document.getElementById('agentProfileForm')?.addEventListener('submit', saveProfile);
   document.getElementById('propertyForm')?.addEventListener('submit', saveProperty);
@@ -1306,12 +1482,14 @@ function init() {
   initPropertyLocationMap();
   bindAuthControls();
   bindImageControls();
+  bindLegalDocumentControls();
   bindSharedListModule();
   bindImagePreviewActions();
   bindCalculatedFields();
   toggleImageInputMode();
   renderDynamicPropertyFields();
   renderImagePreview();
+  renderLegalDocumentState();
   updateVideoPreview();
   updatePricePerAreaPreview();
 }

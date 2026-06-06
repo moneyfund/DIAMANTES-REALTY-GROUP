@@ -8500,3 +8500,136 @@ body.dark-mode .site-footer,
   border-color: var(--footer-premium-text-hover) !important;
   box-shadow: 0 14px 30px rgba(5, 5, 5, 0.28) !important;
 }
+
+.legal-document-card {
+  margin-top: 1.4rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(203, 164, 82, 0.28);
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.94), rgba(248,243,232,0.86));
+  box-shadow: 0 16px 42px rgba(7, 17, 31, 0.09);
+}
+
+.legal-document-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-bottom: 0.7rem;
+}
+
+.legal-document-heading h3 {
+  margin: 0;
+  color: #07111f;
+  font-size: clamp(1rem, 2vw, 1.25rem);
+}
+
+.legal-document-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #07111f, #1c2f4f);
+  color: #f0d38a;
+  box-shadow: 0 10px 24px rgba(7, 17, 31, 0.18);
+}
+
+.legal-upload-dropzone {
+  display: grid;
+  gap: 0.3rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px dashed rgba(203, 164, 82, 0.7);
+  border-radius: 18px;
+  background: rgba(255,255,255,0.75);
+  color: #07111f;
+  cursor: pointer;
+}
+
+.legal-upload-dropzone span {
+  font-weight: 800;
+}
+
+.legal-upload-dropzone small {
+  color: #64748b;
+}
+
+.legal-upload-dropzone input {
+  margin-top: 0.65rem;
+}
+
+.legal-document-existing {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(28, 47, 79, 0.13);
+  border-radius: 18px;
+  background: #fff;
+}
+
+.legal-document-existing strong {
+  color: #1c2f4f;
+}
+
+.legal-document-existing p {
+  margin: 0.2rem 0 0;
+  color: #64748b;
+  word-break: break-word;
+}
+
+.legal-document-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.legal-document-actions a,
+.legal-document-actions button,
+.legal-document-existing > button {
+  min-height: 40px;
+  padding: 0.55rem 0.85rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 800;
+}
+
+.danger-button {
+  border: 1px solid #ef4444;
+  background: #fff1f2;
+  color: #991b1b;
+}
+
+#legalDocumentStatus[data-type="success"] { color: #166534; }
+#legalDocumentStatus[data-type="error"] { color: #991b1b; }
+
+body.dark .legal-document-card,
+body.dark-mode .legal-document-card {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(28, 47, 79, 0.86));
+  border-color: rgba(203, 164, 82, 0.42);
+}
+
+body.dark .legal-document-heading h3,
+body.dark-mode .legal-document-heading h3 { color: #f8fafc; }
+
+body.dark .legal-document-existing,
+body.dark-mode .legal-document-existing,
+body.dark .legal-upload-dropzone,
+body.dark-mode .legal-upload-dropzone {
+  background: rgba(15, 23, 42, 0.78);
+  color: #f8fafc;
+}
+
+@media (max-width: 720px) {
+  .legal-document-existing {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .legal-document-actions {
+    justify-content: flex-start;
+  }
+}

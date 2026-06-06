@@ -29,7 +29,8 @@ import {
   ref,
   uploadBytes,
   uploadBytesResumable,
-  getDownloadURL
+  getDownloadURL,
+  deleteObject
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
 const FIREBASE_APP_NAME = 'inmo-static-web';
@@ -82,5 +83,6 @@ export {
   ref,
   uploadBytes,
   uploadBytesResumable,
-  getDownloadURL
+  getDownloadURL,
+  deleteObject
 };
