@@ -34,10 +34,13 @@ const state = {
   sharedSelectedPropertyIds: new Set(),
   sharedInventory: [],
   agentProfile: null,
+  agentProfileId: '',
   unsubscribeSharedLists: null
 };
 
 const fallbackPhoto = imageUtils?.PLACEHOLDER || 'assets/placeholder.svg';
+const AGENT_DASHBOARD_DEBUG = new URLSearchParams(window.location.search).has('debugAgentDashboard')
+  || window.localStorage?.getItem('debugAgentDashboard') === 'true';
 const propertyUtils = window.inmoPropertyUtils || {};
 const videoUtils = window.inmoVideoUtils || {};
 const normalizePropertyType = (value = '') => propertyUtils.normalizePropertyType ? propertyUtils.normalizePropertyType(value) : String(value || '').trim().toLowerCase();
@@ -165,12 +168,35 @@ function setMessage(message, type = 'info') {
 }
 
 function authMarkup(user) {
-  if (!user) return '<button type="button" id="googleLoginBtn">Ingresar con Google</button>';
+  if (!user) {
+    return `
+      <div class="dashboard-login-card">
+        <div>
+          <p class="dashboard-eyebrow">Acceso privado</p>
+          <h2>Inicia sesión como agente</h2>
+          <p>Usa tu cuenta de Google para cargar tu perfil profesional y tus propiedades.</p>
+        </div>
+        <button type="button" id="googleLoginBtn">Ingresar con Google</button>
+      </div>
+    `;
+  }
+
+  const displayName = user.displayName || user.email || 'Agente Diamantes';
+  const email = user.email || 'Correo no disponible';
   return `
-    <div class="dashboard-user-chip">
-      <img src="${user.photoURL || fallbackPhoto}" alt="${user.displayName || 'Agente'}">
-      <span>${user.displayName || user.email || 'Agente'}</span>
-      <button type="button" id="logoutBtn">Cerrar sesión</button>
+    <div class="dashboard-active-session-card">
+      <div class="dashboard-session-status">
+        <span class="session-status-dot" aria-hidden="true"></span>
+        <span>Sesión activa</span>
+      </div>
+      <div class="dashboard-user-chip">
+        <img src="${user.photoURL || fallbackPhoto}" alt="Avatar de ${escapeHtml(displayName)}" referrerpolicy="no-referrer">
+        <div class="dashboard-user-chip__details">
+          <strong>${escapeHtml(displayName)}</strong>
+          <span>${escapeHtml(email)}</span>
+        </div>
+        <button type="button" id="logoutBtn">Cerrar sesión</button>
+      </div>
     </div>
   `;
 }
@@ -738,6 +764,9 @@ function getPropertyPayload(user, profileName, images, coverImage, videoData) {
     lng: Number.isFinite(lng) ? lng : null,
     agenteId: user.uid,
     agentId: user.uid,
+    agentEmail: user.email || '',
+    ownerEmail: user.email || '',
+    createdBy: user.uid,
     agentName: responsibleAgent,
     updatedAt: serverTimestamp()
   };
@@ -821,7 +850,7 @@ async function guardarPropiedad(data, propertyId = '') {
   let existingProperty = null;
   if (propertyId) {
     const current = await getDoc(propertyRef);
-    if (!current.exists() || current.data().agentId !== state.user.uid) {
+    if (!current.exists() || !ownsProperty(current.data(), state.user)) {
       throw new Error('No tienes permisos para editar esta propiedad.');
     }
     existingProperty = current.data();
@@ -983,8 +1012,10 @@ async function saveProfile(event) {
   event.preventDefault();
   if (!state.user) return;
 
-  const payload = getProfilePayload(state.user);
-  await setDoc(doc(db, 'agents', state.user.uid), payload, { merge: true });
+  const payload = { ...getProfilePayload(state.user), uid: state.user.uid };
+  const profileDocId = state.agentProfileId || state.user.uid;
+  await setDoc(doc(db, 'agents', profileDocId), payload, { merge: true });
+  state.agentProfileId = profileDocId;
   state.agentProfile = { ...(state.agentProfile || {}), ...payload };
   setMessage('Perfil actualizado correctamente.', 'success');
 }
@@ -1067,7 +1098,7 @@ async function markPropertyAsSold(propertyId) {
   const refDoc = doc(db, 'properties', propertyId);
   const snapshot = await getDoc(refDoc);
 
-  if (!snapshot.exists() || snapshot.data().agentId !== state.user.uid) {
+  if (!snapshot.exists() || !ownsProperty(snapshot.data(), state.user)) {
     setMessage('No tienes permisos para modificar esta propiedad.', 'error');
     return;
   }
@@ -1081,7 +1112,7 @@ async function deleteProperty(propertyId) {
 
   const refDoc = doc(db, 'properties', propertyId);
   const snapshot = await getDoc(refDoc);
-  if (!snapshot.exists() || snapshot.data().agentId !== state.user.uid) {
+  if (!snapshot.exists() || !ownsProperty(snapshot.data(), state.user)) {
     setMessage('No tienes permisos para eliminar esta propiedad.', 'error');
     return;
   }
@@ -1090,53 +1121,203 @@ async function deleteProperty(propertyId) {
   setMessage('Propiedad eliminada.', 'success');
 }
 
-async function loadProfile(user) {
-  const snapshot = await getDoc(doc(db, 'agents', user.uid));
-  const profile = snapshot.exists() ? snapshot.data() : {};
-
-  document.getElementById('agentName').value = profile.name || user.displayName || '';
-  document.getElementById('agentPhoto').value = profile.photo || user.photoURL || '';
-  document.getElementById('agentDescription').value = profile.description || '';
-  document.getElementById('agentEmail').value = profile.email || user.email || '';
-  document.getElementById('agentPhone').value = profile.phone || '';
-  document.getElementById('agentInstagram').value = profile.instagram || '';
-  document.getElementById('agentFacebook').value = profile.facebook || '';
-  document.getElementById('agentTiktok').value = profile.tiktok || '';
-  document.getElementById('agentWhatsapp').value = profile.whatsapp || '';
-  const responsibleAgent = document.getElementById('propertyAgentName');
-  if (responsibleAgent && !responsibleAgent.value) responsibleAgent.value = profile.name || user.displayName || '';
-  state.agentProfile = profile;
+function debugAgentDashboard(message, payload = {}) {
+  if (!AGENT_DASHBOARD_DEBUG) return;
+  console.info(`[AgentDashboard] ${message}`, payload);
 }
 
+function normalizeComparable(value = '') {
+  return String(value || '').trim().toLowerCase();
+}
+
+async function findAgentProfile(user) {
+  const email = normalizeComparable(user.email);
+  const candidates = [];
+  const addCandidate = (id, data, source) => {
+    if (!id || candidates.some((entry) => entry.id === id)) return;
+    candidates.push({ id, data, source });
+  };
+
+  try {
+    const uidSnapshot = await getDoc(doc(db, 'agents', user.uid));
+    if (uidSnapshot.exists()) addCandidate(uidSnapshot.id, uidSnapshot.data(), 'uid-doc');
+  } catch (error) {
+    console.warn('[AgentDashboard] No se pudo cargar perfil por UID.', error);
+  }
+
+  if (user.email && user.email !== user.uid) {
+    try {
+      const emailDoc = await getDoc(doc(db, 'agents', user.email));
+      if (emailDoc.exists()) addCandidate(emailDoc.id, emailDoc.data(), 'email-doc');
+    } catch (error) {
+      console.warn('[AgentDashboard] No se pudo cargar perfil por documento email.', error);
+    }
+
+    try {
+      const emailSnapshot = await getDocs(query(collection(db, 'agents'), where('email', '==', user.email)));
+      emailSnapshot.docs.forEach((entry) => addCandidate(entry.id, entry.data(), 'email-field'));
+    } catch (error) {
+      console.warn('[AgentDashboard] No se pudo consultar perfil por email.', error);
+    }
+  }
+
+  try {
+    const uidFieldSnapshot = await getDocs(query(collection(db, 'agents'), where('uid', '==', user.uid)));
+    uidFieldSnapshot.docs.forEach((entry) => addCandidate(entry.id, entry.data(), 'uid-field'));
+  } catch (error) {
+    console.warn('[AgentDashboard] No se pudo consultar perfil por campo UID.', error);
+  }
+
+  const selected = candidates.find((entry) => entry.id === user.uid)
+    || candidates.find((entry) => normalizeComparable(entry.data?.email) === email)
+    || candidates[0]
+    || { id: user.uid, data: {}, source: 'auth-fallback' };
+
+  debugAgentDashboard('Resultado de búsqueda de perfil.', {
+    selectedProfileId: selected.id,
+    source: selected.source,
+    matches: candidates.map((entry) => ({ id: entry.id, source: entry.source }))
+  });
+
+  return selected;
+}
+
+async function loadProfile(user) {
+  const { id, data: profile } = await findAgentProfile(user);
+
+  document.getElementById('agentName').value = profile.name || profile.nombre || user.displayName || '';
+  document.getElementById('agentPhoto').value = profile.photo || profile.photoURL || profile.foto || user.photoURL || '';
+  document.getElementById('agentDescription').value = profile.description || profile.descripcion || profile.bio || '';
+  document.getElementById('agentEmail').value = profile.email || profile.correo || user.email || '';
+  document.getElementById('agentPhone').value = profile.phone || profile.telefono || profile.tel || '';
+  document.getElementById('agentInstagram').value = profile.instagram || '';
+  document.getElementById('agentFacebook').value = profile.facebook || '';
+  document.getElementById('agentTiktok').value = profile.tiktok || profile.tikTok || '';
+  document.getElementById('agentWhatsapp').value = profile.whatsapp || profile.whatsApp || '';
+  const responsibleAgent = document.getElementById('propertyAgentName');
+  if (responsibleAgent && !responsibleAgent.value) responsibleAgent.value = profile.name || profile.nombre || user.displayName || '';
+  state.agentProfile = profile;
+  state.agentProfileId = id;
+}
+
+function ownsProperty(property = {}, user = state.user) {
+  if (!user) return false;
+  const email = normalizeComparable(user.email);
+  const profileName = normalizeComparable(state.agentProfile?.name || user.displayName);
+  const googleName = normalizeComparable(user.displayName);
+  const createdBy = normalizeComparable(property.createdBy);
+  const propertyAgentName = normalizeComparable(property.agentName || property.agente || property.agent);
+
+  return property.agentId === user.uid
+    || property.agenteId === user.uid
+    || createdBy === normalizeComparable(user.uid)
+    || (!!email && (
+      normalizeComparable(property.agentEmail) === email
+      || normalizeComparable(property.ownerEmail) === email
+      || createdBy === email
+    ))
+    || (!!profileName && propertyAgentName === profileName)
+    || (!!googleName && propertyAgentName === googleName);
+}
+
+function renderOwnProperties(properties = []) {
+  const list = document.getElementById('agentPropertiesList');
+  const card = document.getElementById('agentPropertiesCard');
+  if (!list || !card) return;
+
+  card.classList.remove('hidden');
+  list.innerHTML = properties.length
+    ? properties.map(propertyCard).join('')
+    : '<p class="empty-state">Todavía no tienes propiedades registradas.</p>';
+
+  list.querySelectorAll('[data-edit-property]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const selected = properties.find((property) => property.id === button.dataset.editProperty);
+      if (selected) fillPropertyForm(selected);
+    });
+  });
+
+  list.querySelectorAll('[data-sold-property]').forEach((button) => {
+    button.addEventListener('click', () => markPropertyAsSold(button.dataset.soldProperty));
+  });
+
+  list.querySelectorAll('[data-delete-property]').forEach((button) => {
+    button.addEventListener('click', () => deleteProperty(button.dataset.deleteProperty));
+  });
+}
+
+function sortPropertiesForDashboard(properties = []) {
+  return [...properties].sort((a, b) => {
+    const dateA = a.updatedAt?.toMillis?.() || a.createdAt?.toMillis?.() || 0;
+    const dateB = b.updatedAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0;
+    return dateB - dateA;
+  });
+}
 
 function listenOwnProperties(user) {
   if (state.unsubscribeProperties) state.unsubscribeProperties();
 
-  state.unsubscribeProperties = onSnapshot(query(collection(db, 'properties'), where('agentId', '==', user.uid)), (snapshot) => {
-    const properties = snapshot.docs.map((item) => ({ ...item.data(), id: item.id }));
-    const list = document.getElementById('agentPropertiesList');
-    const card = document.getElementById('agentPropertiesCard');
+  const queryResults = new Map();
+  const queryDefinitions = [
+    ['agentId', user.uid],
+    ['agenteId', user.uid],
+    ['createdBy', user.uid]
+  ];
 
-    card.classList.remove('hidden');
-    list.innerHTML = properties.length
-      ? properties.map(propertyCard).join('')
-      : '<p class="empty-state">Todavía no tienes propiedades registradas.</p>';
+  if (user.email) {
+    queryDefinitions.push(
+      ['agentEmail', user.email],
+      ['ownerEmail', user.email],
+      ['createdBy', user.email]
+    );
+  }
 
-    list.querySelectorAll('[data-edit-property]').forEach((button) => {
-      button.addEventListener('click', () => {
-        const selected = properties.find((property) => property.id === button.dataset.editProperty);
-        if (selected) fillPropertyForm(selected);
-      });
-    });
+  const profileName = state.agentProfile?.name || user.displayName || '';
+  if (profileName) queryDefinitions.push(['agentName', profileName]);
 
-    list.querySelectorAll('[data-sold-property]').forEach((button) => {
-      button.addEventListener('click', () => markPropertyAsSold(button.dataset.soldProperty));
-    });
+  const uniqueQueries = queryDefinitions.filter(([field, value], index, all) => (
+    value && all.findIndex(([otherField, otherValue]) => otherField === field && otherValue === value) === index
+  ));
 
-    list.querySelectorAll('[data-delete-property]').forEach((button) => {
-      button.addEventListener('click', () => deleteProperty(button.dataset.deleteProperty));
-    });
+  const unsubscribers = uniqueQueries.map(([field, value]) => {
+    const queryKey = `${field}:${value}`;
+    return onSnapshot(
+      query(collection(db, 'properties'), where(field, '==', value)),
+      (snapshot) => {
+        const matchesForQuery = new Map();
+        snapshot.docs.forEach((item) => {
+          const property = { ...item.data(), id: item.id };
+          if (ownsProperty(property, user)) matchesForQuery.set(item.id, property);
+        });
+        queryResults.set(queryKey, matchesForQuery);
+
+        const merged = new Map();
+        queryResults.forEach((result) => {
+          result.forEach((property, propertyId) => merged.set(propertyId, property));
+        });
+
+        const properties = sortPropertiesForDashboard(Array.from(merged.values()));
+        debugAgentDashboard('Propiedades encontradas para el agente.', {
+          uid: user.uid,
+          email: user.email,
+          queryField: field,
+          count: properties.length,
+          statuses: properties.reduce((acc, property) => {
+            const status = getPublicationStatus(property);
+            acc[status] = (acc[status] || 0) + 1;
+            return acc;
+          }, {})
+        });
+        renderOwnProperties(properties);
+      },
+      (error) => {
+        console.warn(`[AgentDashboard] No se pudo escuchar propiedades por ${field}.`, error);
+      }
+    );
   });
+
+  state.unsubscribeProperties = () => unsubscribers.forEach((unsubscribe) => unsubscribe());
+  renderOwnProperties([]);
 }
 
 
@@ -1432,6 +1613,9 @@ function bindAuthControls() {
       state.sharedInventory = [];
       state.sharedSelectedPropertyIds.clear();
       state.agentProfile = null;
+      state.agentProfileId = '';
+      if (state.unsubscribeProperties) state.unsubscribeProperties();
+      state.unsubscribeProperties = null;
       if (state.unsubscribeSharedLists) state.unsubscribeSharedLists();
       renderSharedInventory();
       renderSharedHistory([]);
@@ -1439,6 +1623,7 @@ function bindAuthControls() {
       return;
     }
 
+    debugAgentDashboard('Usuario autenticado.', { uid: user.uid, email: user.email, displayName: user.displayName });
     await loadProfile(user);
     listenOwnProperties(user);
     listenOwnSharedLists(user);
