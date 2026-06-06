@@ -199,8 +199,13 @@ async function loadAgentProfile() {
       return;
     }
 
-    const propertiesSnapshot = await client.db.collection('properties').where('agentId', '==', agentId).get();
-    const properties = propertiesSnapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
+    const propertiesSnapshot = await client.db.collection('properties')
+      .where('agentId', '==', agentId)
+      .where('publicVisible', '==', true)
+      .get();
+    const properties = propertiesSnapshot.docs
+      .map((doc) => ({ ...doc.data(), id: doc.id }))
+      .filter(isPropertyPublic);
 
     status.textContent = 'Perfil cargado correctamente.';
     renderAgentProfile(agentDoc.data(), properties);

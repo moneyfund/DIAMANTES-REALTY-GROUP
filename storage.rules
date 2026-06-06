@@ -1,9 +1,25 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && firestore.exists(/databases/(default)/documents/agents/$(request.auth.uid))
+        && firestore.get(/databases/(default)/documents/agents/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isPropertyAgent(propertyId) {
+      return isSignedIn()
+        && firestore.exists(/databases/(default)/documents/properties/$(propertyId))
+        && firestore.get(/databases/(default)/documents/properties/$(propertyId)).data.agentId == request.auth.uid;
+    }
+
     match /property-legal-documents/{propertyId}/{fileName} {
-      allow read, delete: if request.auth != null;
-      allow create, update: if request.auth != null
+      allow read, delete: if isAdmin() || isPropertyAgent(propertyId);
+      allow create, update: if (isAdmin() || isPropertyAgent(propertyId))
         && request.resource.size <= 20 * 1024 * 1024
         && request.resource.contentType == 'application/pdf';
     }

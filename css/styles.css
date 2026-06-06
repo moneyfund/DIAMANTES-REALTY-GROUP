@@ -8633,3 +8633,26 @@ body.dark-mode .legal-upload-dropzone {
     justify-content: flex-start;
   }
 }
+
+/* Publication review badges for agent dashboard */
+.publication-status-badge {
+  display: inline-flex;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+.publication-pending { background: #fff8e1; color: #8a5a00; border: 1px solid rgba(212, 175, 55, 0.45); }
+.publication-approved { background: #ecfdf3; color: #166534; border: 1px solid rgba(22, 101, 52, 0.25); }
+.publication-rejected { background: #fef2f2; color: #991b1b; border: 1px solid rgba(153, 27, 27, 0.25); }
+.publication-draft { background: #f3f4f6; color: #374151; border: 1px solid rgba(107, 114, 128, 0.25); }
+.publication-archived { background: #eef2ff; color: #3730a3; border: 1px solid rgba(55, 48, 163, 0.25); }
+.rejection-reason {
+  background: #fef2f2;
+  border-left: 4px solid #991b1b;
+  border-radius: 10px;
+  color: #7f1d1d;
+  padding: 0.7rem;
+}

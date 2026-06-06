@@ -37,6 +37,23 @@
         <button type="button" id="logoutBtn" class="ghost">Cerrar sesión</button>
       </header>
 
+      <section class="review-dashboard" aria-labelledby="reviewTitle">
+        <div class="review-heading">
+          <div>
+            <p class="badge">Control editorial</p>
+            <h2 id="reviewTitle">Revisión de propiedades</h2>
+            <p>Aprueba o rechaza las solicitudes enviadas por agentes antes de publicarlas en la web.</p>
+          </div>
+        </div>
+        <div class="review-stats" aria-label="Resumen de publicaciones">
+          <article><span id="pendingReviewCount">0</span><small>Pendientes de revisión</small></article>
+          <article><span id="approvedReviewCount">0</span><small>Aprobadas</small></article>
+          <article><span id="rejectedReviewCount">0</span><small>Rechazadas</small></article>
+          <article><span id="totalReviewCount">0</span><small>Total de propiedades</small></article>
+        </div>
+        <div id="reviewList" class="review-list"></div>
+      </section>
+
       <section class="editor-layout">
         <form id="propertyForm" class="property-form">
           <input type="hidden" id="propertyId" />
@@ -192,6 +209,13 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js" defer></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js" defer></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js" defer></script>
+  <div id="reviewModal" class="review-modal hidden" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle">
+    <div class="review-modal-card">
+      <button type="button" id="reviewModalClose" class="review-modal-close" aria-label="Cerrar">×</button>
+      <div id="reviewModalContent"></div>
+    </div>
+  </div>
+
   <script src="js/firebase-client.js" defer></script>
   <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"

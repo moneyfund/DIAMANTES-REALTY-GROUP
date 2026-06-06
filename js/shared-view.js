@@ -5,12 +5,18 @@ import {
   query,
   where,
   doc,
-  getDoc,
-  documentId
+  getDoc
 } from './firebase-services.js';
 
 const imageUtils = window.inmoImageUtils || {};
 const propertyUtils = window.inmoPropertyUtils || {};
+
+function isPropertyPublic(property = {}) {
+  const publicationStatus = String(property.publicationStatus || '').toLowerCase();
+  if (!publicationStatus && property.publicVisible === true) return true;
+  return publicationStatus === 'approved' && property.publicVisible === true;
+}
+
 
 function getTokenFromUrl() {
   const params = new URLSearchParams(window.location.search);
@@ -82,15 +88,17 @@ async function loadSharedList(token) {
 
 async function loadPropertiesByIds(ids = []) {
   const unique = Array.from(new Set(ids.filter(Boolean)));
-  const chunks = [];
-  for (let index = 0; index < unique.length; index += 10) {
-    chunks.push(unique.slice(index, index + 10));
-  }
-
   const loaded = [];
-  for (const chunk of chunks) {
-    const snap = await getDocs(query(collection(db, 'properties'), where(documentId(), 'in', chunk)));
-    snap.forEach((entry) => loaded.push(normalizeProperty(entry.data(), entry.id)));
+
+  for (const propertyId of unique) {
+    try {
+      const snap = await getDoc(doc(db, 'properties', propertyId));
+      if (!snap.exists()) continue;
+      const data = snap.data();
+      if (isPropertyPublic(data)) loaded.push(normalizeProperty(data, snap.id));
+    } catch (error) {
+      console.warn('Propiedad compartida no disponible públicamente:', propertyId, error);
+    }
   }
 
   const orderMap = new Map(unique.map((id, index) => [id, index]));
