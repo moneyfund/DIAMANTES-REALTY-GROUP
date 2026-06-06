@@ -37,7 +37,10 @@
   --card-bg: var(--color-surface);
   --card-text: var(--color-primary);
   --section-dark: var(--color-primary);
-  --footer-bg: #07172C;
+  --footer-premium-bg: linear-gradient(135deg, #c0c0c0 0%, #4b4b4b 40%, #050505 100%);
+  --footer-premium-text: #d4af37;
+  --footer-premium-text-hover: #f3d27a;
+  --footer-bg: var(--footer-premium-bg);
   --text-main: var(--color-text);
   --text-secondary: var(--color-muted);
   --text-inverse: #ffffff;
@@ -82,7 +85,7 @@ body.dark-mode,
   --card-bg: var(--color-surface-dark-2);
   --card-text: var(--color-text-dark);
   --section-dark: var(--color-surface-dark);
-  --footer-bg: #030303;
+  --footer-bg: var(--footer-premium-bg);
   --text-main: var(--color-text-dark);
   --text-secondary: var(--color-muted-dark);
   --text-inverse: #050505;
@@ -672,13 +675,40 @@ body.dark-mode .premium-preloader-text { color: var(--color-primary-dark) !impor
 body.dark .premium-preloader-line,
 body.dark-mode .premium-preloader-line { background: linear-gradient(90deg, transparent, var(--color-primary-dark), transparent) !important; }
 
-.site-footer {
-  background:
-    radial-gradient(circle at 88% 0%, rgba(200, 164, 93, 0.14), transparent 22rem),
-    linear-gradient(180deg, #07172C, #030A14) !important;
-  border-top: 1px solid rgba(200, 164, 93, 0.24) !important;
+.site-footer,
+body.dark .site-footer,
+body.dark-mode .site-footer,
+[data-theme="dark"] .site-footer {
+  background: var(--footer-premium-bg) !important;
+  border-top: 1px solid rgba(243, 210, 122, 0.34) !important;
 }
-.site-footer a:hover,
+.site-footer :is(a, a:link, a:visited, a:active),
+.site-footer :is(h1, h2, h3, h4, h5, h6, p, span, small, strong, em, li, label),
+.site-footer .footer-social-link,
+.site-footer .footer-social a {
+  color: var(--footer-premium-text) !important;
+}
+.site-footer :is(a:hover, a:focus-visible),
+.site-footer .footer-social-link:is(:hover, :focus-visible),
+.site-footer .footer-social a:is(:hover, :focus-visible) {
+  color: var(--footer-premium-text-hover) !important;
+}
+.site-footer .footer-cta,
+body.dark .site-footer .footer-cta,
+body.dark-mode .site-footer .footer-cta,
+[data-theme="dark"] .site-footer .footer-cta {
+  background: rgba(5, 5, 5, 0.32) !important;
+  border-color: rgba(243, 210, 122, 0.34) !important;
+  color: var(--footer-premium-text) !important;
+}
+.site-footer .footer-cta:is(:hover, :focus-visible),
+body.dark .site-footer .footer-cta:is(:hover, :focus-visible),
+body.dark-mode .site-footer .footer-cta:is(:hover, :focus-visible),
+[data-theme="dark"] .site-footer .footer-cta:is(:hover, :focus-visible) {
+  background: rgba(5, 5, 5, 0.52) !important;
+  border-color: var(--footer-premium-text-hover) !important;
+  color: var(--footer-premium-text-hover) !important;
+}
 a:hover { color: var(--color-accent) !important; }
 ::selection { background: rgba(200, 164, 93, 0.34); color: var(--color-primary); }
 
