@@ -257,14 +257,7 @@ function isFacebookImageUrl(urlString) {
   }
 }
 
-function isPropertyPublic(property = {}) {
-  if (property.publicationStatus === 'approved' && property.publicVisible === true) {
-    return true;
-  }
-
-  const isLegacy = property.publicationStatus === undefined && property.publicVisible === undefined;
-  return isLegacy;
-}
+const isPublicProperty = window.inmoPublicPropertyFilter.isPublicProperty;
 
 function normalizePropertyImageUrl(urlString) {
   const normalized = String(urlString || '').trim();
@@ -298,7 +291,7 @@ async function loadPropertiesFromFirestore() {
   snapshot.forEach((doc) => {
     const property = doc.data();
     loaded.push(property);
-    if (!isPropertyPublic(property)) return;
+    if (!isPublicProperty(property)) return;
     const propertyId = doc.id;
     properties.push(normalizeProperty(property, propertyId));
   });
@@ -321,7 +314,7 @@ function subscribeToProperties(onUpdate) {
     .onSnapshot((snapshot) => {
     const loaded = snapshot.docs.map((doc) => ({ raw: doc.data(), id: doc.id }));
     const properties = loaded
-      .filter((entry) => isPropertyPublic(entry.raw))
+      .filter((entry) => isPublicProperty(entry.raw))
       .map((entry) => normalizeProperty(entry.raw, entry.id));
     console.log('[PublicProperties] Propiedades cargadas desde Firestore:', loaded.length);
     console.log('[PublicProperties] Propiedades visibles después del filtro:', properties.length);
@@ -593,7 +586,7 @@ async function loadPropertyDetailFromFirestore(propertyId) {
   }
 
   const data = propertySnap.data();
-  if (!isPropertyPublic(data)) return null;
+  if (!isPublicProperty(data)) return null;
   return normalizeProperty(data, propertySnap.id);
 }
 

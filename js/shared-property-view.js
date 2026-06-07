@@ -11,14 +11,7 @@ import {
 const imageUtils = window.inmoImageUtils || {};
 const propertyUtils = window.inmoPropertyUtils || {};
 
-function isPropertyPublic(property = {}) {
-  if (property.publicationStatus === 'approved' && property.publicVisible === true) {
-    return true;
-  }
-
-  const isLegacy = property.publicationStatus === undefined && property.publicVisible === undefined;
-  return isLegacy;
-}
+const isPublicProperty = window.inmoPublicPropertyFilter.isPublicProperty;
 
 
 function getParams() {
@@ -167,7 +160,7 @@ async function init() {
   }
 
   const propertyData = propertySnap.data();
-  if (!isPropertyPublic(propertyData)) {
+  if (!isPublicProperty(propertyData)) {
     renderUnavailable('La propiedad ya no está publicada o no está disponible.');
     return;
   }
