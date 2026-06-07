@@ -16,8 +16,59 @@ const form = document.getElementById('propertyForm');
 const list = document.getElementById('propertyList');
 const agentList = document.getElementById('agentList');
 const adminPanel = document.getElementById('adminPanel');
-const accessDeniedPanel = document.getElementById('accessDeniedPanel');
 const reviewList = document.getElementById('reviewList');
+
+const adminPanelMount = {
+  parent: adminPanel?.parentNode || null,
+  nextSibling: adminPanel?.nextSibling || null
+};
+
+let accessDeniedPanel = null;
+
+function mountAdminPanel() {
+  if (!adminPanel || !adminPanelMount.parent || adminPanel.isConnected) return;
+  adminPanelMount.parent.insertBefore(adminPanel, adminPanelMount.nextSibling);
+}
+
+function unmountAdminPanel() {
+  if (adminPanel?.parentNode) {
+    adminPanel.parentNode.removeChild(adminPanel);
+  }
+}
+
+function removeAccessDeniedPanel() {
+  if (accessDeniedPanel?.parentNode) {
+    accessDeniedPanel.parentNode.removeChild(accessDeniedPanel);
+  }
+  accessDeniedPanel = null;
+}
+
+function createAccessDeniedPanel() {
+  const section = document.createElement('section');
+  section.id = 'accessDeniedPanel';
+  section.className = 'login-screen';
+  section.setAttribute('aria-live', 'polite');
+
+  const card = document.createElement('div');
+  card.className = 'login-card';
+
+  const title = document.createElement('h1');
+  title.textContent = 'No tienes permisos de administrador';
+
+  const message = document.createElement('p');
+  message.textContent = 'No tienes permisos de administrador para acceder a este panel.';
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.id = 'goToLoginBtn';
+  button.className = 'ghost';
+  button.textContent = 'Volver al login';
+  button.addEventListener('click', () => redirectTo('admin-login.html'));
+
+  card.append(title, message, button);
+  section.append(card);
+  return section;
+}
 const reviewModal = document.getElementById('reviewModal');
 const reviewModalContent = document.getElementById('reviewModalContent');
 
@@ -693,31 +744,7 @@ function prepareAdminUI() {
   state.uiReady = true;
 }
 
-function showAdmin() {
-  prepareAdminUI();
-  accessDeniedPanel?.classList.add('hidden');
-  adminPanel.classList.remove('hidden');
-  finishAuthCheck();
-  initAdminMap();
-  refreshMapSize();
-}
-
-function showAccessDenied() {
-  hideAdmin();
-  accessDeniedPanel?.classList.remove('hidden');
-
-  const deniedText = accessDeniedPanel?.querySelector('p');
-  if (deniedText) {
-    deniedText.textContent = 'Access denied – Admins only';
-  }
-
-  finishAuthCheck();
-}
-
-function hideAdmin() {
-  adminPanel.classList.add('hidden');
-  accessDeniedPanel?.classList.add('hidden');
-
+function clearAdminData() {
   if (state.unsubscribeProperties) {
     state.unsubscribeProperties();
     state.unsubscribeProperties = null;
@@ -727,6 +754,32 @@ function hideAdmin() {
   state.agents = [];
   renderList();
   renderAgentsTable();
+}
+
+function showAdmin() {
+  removeAccessDeniedPanel();
+  mountAdminPanel();
+  prepareAdminUI();
+  adminPanel.classList.remove('hidden');
+  finishAuthCheck();
+  initAdminMap();
+  refreshMapSize();
+}
+
+function showAccessDenied() {
+  clearAdminData();
+  unmountAdminPanel();
+  removeAccessDeniedPanel();
+
+  accessDeniedPanel = createAccessDeniedPanel();
+  adminPanelMount.parent?.appendChild(accessDeniedPanel);
+  finishAuthCheck();
+}
+
+function hideAdmin() {
+  clearAdminData();
+  adminPanel?.classList.add('hidden');
+  removeAccessDeniedPanel();
 }
 
 function redirectTo(path) {
@@ -745,10 +798,6 @@ function bindActions() {
   document.getElementById('updateBtn')?.addEventListener('click', savePropertyUpdate);
   document.getElementById('clearBtn')?.addEventListener('click', () => clearFormState());
 
-
-  document.getElementById('goToLoginBtn')?.addEventListener('click', () => {
-    redirectTo('admin-login.html');
-  });
 
   document.getElementById('reviewModalClose')?.addEventListener('click', () => reviewModal?.classList.add('hidden'));
   reviewModal?.addEventListener('click', (event) => {
