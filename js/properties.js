@@ -258,9 +258,12 @@ function isFacebookImageUrl(urlString) {
 }
 
 function isPropertyPublic(property = {}) {
-  const publicationStatus = String(property.publicationStatus || '').toLowerCase();
-  if (!publicationStatus && property.publicVisible === true) return true;
-  return publicationStatus === 'approved' && property.publicVisible === true;
+  if (property.publicationStatus === 'approved' && property.publicVisible === true) {
+    return true;
+  }
+
+  const isLegacy = property.publicationStatus === undefined && property.publicVisible === undefined;
+  return isLegacy;
 }
 
 function normalizePropertyImageUrl(urlString) {
@@ -287,21 +290,21 @@ function normalizePropertyImageUrl(urlString) {
 }
 
 async function loadPropertiesFromFirestore() {
-  const { db, collection, getDocs, query, where } = await getModularFirestore();
-  const snapshot = await getDocs(query(
-    collection(db, 'properties'),
-    where('publicVisible', '==', true)
-  ));
+  const { db, collection, getDocs } = await getModularFirestore();
+  const snapshot = await getDocs(collection(db, 'properties'));
+  const loaded = [];
   const properties = [];
 
   snapshot.forEach((doc) => {
     const property = doc.data();
+    loaded.push(property);
     if (!isPropertyPublic(property)) return;
     const propertyId = doc.id;
     properties.push(normalizeProperty(property, propertyId));
   });
 
-  console.log('Propiedades cargadas desde Firestore:', properties);
+  console.log('[PublicProperties] Propiedades cargadas desde Firestore:', loaded.length);
+  console.log('[PublicProperties] Propiedades visibles después del filtro:', properties.length);
   return properties;
 }
 
@@ -315,12 +318,13 @@ function subscribeToProperties(onUpdate) {
   if (!db) return () => {};
 
   return db.collection('properties')
-    .where('publicVisible', '==', true)
     .onSnapshot((snapshot) => {
-    const properties = snapshot.docs
-      .map((doc) => ({ raw: doc.data(), id: doc.id }))
+    const loaded = snapshot.docs.map((doc) => ({ raw: doc.data(), id: doc.id }));
+    const properties = loaded
       .filter((entry) => isPropertyPublic(entry.raw))
       .map((entry) => normalizeProperty(entry.raw, entry.id));
+    console.log('[PublicProperties] Propiedades cargadas desde Firestore:', loaded.length);
+    console.log('[PublicProperties] Propiedades visibles después del filtro:', properties.length);
     allProperties = properties;
     onUpdate(properties);
   }, (error) => {

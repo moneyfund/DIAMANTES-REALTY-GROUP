@@ -12,9 +12,12 @@ const imageUtils = window.inmoImageUtils || {};
 const propertyUtils = window.inmoPropertyUtils || {};
 
 function isPropertyPublic(property = {}) {
-  const publicationStatus = String(property.publicationStatus || '').toLowerCase();
-  if (!publicationStatus && property.publicVisible === true) return true;
-  return publicationStatus === 'approved' && property.publicVisible === true;
+  if (property.publicationStatus === 'approved' && property.publicVisible === true) {
+    return true;
+  }
+
+  const isLegacy = property.publicationStatus === undefined && property.publicVisible === undefined;
+  return isLegacy;
 }
 
 
