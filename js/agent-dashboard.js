@@ -12,6 +12,7 @@ import {
   query,
   where,
   getDocs,
+  orderBy,
   deleteField,
   serverTimestamp,
   onAuthStateChanged,
@@ -34,28 +35,12 @@ const state = {
   sharedInventory: [],
   agentProfile: null,
   agentProfileId: '',
-  agentProfileFound: false,
-  agentPropertiesCount: 0,
   unsubscribeSharedLists: null
 };
 
 const fallbackPhoto = imageUtils?.PLACEHOLDER || 'assets/placeholder.svg';
-
-function getUserDisplayName(user = {}) {
-  return user.displayName || user.email || 'Agente Diamantes';
-}
-
-function getInitialAvatar(user = {}) {
-  const source = getUserDisplayName(user);
-  const initial = String(source || 'A').trim().charAt(0).toUpperCase() || 'A';
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><rect width="96" height="96" rx="48" fill="%231b3b2f"/><text x="50%" y="56%" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="42" font-weight="700" fill="%23d6b36a">${encodeURIComponent(initial)}</text></svg>`;
-  return `data:image/svg+xml,${svg}`;
-}
-
-function getSessionPhoto(user = {}) {
-  return user.photoURL || getInitialAvatar(user) || fallbackPhoto;
-}
-
+const AGENT_DASHBOARD_DEBUG = new URLSearchParams(window.location.search).has('debugAgentDashboard')
+  || window.localStorage?.getItem('debugAgentDashboard') === 'true';
 const propertyUtils = window.inmoPropertyUtils || {};
 const videoUtils = window.inmoVideoUtils || {};
 const normalizePropertyType = (value = '') => propertyUtils.normalizePropertyType ? propertyUtils.normalizePropertyType(value) : String(value || '').trim().toLowerCase();
@@ -93,8 +78,7 @@ function getPublicationStatus(property = {}) {
 }
 
 function isPubliclyApproved(property = {}) {
-  const publicationStatus = String(property.publicationStatus || '').toLowerCase();
-  return property.publicVisible === true && (!publicationStatus || publicationStatus === 'approved');
+  return getPublicationStatus(property) === 'approved' && property.publicVisible === true;
 }
 
 function getPublicationBadgeMarkup(property = {}) {
@@ -183,12 +167,6 @@ function setMessage(message, type = 'info') {
   box.dataset.type = type;
 }
 
-function renderSmallSession(user) {
-  const authBox = document.getElementById('agentAuthBox');
-  if (!authBox) return;
-  authBox.innerHTML = authMarkup(user);
-}
-
 function authMarkup(user) {
   if (!user) {
     return `
@@ -203,7 +181,7 @@ function authMarkup(user) {
     `;
   }
 
-  const displayName = getUserDisplayName(user);
+  const displayName = user.displayName || user.email || 'Agente Diamantes';
   const email = user.email || 'Correo no disponible';
   return `
     <div class="dashboard-active-session-card">
@@ -212,7 +190,7 @@ function authMarkup(user) {
         <span>Sesión activa</span>
       </div>
       <div class="dashboard-user-chip">
-        <img src="${getSessionPhoto(user)}" alt="Avatar de ${escapeHtml(displayName)}" referrerpolicy="no-referrer">
+        <img src="${user.photoURL || fallbackPhoto}" alt="Avatar de ${escapeHtml(displayName)}" referrerpolicy="no-referrer">
         <div class="dashboard-user-chip__details">
           <strong>${escapeHtml(displayName)}</strong>
           <span>${escapeHtml(email)}</span>
@@ -226,9 +204,11 @@ function authMarkup(user) {
 function getProfilePayload(user) {
   return {
     name: document.getElementById('agentName').value.trim() || user.displayName || 'Agente Diamantes Realty Group',
-    photo: document.getElementById('agentPhoto').value.trim() || user.photoURL || getSessionPhoto(user),
+    photo: document.getElementById('agentPhoto').value.trim() || user.photoURL || fallbackPhoto,
     description: document.getElementById('agentDescription').value.trim(),
     email: document.getElementById('agentEmail').value.trim() || user.email || '',
+    uid: user.uid,
+    agentId: user.uid,
     phone: document.getElementById('agentPhone').value.trim(),
     instagram: document.getElementById('agentInstagram').value.trim(),
     facebook: document.getElementById('agentFacebook').value.trim(),
@@ -236,14 +216,6 @@ function getProfilePayload(user) {
     whatsapp: document.getElementById('agentWhatsapp').value.trim(),
     updatedAt: serverTimestamp()
   };
-}
-
-function clearAgentProfileForm() {
-  ['agentName', 'agentPhoto', 'agentDescription', 'agentEmail', 'agentPhone', 'agentInstagram', 'agentFacebook', 'agentTiktok', 'agentWhatsapp']
-    .forEach((fieldId) => {
-      const field = document.getElementById(fieldId);
-      if (field) field.value = '';
-    });
 }
 
 
@@ -356,30 +328,21 @@ function updateCoordinatesLabel(lat, lng) {
   label.textContent = `Lat: ${lat.toFixed(6)} | Lng: ${lng.toFixed(6)}`;
 }
 
-function getCoordinateInputs() {
-  return {
-    latInput: document.getElementById('propertyLat') || document.getElementById('latitude'),
-    lngInput: document.getElementById('propertyLng') || document.getElementById('longitude')
-  };
-}
-
 function setPropertyCoordinates(lat, lng) {
-  const { latInput, lngInput } = getCoordinateInputs();
+  const latInput = document.getElementById('propertyLat');
+  const lngInput = document.getElementById('propertyLng');
 
   if (!latInput || !lngInput) return;
 
-  const latFields = [latInput, document.getElementById('propertyLat'), document.getElementById('latitude')].filter(Boolean);
-  const lngFields = [lngInput, document.getElementById('propertyLng'), document.getElementById('longitude')].filter(Boolean);
-
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-    latFields.forEach((field) => { field.value = ''; });
-    lngFields.forEach((field) => { field.value = ''; });
+    latInput.value = '';
+    lngInput.value = '';
     updateCoordinatesLabel(NaN, NaN);
     return;
   }
 
-  latFields.forEach((field) => { field.value = String(lat); });
-  lngFields.forEach((field) => { field.value = String(lng); });
+  latInput.value = String(lat);
+  lngInput.value = String(lng);
   updateCoordinatesLabel(lat, lng);
 }
 
@@ -388,11 +351,7 @@ function setPropertyMapMarker(lat, lng) {
 
   const point = [lat, lng];
   if (!state.mapMarker) {
-    state.mapMarker = L.marker(point, { draggable: true }).addTo(state.map);
-    state.mapMarker.on('dragend', (event) => {
-      const position = event.target.getLatLng();
-      setPropertyCoordinates(position.lat, position.lng);
-    });
+    state.mapMarker = L.marker(point).addTo(state.map);
   } else {
     state.mapMarker.setLatLng(point);
   }
@@ -400,14 +359,9 @@ function setPropertyMapMarker(lat, lng) {
   state.map.setView(point, 14);
 }
 
-function initPropertyMapSafely() {
-  const mapElement = document.getElementById('propertyLocationMap') || document.getElementById('map');
+function initPropertyLocationMap() {
+  const mapElement = document.getElementById('propertyLocationMap');
   if (!mapElement || typeof L === 'undefined') return;
-
-  if (state.map) {
-    setTimeout(() => state.map?.invalidateSize?.(), 100);
-    return;
-  }
 
   const defaultPoint = [12.8654, -85.2072];
   state.map = L.map(mapElement).setView(defaultPoint, 7);
@@ -424,11 +378,6 @@ function initPropertyMapSafely() {
   });
 
   setPropertyCoordinates(NaN, NaN);
-  setTimeout(() => state.map?.invalidateSize?.(), 100);
-}
-
-function initPropertyLocationMap() {
-  initPropertyMapSafely();
 }
 
 function createImageEntry({ url = '', file = null, source = 'url', status = 'ready', progress = 0, error = '' }) {
@@ -758,9 +707,8 @@ function handleFileSelection(event) {
 }
 
 function getPropertyPayload(user, profileName, images, coverImage, videoData) {
-  const { latInput, lngInput } = getCoordinateInputs();
-  const lat = Number(latInput?.value);
-  const lng = Number(lngInput?.value);
+  const lat = Number(document.getElementById('propertyLat').value);
+  const lng = Number(document.getElementById('propertyLng').value);
   const title = document.getElementById('propertyTitle').value.trim();
   const price = Number(document.getElementById('propertyPrice').value || 0);
   const description = document.getElementById('propertyDescription').value.trim();
@@ -1177,70 +1125,75 @@ async function deleteProperty(propertyId) {
   setMessage('Propiedad eliminada.', 'success');
 }
 
+function debugAgentDashboard(message, payload = {}) {
+  if (!AGENT_DASHBOARD_DEBUG) return;
+  console.info(`[AgentDashboard] ${message}`, payload);
+}
+
 function normalizeComparable(value = '') {
   return String(value || '').trim().toLowerCase();
 }
 
-async function loadAgentProfileByEmail(user) {
-  if (!user) return null;
-
-  const fallback = {
-    name: user.displayName || user.email || 'Agente Diamantes',
-    email: user.email || '',
-    photo: user.photoURL || getSessionPhoto(user),
-    description: '',
-    phone: '',
-    instagram: '',
-    facebook: '',
-    tiktok: '',
-    whatsapp: ''
+async function findAgentProfile(user) {
+  const email = normalizeComparable(user.email);
+  const candidates = [];
+  const addCandidate = (id, data, source) => {
+    if (!id || candidates.some((entry) => entry.id === id)) return;
+    candidates.push({ id, data, source });
   };
 
-  if (!user.email) {
-    return { collectionName: 'agents', id: user.uid, data: fallback, found: false };
+  if (user.email) {
+    try {
+      const emailSnapshot = await getDocs(query(collection(db, 'agents'), where('email', '==', user.email)));
+      emailSnapshot.docs.forEach((entry) => addCandidate(entry.id, entry.data(), 'email-field'));
+    } catch (error) {
+      console.warn('[AgentDashboard] No se pudo consultar perfil por email.', error);
+    }
   }
 
   try {
-    const emailSnapshot = await getDocs(query(
-      collection(db, 'agents'),
-      where('email', '==', user.email)
-    ));
-
-    if (!emailSnapshot.empty) {
-      const profileDoc = emailSnapshot.docs[0];
-      const profile = profileDoc.data() || {};
-      return {
-        collectionName: 'agents',
-        id: profileDoc.id,
-        found: true,
-        data: {
-          ...profile,
-          name: profile.name || profile.nombre || fallback.name,
-          photo: profile.photo || profile.photoURL || profile.foto || fallback.photo,
-          description: profile.description || profile.descripcion || profile.bio || '',
-          email: profile.email || profile.correo || fallback.email,
-          phone: profile.phone || profile.telefono || profile.tel || '',
-          instagram: profile.instagram || '',
-          facebook: profile.facebook || '',
-          tiktok: profile.tiktok || profile.tikTok || '',
-          whatsapp: profile.whatsapp || profile.whatsApp || ''
-        }
-      };
-    }
+    const uidSnapshot = await getDoc(doc(db, 'agents', user.uid));
+    if (uidSnapshot.exists()) addCandidate(uidSnapshot.id, uidSnapshot.data(), 'uid-doc');
   } catch (error) {
-    console.warn('[AgentDashboard] No se pudo consultar el perfil del agente por email.', error);
+    console.warn('[AgentDashboard] No se pudo cargar perfil por UID.', error);
   }
 
-  return { collectionName: 'agents', id: user.uid, data: fallback, found: false };
+  if (user.email && user.email !== user.uid) {
+    try {
+      const emailDoc = await getDoc(doc(db, 'agents', user.email));
+      if (emailDoc.exists()) addCandidate(emailDoc.id, emailDoc.data(), 'email-doc');
+    } catch (error) {
+      console.warn('[AgentDashboard] No se pudo cargar perfil por documento email.', error);
+    }
+  }
+
+  try {
+    const uidFieldSnapshot = await getDocs(query(collection(db, 'agents'), where('uid', '==', user.uid)));
+    uidFieldSnapshot.docs.forEach((entry) => addCandidate(entry.id, entry.data(), 'uid-field'));
+  } catch (error) {
+    console.warn('[AgentDashboard] No se pudo consultar perfil por campo UID.', error);
+  }
+
+  const selected = candidates.find((entry) => normalizeComparable(entry.data?.email || entry.data?.correo) === email)
+    || candidates.find((entry) => entry.id === user.uid)
+    || candidates[0]
+    || { id: user.uid, data: {}, source: 'auth-fallback' };
+
+  debugAgentDashboard('Resultado de búsqueda de perfil.', {
+    selectedProfileId: selected.id,
+    source: selected.source,
+    matches: candidates.map((entry) => ({ id: entry.id, source: entry.source }))
+  });
+
+  return selected;
 }
 
-function fillAgentProfileForm(profile = {}, user = state.user) {
-  if (!user) return;
-
+async function loadProfile(user) {
+  const { id, data: profile } = await findAgentProfile(user);
   const normalizedProfile = {
     ...profile,
-    name: profile.name || profile.nombre || user.displayName || user.email || 'Agente Diamantes',
-    photo: profile.photo || profile.photoURL || profile.foto || user.photoURL || getSessionPhoto(user),
+    name: profile.name || profile.nombre || user.displayName || 'Agente Diamantes Realty Group',
+    photo: profile.photo || profile.photoURL || profile.foto || user.photoURL || fallbackPhoto,
     description: profile.description || profile.descripcion || profile.bio || '',
     email: profile.email || profile.correo || user.email || '',
     phone: profile.phone || profile.telefono || profile.tel || '',
@@ -1259,28 +1212,10 @@ function fillAgentProfileForm(profile = {}, user = state.user) {
   document.getElementById('agentFacebook').value = normalizedProfile.facebook;
   document.getElementById('agentTiktok').value = normalizedProfile.tiktok;
   document.getElementById('agentWhatsapp').value = normalizedProfile.whatsapp;
-
   const responsibleAgent = document.getElementById('propertyAgentName');
   if (responsibleAgent && !responsibleAgent.value) responsibleAgent.value = normalizedProfile.name;
-
   state.agentProfile = normalizedProfile;
-}
-
-async function loadAgentProfile(user) {
-  const result = await loadAgentProfileByEmail(user);
-  state.agentProfileId = result?.id || user.uid;
-  state.agentProfileFound = Boolean(result?.found);
-  fillAgentProfileForm(result?.data || {}, user);
-
-  if (!state.agentProfileFound) {
-    setMessage('No se encontró perfil profesional para este email. Se precargaron los datos de Google.', 'info');
-  }
-
-  return state.agentProfile;
-}
-
-async function loadProfile(user) {
-  return loadAgentProfile(user);
+  state.agentProfileId = id;
 }
 
 function ownsProperty(property = {}, user = state.user) {
@@ -1293,7 +1228,6 @@ function ownsProperty(property = {}, user = state.user) {
 
   return property.agentId === user.uid
     || property.agenteId === user.uid
-    || property.createdBy === user.uid
     || property.ownerId === user.uid
     || property.userId === user.uid
     || createdBy === normalizeComparable(user.uid)
@@ -1342,11 +1276,17 @@ function sortPropertiesForDashboard(properties = []) {
   });
 }
 
-async function loadAgentProperties(user) {
+function listenOwnProperties(user) {
   if (state.unsubscribeProperties) state.unsubscribeProperties();
 
   const queryResults = new Map();
-  const queryDefinitions = [];
+  const queryDefinitions = [
+    ['agentId', user.uid],
+    ['agenteId', user.uid],
+    ['createdBy', user.uid],
+    ['ownerId', user.uid],
+    ['userId', user.uid]
+  ];
 
   if (user.email) {
     queryDefinitions.push(
@@ -1358,53 +1298,17 @@ async function loadAgentProperties(user) {
     );
   }
 
-  queryDefinitions.push(
-    ['agentId', user.uid],
-    ['createdBy', user.uid],
-    ['agenteId', user.uid],
-    ['ownerId', user.uid],
-    ['userId', user.uid]
-  );
+  const profileName = state.agentProfile?.name || user.displayName || '';
+  if (profileName) queryDefinitions.push(['agentName', profileName]);
 
   const uniqueQueries = queryDefinitions.filter(([field, value], index, all) => (
     value && all.findIndex(([otherField, otherValue]) => otherField === field && otherValue === value) === index
   ));
 
-  state.agentPropertiesCount = 0;
-  renderOwnProperties([]);
-
-  const mergeAndRender = () => {
-    const merged = new Map();
-    queryResults.forEach((result) => {
-      result.forEach((property, propertyId) => merged.set(propertyId, property));
-    });
-
-    const properties = sortPropertiesForDashboard(Array.from(merged.values()));
-    state.agentPropertiesCount = properties.length;
-    renderOwnProperties(properties);
-  };
-
-  const initialLoads = [];
   const unsubscribers = uniqueQueries.map(([field, value]) => {
     const queryKey = `${field}:${value}`;
-    const propertiesQuery = query(collection(db, 'properties'), where(field, '==', value));
-
-    initialLoads.push(getDocs(propertiesQuery)
-      .then((snapshot) => {
-        const matchesForQuery = new Map();
-        snapshot.docs.forEach((item) => {
-          const property = { ...item.data(), id: item.id };
-          if (ownsProperty(property, user)) matchesForQuery.set(item.id, property);
-        });
-        queryResults.set(queryKey, matchesForQuery);
-        mergeAndRender();
-      })
-      .catch((error) => {
-        console.warn(`[AgentDashboard] No se pudieron cargar propiedades por ${field}.`, error);
-      }));
-
     return onSnapshot(
-      propertiesQuery,
+      query(collection(db, 'properties'), where(field, '==', value)),
       (snapshot) => {
         const matchesForQuery = new Map();
         snapshot.docs.forEach((item) => {
@@ -1412,7 +1316,25 @@ async function loadAgentProperties(user) {
           if (ownsProperty(property, user)) matchesForQuery.set(item.id, property);
         });
         queryResults.set(queryKey, matchesForQuery);
-        mergeAndRender();
+
+        const merged = new Map();
+        queryResults.forEach((result) => {
+          result.forEach((property, propertyId) => merged.set(propertyId, property));
+        });
+
+        const properties = sortPropertiesForDashboard(Array.from(merged.values()));
+        debugAgentDashboard('Propiedades encontradas para el agente.', {
+          uid: user.uid,
+          email: user.email,
+          queryField: field,
+          count: properties.length,
+          statuses: properties.reduce((acc, property) => {
+            const status = getPublicationStatus(property);
+            acc[status] = (acc[status] || 0) + 1;
+            return acc;
+          }, {})
+        });
+        renderOwnProperties(properties);
       },
       (error) => {
         console.warn(`[AgentDashboard] No se pudo escuchar propiedades por ${field}.`, error);
@@ -1421,11 +1343,7 @@ async function loadAgentProperties(user) {
   });
 
   state.unsubscribeProperties = () => unsubscribers.forEach((unsubscribe) => unsubscribe());
-  await Promise.allSettled(initialLoads);
-}
-
-function listenOwnProperties(user) {
-  return loadAgentProperties(user);
+  renderOwnProperties([]);
 }
 
 
@@ -1682,74 +1600,19 @@ function renderSharedHistory(items = []) {
   });
 }
 
-async function loadSharedLists(user) {
+function listenOwnSharedLists(user) {
   if (state.unsubscribeSharedLists) state.unsubscribeSharedLists();
 
-  const queryResults = new Map();
-  const queryDefinitions = [
-    ['createdByAgentId', user.uid],
-    ['agentId', user.uid],
-    ['createdBy', user.uid]
-  ];
+  const sharedQuery = query(
+    collection(db, 'sharedPropertyLists'),
+    where('createdByAgentId', '==', user.uid),
+    orderBy('createdAt', 'desc')
+  );
 
-  if (user.email) {
-    queryDefinitions.push(
-      ['createdByAgentEmail', user.email],
-      ['agentEmail', user.email],
-      ['createdByEmail', user.email],
-      ['email', user.email]
-    );
-  }
-
-  const uniqueQueries = queryDefinitions.filter(([field, value], index, all) => (
-    value && all.findIndex(([otherField, otherValue]) => otherField === field && otherValue === value) === index
-  ));
-
-  const mergeAndRender = () => {
-    const merged = new Map();
-    queryResults.forEach((result) => {
-      result.forEach((list, listId) => merged.set(listId, list));
-    });
-
-    const lists = Array.from(merged.values())
-      .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+  state.unsubscribeSharedLists = onSnapshot(sharedQuery, (snapshot) => {
+    const lists = snapshot.docs.map((entry) => ({ id: entry.id, ...entry.data() }));
     renderSharedHistory(lists);
-  };
-
-  renderSharedHistory([]);
-
-  const initialLoads = [];
-  const unsubscribers = uniqueQueries.map(([field, value]) => {
-    const queryKey = `${field}:${value}`;
-    const listsQuery = query(collection(db, 'sharedPropertyLists'), where(field, '==', value));
-
-    initialLoads.push(getDocs(listsQuery)
-      .then((snapshot) => {
-        const matches = new Map();
-        snapshot.docs.forEach((entry) => matches.set(entry.id, { id: entry.id, ...entry.data() }));
-        queryResults.set(queryKey, matches);
-        mergeAndRender();
-      })
-      .catch((error) => {
-        console.warn(`[AgentDashboard] No se pudieron cargar listas compartidas por ${field}.`, error);
-      }));
-
-    return onSnapshot(listsQuery, (snapshot) => {
-      const matches = new Map();
-      snapshot.docs.forEach((entry) => matches.set(entry.id, { id: entry.id, ...entry.data() }));
-      queryResults.set(queryKey, matches);
-      mergeAndRender();
-    }, (error) => {
-      console.warn(`[AgentDashboard] No se pudo escuchar listas compartidas por ${field}.`, error);
-    });
   });
-
-  state.unsubscribeSharedLists = () => unsubscribers.forEach((unsubscribe) => unsubscribe());
-  await Promise.allSettled(initialLoads);
-}
-
-function listenOwnSharedLists(user) {
-  return loadSharedLists(user);
 }
 
 function bindSharedListModule() {
@@ -1758,41 +1621,11 @@ function bindSharedListModule() {
   updateSharedCounter();
 }
 
-function renderLoggedOutState() {
-  state.sharedInventory = [];
-  state.sharedSelectedPropertyIds.clear();
-  state.agentProfile = null;
-  state.agentProfileId = '';
-  state.agentProfileFound = false;
-  state.agentPropertiesCount = 0;
-
-  if (state.unsubscribeProperties) state.unsubscribeProperties();
-  state.unsubscribeProperties = null;
-
-  if (state.unsubscribeSharedLists) state.unsubscribeSharedLists();
-  state.unsubscribeSharedLists = null;
-
-  clearAgentProfileForm();
-  resetPropertyForm();
-
-  const ownPropertiesList = document.getElementById('agentPropertiesList');
-  if (ownPropertiesList) ownPropertiesList.innerHTML = '';
-
-  renderSharedInventory();
-  renderSharedHistory([]);
-  setMessage('Inicia sesión para administrar tu perfil y propiedades.', 'info');
-}
-
 function updateLayoutForAuth(user) {
   const dashboard = document.getElementById('agentDashboard');
   if (dashboard) dashboard.classList.toggle('hidden', !user);
   document.getElementById('agentPropertiesCard')?.classList.toggle('hidden', !user);
   document.getElementById('sharedListsCard')?.classList.toggle('hidden', !user);
-
-  if (user) {
-    initPropertyLocationMap();
-    setTimeout(() => state.map?.invalidateSize?.(), 100);
-  }
 }
 
 
@@ -1801,23 +1634,28 @@ function bindAuthControls() {
 
   onAuthStateChanged(auth, async (user) => {
     state.user = user;
-    renderSmallSession(user);
+    authBox.innerHTML = authMarkup(user);
     updateLayoutForAuth(user);
 
     if (!user) {
-      renderLoggedOutState();
+      state.sharedInventory = [];
+      state.sharedSelectedPropertyIds.clear();
+      state.agentProfile = null;
+      state.agentProfileId = '';
+      if (state.unsubscribeProperties) state.unsubscribeProperties();
+      state.unsubscribeProperties = null;
+      if (state.unsubscribeSharedLists) state.unsubscribeSharedLists();
+      renderSharedInventory();
+      renderSharedHistory([]);
+      setMessage('Inicia sesión para administrar tu perfil y propiedades.', 'info');
       return;
     }
 
-    const agentProfile = await loadAgentProfile(user);
-    fillAgentProfileForm(agentProfile || {}, user);
-
-    await loadAgentProperties(user, agentProfile);
-    await loadSharedLists(user, agentProfile);
+    debugAgentDashboard('Usuario autenticado.', { uid: user.uid, email: user.email, displayName: user.displayName });
+    await loadProfile(user);
+    listenOwnProperties(user);
+    listenOwnSharedLists(user);
     await loadShareInventory();
-    initPropertyMapSafely();
-    setTimeout(() => state.map?.invalidateSize?.(), 100);
-
     setMessage('Sesión activa. Solo puedes editar tus propios datos.', 'success');
 
     const logoutBtn = document.getElementById('logoutBtn');
