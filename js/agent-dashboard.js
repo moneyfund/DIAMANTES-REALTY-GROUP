@@ -183,6 +183,12 @@ function setMessage(message, type = 'info') {
   box.dataset.type = type;
 }
 
+function renderSmallSession(user) {
+  const authBox = document.getElementById('agentAuthBox');
+  if (!authBox) return;
+  authBox.innerHTML = authMarkup(user);
+}
+
 function authMarkup(user) {
   if (!user) {
     return `
@@ -350,21 +356,30 @@ function updateCoordinatesLabel(lat, lng) {
   label.textContent = `Lat: ${lat.toFixed(6)} | Lng: ${lng.toFixed(6)}`;
 }
 
+function getCoordinateInputs() {
+  return {
+    latInput: document.getElementById('propertyLat') || document.getElementById('latitude'),
+    lngInput: document.getElementById('propertyLng') || document.getElementById('longitude')
+  };
+}
+
 function setPropertyCoordinates(lat, lng) {
-  const latInput = document.getElementById('propertyLat');
-  const lngInput = document.getElementById('propertyLng');
+  const { latInput, lngInput } = getCoordinateInputs();
 
   if (!latInput || !lngInput) return;
 
+  const latFields = [latInput, document.getElementById('propertyLat'), document.getElementById('latitude')].filter(Boolean);
+  const lngFields = [lngInput, document.getElementById('propertyLng'), document.getElementById('longitude')].filter(Boolean);
+
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-    latInput.value = '';
-    lngInput.value = '';
+    latFields.forEach((field) => { field.value = ''; });
+    lngFields.forEach((field) => { field.value = ''; });
     updateCoordinatesLabel(NaN, NaN);
     return;
   }
 
-  latInput.value = String(lat);
-  lngInput.value = String(lng);
+  latFields.forEach((field) => { field.value = String(lat); });
+  lngFields.forEach((field) => { field.value = String(lng); });
   updateCoordinatesLabel(lat, lng);
 }
 
@@ -373,7 +388,11 @@ function setPropertyMapMarker(lat, lng) {
 
   const point = [lat, lng];
   if (!state.mapMarker) {
-    state.mapMarker = L.marker(point).addTo(state.map);
+    state.mapMarker = L.marker(point, { draggable: true }).addTo(state.map);
+    state.mapMarker.on('dragend', (event) => {
+      const position = event.target.getLatLng();
+      setPropertyCoordinates(position.lat, position.lng);
+    });
   } else {
     state.mapMarker.setLatLng(point);
   }
@@ -381,12 +400,12 @@ function setPropertyMapMarker(lat, lng) {
   state.map.setView(point, 14);
 }
 
-function initPropertyLocationMap() {
-  const mapElement = document.getElementById('propertyLocationMap');
+function initPropertyMapSafely() {
+  const mapElement = document.getElementById('propertyLocationMap') || document.getElementById('map');
   if (!mapElement || typeof L === 'undefined') return;
 
   if (state.map) {
-    setTimeout(() => state.map?.invalidateSize?.(), 0);
+    setTimeout(() => state.map?.invalidateSize?.(), 100);
     return;
   }
 
@@ -405,7 +424,11 @@ function initPropertyLocationMap() {
   });
 
   setPropertyCoordinates(NaN, NaN);
-  setTimeout(() => state.map?.invalidateSize?.(), 0);
+  setTimeout(() => state.map?.invalidateSize?.(), 100);
+}
+
+function initPropertyLocationMap() {
+  initPropertyMapSafely();
 }
 
 function createImageEntry({ url = '', file = null, source = 'url', status = 'ready', progress = 0, error = '' }) {
@@ -735,8 +758,9 @@ function handleFileSelection(event) {
 }
 
 function getPropertyPayload(user, profileName, images, coverImage, videoData) {
-  const lat = Number(document.getElementById('propertyLat').value);
-  const lng = Number(document.getElementById('propertyLng').value);
+  const { latInput, lngInput } = getCoordinateInputs();
+  const lat = Number(latInput?.value);
+  const lng = Number(lngInput?.value);
   const title = document.getElementById('propertyTitle').value.trim();
   const price = Number(document.getElementById('propertyPrice').value || 0);
   const description = document.getElementById('propertyDescription').value.trim();
@@ -795,6 +819,8 @@ function getPropertyPayload(user, profileName, images, coverImage, videoData) {
     agenteId: user.uid,
     agentId: user.uid,
     agentEmail: user.email || '',
+    email: user.email || '',
+    createdByEmail: user.email || '',
     ownerEmail: user.email || '',
     createdBy: user.uid,
     agentName: responsibleAgent,
@@ -1155,67 +1181,102 @@ function normalizeComparable(value = '') {
   return String(value || '').trim().toLowerCase();
 }
 
-async function findAgentProfile(user) {
-  const email = normalizeComparable(user.email);
-  const candidates = [];
-  const addCandidate = (collectionName, id, data, source) => {
-    if (!id || candidates.some((entry) => entry.collectionName === collectionName && entry.id === id)) return;
-    candidates.push({ collectionName, id, data: data || {}, source });
+async function loadAgentProfileByEmail(user) {
+  if (!user) return null;
+
+  const fallback = {
+    name: user.displayName || user.email || 'Agente Diamantes',
+    email: user.email || '',
+    photo: user.photoURL || getSessionPhoto(user),
+    description: '',
+    phone: '',
+    instagram: '',
+    facebook: '',
+    tiktok: '',
+    whatsapp: ''
   };
 
-  for (const collectionName of ['agents', 'agentes', 'users', 'usuarios']) {
-    try {
-      const uidSnapshot = await getDoc(doc(db, collectionName, user.uid));
-      if (uidSnapshot.exists()) {
-        addCandidate(collectionName, uidSnapshot.id, uidSnapshot.data(), `${collectionName}:uid-doc`);
-        return candidates[0];
-      }
-    } catch (error) {
-      console.warn(`[AgentDashboard] No se pudo cargar perfil por UID en ${collectionName}.`, error);
-    }
+  if (!user.email) {
+    return { collectionName: 'agents', id: user.uid, data: fallback, found: false };
   }
 
-  if (user.email) {
-    for (const collectionName of ['agents', 'agentes']) {
-      try {
-        const emailSnapshot = await getDocs(query(collection(db, collectionName), where('email', '==', user.email)));
-        emailSnapshot.docs.forEach((entry) => addCandidate(collectionName, entry.id, entry.data(), `${collectionName}:email-field`));
-        if (candidates.length) return candidates[0];
-      } catch (error) {
-        console.warn(`[AgentDashboard] No se pudo consultar perfil por email en ${collectionName}.`, error);
-      }
+  try {
+    const emailSnapshot = await getDocs(query(
+      collection(db, 'agents'),
+      where('email', '==', user.email)
+    ));
+
+    if (!emailSnapshot.empty) {
+      const profileDoc = emailSnapshot.docs[0];
+      const profile = profileDoc.data() || {};
+      return {
+        collectionName: 'agents',
+        id: profileDoc.id,
+        found: true,
+        data: {
+          ...profile,
+          name: profile.name || profile.nombre || fallback.name,
+          photo: profile.photo || profile.photoURL || profile.foto || fallback.photo,
+          description: profile.description || profile.descripcion || profile.bio || '',
+          email: profile.email || profile.correo || fallback.email,
+          phone: profile.phone || profile.telefono || profile.tel || '',
+          instagram: profile.instagram || '',
+          facebook: profile.facebook || '',
+          tiktok: profile.tiktok || profile.tikTok || '',
+          whatsapp: profile.whatsapp || profile.whatsApp || ''
+        }
+      };
     }
+  } catch (error) {
+    console.warn('[AgentDashboard] No se pudo consultar el perfil del agente por email.', error);
   }
 
-  return { collectionName: 'agents', id: user.uid, data: {}, source: 'auth-fallback' };
+  return { collectionName: 'agents', id: user.uid, data: fallback, found: false };
 }
-async function loadAgentProfile(user) {
-  const { collectionName, id, data: profile, source } = await findAgentProfile(user);
-  const profileFound = source !== 'auth-fallback';
-  const writableProfileId = collectionName === 'agents' ? id : user.uid;
 
-  document.getElementById('agentName').value = profile.name || profile.nombre || user.displayName || '';
-  document.getElementById('agentPhoto').value = profile.photo || profile.photoURL || profile.foto || user.photoURL || getSessionPhoto(user);
-  document.getElementById('agentDescription').value = profile.description || profile.descripcion || profile.bio || '';
-  document.getElementById('agentEmail').value = profile.email || profile.correo || user.email || '';
-  document.getElementById('agentPhone').value = profile.phone || profile.telefono || profile.tel || '';
-  document.getElementById('agentInstagram').value = profile.instagram || '';
-  document.getElementById('agentFacebook').value = profile.facebook || '';
-  document.getElementById('agentTiktok').value = profile.tiktok || profile.tikTok || '';
-  document.getElementById('agentWhatsapp').value = profile.whatsapp || profile.whatsApp || '';
-  const responsibleAgent = document.getElementById('propertyAgentName');
-  if (responsibleAgent && !responsibleAgent.value) responsibleAgent.value = profile.name || profile.nombre || user.displayName || '';
-  state.agentProfile = {
+function fillAgentProfileForm(profile = {}, user = state.user) {
+  if (!user) return;
+
+  const normalizedProfile = {
     ...profile,
     name: profile.name || profile.nombre || user.displayName || user.email || 'Agente Diamantes',
+    photo: profile.photo || profile.photoURL || profile.foto || user.photoURL || getSessionPhoto(user),
+    description: profile.description || profile.descripcion || profile.bio || '',
     email: profile.email || profile.correo || user.email || '',
-    photo: profile.photo || profile.photoURL || profile.foto || user.photoURL || getSessionPhoto(user)
+    phone: profile.phone || profile.telefono || profile.tel || '',
+    instagram: profile.instagram || '',
+    facebook: profile.facebook || '',
+    tiktok: profile.tiktok || profile.tikTok || '',
+    whatsapp: profile.whatsapp || profile.whatsApp || ''
   };
-  state.agentProfileId = writableProfileId;
-  state.agentProfileFound = profileFound;
-  if (!profileFound) {
-    setMessage('No se encontró perfil profesional completo para este agente. Puedes completar y guardar tu perfil con los datos de Google precargados.', 'info');
+
+  document.getElementById('agentName').value = normalizedProfile.name;
+  document.getElementById('agentPhoto').value = normalizedProfile.photo;
+  document.getElementById('agentDescription').value = normalizedProfile.description;
+  document.getElementById('agentEmail').value = normalizedProfile.email;
+  document.getElementById('agentPhone').value = normalizedProfile.phone;
+  document.getElementById('agentInstagram').value = normalizedProfile.instagram;
+  document.getElementById('agentFacebook').value = normalizedProfile.facebook;
+  document.getElementById('agentTiktok').value = normalizedProfile.tiktok;
+  document.getElementById('agentWhatsapp').value = normalizedProfile.whatsapp;
+
+  const responsibleAgent = document.getElementById('propertyAgentName');
+  if (responsibleAgent && !responsibleAgent.value) responsibleAgent.value = normalizedProfile.name;
+
+  state.agentProfile = normalizedProfile;
+}
+
+async function loadAgentProfile(user) {
+  const result = await loadAgentProfileByEmail(user);
+  state.agentProfileId = result?.id || user.uid;
+  state.agentProfileFound = Boolean(result?.found);
+  fillAgentProfileForm(result?.data || {}, user);
+
+  if (!state.agentProfileFound) {
+    setMessage('No se encontró perfil profesional para este email. Se precargaron los datos de Google.', 'info');
   }
+
+  return state.agentProfile;
 }
 
 async function loadProfile(user) {
@@ -1238,6 +1299,7 @@ function ownsProperty(property = {}, user = state.user) {
     || createdBy === normalizeComparable(user.uid)
     || (!!email && (
       normalizeComparable(property.agentEmail) === email
+      || normalizeComparable(property.email) === email
       || normalizeComparable(property.createdByEmail) === email
       || normalizeComparable(property.ownerEmail) === email
       || createdBy === email
@@ -1280,36 +1342,69 @@ function sortPropertiesForDashboard(properties = []) {
   });
 }
 
-function loadAgentProperties(user) {
+async function loadAgentProperties(user) {
   if (state.unsubscribeProperties) state.unsubscribeProperties();
 
   const queryResults = new Map();
-  const queryDefinitions = [
-    ['agentId', user.uid],
-    ['agenteId', user.uid],
-    ['createdBy', user.uid],
-    ['ownerId', user.uid],
-    ['userId', user.uid]
-  ];
+  const queryDefinitions = [];
 
   if (user.email) {
     queryDefinitions.push(
       ['agentEmail', user.email],
+      ['email', user.email],
       ['createdByEmail', user.email],
       ['ownerEmail', user.email],
       ['createdBy', user.email]
     );
   }
 
+  queryDefinitions.push(
+    ['agentId', user.uid],
+    ['createdBy', user.uid],
+    ['agenteId', user.uid],
+    ['ownerId', user.uid],
+    ['userId', user.uid]
+  );
 
   const uniqueQueries = queryDefinitions.filter(([field, value], index, all) => (
     value && all.findIndex(([otherField, otherValue]) => otherField === field && otherValue === value) === index
   ));
 
+  state.agentPropertiesCount = 0;
+  renderOwnProperties([]);
+
+  const mergeAndRender = () => {
+    const merged = new Map();
+    queryResults.forEach((result) => {
+      result.forEach((property, propertyId) => merged.set(propertyId, property));
+    });
+
+    const properties = sortPropertiesForDashboard(Array.from(merged.values()));
+    state.agentPropertiesCount = properties.length;
+    renderOwnProperties(properties);
+  };
+
+  const initialLoads = [];
   const unsubscribers = uniqueQueries.map(([field, value]) => {
     const queryKey = `${field}:${value}`;
+    const propertiesQuery = query(collection(db, 'properties'), where(field, '==', value));
+
+    initialLoads.push(getDocs(propertiesQuery)
+      .then((snapshot) => {
+        const matchesForQuery = new Map();
+        snapshot.docs.forEach((item) => {
+          const property = { ...item.data(), id: item.id };
+          if (ownsProperty(property, user)) matchesForQuery.set(item.id, property);
+        });
+        queryResults.set(queryKey, matchesForQuery);
+        mergeAndRender();
+      })
+      .catch((error) => {
+        console.warn(`[AgentDashboard] No se pudieron cargar propiedades por ${field}.`, error);
+      }));
+
     return onSnapshot(
-      query(collection(db, 'properties'), where(field, '==', value)),
+      propertiesQuery,
       (snapshot) => {
         const matchesForQuery = new Map();
         snapshot.docs.forEach((item) => {
@@ -1317,15 +1412,7 @@ function loadAgentProperties(user) {
           if (ownsProperty(property, user)) matchesForQuery.set(item.id, property);
         });
         queryResults.set(queryKey, matchesForQuery);
-
-        const merged = new Map();
-        queryResults.forEach((result) => {
-          result.forEach((property, propertyId) => merged.set(propertyId, property));
-        });
-
-        const properties = sortPropertiesForDashboard(Array.from(merged.values()));
-        state.agentPropertiesCount = properties.length;
-        renderOwnProperties(properties);
+        mergeAndRender();
       },
       (error) => {
         console.warn(`[AgentDashboard] No se pudo escuchar propiedades por ${field}.`, error);
@@ -1334,8 +1421,7 @@ function loadAgentProperties(user) {
   });
 
   state.unsubscribeProperties = () => unsubscribers.forEach((unsubscribe) => unsubscribe());
-  state.agentPropertiesCount = 0;
-  renderOwnProperties([]);
+  await Promise.allSettled(initialLoads);
 }
 
 function listenOwnProperties(user) {
@@ -1505,6 +1591,8 @@ async function createSharedList(event) {
     createdByAgentPhone: profile.phone || '',
     createdByAgentPhoto: profile.photo || state.user.photoURL || fallbackPhoto,
     createdByAgentEmail: profile.email || state.user.email || '',
+    agentEmail: profile.email || state.user.email || '',
+    createdByEmail: profile.email || state.user.email || '',
     createdByAgentWhatsapp: whatsapp,
     clientName: document.getElementById('sharedListClientName')?.value.trim() || '',
     propertyIds: Array.from(state.sharedSelectedPropertyIds),
@@ -1594,26 +1682,105 @@ function renderSharedHistory(items = []) {
   });
 }
 
-function listenOwnSharedLists(user) {
+async function loadSharedLists(user) {
   if (state.unsubscribeSharedLists) state.unsubscribeSharedLists();
 
-  const sharedQuery = query(
-    collection(db, 'sharedPropertyLists'),
-    where('createdByAgentId', '==', user.uid)
-  );
+  const queryResults = new Map();
+  const queryDefinitions = [
+    ['createdByAgentId', user.uid],
+    ['agentId', user.uid],
+    ['createdBy', user.uid]
+  ];
 
-  state.unsubscribeSharedLists = onSnapshot(sharedQuery, (snapshot) => {
-    const lists = snapshot.docs
-      .map((entry) => ({ id: entry.id, ...entry.data() }))
+  if (user.email) {
+    queryDefinitions.push(
+      ['createdByAgentEmail', user.email],
+      ['agentEmail', user.email],
+      ['createdByEmail', user.email],
+      ['email', user.email]
+    );
+  }
+
+  const uniqueQueries = queryDefinitions.filter(([field, value], index, all) => (
+    value && all.findIndex(([otherField, otherValue]) => otherField === field && otherValue === value) === index
+  ));
+
+  const mergeAndRender = () => {
+    const merged = new Map();
+    queryResults.forEach((result) => {
+      result.forEach((list, listId) => merged.set(listId, list));
+    });
+
+    const lists = Array.from(merged.values())
       .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
     renderSharedHistory(lists);
+  };
+
+  renderSharedHistory([]);
+
+  const initialLoads = [];
+  const unsubscribers = uniqueQueries.map(([field, value]) => {
+    const queryKey = `${field}:${value}`;
+    const listsQuery = query(collection(db, 'sharedPropertyLists'), where(field, '==', value));
+
+    initialLoads.push(getDocs(listsQuery)
+      .then((snapshot) => {
+        const matches = new Map();
+        snapshot.docs.forEach((entry) => matches.set(entry.id, { id: entry.id, ...entry.data() }));
+        queryResults.set(queryKey, matches);
+        mergeAndRender();
+      })
+      .catch((error) => {
+        console.warn(`[AgentDashboard] No se pudieron cargar listas compartidas por ${field}.`, error);
+      }));
+
+    return onSnapshot(listsQuery, (snapshot) => {
+      const matches = new Map();
+      snapshot.docs.forEach((entry) => matches.set(entry.id, { id: entry.id, ...entry.data() }));
+      queryResults.set(queryKey, matches);
+      mergeAndRender();
+    }, (error) => {
+      console.warn(`[AgentDashboard] No se pudo escuchar listas compartidas por ${field}.`, error);
+    });
   });
+
+  state.unsubscribeSharedLists = () => unsubscribers.forEach((unsubscribe) => unsubscribe());
+  await Promise.allSettled(initialLoads);
+}
+
+function listenOwnSharedLists(user) {
+  return loadSharedLists(user);
 }
 
 function bindSharedListModule() {
   document.getElementById('sharedListForm')?.addEventListener('submit', createSharedList);
   document.getElementById('sharedInventorySearch')?.addEventListener('input', renderSharedInventory);
   updateSharedCounter();
+}
+
+function renderLoggedOutState() {
+  state.sharedInventory = [];
+  state.sharedSelectedPropertyIds.clear();
+  state.agentProfile = null;
+  state.agentProfileId = '';
+  state.agentProfileFound = false;
+  state.agentPropertiesCount = 0;
+
+  if (state.unsubscribeProperties) state.unsubscribeProperties();
+  state.unsubscribeProperties = null;
+
+  if (state.unsubscribeSharedLists) state.unsubscribeSharedLists();
+  state.unsubscribeSharedLists = null;
+
+  clearAgentProfileForm();
+  resetPropertyForm();
+
+  const ownPropertiesList = document.getElementById('agentPropertiesList');
+  if (ownPropertiesList) ownPropertiesList.innerHTML = '';
+
+  renderSharedInventory();
+  renderSharedHistory([]);
+  setMessage('Inicia sesión para administrar tu perfil y propiedades.', 'info');
 }
 
 function updateLayoutForAuth(user) {
@@ -1634,34 +1801,23 @@ function bindAuthControls() {
 
   onAuthStateChanged(auth, async (user) => {
     state.user = user;
-    authBox.innerHTML = authMarkup(user);
+    renderSmallSession(user);
     updateLayoutForAuth(user);
 
     if (!user) {
-      state.sharedInventory = [];
-      state.sharedSelectedPropertyIds.clear();
-      state.agentProfile = null;
-      state.agentProfileId = '';
-      state.agentProfileFound = false;
-      state.agentPropertiesCount = 0;
-      if (state.unsubscribeProperties) state.unsubscribeProperties();
-      state.unsubscribeProperties = null;
-      if (state.unsubscribeSharedLists) state.unsubscribeSharedLists();
-      state.unsubscribeSharedLists = null;
-      clearAgentProfileForm();
-      resetPropertyForm();
-      const ownPropertiesList = document.getElementById('agentPropertiesList');
-      if (ownPropertiesList) ownPropertiesList.innerHTML = '';
-      renderSharedInventory();
-      renderSharedHistory([]);
-      setMessage('Inicia sesión para administrar tu perfil y propiedades.', 'info');
+      renderLoggedOutState();
       return;
     }
 
-    await loadAgentProfile(user);
-    await loadAgentProperties(user);
-    listenOwnSharedLists(user);
+    const agentProfile = await loadAgentProfile(user);
+    fillAgentProfileForm(agentProfile || {}, user);
+
+    await loadAgentProperties(user, agentProfile);
+    await loadSharedLists(user, agentProfile);
     await loadShareInventory();
+    initPropertyMapSafely();
+    setTimeout(() => state.map?.invalidateSize?.(), 100);
+
     setMessage('Sesión activa. Solo puedes editar tus propios datos.', 'success');
 
     const logoutBtn = document.getElementById('logoutBtn');

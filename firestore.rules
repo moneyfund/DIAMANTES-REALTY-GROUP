@@ -34,6 +34,7 @@ service cloud.firestore {
         || data.userId == request.auth.uid
         || (requestEmail() != '' && (
           data.agentEmail == requestEmail()
+          || data.email == requestEmail()
           || data.createdByEmail == requestEmail()
           || data.ownerEmail == requestEmail()
           || data.createdBy == requestEmail()
@@ -47,6 +48,20 @@ service cloud.firestore {
           data.publicationStatus == 'approved'
           || !data.keys().hasAny(['publicationStatus'])
         );
+    }
+
+    function isOwnSharedList(data) {
+      return isSignedIn() && (
+        data.createdByAgentId == request.auth.uid
+        || data.agentId == request.auth.uid
+        || data.createdBy == request.auth.uid
+        || (requestEmail() != '' && (
+          data.createdByAgentEmail == requestEmail()
+          || data.agentEmail == requestEmail()
+          || data.createdByEmail == requestEmail()
+          || data.email == requestEmail()
+        ))
+      );
     }
 
     function isValidCommercialStatus(data) {
@@ -161,7 +176,7 @@ service cloud.firestore {
 
     match /sharedPropertyLists/{listId} {
       allow read: if resource.data.status == 'active'
-        || (isSignedIn() && resource.data.createdByAgentId == request.auth.uid)
+        || isOwnSharedList(resource.data)
         || isAdmin();
 
       allow create: if isSignedIn()
@@ -172,13 +187,13 @@ service cloud.firestore {
         && request.resource.data.status in ['active', 'inactive'];
 
       allow update: if isSignedIn() && (
-          (resource.data.createdByAgentId == request.auth.uid
-            && request.resource.data.createdByAgentId == resource.data.createdByAgentId
+          (isOwnSharedList(resource.data)
+            && isOwnSharedList(request.resource.data)
             && request.resource.data.token == resource.data.token)
           || isAdmin()
         );
 
-      allow delete: if isSignedIn() && (resource.data.createdByAgentId == request.auth.uid || isAdmin());
+      allow delete: if isSignedIn() && (isOwnSharedList(resource.data) || isAdmin());
     }
 
     match /{document=**} {
