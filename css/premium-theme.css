@@ -386,6 +386,9 @@ body.dark-mode .hero-search-submit:hover {
 .premium-hero h1,
 .education-hero h1,
 .hero h1 { color: #ffffff !important; text-shadow: 0 20px 52px rgba(0, 0, 0, 0.4); }
+.premium-hero .hero-static-content .hero-title,
+.premium-hero .hero-static-content .hero-title span,
+.premium-hero .hero-static-content .hero-title * { color: #ffffff !important; }
 .premium-hero .hero-description,
 .education-hero p { color: rgba(255, 255, 255, 0.82) !important; }
 .premium-search,
