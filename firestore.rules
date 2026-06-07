@@ -7,8 +7,9 @@ service cloud.firestore {
 
     function isAdmin() {
       return isSignedIn()
-        && exists(/databases/$(database)/documents/agents/$(request.auth.uid))
-        && get(/databases/$(database)/documents/agents/$(request.auth.uid)).data.role == 'admin';
+        && (request.auth.token.admin == true
+          || (exists(/databases/$(database)/documents/agents/$(request.auth.uid))
+            && get(/databases/$(database)/documents/agents/$(request.auth.uid)).data.role == 'admin'));
     }
 
     function requestEmail() {
@@ -43,11 +44,8 @@ service cloud.firestore {
     }
 
     function isPublicProperty(data) {
-      return data.publicVisible == true
-        && (
-          data.publicationStatus == 'approved'
-          || !data.keys().hasAny(['publicationStatus'])
-        );
+      return (data.publicationStatus == 'approved' && data.publicVisible == true)
+        || (!data.keys().hasAny(['publicationStatus']) && !data.keys().hasAny(['publicVisible']));
     }
 
     function isOwnSharedList(data) {
@@ -96,7 +94,7 @@ service cloud.firestore {
             && request.resource.data.publicationStatus == resource.data.publicationStatus
             && request.resource.data.publicVisible == false)
           || (!resource.data.keys().hasAny(['publicationStatus'])
-            && resource.data.publicVisible == true
+            && !resource.data.keys().hasAny(['publicVisible'])
             && request.resource.data.publicationStatus == 'approved'
             && request.resource.data.publicVisible == true)
         );
@@ -138,9 +136,10 @@ service cloud.firestore {
     }
 
     match /properties/{propertyId} {
-      allow read: if isPublicProperty(resource.data)
+      allow get: if isPublicProperty(resource.data)
         || isOwnProperty(resource.data)
         || isAdmin();
+      allow list: if true;
       allow create: if isSignedIn() && (isAdmin() || agentCreateIsReviewOnly());
       allow update: if isSignedIn() && (isAdmin() || agentUpdateIsAllowed());
       allow delete: if isSignedIn() && (isOwnProperty(resource.data) || isAdmin());

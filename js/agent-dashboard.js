@@ -74,11 +74,20 @@ const PUBLICATION_STATUS_BADGE_CLASS = {
 
 function getPublicationStatus(property = {}) {
   if (property.publicationStatus) return String(property.publicationStatus).toLowerCase();
+  if (property.publicationStatus === undefined && property.publicVisible === undefined) return 'approved';
   return property.publicVisible === true ? 'approved' : 'pending_review';
 }
 
+function isPublicProperty(property = {}) {
+  if (property.publicationStatus === 'approved' && property.publicVisible === true) {
+    return true;
+  }
+
+  return property.publicationStatus === undefined && property.publicVisible === undefined;
+}
+
 function isPubliclyApproved(property = {}) {
-  return getPublicationStatus(property) === 'approved' && property.publicVisible === true;
+  return isPublicProperty(property);
 }
 
 function getPublicationBadgeMarkup(property = {}) {
@@ -243,7 +252,7 @@ function createDynamicFieldMarkup(field = [], value = '') {
 
 function renderDynamicPropertyFields(prefill = {}) {
   const type = normalizePropertyType(document.getElementById('tipo-propiedad')?.value || '');
-  const container = document.getElementById('dynamicPropertyFields');
+  const container = document.getElementById('dynamic-property-fields') || document.getElementById('dynamicPropertyFields');
   const hint = document.getElementById('dynamicFieldsHint');
   if (!container) return;
 
@@ -265,7 +274,7 @@ function renderDynamicPropertyFields(prefill = {}) {
 
 function collectPropertyDetails() {
   const details = {};
-  document.querySelectorAll('#dynamicPropertyFields [data-detail-key]').forEach((input) => {
+  document.querySelectorAll('#dynamic-property-fields [data-detail-key], #dynamicPropertyFields [data-detail-key]').forEach((input) => {
     const key = input.dataset.detailKey;
     const rawValue = input.value?.trim?.() ?? '';
     if (rawValue === '') return;
@@ -351,7 +360,11 @@ function setPropertyMapMarker(lat, lng) {
 
   const point = [lat, lng];
   if (!state.mapMarker) {
-    state.mapMarker = L.marker(point).addTo(state.map);
+    state.mapMarker = L.marker(point, { draggable: true }).addTo(state.map);
+    state.mapMarker.on('dragend', (event) => {
+      const position = event.target.getLatLng();
+      setPropertyCoordinates(position.lat, position.lng);
+    });
   } else {
     state.mapMarker.setLatLng(point);
   }
@@ -359,16 +372,30 @@ function setPropertyMapMarker(lat, lng) {
   state.map.setView(point, 14);
 }
 
-function initPropertyLocationMap() {
-  const mapElement = document.getElementById('propertyLocationMap');
-  if (!mapElement || typeof L === 'undefined') return;
+function initPropertyMap() {
+  const mapElement = document.getElementById('property-map')
+    || document.getElementById('map')
+    || document.querySelector('[data-property-map]')
+    || document.getElementById('propertyLocationMap');
+
+  if (!mapElement || typeof L === 'undefined') {
+    console.warn('No se encontró contenedor de mapa o Leaflet no está cargado');
+    console.log('[AgentDashboard] Mapa inicializado:', false);
+    return;
+  }
+
+  if (state.map) {
+    state.map.remove();
+    state.map = null;
+    state.mapMarker = null;
+  }
 
   const defaultPoint = [12.8654, -85.2072];
   state.map = L.map(mapElement).setView(defaultPoint, 7);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
-    attribution: '&copy; OpenStreetMap contributors'
+    attribution: '© OpenStreetMap contributors'
   }).addTo(state.map);
 
   state.map.on('click', (event) => {
@@ -378,7 +405,11 @@ function initPropertyLocationMap() {
   });
 
   setPropertyCoordinates(NaN, NaN);
+  setTimeout(() => state.map?.invalidateSize(), 300);
+  console.log('[AgentDashboard] Mapa inicializado:', true);
 }
+
+const initPropertyLocationMap = initPropertyMap;
 
 function createImageEntry({ url = '', file = null, source = 'url', status = 'ready', progress = 0, error = '' }) {
   return {
@@ -771,7 +802,9 @@ function getPropertyPayload(user, profileName, images, coverImage, videoData) {
     createdByEmail: user.email || '',
     ownerEmail: user.email || '',
     createdBy: user.uid,
-    agentName: responsibleAgent,
+    ownerId: user.uid,
+    userId: user.uid,
+    agentName: responsibleAgent || state.agentProfile?.name || user.displayName || '',
     updatedAt: serverTimestamp()
   };
 
@@ -1188,7 +1221,7 @@ async function findAgentProfile(user) {
   return selected;
 }
 
-async function loadProfile(user) {
+async function loadAgentProfile(user) {
   const { id, data: profile } = await findAgentProfile(user);
   const normalizedProfile = {
     ...profile,
@@ -1216,7 +1249,36 @@ async function loadProfile(user) {
   if (responsibleAgent && !responsibleAgent.value) responsibleAgent.value = normalizedProfile.name;
   state.agentProfile = normalizedProfile;
   state.agentProfileId = id;
+  console.log('[AgentDashboard] Perfil encontrado en agents:', Boolean(id), { id, email: normalizedProfile.email });
+  return { id, ...normalizedProfile };
 }
+
+function fillAgentProfile(agentProfile = {}, user = state.user) {
+  const normalizedProfile = {
+    name: agentProfile.name || user?.displayName || '',
+    photo: agentProfile.photo || user?.photoURL || fallbackPhoto,
+    description: agentProfile.description || '',
+    email: agentProfile.email || user?.email || '',
+    phone: agentProfile.phone || '',
+    instagram: agentProfile.instagram || '',
+    facebook: agentProfile.facebook || '',
+    tiktok: agentProfile.tiktok || '',
+    whatsapp: agentProfile.whatsapp || ''
+  };
+
+  document.getElementById('agentName').value = normalizedProfile.name;
+  document.getElementById('agentPhoto').value = normalizedProfile.photo;
+  document.getElementById('agentDescription').value = normalizedProfile.description;
+  document.getElementById('agentEmail').value = normalizedProfile.email;
+  document.getElementById('agentPhone').value = normalizedProfile.phone;
+  document.getElementById('agentInstagram').value = normalizedProfile.instagram;
+  document.getElementById('agentFacebook').value = normalizedProfile.facebook;
+  document.getElementById('agentTiktok').value = normalizedProfile.tiktok;
+  document.getElementById('agentWhatsapp').value = normalizedProfile.whatsapp;
+}
+
+const loadProfile = loadAgentProfile;
+
 
 function ownsProperty(property = {}, user = state.user) {
   if (!user) return false;
@@ -1276,7 +1338,24 @@ function sortPropertiesForDashboard(properties = []) {
   });
 }
 
-function listenOwnProperties(user) {
+
+async function loadAllOwnPropertiesFallback(user) {
+  try {
+    const snapshot = await getDocs(collection(db, 'properties'));
+    const properties = snapshot.docs
+      .map((entry) => ({ id: entry.id, ...entry.data() }))
+      .filter((property) => ownsProperty(property, user));
+    const sorted = sortPropertiesForDashboard(properties);
+    console.log('[AgentDashboard] Cantidad de propiedades encontradas:', sorted.length);
+    renderOwnProperties(sorted);
+  } catch (error) {
+    console.warn('[AgentDashboard] No se pudo cargar inventario completo temporal.', error);
+  }
+}
+
+function loadAgentProperties(user, agentProfile = state.agentProfile) {
+  state.agentProfile = agentProfile || state.agentProfile;
+
   if (state.unsubscribeProperties) state.unsubscribeProperties();
 
   const queryResults = new Map();
@@ -1323,6 +1402,7 @@ function listenOwnProperties(user) {
         });
 
         const properties = sortPropertiesForDashboard(Array.from(merged.values()));
+        console.log('[AgentDashboard] Cantidad de propiedades encontradas:', properties.length);
         debugAgentDashboard('Propiedades encontradas para el agente.', {
           uid: user.uid,
           email: user.email,
@@ -1338,6 +1418,7 @@ function listenOwnProperties(user) {
       },
       (error) => {
         console.warn(`[AgentDashboard] No se pudo escuchar propiedades por ${field}.`, error);
+        loadAllOwnPropertiesFallback(user);
       }
     );
   });
@@ -1346,6 +1427,7 @@ function listenOwnProperties(user) {
   renderOwnProperties([]);
 }
 
+const listenOwnProperties = loadAgentProperties;
 
 function normalizePropertyForShare(data = {}, id = '') {
   const title = data.title || data.titulo || 'Propiedad';
@@ -1459,17 +1541,23 @@ function renderSharedInventory() {
 async function loadShareInventory() {
   if (!state.user) return;
 
-  const snapshot = await getDocs(query(
-    collection(db, 'properties'),
-    where('publicVisible', '==', true)
-  ));
+  const snapshot = await getDocs(collection(db, 'properties'));
   const properties = snapshot.docs
     .map((item) => normalizePropertyForShare(item.data(), item.id))
-    .filter((property) => property.status === 'available' && isPubliclyApproved(property));
+    .filter((property) => property.status === 'available')
+    .filter((property) => isPublicProperty(property) || ownsProperty(property, state.user))
+    .filter((property) => !['rejected', 'archived'].includes(getPublicationStatus(property)));
 
   state.sharedInventory = properties;
+  console.log('[AgentDashboard] Listas compartidas cargadas. Inventario disponible:', properties.length);
   renderSharedInventory();
 }
+
+const loadSharedLists = async (user, agentProfile = state.agentProfile) => {
+  state.agentProfile = agentProfile || state.agentProfile;
+  listenOwnSharedLists(user);
+  await loadShareInventory();
+};
 
 function generateShareToken() {
   const randomBlock = crypto.randomUUID().replaceAll('-', '').slice(0, 12);
@@ -1611,7 +1699,11 @@ function listenOwnSharedLists(user) {
 
   state.unsubscribeSharedLists = onSnapshot(sharedQuery, (snapshot) => {
     const lists = snapshot.docs.map((entry) => ({ id: entry.id, ...entry.data() }));
+    console.log('[AgentDashboard] Listas compartidas cargadas:', lists.length);
     renderSharedHistory(lists);
+  }, (error) => {
+    console.warn('[AgentDashboard] No se pudieron cargar listas compartidas.', error);
+    renderSharedHistory([]);
   });
 }
 
@@ -1651,11 +1743,14 @@ function bindAuthControls() {
       return;
     }
 
+    console.log('[AgentDashboard] Usuario autenticado:', Boolean(user));
+    console.log('[AgentDashboard] Email del usuario:', user.email || '');
     debugAgentDashboard('Usuario autenticado.', { uid: user.uid, email: user.email, displayName: user.displayName });
-    await loadProfile(user);
-    listenOwnProperties(user);
-    listenOwnSharedLists(user);
-    await loadShareInventory();
+    const agentProfile = await loadAgentProfile(user);
+    fillAgentProfile(agentProfile, user);
+    await loadAgentProperties(user, agentProfile);
+    await loadSharedLists(user, agentProfile);
+    initPropertyMap();
     setMessage('Sesión activa. Solo puedes editar tus propios datos.', 'success');
 
     const logoutBtn = document.getElementById('logoutBtn');
@@ -1694,7 +1789,13 @@ function bindCalculatedFields() {
     document.getElementById(fieldId)?.addEventListener('input', updatePricePerAreaPreview);
     document.getElementById(fieldId)?.addEventListener('change', updatePricePerAreaPreview);
   });
-  document.getElementById('tipo-propiedad')?.addEventListener('change', () => renderDynamicPropertyFields());
+  const propertyTypeSelect = document.getElementById('tipo-propiedad');
+  if (propertyTypeSelect) {
+    propertyTypeSelect.addEventListener('change', renderDynamicPropertyFields);
+    console.log('[AgentDashboard] Select de tipo de propiedad conectado:', true);
+  } else {
+    console.log('[AgentDashboard] Select de tipo de propiedad conectado:', false);
+  }
   ['propertyVideoType', 'propertyVideoUrl'].forEach((fieldId) => {
     document.getElementById(fieldId)?.addEventListener('input', updateVideoPreview);
     document.getElementById(fieldId)?.addEventListener('change', updateVideoPreview);
@@ -1755,7 +1856,6 @@ function init() {
   document.getElementById('agentProfileForm')?.addEventListener('submit', saveProfile);
   document.getElementById('propertyForm')?.addEventListener('submit', saveProperty);
   document.getElementById('propertyFormReset')?.addEventListener('click', resetPropertyForm);
-  initPropertyLocationMap();
   bindAuthControls();
   bindImageControls();
   bindLegalDocumentControls();
