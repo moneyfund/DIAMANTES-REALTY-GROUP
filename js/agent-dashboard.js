@@ -1527,15 +1527,6 @@ function updateSharedCounter() {
   counter.textContent = `${state.sharedSelectedPropertyIds.size} propiedades seleccionadas`;
 }
 
-function escapeHtml(value = '') {
-  return String(value || '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
-}
-
 function getSharedLink(token = '') {
   return `${window.location.origin}/share.html?token=${encodeURIComponent(token)}`;
 }
