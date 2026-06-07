@@ -12,7 +12,6 @@ import {
   query,
   where,
   getDocs,
-  orderBy,
   deleteField,
   serverTimestamp,
   onAuthStateChanged,
@@ -78,13 +77,7 @@ function getPublicationStatus(property = {}) {
   return property.publicVisible === true ? 'approved' : 'pending_review';
 }
 
-function isPublicProperty(property = {}) {
-  if (property.publicationStatus === 'approved' && property.publicVisible === true) {
-    return true;
-  }
-
-  return property.publicationStatus === undefined && property.publicVisible === undefined;
-}
+const isPublicProperty = window.inmoPublicPropertyFilter.isPublicProperty;
 
 function isPubliclyApproved(property = {}) {
   return isPublicProperty(property);
@@ -372,11 +365,16 @@ function setPropertyMapMarker(lat, lng) {
   state.map.setView(point, 14);
 }
 
-function initPropertyMap() {
-  const mapElement = document.getElementById('property-map')
-    || document.getElementById('map')
+function findPropertyMapElement() {
+  return document.getElementById('propertyLocationMap')
     || document.querySelector('[data-property-map]')
-    || document.getElementById('propertyLocationMap');
+    || document.querySelector('.dashboard-property-map')
+    || document.getElementById('property-map')
+    || document.getElementById('map');
+}
+
+function initPropertyMap() {
+  const mapElement = findPropertyMapElement();
 
   if (!mapElement || typeof L === 'undefined') {
     console.warn('No se encontró contenedor de mapa o Leaflet no está cargado');
@@ -404,7 +402,14 @@ function initPropertyMap() {
     setPropertyMapMarker(lat, lng);
   });
 
-  setPropertyCoordinates(NaN, NaN);
+  const currentLat = Number(document.getElementById('propertyLat')?.value);
+  const currentLng = Number(document.getElementById('propertyLng')?.value);
+  if (Number.isFinite(currentLat) && Number.isFinite(currentLng)) {
+    setPropertyMapMarker(currentLat, currentLng);
+  } else {
+    setPropertyCoordinates(NaN, NaN);
+  }
+
   setTimeout(() => state.map?.invalidateSize(), 300);
   console.log('[AgentDashboard] Mapa inicializado:', true);
 }
@@ -1545,8 +1550,7 @@ async function loadShareInventory() {
   const properties = snapshot.docs
     .map((item) => normalizePropertyForShare(item.data(), item.id))
     .filter((property) => property.status === 'available')
-    .filter((property) => isPublicProperty(property) || ownsProperty(property, state.user))
-    .filter((property) => !['rejected', 'archived'].includes(getPublicationStatus(property)));
+    .filter((property) => ownsProperty(property, state.user));
 
   state.sharedInventory = properties;
   console.log('[AgentDashboard] Listas compartidas cargadas. Inventario disponible:', properties.length);
@@ -1691,20 +1695,54 @@ function renderSharedHistory(items = []) {
 function listenOwnSharedLists(user) {
   if (state.unsubscribeSharedLists) state.unsubscribeSharedLists();
 
-  const sharedQuery = query(
-    collection(db, 'sharedPropertyLists'),
-    where('createdByAgentId', '==', user.uid),
-    orderBy('createdAt', 'desc')
-  );
+  const queryResults = new Map();
+  const queryDefinitions = [['createdByAgentId', user.uid]];
+  if (user.email) {
+    queryDefinitions.push(
+      ['createdByAgentEmail', user.email],
+      ['agentEmail', user.email],
+      ['createdByEmail', user.email]
+    );
+  }
 
-  state.unsubscribeSharedLists = onSnapshot(sharedQuery, (snapshot) => {
-    const lists = snapshot.docs.map((entry) => ({ id: entry.id, ...entry.data() }));
+  const uniqueQueries = queryDefinitions.filter(([field, value], index, all) => (
+    value && all.findIndex(([otherField, otherValue]) => otherField === field && otherValue === value) === index
+  ));
+
+  const renderMergedLists = () => {
+    const merged = new Map();
+    queryResults.forEach((result) => {
+      result.forEach((list, listId) => merged.set(listId, list));
+    });
+    const lists = Array.from(merged.values()).sort((a, b) => {
+      const dateA = a.updatedAt?.toMillis?.() || a.createdAt?.toMillis?.() || 0;
+      const dateB = b.updatedAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0;
+      return dateB - dateA;
+    });
     console.log('[AgentDashboard] Listas compartidas cargadas:', lists.length);
     renderSharedHistory(lists);
-  }, (error) => {
-    console.warn('[AgentDashboard] No se pudieron cargar listas compartidas.', error);
-    renderSharedHistory([]);
+  };
+
+  const unsubscribers = uniqueQueries.map(([field, value]) => {
+    const queryKey = `${field}:${value}`;
+    return onSnapshot(
+      query(collection(db, 'sharedPropertyLists'), where(field, '==', value)),
+      (snapshot) => {
+        const matches = new Map();
+        snapshot.docs.forEach((entry) => matches.set(entry.id, { id: entry.id, ...entry.data() }));
+        queryResults.set(queryKey, matches);
+        renderMergedLists();
+      },
+      (error) => {
+        console.warn(`[AgentDashboard] No se pudieron cargar listas compartidas por ${field}.`, error);
+        queryResults.set(queryKey, new Map());
+        renderMergedLists();
+      }
+    );
   });
+
+  state.unsubscribeSharedLists = () => unsubscribers.forEach((unsubscribe) => unsubscribe());
+  renderSharedHistory([]);
 }
 
 function bindSharedListModule() {
@@ -1723,6 +1761,7 @@ function updateLayoutForAuth(user) {
 
 function bindAuthControls() {
   const authBox = document.getElementById('agentAuthBox');
+  if (!authBox) return;
 
   onAuthStateChanged(auth, async (user) => {
     state.user = user;

@@ -11,14 +11,7 @@ import {
 const imageUtils = window.inmoImageUtils || {};
 const propertyUtils = window.inmoPropertyUtils || {};
 
-function isPropertyPublic(property = {}) {
-  if (property.publicationStatus === 'approved' && property.publicVisible === true) {
-    return true;
-  }
-
-  const isLegacy = property.publicationStatus === undefined && property.publicVisible === undefined;
-  return isLegacy;
-}
+const isPublicProperty = window.inmoPublicPropertyFilter.isPublicProperty;
 
 
 function getTokenFromUrl() {
@@ -98,7 +91,7 @@ async function loadPropertiesByIds(ids = []) {
       const snap = await getDoc(doc(db, 'properties', propertyId));
       if (!snap.exists()) continue;
       const data = snap.data();
-      if (isPropertyPublic(data)) loaded.push(normalizeProperty(data, snap.id));
+      if (isPublicProperty(data)) loaded.push(normalizeProperty(data, snap.id));
     } catch (error) {
       console.warn('Propiedad compartida no disponible públicamente:', propertyId, error);
     }

@@ -7,15 +7,7 @@ const formatPricePerArea = (value, unit) => propertyUtils.formatPricePerArea ? p
 const calculatePricePerArea = (price, area) => propertyUtils.calculatePricePerArea ? propertyUtils.calculatePricePerArea(price, area) : NaN;
 const getAreaDisplay = (property = {}) => propertyUtils.getAreaDisplay ? propertyUtils.getAreaDisplay(property) : `${property.area || 0} m²`;
 
-function isPropertyPublic(property = {}) {
-  if (property.publicationStatus === 'approved' && property.publicVisible === true) {
-    return true;
-  }
-
-  return property.publicationStatus === undefined && property.publicVisible === undefined;
-}
-
-
+const isPublicProperty = window.inmoPublicPropertyFilter.isPublicProperty;
 const socialIcons = {
   instagram: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2Zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.5a4.25 4.25 0 0 0 4.25 4.25h8.5a4.25 4.25 0 0 0 4.25-4.25v-8.5a4.25 4.25 0 0 0-4.25-4.25h-8.5Zm8.9 2.35a1.15 1.15 0 1 1 0 2.3 1.15 1.15 0 0 1 0-2.3ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 1.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/></svg>',
   facebook: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.7 22v-8.2h2.76l.41-3.2H13.7V8.56c0-.93.26-1.56 1.6-1.56h1.7V4.14A22.8 22.8 0 0 0 14.52 4c-2.45 0-4.14 1.5-4.14 4.24v2.36H7.6v3.2h2.78V22h3.32Z"/></svg>',
@@ -211,7 +203,7 @@ async function loadAgentProfile() {
     const propertiesSnapshot = await client.db.collection('properties').get();
     const properties = propertiesSnapshot.docs
       .map((doc) => ({ ...doc.data(), id: doc.id }))
-      .filter((property) => isPropertyPublic(property) && property.agentId === agentId);
+      .filter((property) => isPublicProperty(property) && property.agentId === agentId);
 
     status.textContent = 'Perfil cargado correctamente.';
     renderAgentProfile(agentDoc.data(), properties);
