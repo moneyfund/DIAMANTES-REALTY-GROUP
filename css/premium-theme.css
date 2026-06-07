@@ -780,3 +780,30 @@ a:hover { color: var(--color-accent) !important; }
 .home-page .hero .hero-advisor-button:focus-visible {
   color: #d4af37 !important;
 }
+
+/* Hero search primary button: fixed premium gold in light and dark modes */
+.home-page .hero-search-content .premium-search .hero-search-submit,
+.home-page .hero-search-content .premium-search .hero-search-submit:visited,
+body.dark .home-page .hero-search-content .premium-search .hero-search-submit,
+body.dark-mode .home-page .hero-search-content .premium-search .hero-search-submit,
+[data-theme="dark"] .home-page .hero-search-content .premium-search .hero-search-submit,
+body:not(.dark):not(.dark-mode) .home-page .hero-search-content .premium-search .hero-search-submit {
+  background: #d4af37 !important;
+  background-color: #d4af37 !important;
+  color: #07162f !important;
+  border-color: #d4af37 !important;
+}
+
+.home-page .hero-search-content .premium-search .hero-search-submit:hover,
+.home-page .hero-search-content .premium-search .hero-search-submit:focus-visible,
+body.dark .home-page .hero-search-content .premium-search .hero-search-submit:hover,
+body.dark .home-page .hero-search-content .premium-search .hero-search-submit:focus-visible,
+body.dark-mode .home-page .hero-search-content .premium-search .hero-search-submit:hover,
+body.dark-mode .home-page .hero-search-content .premium-search .hero-search-submit:focus-visible,
+[data-theme="dark"] .home-page .hero-search-content .premium-search .hero-search-submit:hover,
+[data-theme="dark"] .home-page .hero-search-content .premium-search .hero-search-submit:focus-visible {
+  background: #e3bf63 !important;
+  background-color: #e3bf63 !important;
+  color: #07162f !important;
+  border-color: #e3bf63 !important;
+}
