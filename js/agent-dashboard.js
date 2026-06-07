@@ -20,8 +20,56 @@ import {
 } from './firebase-services.js';
 import { uploadImage, uploadLegalDocument, validateLegalPdf, deleteStorageFile } from './storage-helpers.js';
 
-const imageUtils = window.inmoImageUtils;
+const fallbackImageUtils = {
+  PLACEHOLDER: 'assets/placeholder.svg',
+  isValidHttpUrl(value = '') {
+    try {
+      const parsed = new URL(String(value || '').trim());
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch (error) {
+      return false;
+    }
+  },
+  normalizeImageList(values = []) {
+    const unique = new Set();
+    return (Array.isArray(values) ? values : [values])
+      .map((item) => String(item || '').trim())
+      .filter((item) => {
+        if (!item || unique.has(item) || !imageUtils.isValidHttpUrl(item)) return false;
+        unique.add(item);
+        return true;
+      });
+  },
+  getPropertyImages(property = {}) {
+    const images = imageUtils.normalizeImageList(property.images);
+    if (images.length) return images;
 
+    const cover = imageUtils.normalizeImageList([property.coverImage]);
+    if (cover.length) return cover;
+
+    return imageUtils.normalizeImageList([
+      property.image,
+      property.imagen,
+      ...(Array.isArray(property.imagenes) ? property.imagenes : [])
+    ]);
+  },
+  getCoverImage(property = {}) {
+    const images = imageUtils.getPropertyImages(property);
+    if (!images.length) return imageUtils.PLACEHOLDER;
+
+    const explicitCover = String(property.coverImage || '').trim();
+    return images.includes(explicitCover) ? explicitCover : images[0];
+  }
+};
+
+const imageUtils = {
+  ...fallbackImageUtils,
+  ...(window.inmoImageUtils || {})
+};
+
+if (!window.inmoImageUtils) {
+  window.inmoImageUtils = imageUtils;
+}
 const state = {
   user: null,
   unsubscribeProperties: null,
@@ -77,7 +125,9 @@ function getPublicationStatus(property = {}) {
   return property.publicVisible === true ? 'approved' : 'pending_review';
 }
 
-const isPublicProperty = window.inmoPublicPropertyFilter.isPublicProperty;
+const isPublicProperty = window.inmoPublicPropertyFilter?.isPublicProperty || function(property = {}) {
+  return property.publicationStatus === "approved" && property.publicVisible === true;
+};
 
 function isPubliclyApproved(property = {}) {
   return isPublicProperty(property);
@@ -1763,7 +1813,9 @@ function bindAuthControls() {
   const authBox = document.getElementById('agentAuthBox');
   if (!authBox) return;
 
+  console.log('[AgentDashboard] auth listener activo');
   onAuthStateChanged(auth, async (user) => {
+    console.log('[AgentDashboard] usuario:', user?.email);
     state.user = user;
     authBox.innerHTML = authMarkup(user);
     updateLayoutForAuth(user);
@@ -1892,6 +1944,10 @@ function bindLegalDocumentControls() {
 }
 
 function init() {
+  console.log('[AgentDashboard] JS cargado correctamente');
+  console.log('[AgentDashboard] init ejecutado');
+  console.log('[AgentDashboard] select tipo propiedad:', !!document.getElementById('tipo-propiedad'));
+  console.log('[AgentDashboard] mapa:', !!document.getElementById('propertyLocationMap'));
   document.getElementById('agentProfileForm')?.addEventListener('submit', saveProfile);
   document.getElementById('propertyForm')?.addEventListener('submit', saveProperty);
   document.getElementById('propertyFormReset')?.addEventListener('click', resetPropertyForm);
