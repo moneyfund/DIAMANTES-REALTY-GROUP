@@ -87,10 +87,10 @@ button,
 }
 
 .home-page .hero.premium-hero {
-  min-height: 760px;
+  min-height: 720px;
   display: flex;
   align-items: center;
-  padding: 9.5rem 0 4.5rem;
+  padding: 9rem 0 4.25rem;
 }
 
 .home-page .hero-overlay {
@@ -113,7 +113,7 @@ button,
 
 .premium-hero .hero-static-content {
   max-width: 780px;
-  gap: 0.6rem;
+  gap: 0.5rem;
 }
 
 .premium-hero .hero-static-content .eyebrow,
@@ -138,7 +138,7 @@ button,
   color: #fff !important;
   font-size: clamp(3rem, 6vw, 5.5rem) !important;
   line-height: 0.96;
-  margin: 0.25rem 0 1rem;
+  margin: 0.25rem 0 0.45rem;
 }
 
 .premium-hero .hero-static-content .hero-description {
@@ -151,7 +151,7 @@ button,
   display: flex;
   flex-wrap: wrap;
   gap: 0.8rem;
-  margin-top: 1rem;
+  margin-top: 0.15rem;
 }
 
 .premium-btn {
@@ -594,11 +594,16 @@ button,
 
   .home-page .hero.premium-hero {
     min-height: auto;
-    padding: 7.8rem 0 3.4rem;
+    padding: 7.2rem 0 3.1rem;
   }
 
   .premium-hero .hero-static-content h1 {
     font-size: clamp(2.2rem, 10vw, 3.4rem) !important;
+    margin: 0.2rem 0 0.35rem;
+  }
+
+  .premium-hero-actions {
+    margin-top: 0.1rem;
   }
 
   .premium-hero-actions,
