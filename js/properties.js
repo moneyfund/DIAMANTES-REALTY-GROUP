@@ -529,14 +529,29 @@ function renderAgentFilterBanner(agentId, agents = []) {
   banner.classList.remove('hidden');
 }
 
+function normalizeLocationSearch(value = '') {
+  return String(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
+}
+
+function propertyMatchesLocation(property, locationInput) {
+  if (!locationInput) return true;
+
+  return [property.department, property.city, property.location, property.ubicacion]
+    .some((value) => normalizeLocationSearch(value).includes(locationInput));
+}
+
 function applyFilters(properties) {
-  const locationInput = document.getElementById('filterLocation')?.value.trim().toLowerCase() || '';
+  const locationInput = normalizeLocationSearch(document.getElementById('filterLocation')?.value || '');
   const typeInput = normalizePropertyType(document.getElementById('filterType')?.value || '');
   const operationInput = normalizePropertyOperation(document.getElementById('filterOperation')?.value || '');
   const budgetInput = Number(document.getElementById('filterBudget')?.value || 0);
 
   return properties.filter((property) => {
-    const matchesLocation = !locationInput || String(property.ubicacion || '').toLowerCase().includes(locationInput);
+    const matchesLocation = propertyMatchesLocation(property, locationInput);
     const matchesType = !typeInput || normalizePropertyType(property.tipo) === typeInput;
     const matchesOperation = !operationInput || normalizePropertyOperation(property.tipoOperacion || property.operacion || property.operation) === operationInput;
     const matchesBudget = !budgetInput || Number(getPriceUsd(property) || 0) <= budgetInput;
