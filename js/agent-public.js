@@ -201,6 +201,7 @@ async function loadAgentProfile() {
 
     const propertiesSnapshot = await client.db.collection('properties')
       .where('agentId', '==', agentId)
+      .where('publicationStatus', '==', 'approved')
       .where('publicVisible', '==', true)
       .get();
     const properties = propertiesSnapshot.docs

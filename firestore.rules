@@ -11,12 +11,42 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/agents/$(request.auth.uid)).data.role == 'admin';
     }
 
-    function isOwner() {
-      return isSignedIn() && resource.data.agentId == request.auth.uid;
+    function requestEmail() {
+      return isSignedIn() && request.auth.token.email != null ? request.auth.token.email : '';
+    }
+
+    function isOwnAgentProfile(data, profileId) {
+      return isSignedIn() && (
+        profileId == request.auth.uid
+        || data.uid == request.auth.uid
+        || data.userId == request.auth.uid
+        || data.agentId == request.auth.uid
+        || (requestEmail() != '' && (data.email == requestEmail() || data.correo == requestEmail()))
+      );
+    }
+
+    function isOwnProperty(data) {
+      return isSignedIn() && (
+        data.agentId == request.auth.uid
+        || data.agenteId == request.auth.uid
+        || data.createdBy == request.auth.uid
+        || data.ownerId == request.auth.uid
+        || data.userId == request.auth.uid
+        || (requestEmail() != '' && (
+          data.agentEmail == requestEmail()
+          || data.createdByEmail == requestEmail()
+          || data.ownerEmail == requestEmail()
+          || data.createdBy == requestEmail()
+        ))
+      );
     }
 
     function isPublicProperty(data) {
-      return data.publicVisible == true;
+      return data.publicVisible == true
+        && (
+          data.publicationStatus == 'approved'
+          || !data.keys().hasAny(['publicationStatus'])
+        );
     }
 
     function isValidCommercialStatus(data) {
@@ -25,15 +55,16 @@ service cloud.firestore {
     }
 
     function agentCreateIsReviewOnly() {
-      return request.resource.data.agentId == request.auth.uid
+      return isSignedIn()
+        && request.resource.data.agentId == request.auth.uid
         && request.resource.data.publicationStatus == 'pending_review'
         && request.resource.data.publicVisible == false
         && isValidCommercialStatus(request.resource.data);
     }
 
     function agentUpdateIsAllowed() {
-      return resource.data.agentId == request.auth.uid
-        && request.resource.data.agentId == request.auth.uid
+      return isOwnProperty(resource.data)
+        && isOwnProperty(request.resource.data)
         && isValidCommercialStatus(request.resource.data)
         && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
           'approvedAt', 'approvedBy', 'rejectedAt', 'rejectedBy', 'reviewedAt'
@@ -58,17 +89,46 @@ service cloud.firestore {
 
     match /agents/{agentId} {
       allow read: if true;
-      allow create, update: if isSignedIn() && request.auth.uid == agentId;
-      allow delete: if false;
+      allow create: if isSignedIn() && (request.auth.uid == agentId || isAdmin());
+      allow update: if isSignedIn() && (request.auth.uid == agentId || isOwnAgentProfile(resource.data, agentId) || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    match /agentes/{agentId} {
+      allow get: if (isSignedIn() && request.auth.uid == agentId) || isOwnAgentProfile(resource.data, agentId) || isAdmin();
+      allow list: if isOwnAgentProfile(resource.data, agentId) || isAdmin();
+      allow create, update: if isSignedIn() && (request.auth.uid == agentId || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow get: if (isSignedIn() && request.auth.uid == userId) || isOwnAgentProfile(resource.data, userId) || isAdmin();
+      allow list: if isOwnAgentProfile(resource.data, userId) || isAdmin();
+      allow create, update: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    match /usuarios/{userId} {
+      allow get: if (isSignedIn() && request.auth.uid == userId) || isOwnAgentProfile(resource.data, userId) || isAdmin();
+      allow list: if isOwnAgentProfile(resource.data, userId) || isAdmin();
+      allow create, update: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    match /agentProfiles/{profileId} {
+      allow get: if (isSignedIn() && request.auth.uid == profileId) || isOwnAgentProfile(resource.data, profileId) || isAdmin();
+      allow list: if isOwnAgentProfile(resource.data, profileId) || isAdmin();
+      allow create, update: if isSignedIn() && (request.auth.uid == profileId || isAdmin());
+      allow delete: if isAdmin();
     }
 
     match /properties/{propertyId} {
       allow read: if isPublicProperty(resource.data)
-        || isOwner()
+        || isOwnProperty(resource.data)
         || isAdmin();
       allow create: if isSignedIn() && (isAdmin() || agentCreateIsReviewOnly());
       allow update: if isSignedIn() && (isAdmin() || agentUpdateIsAllowed());
-      allow delete: if isSignedIn() && (resource.data.agentId == request.auth.uid || isAdmin());
+      allow delete: if isSignedIn() && (isOwnProperty(resource.data) || isAdmin());
     }
 
     match /properties/{propertyId}/comments/{commentId} {
@@ -98,7 +158,6 @@ service cloud.firestore {
         && request.resource.data.userId == request.auth.uid;
       allow delete: if isSignedIn() && request.auth.uid == userId;
     }
-
 
     match /sharedPropertyLists/{listId} {
       allow read: if resource.data.status == 'active'

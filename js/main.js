@@ -519,21 +519,54 @@ function dispatchAuthStateChanged() {
   }));
 }
 
+
+function escapeHtml(value = '') {
+  return String(value || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+function getAuthDisplayName(user = {}) {
+  return user.displayName || user.email || 'Usuario';
+}
+
+function getAuthAvatar(user = {}) {
+  if (user.photoURL) return user.photoURL;
+  const initial = String(getAuthDisplayName(user)).trim().charAt(0).toUpperCase() || 'U';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><rect width="96" height="96" rx="48" fill="%231b3b2f"/><text x="50%" y="56%" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="42" font-weight="700" fill="%23d6b36a">${encodeURIComponent(initial)}</text></svg>`;
+  return `data:image/svg+xml,${svg}`;
+}
+
 function renderNavbarAuthButton() {
   if (!mainNav) return;
 
-  let actionButton = mainNav.querySelector('[data-nav-auth-action]');
-  if (!actionButton) {
-    actionButton = document.createElement('button');
-    actionButton.type = 'button';
-    actionButton.className = 'review-auth-btn review-auth-btn-outline nav-auth-action';
-    actionButton.dataset.navAuthAction = 'true';
-    mainNav.appendChild(actionButton);
+  let authContainer = mainNav.querySelector('[data-nav-auth-container]');
+  if (!authContainer) {
+    authContainer = document.createElement('div');
+    authContainer.className = 'nav-auth-container';
+    authContainer.dataset.navAuthContainer = 'true';
+    mainNav.appendChild(authContainer);
   }
 
-  if (globalAuthState.currentUser) {
-    actionButton.textContent = 'Cerrar sesión';
-    actionButton.onclick = async () => {
+  const user = globalAuthState.currentUser;
+  if (user) {
+    const displayName = getAuthDisplayName(user);
+    const email = user.email || 'Correo no disponible';
+    authContainer.innerHTML = `
+      <div class="nav-auth-session" data-nav-auth-session>
+        <img src="${getAuthAvatar(user)}" alt="Avatar de ${escapeHtml(displayName)}" referrerpolicy="no-referrer">
+        <span class="nav-auth-session__text">
+          <strong>${escapeHtml(displayName)}</strong>
+          <small>${escapeHtml(email)}</small>
+        </span>
+        <button type="button" class="review-auth-btn review-auth-btn-outline nav-auth-action" data-nav-auth-action="logout">Cerrar sesión</button>
+      </div>
+    `;
+
+    authContainer.querySelector('[data-nav-auth-action="logout"]')?.addEventListener('click', async () => {
       const client = getFirebaseClient();
       if (!client?.auth) return;
 
@@ -542,12 +575,12 @@ function renderNavbarAuthButton() {
       } catch (error) {
         console.error('No fue posible cerrar sesión.', error);
       }
-    };
+    });
     return;
   }
 
-  actionButton.textContent = 'Iniciar sesión';
-  actionButton.onclick = async () => {
+  authContainer.innerHTML = '<button type="button" class="review-auth-btn review-auth-btn-outline nav-auth-action" data-nav-auth-action="login">Iniciar sesión</button>';
+  authContainer.querySelector('[data-nav-auth-action="login"]')?.addEventListener('click', async () => {
     const client = getFirebaseClient();
     if (!client?.auth || !client?.provider) return;
 
@@ -556,7 +589,7 @@ function renderNavbarAuthButton() {
     } catch (error) {
       console.error('No fue posible iniciar sesión con Google.', error);
     }
-  };
+  });
 }
 
 function attachGlobalAuthListener() {

@@ -33,8 +33,6 @@ import {
   deleteObject
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
-const FIREBASE_APP_NAME = 'inmo-static-web';
-
 const firebaseConfig = {
   apiKey: 'AIzaSyCVL7tpUkyQWz_aVr9wFi2hrCBum2pLnPs',
   authDomain: 'inmo-nicaragua.firebaseapp.com',
@@ -47,8 +45,7 @@ const firebaseConfig = {
 
 const storageBucketUrl = `gs://${firebaseConfig.storageBucket}`;
 
-const app = getApps().find((firebaseApp) => firebaseApp.name === FIREBASE_APP_NAME)
-  || initializeApp(firebaseConfig, FIREBASE_APP_NAME);
+const app = getApps()[0] || initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const db = getFirestore(app);
