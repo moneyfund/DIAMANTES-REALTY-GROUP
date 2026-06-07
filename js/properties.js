@@ -290,6 +290,7 @@ async function loadPropertiesFromFirestore() {
   const { db, collection, getDocs, query, where } = await getModularFirestore();
   const snapshot = await getDocs(query(
     collection(db, 'properties'),
+    where('publicationStatus', '==', 'approved'),
     where('publicVisible', '==', true)
   ));
   const properties = [];
@@ -315,6 +316,7 @@ function subscribeToProperties(onUpdate) {
   if (!db) return () => {};
 
   return db.collection('properties')
+    .where('publicationStatus', '==', 'approved')
     .where('publicVisible', '==', true)
     .onSnapshot((snapshot) => {
     const properties = snapshot.docs

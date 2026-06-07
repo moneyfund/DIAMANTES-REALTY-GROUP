@@ -35,10 +35,45 @@ const state = {
   sharedInventory: [],
   agentProfile: null,
   agentProfileId: '',
+  agentProfileFound: false,
+  agentPropertiesCount: 0,
   unsubscribeSharedLists: null
 };
 
 const fallbackPhoto = imageUtils?.PLACEHOLDER || 'assets/placeholder.svg';
+
+function getUserDisplayName(user = {}) {
+  return user.displayName || user.email || 'Agente Diamantes';
+}
+
+function getInitialAvatar(user = {}) {
+  const source = getUserDisplayName(user);
+  const initial = String(source || 'A').trim().charAt(0).toUpperCase() || 'A';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><rect width="96" height="96" rx="48" fill="%231b3b2f"/><text x="50%" y="56%" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="42" font-weight="700" fill="%23d6b36a">${encodeURIComponent(initial)}</text></svg>`;
+  return `data:image/svg+xml,${svg}`;
+}
+
+function getSessionPhoto(user = {}) {
+  return user.photoURL || getInitialAvatar(user) || fallbackPhoto;
+}
+
+function renderConnectionStatus({ user = state.user, profileFound = state.agentProfileFound, propertiesCount = state.agentPropertiesCount } = {}) {
+  const box = document.getElementById('agentConnectionStatus');
+  if (!box) return;
+  box.innerHTML = `
+    <div class="dashboard-card-header">
+      <p class="dashboard-eyebrow">Diagnóstico temporal</p>
+      <h2>Estado de conexión</h2>
+    </div>
+    <dl class="connection-status-grid">
+      <div><dt>Auth</dt><dd>${user ? 'conectado' : 'no conectado'}</dd></div>
+      <div><dt>UID</dt><dd>${escapeHtml(user?.uid || '—')}</dd></div>
+      <div><dt>Email</dt><dd>${escapeHtml(user?.email || '—')}</dd></div>
+      <div><dt>Perfil encontrado</dt><dd>${profileFound ? 'sí' : 'no'}</dd></div>
+      <div><dt>Propiedades encontradas</dt><dd>${Number(propertiesCount || 0)}</dd></div>
+    </dl>
+  `;
+}
 const AGENT_DASHBOARD_DEBUG = new URLSearchParams(window.location.search).has('debugAgentDashboard')
   || window.localStorage?.getItem('debugAgentDashboard') === 'true';
 const propertyUtils = window.inmoPropertyUtils || {};
@@ -181,7 +216,7 @@ function authMarkup(user) {
     `;
   }
 
-  const displayName = user.displayName || user.email || 'Agente Diamantes';
+  const displayName = getUserDisplayName(user);
   const email = user.email || 'Correo no disponible';
   return `
     <div class="dashboard-active-session-card">
@@ -190,7 +225,7 @@ function authMarkup(user) {
         <span>Sesión activa</span>
       </div>
       <div class="dashboard-user-chip">
-        <img src="${user.photoURL || fallbackPhoto}" alt="Avatar de ${escapeHtml(displayName)}" referrerpolicy="no-referrer">
+        <img src="${getSessionPhoto(user)}" alt="Avatar de ${escapeHtml(displayName)}" referrerpolicy="no-referrer">
         <div class="dashboard-user-chip__details">
           <strong>${escapeHtml(displayName)}</strong>
           <span>${escapeHtml(email)}</span>
@@ -204,7 +239,7 @@ function authMarkup(user) {
 function getProfilePayload(user) {
   return {
     name: document.getElementById('agentName').value.trim() || user.displayName || 'Agente Diamantes Realty Group',
-    photo: document.getElementById('agentPhoto').value.trim() || user.photoURL || fallbackPhoto,
+    photo: document.getElementById('agentPhoto').value.trim() || user.photoURL || getSessionPhoto(user),
     description: document.getElementById('agentDescription').value.trim(),
     email: document.getElementById('agentEmail').value.trim() || user.email || '',
     phone: document.getElementById('agentPhone').value.trim(),
@@ -1133,60 +1168,66 @@ function normalizeComparable(value = '') {
 async function findAgentProfile(user) {
   const email = normalizeComparable(user.email);
   const candidates = [];
-  const addCandidate = (id, data, source) => {
-    if (!id || candidates.some((entry) => entry.id === id)) return;
-    candidates.push({ id, data, source });
+  const profileCollections = ['agents', 'agentes', 'users', 'usuarios', 'agentProfiles'];
+  const addCandidate = (collectionName, id, data, source) => {
+    if (!id || candidates.some((entry) => entry.collectionName === collectionName && entry.id === id)) return;
+    candidates.push({ collectionName, id, data, source });
   };
 
-  try {
-    const uidSnapshot = await getDoc(doc(db, 'agents', user.uid));
-    if (uidSnapshot.exists()) addCandidate(uidSnapshot.id, uidSnapshot.data(), 'uid-doc');
-  } catch (error) {
-    console.warn('[AgentDashboard] No se pudo cargar perfil por UID.', error);
-  }
-
-  if (user.email && user.email !== user.uid) {
+  for (const collectionName of profileCollections) {
     try {
-      const emailDoc = await getDoc(doc(db, 'agents', user.email));
-      if (emailDoc.exists()) addCandidate(emailDoc.id, emailDoc.data(), 'email-doc');
+      const uidSnapshot = await getDoc(doc(db, collectionName, user.uid));
+      if (uidSnapshot.exists()) addCandidate(collectionName, uidSnapshot.id, uidSnapshot.data(), `${collectionName}:uid-doc`);
     } catch (error) {
-      console.warn('[AgentDashboard] No se pudo cargar perfil por documento email.', error);
+      console.warn(`[AgentDashboard] No se pudo cargar perfil por UID en ${collectionName}.`, error);
+    }
+
+    if (user.email && user.email !== user.uid) {
+      try {
+        const emailSnapshot = await getDocs(query(collection(db, collectionName), where('email', '==', user.email)));
+        emailSnapshot.docs.forEach((entry) => addCandidate(collectionName, entry.id, entry.data(), `${collectionName}:email-field`));
+      } catch (error) {
+        console.warn(`[AgentDashboard] No se pudo consultar perfil por email en ${collectionName}.`, error);
+      }
+
+      try {
+        const correoSnapshot = await getDocs(query(collection(db, collectionName), where('correo', '==', user.email)));
+        correoSnapshot.docs.forEach((entry) => addCandidate(collectionName, entry.id, entry.data(), `${collectionName}:correo-field`));
+      } catch (error) {
+        console.warn(`[AgentDashboard] No se pudo consultar perfil por correo en ${collectionName}.`, error);
+      }
     }
 
     try {
-      const emailSnapshot = await getDocs(query(collection(db, 'agents'), where('email', '==', user.email)));
-      emailSnapshot.docs.forEach((entry) => addCandidate(entry.id, entry.data(), 'email-field'));
+      const uidFieldSnapshot = await getDocs(query(collection(db, collectionName), where('uid', '==', user.uid)));
+      uidFieldSnapshot.docs.forEach((entry) => addCandidate(collectionName, entry.id, entry.data(), `${collectionName}:uid-field`));
     } catch (error) {
-      console.warn('[AgentDashboard] No se pudo consultar perfil por email.', error);
+      console.warn(`[AgentDashboard] No se pudo consultar perfil por campo UID en ${collectionName}.`, error);
     }
   }
 
-  try {
-    const uidFieldSnapshot = await getDocs(query(collection(db, 'agents'), where('uid', '==', user.uid)));
-    uidFieldSnapshot.docs.forEach((entry) => addCandidate(entry.id, entry.data(), 'uid-field'));
-  } catch (error) {
-    console.warn('[AgentDashboard] No se pudo consultar perfil por campo UID.', error);
-  }
-
-  const selected = candidates.find((entry) => entry.id === user.uid)
-    || candidates.find((entry) => normalizeComparable(entry.data?.email) === email)
+  const selected = candidates.find((entry) => entry.collectionName === 'agents' && entry.id === user.uid)
+    || candidates.find((entry) => entry.collectionName === 'agents' && normalizeComparable(entry.data?.email || entry.data?.correo) === email)
+    || candidates.find((entry) => normalizeComparable(entry.data?.email || entry.data?.correo) === email)
     || candidates[0]
-    || { id: user.uid, data: {}, source: 'auth-fallback' };
+    || { collectionName: 'agents', id: user.uid, data: {}, source: 'auth-fallback' };
 
   debugAgentDashboard('Resultado de búsqueda de perfil.', {
     selectedProfileId: selected.id,
     source: selected.source,
-    matches: candidates.map((entry) => ({ id: entry.id, source: entry.source }))
+    collectionName: selected.collectionName,
+    matches: candidates.map((entry) => ({ id: entry.id, collectionName: entry.collectionName, source: entry.source }))
   });
 
   return selected;
 }
-
-async function loadProfile(user) {
-  const { id, data: profile } = await findAgentProfile(user);
+async function loadAgentProfile(user) {
+  const { collectionName, id, data: profile, source } = await findAgentProfile(user);
+  const profileFound = source !== 'auth-fallback';
+  const writableProfileId = collectionName === 'agents' ? id : user.uid;
 
   document.getElementById('agentName').value = profile.name || profile.nombre || user.displayName || '';
-  document.getElementById('agentPhoto').value = profile.photo || profile.photoURL || profile.foto || user.photoURL || '';
+  document.getElementById('agentPhoto').value = profile.photo || profile.photoURL || profile.foto || user.photoURL || getSessionPhoto(user);
   document.getElementById('agentDescription').value = profile.description || profile.descripcion || profile.bio || '';
   document.getElementById('agentEmail').value = profile.email || profile.correo || user.email || '';
   document.getElementById('agentPhone').value = profile.phone || profile.telefono || profile.tel || '';
@@ -1196,8 +1237,22 @@ async function loadProfile(user) {
   document.getElementById('agentWhatsapp').value = profile.whatsapp || profile.whatsApp || '';
   const responsibleAgent = document.getElementById('propertyAgentName');
   if (responsibleAgent && !responsibleAgent.value) responsibleAgent.value = profile.name || profile.nombre || user.displayName || '';
-  state.agentProfile = profile;
-  state.agentProfileId = id;
+  state.agentProfile = {
+    ...profile,
+    name: profile.name || profile.nombre || user.displayName || user.email || 'Agente Diamantes',
+    email: profile.email || profile.correo || user.email || '',
+    photo: profile.photo || profile.photoURL || profile.foto || user.photoURL || getSessionPhoto(user)
+  };
+  state.agentProfileId = writableProfileId;
+  state.agentProfileFound = profileFound;
+  renderConnectionStatus();
+  if (!profileFound) {
+    setMessage('No se encontró perfil profesional completo para este agente. Puedes completar y guardar tu perfil con los datos de Google precargados.', 'info');
+  }
+}
+
+async function loadProfile(user) {
+  return loadAgentProfile(user);
 }
 
 function ownsProperty(property = {}, user = state.user) {
@@ -1210,9 +1265,13 @@ function ownsProperty(property = {}, user = state.user) {
 
   return property.agentId === user.uid
     || property.agenteId === user.uid
+    || property.createdBy === user.uid
+    || property.ownerId === user.uid
+    || property.userId === user.uid
     || createdBy === normalizeComparable(user.uid)
     || (!!email && (
       normalizeComparable(property.agentEmail) === email
+      || normalizeComparable(property.createdByEmail) === email
       || normalizeComparable(property.ownerEmail) === email
       || createdBy === email
     ))
@@ -1254,26 +1313,27 @@ function sortPropertiesForDashboard(properties = []) {
   });
 }
 
-function listenOwnProperties(user) {
+function loadAgentProperties(user) {
   if (state.unsubscribeProperties) state.unsubscribeProperties();
 
   const queryResults = new Map();
   const queryDefinitions = [
     ['agentId', user.uid],
     ['agenteId', user.uid],
-    ['createdBy', user.uid]
+    ['createdBy', user.uid],
+    ['ownerId', user.uid],
+    ['userId', user.uid]
   ];
 
   if (user.email) {
     queryDefinitions.push(
       ['agentEmail', user.email],
+      ['createdByEmail', user.email],
       ['ownerEmail', user.email],
       ['createdBy', user.email]
     );
   }
 
-  const profileName = state.agentProfile?.name || user.displayName || '';
-  if (profileName) queryDefinitions.push(['agentName', profileName]);
 
   const uniqueQueries = queryDefinitions.filter(([field, value], index, all) => (
     value && all.findIndex(([otherField, otherValue]) => otherField === field && otherValue === value) === index
@@ -1308,6 +1368,8 @@ function listenOwnProperties(user) {
             return acc;
           }, {})
         });
+        state.agentPropertiesCount = properties.length;
+        renderConnectionStatus();
         renderOwnProperties(properties);
       },
       (error) => {
@@ -1317,7 +1379,13 @@ function listenOwnProperties(user) {
   });
 
   state.unsubscribeProperties = () => unsubscribers.forEach((unsubscribe) => unsubscribe());
+  state.agentPropertiesCount = 0;
+  renderConnectionStatus();
   renderOwnProperties([]);
+}
+
+function listenOwnProperties(user) {
+  return loadAgentProperties(user);
 }
 
 
@@ -1614,18 +1682,24 @@ function bindAuthControls() {
       state.sharedSelectedPropertyIds.clear();
       state.agentProfile = null;
       state.agentProfileId = '';
+      state.agentProfileFound = false;
+      state.agentPropertiesCount = 0;
+      renderConnectionStatus({ user: null, profileFound: false, propertiesCount: 0 });
       if (state.unsubscribeProperties) state.unsubscribeProperties();
       state.unsubscribeProperties = null;
       if (state.unsubscribeSharedLists) state.unsubscribeSharedLists();
       renderSharedInventory();
       renderSharedHistory([]);
+      console.log('No hay usuario autenticado');
       setMessage('Inicia sesión para administrar tu perfil y propiedades.', 'info');
       return;
     }
 
-    debugAgentDashboard('Usuario autenticado.', { uid: user.uid, email: user.email, displayName: user.displayName });
-    await loadProfile(user);
-    listenOwnProperties(user);
+    console.log('Usuario autenticado:', user.uid, user.email, user.displayName, user.photoURL);
+    debugAgentDashboard('Usuario autenticado.', { uid: user.uid, email: user.email, displayName: user.displayName, photoURL: user.photoURL });
+    renderConnectionStatus();
+    await loadAgentProfile(user);
+    await loadAgentProperties(user);
     listenOwnSharedLists(user);
     await loadShareInventory();
     setMessage('Sesión activa. Solo puedes editar tus propios datos.', 'success');

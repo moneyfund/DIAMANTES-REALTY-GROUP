@@ -53,6 +53,19 @@
       <p id="dashboardMessage" class="dashboard-message" aria-live="polite"></p>
 
       <div id="agentDashboard" class="dashboard-layout hidden">
+        <article id="agentConnectionStatus" class="dashboard-card connection-status-card" aria-live="polite">
+          <div class="dashboard-card-header">
+            <p class="dashboard-eyebrow">Diagnóstico temporal</p>
+            <h2>Estado de conexión</h2>
+          </div>
+          <dl class="connection-status-grid">
+            <div><dt>Auth</dt><dd>no conectado</dd></div>
+            <div><dt>UID</dt><dd>—</dd></div>
+            <div><dt>Email</dt><dd>—</dd></div>
+            <div><dt>Perfil encontrado</dt><dd>no</dd></div>
+            <div><dt>Propiedades encontradas</dt><dd>0</dd></div>
+          </dl>
+        </article>
         <article class="dashboard-card dashboard-profile-card">
           <div class="dashboard-card-header">
             <p class="dashboard-eyebrow">Identidad profesional</p>
