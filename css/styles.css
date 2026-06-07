@@ -61,7 +61,7 @@
   --button-bg: var(--primary-red);
   --button-hover: var(--primary-red-dark);
   --button-text: var(--text-inverse);
-  --nav-mobile-bg: rgba(211, 47, 47, 0.92);
+  --nav-mobile-bg: #f8f3ec;
   --section-banner: transparent;
   --announcement-bg: var(--section-dark);
   --surface-overlay: rgba(255, 255, 255, 0.08);
@@ -117,7 +117,7 @@ body.dark-mode,
   --button-bg: var(--primary-red);
   --button-hover: var(--primary-red-dark);
   --button-text: var(--text-inverse);
-  --nav-mobile-bg: color-mix(in srgb, var(--primary-red-dark) 82%, var(--bg-main));
+  --nav-mobile-bg: rgba(5, 5, 5, 0.98);
   --section-banner: linear-gradient(120deg, var(--bg-main), var(--primary-red-dark));
   --announcement-bg: linear-gradient(90deg, var(--primary-red), var(--primary-red-dark));
   --surface-overlay: rgba(255, 255, 255, 0.1);
@@ -2318,7 +2318,7 @@ body.dark-mode {
   --shadow-card-hover: 0 14px 28px rgba(0, 0, 0, 0.5);
   --header-border: rgba(255, 255, 255, 0.05);
   --header-scrolled: rgba(26, 15, 15, 0.9);
-  --nav-mobile-bg: rgba(26, 15, 15, 0.96);
+  --nav-mobile-bg: rgba(5, 5, 5, 0.98);
   --input-bg: #241212;
 }
 
@@ -2840,7 +2840,7 @@ body:not(.dark):not(.dark-mode) {
   --button-bg: var(--primary-red);
   --button-hover: var(--primary-red-dark);
   --button-text: var(--text-inverse);
-  --nav-mobile-bg: rgba(211, 47, 47, 0.92);
+  --nav-mobile-bg: #f8f3ec;
   --section-banner: transparent;
   --announcement-bg: var(--section-dark);
   --surface-overlay: rgba(255, 255, 255, 0.08);
@@ -8781,4 +8781,58 @@ body.dark-mode .legal-upload-dropzone {
     justify-content: space-between;
     border-radius: 18px;
   }
+}
+
+/* Final mobile navbar and hero advisor button fixes */
+@media (max-width: 900px) {
+  body:not(.dark):not(.dark-mode) .site-nav,
+  body:not(.dark):not(.dark-mode) .site-nav.open,
+  body:not(.dark):not(.dark-mode) .site-nav.active,
+  body:not(.dark):not(.dark-mode) .main-nav,
+  body:not(.dark):not(.dark-mode) .mobile-menu,
+  body:not(.dark):not(.dark-mode) .nav-menu,
+  body:not(.dark):not(.dark-mode) .nav-wrapper.menu-open {
+    background: #f8f3ec !important;
+    background-color: #f8f3ec !important;
+    border-color: rgba(7, 22, 47, 0.12) !important;
+  }
+
+  body:not(.dark):not(.dark-mode) .site-nav a,
+  body:not(.dark):not(.dark-mode) .site-nav.open a,
+  body:not(.dark):not(.dark-mode) .site-nav.active a,
+  body:not(.dark):not(.dark-mode) .main-nav a,
+  body:not(.dark):not(.dark-mode) .mobile-menu a,
+  body:not(.dark):not(.dark-mode) .nav-menu a {
+    color: #07162f !important;
+  }
+
+  body.dark .site-nav,
+  body.dark-mode .site-nav,
+  body.dark .site-nav.open,
+  body.dark-mode .site-nav.open,
+  body.dark .site-nav.active,
+  body.dark-mode .site-nav.active,
+  body.dark .main-nav,
+  body.dark-mode .main-nav,
+  body.dark .mobile-menu,
+  body.dark-mode .mobile-menu,
+  body.dark .nav-menu,
+  body.dark-mode .nav-menu,
+  body.dark .nav-wrapper.menu-open,
+  body.dark-mode .nav-wrapper.menu-open {
+    background: rgba(5, 5, 5, 0.98) !important;
+    background-color: rgba(5, 5, 5, 0.98) !important;
+  }
+}
+
+.home-page .hero .premium-btn-secondary[href*="wa.me"],
+.home-page .hero .premium-btn-secondary[href*="wa.me"]:hover,
+.home-page .hero .premium-btn-secondary[href*="wa.me"]:focus-visible,
+.home-page .hero .btn-secondary[href*="wa.me"],
+.home-page .hero .btn-secondary[href*="wa.me"]:hover,
+.home-page .hero .btn-secondary[href*="wa.me"]:focus-visible,
+.home-page .hero .hero-advisor-button,
+.home-page .hero .hero-advisor-button:hover,
+.home-page .hero .hero-advisor-button:focus-visible {
+  color: #d4af37 !important;
 }
