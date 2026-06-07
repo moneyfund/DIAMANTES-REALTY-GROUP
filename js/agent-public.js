@@ -200,13 +200,11 @@ async function loadAgentProfile() {
     }
 
     const propertiesSnapshot = await client.db.collection('properties')
-      .where('agentId', '==', agentId)
-      .where('publicationStatus', '==', 'approved')
       .where('publicVisible', '==', true)
       .get();
     const properties = propertiesSnapshot.docs
       .map((doc) => ({ ...doc.data(), id: doc.id }))
-      .filter(isPropertyPublic);
+      .filter((property) => isPropertyPublic(property) && property.agentId === agentId);
 
     status.textContent = 'Perfil cargado correctamente.';
     renderAgentProfile(agentDoc.data(), properties);
