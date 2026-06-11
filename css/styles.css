@@ -8836,3 +8836,239 @@ body.dark-mode .legal-upload-dropzone {
 .home-page .hero .hero-advisor-button:focus-visible {
   color: #d4af37 !important;
 }
+
+/* Diamantes Realty Group visual identity update: institutional red actions + graphite dark mode. */
+:root {
+  --brand-red: #B00008;
+  --brand-red-hover: #C51A22;
+  --brand-red-active: #930006;
+  --premium-dark-gradient: linear-gradient(180deg, #181818 0%, #222222 50%, #2A2A2A 100%);
+  --primary-red: var(--brand-red);
+  --primary-red-dark: var(--brand-red-active);
+  --primary-red-soft: var(--brand-red-hover);
+  --primary-red-fixed: var(--brand-red);
+  --accent-primary: var(--brand-red);
+  --accent-strong: var(--brand-red-active);
+  --accent-strong-hover: var(--brand-red-hover);
+  --accent-gold: var(--brand-red);
+  --accent-gold-soft: var(--brand-red-hover);
+  --accent-gold-bright: var(--brand-red-hover);
+  --diamond-red: var(--brand-red);
+  --button-bg: var(--brand-red);
+  --button-hover: var(--brand-red-hover);
+  --button-text: #ffffff;
+  --color-brand-red: var(--brand-red);
+  --color-brand-gold: var(--brand-red);
+  --premium-accent: var(--brand-red);
+  --luxury-gold: var(--brand-red);
+  --luxury-gold-soft: rgba(176, 0, 8, 0.18);
+}
+
+body.dark,
+body.dark-mode,
+[data-theme="dark"] {
+  --bg-main: #181818;
+  --bg-secondary: #222222;
+  --section-dark: #181818;
+  --bg-card: #242424;
+  --card-bg: #242424;
+  --text-main: #F5F5F5;
+  --text-secondary: #D4D4D4;
+  --text-inverse: #ffffff;
+  --text-strong: #ffffff;
+  --accent-primary: var(--brand-red);
+  --accent-strong: var(--brand-red-active);
+  --accent-strong-hover: var(--brand-red-hover);
+  --button-bg: var(--brand-red);
+  --button-hover: var(--brand-red-hover);
+  --button-text: #ffffff;
+  --header-scrolled: rgba(24, 24, 24, 0.88);
+  --nav-mobile-bg: rgba(24, 24, 24, 0.98);
+  --glass-card: rgba(34, 34, 34, 0.86);
+  --glass-card-strong: rgba(42, 42, 42, 0.94);
+  --glass-border: rgba(255, 255, 255, 0.16);
+  --glass-border-strong: rgba(255, 255, 255, 0.24);
+}
+
+body.dark,
+body.dark-mode,
+[data-theme="dark"] {
+  background: var(--premium-dark-gradient) !important;
+  color: var(--text-main) !important;
+}
+
+body.dark main,
+body.dark-mode main,
+[data-theme="dark"] main,
+body.dark .main,
+body.dark-mode .main,
+body.dark section,
+body.dark-mode section,
+body.dark .section,
+body.dark-mode .section,
+body.dark .premium-gradient-bg,
+body.dark-mode .premium-gradient-bg,
+body.dark .premium-stats-section,
+body.dark-mode .premium-stats-section,
+body.dark .premium-services-section,
+body.dark-mode .premium-services-section,
+body.dark .premium-trust-section,
+body.dark-mode .premium-trust-section,
+body.dark .home-matched-properties,
+body.dark-mode .home-matched-properties,
+body.dark .education-main,
+body.dark-mode .education-main,
+body.dark .section-properties,
+body.dark-mode .section-properties,
+body.dark .agent-dashboard-hero,
+body.dark-mode .agent-dashboard-hero,
+body.dark .agent-dashboard-shell,
+body.dark-mode .agent-dashboard-shell {
+  background: var(--premium-dark-gradient) !important;
+  color: var(--text-main) !important;
+}
+
+body.dark .dashboard-card,
+body.dark-mode .dashboard-card,
+body.dark .dashboard-auth-box,
+body.dark-mode .dashboard-auth-box,
+body.dark .legal-document-card,
+body.dark-mode .legal-document-card,
+body.dark .shared-history-item,
+body.dark-mode .shared-history-item,
+body.dark .shared-select-card,
+body.dark-mode .shared-select-card,
+body.dark .property-card,
+body.dark-mode .property-card,
+body.dark .service-card,
+body.dark-mode .service-card,
+body.dark .trust-card,
+body.dark-mode .trust-card,
+body.dark .highlight-card,
+body.dark-mode .highlight-card,
+body.dark .contact-card,
+body.dark-mode .contact-card {
+  background: var(--premium-dark-gradient) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  color: var(--text-main) !important;
+}
+
+body.dark .hero-overlay,
+body.dark-mode .hero-overlay,
+body.dark .premium-hero::before,
+body.dark-mode .premium-hero::before {
+  background: linear-gradient(90deg, rgba(24, 24, 24, 0.84) 0%, rgba(34, 34, 34, 0.58) 50%, rgba(42, 42, 42, 0.2) 100%) !important;
+}
+
+.btn,
+.button,
+button[type="submit"],
+.premium-btn-primary,
+.hero-search-submit,
+.footer-cta,
+.education-cta-button,
+.btn-primary-property,
+.review-auth-btn,
+.dashboard-form-actions button:not(.button-secondary),
+#createSharedListBtn,
+.legal-document-actions button,
+.legal-document-existing > button,
+.agent-contact-button,
+.property-contact-button {
+  background: var(--brand-red) !important;
+  background-color: var(--brand-red) !important;
+  border-color: var(--brand-red) !important;
+  color: #ffffff !important;
+  box-shadow: 0 14px 30px rgba(176, 0, 8, 0.22);
+}
+
+.btn:hover,
+.button:hover,
+button[type="submit"]:hover,
+.premium-btn-primary:hover,
+.hero-search-submit:hover,
+.footer-cta:hover,
+.education-cta-button:hover,
+.btn-primary-property:hover,
+.review-auth-btn:hover,
+.dashboard-form-actions button:not(.button-secondary):hover,
+#createSharedListBtn:hover,
+.legal-document-actions button:hover,
+.legal-document-existing > button:hover,
+.agent-contact-button:hover,
+.property-contact-button:hover {
+  background: var(--brand-red-hover) !important;
+  background-color: var(--brand-red-hover) !important;
+  border-color: var(--brand-red-hover) !important;
+  color: #ffffff !important;
+}
+
+.btn:active,
+.button:active,
+button[type="submit"]:active,
+.premium-btn-primary:active,
+.hero-search-submit:active,
+.footer-cta:active,
+.education-cta-button:active,
+.btn-primary-property:active,
+.review-auth-btn:active,
+.dashboard-form-actions button:not(.button-secondary):active,
+#createSharedListBtn:active,
+.legal-document-actions button:active,
+.legal-document-existing > button:active,
+.agent-contact-button:active,
+.property-contact-button:active {
+  background: var(--brand-red-active) !important;
+  background-color: var(--brand-red-active) !important;
+  border-color: var(--brand-red-active) !important;
+  color: #ffffff !important;
+}
+
+.menu-toggle,
+.theme-toggle,
+.ghost,
+.button-secondary,
+.image-preview-actions button {
+  box-shadow: none;
+}
+
+.home-page .hero-search-content .premium-search .hero-search-submit,
+.home-page .hero-search-content .premium-search .hero-search-submit:visited,
+.home-page .premium-search .hero-search-submit,
+body.dark .home-page .hero-search-content .premium-search .hero-search-submit,
+body.dark-mode .home-page .hero-search-content .premium-search .hero-search-submit,
+[data-theme="dark"] .home-page .hero-search-content .premium-search .hero-search-submit,
+body:not(.dark):not(.dark-mode) .home-page .hero-search-content .premium-search .hero-search-submit {
+  background: var(--brand-red) !important;
+  background-color: var(--brand-red) !important;
+  color: #ffffff !important;
+  border-color: var(--brand-red) !important;
+}
+
+.home-page .hero-search-content .premium-search .hero-search-submit:hover,
+.home-page .hero-search-content .premium-search .hero-search-submit:focus-visible,
+.home-page .premium-search .hero-search-submit:hover,
+.home-page .premium-search .hero-search-submit:focus-visible,
+body.dark .home-page .hero-search-content .premium-search .hero-search-submit:hover,
+body.dark .home-page .hero-search-content .premium-search .hero-search-submit:focus-visible,
+body.dark-mode .home-page .hero-search-content .premium-search .hero-search-submit:hover,
+body.dark-mode .home-page .hero-search-content .premium-search .hero-search-submit:focus-visible,
+[data-theme="dark"] .home-page .hero-search-content .premium-search .hero-search-submit:hover,
+[data-theme="dark"] .home-page .hero-search-content .premium-search .hero-search-submit:focus-visible {
+  background: var(--brand-red-hover) !important;
+  background-color: var(--brand-red-hover) !important;
+  color: #ffffff !important;
+  border-color: var(--brand-red-hover) !important;
+}
+
+.home-page .hero .premium-btn-secondary[href*="wa.me"],
+.home-page .hero .premium-btn-secondary[href*="wa.me"]:hover,
+.home-page .hero .premium-btn-secondary[href*="wa.me"]:focus-visible,
+.home-page .hero .btn-secondary[href*="wa.me"],
+.home-page .hero .btn-secondary[href*="wa.me"]:hover,
+.home-page .hero .btn-secondary[href*="wa.me"]:focus-visible,
+.home-page .hero .hero-advisor-button,
+.home-page .hero .hero-advisor-button:hover,
+.home-page .hero .hero-advisor-button:focus-visible {
+  color: #ffffff !important;
+}

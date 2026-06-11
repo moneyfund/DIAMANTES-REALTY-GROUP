@@ -434,3 +434,53 @@ label {
   .review-detail-grid { grid-template-columns: 1fr; }
   .review-card dl div { grid-template-columns: 1fr; }
 }
+
+/* Diamantes Realty Group institutional red action identity. */
+:root {
+  --color-brand-red: #B00008;
+  --color-brand-gold: #B00008;
+  --accent: #B00008;
+  --accent-hover: #C51A22;
+  --accent-active: #930006;
+}
+
+button,
+.secondary,
+.edit-btn,
+.legal-document-actions button,
+.legal-document-existing > button {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--color-brand-white);
+}
+
+button:hover,
+.secondary:hover,
+.edit-btn:hover,
+.legal-document-actions button:hover,
+.legal-document-existing > button:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  color: var(--color-brand-white);
+}
+
+button:active,
+.secondary:active,
+.edit-btn:active,
+.legal-document-actions button:active,
+.legal-document-existing > button:active {
+  background: var(--accent-active);
+  border-color: var(--accent-active);
+  color: var(--color-brand-white);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.ghost:hover {
+  background: rgba(176, 0, 8, 0.08);
+  color: var(--accent);
+}
