@@ -87,7 +87,7 @@
     })} USD`;
   }
 
-  function formatNio(nio, decimals = 2) {
+  function formatNio(nio, decimals = 0) {
     const amount = toNumber(nio);
     if (!Number.isFinite(amount)) return '';
     return `C$${amount.toLocaleString('en-US', {
@@ -99,7 +99,13 @@
   function formatDualPrice(usd) {
     const usdAmount = toNumber(usd);
     if (!Number.isFinite(usdAmount) || usdAmount <= 0) return 'Precio no disponible';
-    return `${formatUsd(usdAmount, 0)} - ${formatNio(convertUsdToNio(usdAmount), 2)}`;
+    return `${formatUsd(usdAmount, 0)}\n${formatNio(convertUsdToNio(usdAmount), 0)}`;
+  }
+
+  function formatDualPriceMarkup(usd) {
+    const usdAmount = toNumber(usd);
+    if (!Number.isFinite(usdAmount) || usdAmount <= 0) return '<span class="price-unavailable">Precio no disponible</span>';
+    return `<span class="price-usd">${formatUsd(usdAmount, 0)}</span><span class="price-nio">${formatNio(convertUsdToNio(usdAmount), 0)}</span>`;
   }
 
   function calculatePricePerArea(priceUsd, areaValue) {
@@ -231,6 +237,7 @@
     normalizeAreaUnit,
     convertUsdToNio,
     formatDualPrice,
+    formatDualPriceMarkup,
     calculatePricePerArea,
     formatPricePerArea,
     getPriceUsd,

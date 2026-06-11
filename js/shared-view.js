@@ -59,6 +59,10 @@ function formatPrice(price = 0) {
   return propertyUtils.formatDualPrice ? propertyUtils.formatDualPrice(price) : `$${Number(price || 0).toLocaleString('en-US')} USD`;
 }
 
+function formatPriceMarkup(price = 0) {
+  return propertyUtils.formatDualPriceMarkup ? propertyUtils.formatDualPriceMarkup(price) : formatPrice(price);
+}
+
 function formatPricePerArea(price = 0, area = 0, unit = 'metros') {
   const perArea = propertyUtils.calculatePricePerArea ? propertyUtils.calculatePricePerArea(price, area) : NaN;
   return propertyUtils.formatPricePerArea ? propertyUtils.formatPricePerArea(perArea, unit) : '';
@@ -149,7 +153,7 @@ function renderSharedList(sharedList, properties) {
             <p class="badge">${formatType(property.type)} en ${formatOperation(property.operation).toLowerCase()}</p>
             <h3>${property.title}</h3>
             <p>${property.location}</p>
-            <p class="price">${formatPrice(property.price)}</p>
+            <p class="price">${formatPriceMarkup(property.price)}</p>
             <p>${formatPricePerArea(property.price, property.areaValue, property.areaUnit)}</p>
             <div class="property-meta property-meta-icons">
               ${getDisplayDetails(property).slice(0, 3).map((detail) => `<span>${detail.label}: ${detail.value}</span>`).join('')}

@@ -9072,3 +9072,64 @@ body.dark-mode .home-page .hero-search-content .premium-search .hero-search-subm
 .home-page .hero .hero-advisor-button:focus-visible {
   color: #ffffff !important;
 }
+
+/* Premium property pricing typography */
+.property-card .price,
+.property-price,
+.detail-summary-price,
+.map-preview-price,
+.shared-detail-grid .price,
+#propertiesGrid .price,
+.home-page #featuredGrid .price,
+.home-page .home-matched-properties-grid .price {
+  display: block;
+  color: #B00008 !important;
+  font-family: "Inter", "Montserrat", "Manrope", "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 2rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.5px !important;
+  line-height: 1.1 !important;
+  text-align: left;
+  white-space: pre-line;
+}
+
+.price .price-usd,
+.property-price .price-usd,
+.detail-summary-price .price-usd,
+.map-preview-price .price-usd {
+  display: block;
+  color: #B00008;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+}
+
+.price .price-nio,
+.property-price .price-nio,
+.detail-summary-price .price-nio,
+.map-preview-price .price-nio {
+  display: block;
+  color: #B00008;
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  opacity: 0.9;
+  margin-top: 0.15rem;
+}
+
+.price .price-unavailable,
+.property-price .price-unavailable,
+.detail-summary-price .price-unavailable {
+  display: block;
+  color: #B00008;
+  font-size: 1.3rem;
+  font-weight: 600;
+  line-height: 1.1;
+  opacity: 0.9;
+}
+
+.detail-summary-price {
+  margin: 0.18rem 0 0 !important;
+}

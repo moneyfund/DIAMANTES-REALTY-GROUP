@@ -93,6 +93,7 @@ const videoUtils = window.inmoVideoUtils || {};
 const normalizePropertyType = (value = '') => propertyUtils.normalizePropertyType ? propertyUtils.normalizePropertyType(value) : String(value || '').trim().toLowerCase();
 const getPropertyTypeLabel = (value = '') => propertyUtils.getPropertyTypeLabel ? propertyUtils.getPropertyTypeLabel(value) : value;
 const formatDualPrice = (usd) => propertyUtils.formatDualPrice ? propertyUtils.formatDualPrice(usd) : `$${Number(usd || 0).toLocaleString()} USD`;
+const formatDualPriceMarkup = (usd) => propertyUtils.formatDualPriceMarkup ? propertyUtils.formatDualPriceMarkup(usd) : formatDualPrice(usd);
 const calculatePricePerArea = (priceUsd, areaValue) => propertyUtils.calculatePricePerArea ? propertyUtils.calculatePricePerArea(priceUsd, areaValue) : NaN;
 const formatPricePerArea = (value, unit) => propertyUtils.formatPricePerArea ? propertyUtils.formatPricePerArea(value, unit) : '';
 
@@ -1085,7 +1086,7 @@ function propertyCard(property) {
         <p class="badge">${formatPropertyType(property.type || property.tipo)} en ${String(formatPropertyOperation(property.tipoOperacion || property.operation || property.operacion) || 'Venta').toLowerCase()}</p>
         <h3>${property.title || property.titulo || 'Propiedad'}</h3>
         <p>${property.location || property.ubicacion || ''}</p>
-        <p class="price">${formatDualPrice(property.priceUsd ?? property.price ?? property.precio)}</p>
+        <p class="price">${formatDualPriceMarkup(property.priceUsd ?? property.price ?? property.precio)}</p>
         <p>${formatPricePerArea(property.pricePerAreaUsd ?? calculatePricePerArea(property.priceUsd ?? property.price ?? property.precio, property.areaValue ?? property.area), property.areaUnit)}</p>
         <p class="property-status-tag">Estado comercial: ${statusLabel}</p>
         ${getPublicationBadgeMarkup(property)}
@@ -1563,7 +1564,7 @@ function renderSharedInventory() {
           <p class="badge">${formatPropertyType(property.type)} en ${formatPropertyOperation(property.operation).toLowerCase()}</p>
           <h3>${escapeHtml(property.title)}</h3>
           <p>${escapeHtml(property.location)}</p>
-          <p class="price">${formatDualPrice(property.price)}</p>
+          <p class="price">${formatDualPriceMarkup(property.price)}</p>
           <p>${perArea}</p>
           ${statusLabel}
         </div>
