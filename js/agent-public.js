@@ -3,6 +3,7 @@ const fallbackPhoto = imageUtils?.PLACEHOLDER || 'assets/placeholder.svg';
 const propertyUtils = window.inmoPropertyUtils || {};
 const getPropertyTypeLabel = (value = '') => propertyUtils.getPropertyTypeLabel ? propertyUtils.getPropertyTypeLabel(value) : value;
 const formatDualPrice = (usd) => propertyUtils.formatDualPrice ? propertyUtils.formatDualPrice(usd) : `$${Number(usd || 0).toLocaleString()} USD`;
+const formatDualPriceMarkup = (usd) => propertyUtils.formatDualPriceMarkup ? propertyUtils.formatDualPriceMarkup(usd) : formatDualPrice(usd);
 const formatPricePerArea = (value, unit) => propertyUtils.formatPricePerArea ? propertyUtils.formatPricePerArea(value, unit) : '';
 const calculatePricePerArea = (price, area) => propertyUtils.calculatePricePerArea ? propertyUtils.calculatePricePerArea(price, area) : NaN;
 const getAreaDisplay = (property = {}) => propertyUtils.getAreaDisplay ? propertyUtils.getAreaDisplay(property) : `${property.area || 0} m²`;
@@ -51,7 +52,7 @@ function propertyCard(property) {
         <p class="badge">${getPropertyTypeLabel(property.type || property.tipo) || 'Propiedad'}</p>
         <h3>${property.title || property.titulo || 'Propiedad'}</h3>
         <p>${property.location || property.ubicacion || ''}</p>
-        <p class="price">${formatDualPrice(property.priceUsd ?? property.price ?? property.precio)}</p>
+        <p class="price">${formatDualPriceMarkup(property.priceUsd ?? property.price ?? property.precio)}</p>
         <p>Área: ${getAreaDisplay(property)}</p>
         <p>${formatPricePerArea(property.pricePerAreaUsd ?? calculatePricePerArea(property.priceUsd ?? property.price ?? property.precio, property.areaValue ?? property.area), property.areaUnit)}</p>
         ${status === 'sold' ? '<p class="property-status-tag">VENDIDA</p>' : ''}

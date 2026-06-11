@@ -80,6 +80,7 @@ const normalizePropertyType = (value = '') => propertyUtils.normalizePropertyTyp
 const getPropertyTypeLabel = (value = '') => propertyUtils.getPropertyTypeLabel ? propertyUtils.getPropertyTypeLabel(value) : '';
 const normalizePropertyOperation = (value = '') => propertyUtils.normalizeOperation ? propertyUtils.normalizeOperation(value) : String(value || '').trim().toLowerCase();
 const formatDualPrice = (usd) => propertyUtils.formatDualPrice ? propertyUtils.formatDualPrice(usd) : `$${Number(usd || 0).toLocaleString()} USD`;
+const formatDualPriceMarkup = (usd) => propertyUtils.formatDualPriceMarkup ? propertyUtils.formatDualPriceMarkup(usd) : formatDualPrice(usd);
 const getPriceUsd = (property = {}) => propertyUtils.getPriceUsd ? propertyUtils.getPriceUsd(property) : Number(property.price ?? property.precio ?? 0);
 const getAreaDisplay = (property = {}) => propertyUtils.getAreaDisplay ? propertyUtils.getAreaDisplay(property) : `${property.area || 0} m²`;
 const getPricePerAreaUsd = (property = {}) => propertyUtils.getPricePerAreaUsd ? propertyUtils.getPricePerAreaUsd(property) : NaN;
@@ -364,7 +365,7 @@ function propertyCardTemplate(property) {
         <p class="badge">${property.typeLabel || getPropertyTypeLabel(property.tipo) || 'Propiedad'} en ${(property.operationLabel || formatPropertyOperation(property.operacion) || 'Venta').toLowerCase()}</p>
         <h3>${property.title || property.titulo}</h3>
         <p class="property-location">${locationLabel}</p>
-        <p class="price">${formatDualPrice(getPriceUsd(property))}</p>
+        <p class="price">${formatDualPriceMarkup(getPriceUsd(property))}</p>
         ${status === 'sold' ? '<p class="property-status-tag">VENDIDA</p>' : ''}
         <div class="property-meta property-meta-icons">
           ${displayDetails.map((detail) => `<span>${featureIcon(detail.icon)} ${escapeHtml(detail.value)} ${escapeHtml(detail.label).toLowerCase()}</span>`).join('')}
@@ -670,7 +671,7 @@ async function renderPropertyDetail() {
         <h1 class="detail-summary-title">${property.titulo}</h1>
         <p class="detail-summary-location">${property.ubicacion}</p>
         <p class="detail-summary-type"><strong>${property.typeLabel || getPropertyTypeLabel(property.tipo) || 'Propiedad'} en ${(property.operationLabel || formatPropertyOperation(property.operacion) || 'venta').toLowerCase()}</strong></p>
-        <p class="price detail-summary-price">${formatDualPrice(getPriceUsd(property))}</p>
+        <p class="price detail-summary-price">${formatDualPriceMarkup(getPriceUsd(property))}</p>
         <div class="property-main-actions">
           <div id="propertyLikeMount" class="property-like-mount" aria-live="polite"></div>
         </div>

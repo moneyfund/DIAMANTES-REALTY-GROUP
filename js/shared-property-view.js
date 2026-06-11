@@ -26,6 +26,10 @@ function formatPrice(price = 0) {
   return propertyUtils.formatDualPrice ? propertyUtils.formatDualPrice(price) : `$${Number(price || 0).toLocaleString('en-US')} USD`;
 }
 
+function formatPriceMarkup(price = 0) {
+  return propertyUtils.formatDualPriceMarkup ? propertyUtils.formatDualPriceMarkup(price) : formatPrice(price);
+}
+
 function formatOperation(value = '') {
   const normalized = propertyUtils.normalizeOperation ? propertyUtils.normalizeOperation(value) : String(value || '').toLowerCase();
   if (normalized === 'alquiler') return 'Renta';
@@ -107,7 +111,7 @@ function renderSharedProperty(sharedList, property) {
         <p class="badge">${formatType(property.type)} en ${formatOperation(property.operation).toLowerCase()}</p>
         <h1>${property.title}</h1>
         <p>${property.location}</p>
-        <p class="price">${formatPrice(property.price)}</p>
+        <p class="price">${formatPriceMarkup(property.price)}</p>
         <p><strong>Área:</strong> ${property.areaValue || 0} ${property.areaUnit}</p>
         <p><strong>Precio por área:</strong> ${formatPricePerArea(property.price, property.areaValue, property.areaUnit)}</p>
         <p>${property.description}</p>
