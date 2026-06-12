@@ -67,6 +67,24 @@ const imageUtils = {
   ...(window.inmoImageUtils || {})
 };
 
+const ALLOWED_AGENT_EMAILS = [
+  "norvingarcia220@gmail.com",
+  "valop27@gmail.com",
+  "dra.nazarethbravo@gmail.com",
+  "diego.valdivia.52056@gmail.com",
+  "27marvin@gmail.com",
+  "rubenn2121@gmail.com",
+  "dr.americamora@gmail.com",
+  "norlanflores3@gmail.com",
+  "amyblandon.as@gmail.com",
+  "marccenarokarel@gmail.com",
+  "caguadamuzmoreno@gmail.com",
+  "agentenorvingarcia@gmail.com",
+  "valenzuela.ing120@gmail.com"
+];
+
+const UNAUTHORIZED_AGENT_MESSAGE = 'No tienes autorización para acceder al panel privado de agentes. Contacta a la administración de Diamantes Realty Group.';
+
 if (!window.inmoImageUtils) {
   window.inmoImageUtils = imageUtils;
 }
@@ -218,6 +236,32 @@ function setMessage(message, type = 'info') {
   if (!box) return;
   box.textContent = message;
   box.dataset.type = type;
+}
+
+function getAuthorizedAgentEmail(user) {
+  const email = String(user.email || "").toLowerCase().trim();
+  return email;
+}
+
+function isAllowedAgentUser(user) {
+  return ALLOWED_AGENT_EMAILS.includes(getAuthorizedAgentEmail(user));
+}
+
+function clearAgentPrivateState() {
+  state.sharedInventory = [];
+  state.sharedSelectedPropertyIds.clear();
+  state.agentProfile = null;
+  state.agentProfileId = '';
+
+  if (state.unsubscribeProperties) state.unsubscribeProperties();
+  state.unsubscribeProperties = null;
+
+  if (state.unsubscribeSharedLists) state.unsubscribeSharedLists();
+  state.unsubscribeSharedLists = null;
+
+  renderOwnProperties([]);
+  renderSharedInventory();
+  renderSharedHistory([]);
 }
 
 function authMarkup(user) {
@@ -1103,7 +1147,10 @@ function propertyCard(property) {
 
 async function saveProfile(event) {
   event.preventDefault();
-  if (!state.user) return;
+  if (!state.user || !isAllowedAgentUser(state.user)) {
+    setMessage(UNAUTHORIZED_AGENT_MESSAGE, 'error');
+    return;
+  }
 
   const payload = { ...getProfilePayload(state.user), uid: state.user.uid };
   const profileDocId = state.agentProfileId || state.user.uid;
@@ -1115,7 +1162,11 @@ async function saveProfile(event) {
 
 async function saveProperty(event) {
   event.preventDefault();
-  if (!state.user || state.isSavingProperty) return;
+  if (!state.user || !isAllowedAgentUser(state.user)) {
+    setMessage(UNAUTHORIZED_AGENT_MESSAGE, 'error');
+    return;
+  }
+  if (state.isSavingProperty) return;
 
   const submitButton = event.submitter || document.querySelector('#propertyForm button[type="submit"]');
   const profileName = document.getElementById('agentName').value.trim() || state.user.displayName || 'Agente';
@@ -1612,7 +1663,11 @@ function generateShareToken() {
 
 async function createSharedList(event) {
   event.preventDefault();
-  if (!state.user) return;
+  if (!state.user || !isAllowedAgentUser(state.user)) {
+    setSharedFeedback(UNAUTHORIZED_AGENT_MESSAGE, 'error');
+    setMessage(UNAUTHORIZED_AGENT_MESSAGE, 'error');
+    return;
+  }
 
   if (!state.sharedSelectedPropertyIds.size) {
     setSharedFeedback('Debes seleccionar al menos una propiedad.', 'error');
@@ -1793,11 +1848,12 @@ function bindSharedListModule() {
   updateSharedCounter();
 }
 
-function updateLayoutForAuth(user) {
+function updateLayoutForAuth(isAuthorized) {
+  const shouldShowPrivatePanel = Boolean(isAuthorized);
   const dashboard = document.getElementById('agentDashboard');
-  if (dashboard) dashboard.classList.toggle('hidden', !user);
-  document.getElementById('agentPropertiesCard')?.classList.toggle('hidden', !user);
-  document.getElementById('sharedListsCard')?.classList.toggle('hidden', !user);
+  if (dashboard) dashboard.classList.toggle('hidden', !shouldShowPrivatePanel);
+  document.getElementById('agentPropertiesCard')?.classList.toggle('hidden', !shouldShowPrivatePanel);
+  document.getElementById('sharedListsCard')?.classList.toggle('hidden', !shouldShowPrivatePanel);
 }
 
 
@@ -1808,24 +1864,30 @@ function bindAuthControls() {
   console.log('[AgentDashboard] auth listener activo');
   onAuthStateChanged(auth, async (user) => {
     console.log('[AgentDashboard] usuario:', user?.email);
-    state.user = user;
     authBox.innerHTML = authMarkup(user);
-    updateLayoutForAuth(user);
 
     if (!user) {
-      state.sharedInventory = [];
-      state.sharedSelectedPropertyIds.clear();
-      state.agentProfile = null;
-      state.agentProfileId = '';
-      if (state.unsubscribeProperties) state.unsubscribeProperties();
-      state.unsubscribeProperties = null;
-      if (state.unsubscribeSharedLists) state.unsubscribeSharedLists();
-      renderSharedInventory();
-      renderSharedHistory([]);
+      state.user = null;
+      clearAgentPrivateState();
+      updateLayoutForAuth(false);
       setMessage('Inicia sesión para administrar tu perfil y propiedades.', 'info');
       return;
     }
 
+    const email = String(user.email || "").toLowerCase().trim();
+    const isAuthorized = ALLOWED_AGENT_EMAILS.includes(email);
+
+    if (!isAuthorized) {
+      state.user = null;
+      clearAgentPrivateState();
+      updateLayoutForAuth(false);
+      console.warn('[AgentDashboard] Acceso no autorizado al panel de agentes:', email);
+      setMessage(UNAUTHORIZED_AGENT_MESSAGE, 'error');
+      return;
+    }
+
+    state.user = user;
+    updateLayoutForAuth(true);
     console.log('[AgentDashboard] Usuario autenticado:', Boolean(user));
     console.log('[AgentDashboard] Email del usuario:', user.email || '');
     debugAgentDashboard('Usuario autenticado.', { uid: user.uid, email: user.email, displayName: user.displayName });
@@ -1835,12 +1897,14 @@ function bindAuthControls() {
     await loadSharedLists(user, agentProfile);
     initPropertyMap();
     setMessage('Sesión activa. Solo puedes editar tus propios datos.', 'success');
-
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) logoutBtn.addEventListener('click', () => signOut(auth));
   });
 
   authBox.addEventListener('click', async (event) => {
+    if (event.target.id === 'logoutBtn') {
+      await signOut(auth);
+      return;
+    }
+
     if (event.target.id !== 'googleLoginBtn') return;
     try {
       await signInWithPopup(auth, provider);
