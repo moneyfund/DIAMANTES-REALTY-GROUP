@@ -152,6 +152,24 @@ function isPubliclyApproved(property = {}) {
   return isPublicProperty(property);
 }
 
+function isShareableProperty(property = {}) {
+  const approved =
+    property.publicationStatus === "approved" &&
+    property.publicVisible === true;
+
+  const legacy =
+    property.publicationStatus === undefined &&
+    property.publicVisible === undefined;
+
+  const status = String(property.status || '').trim().toLowerCase();
+  const publicationStatus = String(property.publicationStatus || '').trim().toLowerCase();
+  const notArchived =
+    publicationStatus !== "archived" &&
+    !["archived", "sold", "vendida"].includes(status);
+
+  return (approved || legacy) && notArchived;
+}
+
 function getPublicationBadgeMarkup(property = {}) {
   const publicationStatus = getPublicationStatus(property);
   const label = PUBLICATION_STATUS_LABELS[publicationStatus] || 'Pendiente de revisión';
@@ -1539,8 +1557,10 @@ const listenOwnProperties = loadAgentProperties;
 function normalizePropertyForShare(data = {}, id = '') {
   const title = data.title || data.titulo || 'Propiedad';
   const location = data.location || data.ubicacion || 'Ubicación no disponible';
-  const type = normalizePropertyType(data.type || data.tipo || '');
-  const operation = (data.operation || data.operacion || data.tipoOperacion || 'venta').toLowerCase();
+  const city = data.city || data.ciudad || data.department || data.departamento || '';
+  const internalCode = data.internalCode || data.codigoInterno || data.code || data.codigo || '';
+  const type = normalizePropertyType(data.propertyType || data.type || data.tipo || '');
+  const operation = propertyUtils.normalizeOperation ? propertyUtils.normalizeOperation(data.operation || data.operacion || data.tipoOperacion || 'venta') : String(data.operation || data.operacion || data.tipoOperacion || 'venta').toLowerCase();
   const price = Number(data.priceUsd ?? data.price ?? data.precio ?? 0);
   const status = String(data.status || 'available').toLowerCase();
   const bedrooms = Number(data.bedrooms ?? data.habitaciones ?? 0);
@@ -1554,6 +1574,8 @@ function normalizePropertyForShare(data = {}, id = '') {
     ...data,
     title,
     location,
+    city,
+    internalCode,
     type,
     operation,
     price,
@@ -1583,55 +1605,107 @@ function getSharedLink(token = '') {
   return `${window.location.origin}/share.html?token=${encodeURIComponent(token)}`;
 }
 
+function normalizeFilterText(value = '') {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function matchesPriceRange(price = 0, range = '') {
+  if (!range) return true;
+  const [minValue, maxValue] = range.split('-');
+  const min = minValue ? Number(minValue) : 0;
+  const max = maxValue ? Number(maxValue) : Infinity;
+  const amount = Number(price || 0);
+  if (!Number.isFinite(amount)) return false;
+  return amount >= min && amount <= max;
+}
+
+function getSharedInventoryFilters() {
+  return {
+    operation: document.getElementById('sharedFilterOperation')?.value || '',
+    type: document.getElementById('sharedFilterType')?.value || '',
+    department: document.getElementById('sharedFilterDepartment')?.value || '',
+    price: document.getElementById('sharedFilterPrice')?.value || '',
+    term: document.getElementById('sharedInventorySearch')?.value || ''
+  };
+}
+
+function propertyMatchesSharedFilters(property = {}, filters = getSharedInventoryFilters()) {
+  const operation = propertyUtils.normalizeOperation ? propertyUtils.normalizeOperation(property.operation || '') : String(property.operation || '').toLowerCase();
+  const type = normalizePropertyType(property.propertyType || property.type || '');
+  const departmentNeedle = normalizeFilterText(filters.department);
+  const searchableLocation = normalizeFilterText(`${property.location || ''} ${property.city || ''} ${property.department || ''} ${property.departamento || ''}`);
+  const freeNeedle = normalizeFilterText(filters.term);
+  const freeSearch = normalizeFilterText(`${property.title || ''} ${property.location || ''} ${property.city || ''} ${property.department || ''} ${property.departamento || ''} ${property.internalCode || ''} ${property.codigoInterno || ''} ${property.code || ''} ${property.codigo || ''}`);
+
+  return (!filters.operation || operation === filters.operation)
+    && (!filters.type || type === filters.type)
+    && (!departmentNeedle || searchableLocation.includes(departmentNeedle))
+    && matchesPriceRange(property.price, filters.price)
+    && (!freeNeedle || freeSearch.includes(freeNeedle));
+}
+
+function updateSharedInventorySummary(visibleCount = 0) {
+  const summary = document.getElementById('sharedInventoryResultsSummary');
+  if (!summary) return;
+  const total = state.sharedInventory.length;
+  summary.textContent = `${visibleCount} de ${total} propiedades compartibles visibles · ${state.sharedSelectedPropertyIds.size} seleccionadas`;
+}
+
 function renderSharedInventory() {
   const list = document.getElementById('sharedInventoryList');
-  const search = document.getElementById('sharedInventorySearch');
   if (!list) return;
 
-  const term = String(search?.value || '').trim().toLowerCase();
-  const filtered = state.sharedInventory.filter((property) => {
-    if (!term) return true;
-    return `${property.title} ${property.location}`.toLowerCase().includes(term);
-  });
+  const filters = getSharedInventoryFilters();
+  const filtered = state.sharedInventory.filter((property) => propertyMatchesSharedFilters(property, filters));
+  updateSharedInventorySummary(filtered.length);
 
   if (!filtered.length) {
-    list.innerHTML = '<p class="empty-state">No hay propiedades que coincidan con la búsqueda.</p>';
+    list.innerHTML = '<p class="empty-state">No hay propiedades compartibles que coincidan con los filtros.</p>';
     return;
   }
 
   list.innerHTML = filtered.map((property) => {
-    const checked = state.sharedSelectedPropertyIds.has(property.id) ? 'checked' : '';
-    const statusLabel = property.status !== 'available' ? `<span class="property-status-tag">${PROPERTY_STATUS_LABELS[property.status] || property.status.toUpperCase()}</span>` : '';
+    const selected = state.sharedSelectedPropertyIds.has(property.id);
+    const statusLabel = property.status && property.status !== 'available' ? `<span class="property-status-tag">${PROPERTY_STATUS_LABELS[property.status] || property.status.toUpperCase()}</span>` : '';
     const perArea = formatPricePerArea(calculatePricePerArea(property.price, property.areaValue), property.areaUnit);
+    const detailUrl = `propiedad.html?id=${encodeURIComponent(property.id)}`;
 
     return `
-      <article class="property-card shared-select-card">
-        <label class="shared-select-checkbox">
-          <input type="checkbox" data-share-property-id="${property.id}" ${checked}>
-          <span>Seleccionar</span>
-        </label>
+      <article class="property-card shared-select-card${selected ? ' is-selected' : ''}">
         <img src="${property.coverImage || fallbackPhoto}" alt="${escapeHtml(property.title)}" loading="lazy">
         <div class="property-card-content">
           <p class="badge">${formatPropertyType(property.type)} en ${formatPropertyOperation(property.operation).toLowerCase()}</p>
           <h3>${escapeHtml(property.title)}</h3>
-          <p>${escapeHtml(property.location)}</p>
+          <p>${escapeHtml([property.location, property.city].filter(Boolean).join(' · '))}</p>
           <p class="price">${formatDualPriceMarkup(property.price)}</p>
           <p>${perArea}</p>
+          ${property.internalCode ? `<p class="shared-card-code">Código: ${escapeHtml(property.internalCode)}</p>` : ''}
           ${statusLabel}
+          <div class="shared-select-actions">
+            <button type="button" class="shared-select-button${selected ? ' is-selected' : ''}" data-share-property-id="${property.id}" aria-pressed="${selected}">
+              ${selected ? 'Seleccionada' : 'Seleccionar'}
+            </button>
+            <a class="button-outline" href="${detailUrl}" target="_blank" rel="noopener noreferrer">Ver detalle</a>
+          </div>
         </div>
       </article>
     `;
   }).join('');
 
-  list.querySelectorAll('[data-share-property-id]').forEach((input) => {
-    input.addEventListener('change', () => {
-      const propertyId = input.dataset.sharePropertyId;
+  list.querySelectorAll('[data-share-property-id]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const propertyId = button.dataset.sharePropertyId;
       if (!propertyId) return;
 
-      if (input.checked) state.sharedSelectedPropertyIds.add(propertyId);
-      else state.sharedSelectedPropertyIds.delete(propertyId);
+      if (state.sharedSelectedPropertyIds.has(propertyId)) state.sharedSelectedPropertyIds.delete(propertyId);
+      else state.sharedSelectedPropertyIds.add(propertyId);
 
       updateSharedCounter();
+      renderSharedInventory();
     });
   });
 }
@@ -1642,8 +1716,7 @@ async function loadShareInventory() {
   const snapshot = await getDocs(collection(db, 'properties'));
   const properties = snapshot.docs
     .map((item) => normalizePropertyForShare(item.data(), item.id))
-    .filter((property) => property.status === 'available')
-    .filter((property) => ownsProperty(property, state.user));
+    .filter((property) => isShareableProperty(property));
 
   state.sharedInventory = properties;
   console.log('[AgentDashboard] Listas compartidas cargadas. Inventario disponible:', properties.length);
@@ -1699,6 +1772,7 @@ async function createSharedList(event) {
     createdByAgentPhoto: profile.photo || state.user.photoURL || fallbackPhoto,
     createdByAgentEmail: profile.email || state.user.email || '',
     agentEmail: profile.email || state.user.email || '',
+    agentWhatsapp: whatsapp,
     createdByEmail: profile.email || state.user.email || '',
     createdByAgentWhatsapp: whatsapp,
     clientName: document.getElementById('sharedListClientName')?.value.trim() || '',
@@ -1844,7 +1918,18 @@ function listenOwnSharedLists(user) {
 
 function bindSharedListModule() {
   document.getElementById('sharedListForm')?.addEventListener('submit', createSharedList);
-  document.getElementById('sharedInventorySearch')?.addEventListener('input', renderSharedInventory);
+  document.getElementById('sharedInventoryFilters')?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    renderSharedInventory();
+  });
+  ['sharedFilterOperation', 'sharedFilterType', 'sharedFilterDepartment', 'sharedFilterPrice', 'sharedInventorySearch'].forEach((id) => {
+    document.getElementById(id)?.addEventListener('input', renderSharedInventory);
+    document.getElementById(id)?.addEventListener('change', renderSharedInventory);
+  });
+  document.getElementById('sharedFiltersReset')?.addEventListener('click', () => {
+    document.getElementById('sharedInventoryFilters')?.reset();
+    renderSharedInventory();
+  });
   updateSharedCounter();
 }
 

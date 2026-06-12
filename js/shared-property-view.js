@@ -13,6 +13,34 @@ const propertyUtils = window.inmoPropertyUtils || {};
 
 const isPublicProperty = window.inmoPublicPropertyFilter.isPublicProperty;
 
+function isShareableProperty(property = {}) {
+  const approved =
+    property.publicationStatus === "approved" &&
+    property.publicVisible === true;
+
+  const legacy =
+    property.publicationStatus === undefined &&
+    property.publicVisible === undefined;
+
+  const status = String(property.status || '').trim().toLowerCase();
+  const publicationStatus = String(property.publicationStatus || '').trim().toLowerCase();
+  const notArchived =
+    publicationStatus !== "archived" &&
+    !["archived", "sold", "vendida"].includes(status);
+
+  return (approved || legacy || isPublicProperty(property)) && notArchived;
+}
+
+function escapeHtml(value = '') {
+  return String(value || '').replace(/[&<>'"]/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;'
+  }[char]));
+}
+
 
 function getParams() {
   const params = new URLSearchParams(window.location.search);
@@ -64,6 +92,38 @@ async function loadSharedList(token) {
   return { id: first.id, ...first.data() };
 }
 
+async function resolveSharedAgent(sharedList = {}) {
+  const current = { ...sharedList };
+  if (current.createdByAgentName && (current.createdByAgentWhatsapp || current.createdByAgentPhone)) return current;
+
+  let agent = null;
+  const agentId = current.createdByAgentId || current.agentId || current.createdBy;
+  try {
+    if (agentId) {
+      const snap = await getDoc(doc(db, 'agents', agentId));
+      if (snap.exists()) agent = snap.data();
+    }
+
+    if (!agent && (current.createdByAgentEmail || current.agentEmail || current.createdByEmail)) {
+      const email = current.createdByAgentEmail || current.agentEmail || current.createdByEmail;
+      const agentsQuery = query(collection(db, 'agents'), where('email', '==', email));
+      const snapshot = await getDocs(agentsQuery);
+      agent = snapshot.docs[0]?.data() || null;
+    }
+  } catch (error) {
+    console.warn('No se pudo resolver el perfil del asesor de la lista compartida.', error);
+  }
+
+  return {
+    ...current,
+    createdByAgentName: current.createdByAgentName || agent?.name || 'Asesor inmobiliario',
+    createdByAgentEmail: current.createdByAgentEmail || agent?.email || current.agentEmail || current.createdByEmail || '',
+    createdByAgentPhone: current.createdByAgentPhone || agent?.phone || '',
+    createdByAgentWhatsapp: current.createdByAgentWhatsapp || agent?.whatsapp || current.agentWhatsapp || current.createdByAgentPhone || agent?.phone || '',
+    createdByAgentPhoto: current.createdByAgentPhoto || agent?.photo || 'assets/placeholder.svg'
+  };
+}
+
 function normalizeProperty(property = {}, id = '') {
   const title = property.title || property.titulo || 'Propiedad';
   const location = property.location || property.ubicacion || 'Ubicación no disponible';
@@ -98,6 +158,7 @@ function renderSharedProperty(sharedList, property) {
   if (!page) return;
 
   const contactName = sharedList.createdByAgentName || 'Asesor inmobiliario';
+  const contactEmail = sharedList.createdByAgentEmail || '';
   const contactPhone = sharedList.createdByAgentWhatsapp || sharedList.createdByAgentPhone || '';
   const contactPhoto = sharedList.createdByAgentPhoto || 'assets/placeholder.svg';
   const waLink = whatsappLink(contactPhone, `Hola ${contactName}, quiero información sobre ${property.title}.`);
@@ -105,18 +166,18 @@ function renderSharedProperty(sharedList, property) {
   page.innerHTML = `
     <div class="detail-grid shared-detail-grid">
       <section class="detail-gallery">
-        <img class="detail-gallery-main-image" src="${property.image}" alt="${property.title}" loading="lazy">
+        <img class="detail-gallery-main-image" src="${escapeHtml(property.image)}" alt="${escapeHtml(property.title)}" loading="lazy">
       </section>
       <div>
-        <p class="badge">${formatType(property.type)} en ${formatOperation(property.operation).toLowerCase()}</p>
-        <h1>${property.title}</h1>
-        <p>${property.location}</p>
+        <p class="badge">${escapeHtml(formatType(property.type))} en ${escapeHtml(formatOperation(property.operation).toLowerCase())}</p>
+        <h1>${escapeHtml(property.title)}</h1>
+        <p>${escapeHtml(property.location)}</p>
         <p class="price">${formatPriceMarkup(property.price)}</p>
         <p><strong>Área:</strong> ${property.areaValue || 0} ${property.areaUnit}</p>
         <p><strong>Precio por área:</strong> ${formatPricePerArea(property.price, property.areaValue, property.areaUnit)}</p>
-        <p>${property.description}</p>
+        <p>${escapeHtml(property.description)}</p>
         <ul class="checklist property-feature-list">
-          ${getDisplayDetails(property).map((detail) => `<li><strong>${detail.label}:</strong> ${detail.value}</li>`).join('')}
+          ${getDisplayDetails(property).map((detail) => `<li><strong>${escapeHtml(detail.label)}:</strong> ${escapeHtml(detail.value)}</li>`).join('')}
         </ul>
       </div>
     </div>
@@ -124,12 +185,13 @@ function renderSharedProperty(sharedList, property) {
     <section class="agent-card-section" aria-label="Asesor de la selección compartida">
       <h2>Tu asesor asignado</h2>
       <article class="agent-card">
-        <img src="${contactPhoto}" alt="Foto de ${contactName}" loading="lazy">
+        <img src="${escapeHtml(contactPhoto)}" alt="Foto de ${escapeHtml(contactName)}" loading="lazy">
         <div class="agent-card-content">
-          <h3>${contactName}</h3>
+          <h3>${escapeHtml(contactName)}</h3>
           <p>Contacto exclusivo de esta selección</p>
+          ${contactEmail ? `<p>${escapeHtml(contactEmail)}</p>` : ''}
           <div class="agent-card-actions">
-            <a class="button-outline" href="${waLink}" target="_blank" rel="noopener noreferrer">Contactar por WhatsApp</a>
+            <a class="button-outline" href="${waLink}" target="_blank" rel="noopener noreferrer">Contactar asesor</a>
             <a class="button-outline" href="share.html?token=${encodeURIComponent(sharedList.token)}">Volver a la lista</a>
           </div>
         </div>
@@ -164,13 +226,14 @@ async function init() {
   }
 
   const propertyData = propertySnap.data();
-  if (!isPublicProperty(propertyData)) {
+  if (!isShareableProperty(propertyData)) {
     renderUnavailable('La propiedad ya no está publicada o no está disponible.');
     return;
   }
 
+  const resolvedSharedList = await resolveSharedAgent(sharedList);
   const property = normalizeProperty(propertyData, propertySnap.id);
-  renderSharedProperty(sharedList, property);
+  renderSharedProperty(resolvedSharedList, property);
 }
 
 window.addEventListener('DOMContentLoaded', () => {

@@ -227,13 +227,76 @@
           </div>
           <p id="sharedListFeedback" class="dashboard-helper-text" aria-live="polite"></p>
         </form>
-        <div class="shared-inventory-header">
+        <div class="shared-inventory-header shared-inventory-header--stacked">
           <div>
             <p class="dashboard-eyebrow">Disponibles para compartir</p>
             <h3>Inventario disponible</h3>
+            <p class="dashboard-helper-text">Busca en todo el inventario aprobado de la correduría para armar una selección personalizada.</p>
           </div>
-          <input type="search" id="sharedInventorySearch" placeholder="Buscar por título o ubicación" />
         </div>
+        <form id="sharedInventoryFilters" class="shared-inventory-filters" role="search" aria-label="Filtros para inventario compartible">
+          <label>Tipo de operación
+            <select id="sharedFilterOperation">
+              <option value="">Todos</option>
+              <option value="venta">Venta</option>
+              <option value="alquiler">Alquiler</option>
+              <option value="venta_renta">Venta/Renta</option>
+            </select>
+          </label>
+          <label>Tipo de propiedad
+            <select id="sharedFilterType">
+              <option value="">Todos</option>
+              <option value="house">Casa</option>
+              <option value="apartment">Apartamento</option>
+              <option value="quinta">Quinta</option>
+              <option value="farm">Finca</option>
+              <option value="land">Terreno</option>
+              <option value="commercial">Local comercial</option>
+              <option value="warehouse">Bodega</option>
+              <option value="office">Oficina</option>
+              <option value="investment">Proyecto / inversión</option>
+              <option value="other">Otro</option>
+            </select>
+          </label>
+          <label>Ubicación / Departamento
+            <select id="sharedFilterDepartment">
+              <option value="">Todos los departamentos</option>
+              <option value="boaco">Boaco</option>
+              <option value="carazo">Carazo</option>
+              <option value="chinandega">Chinandega</option>
+              <option value="chontales">Chontales</option>
+              <option value="esteli">Estelí</option>
+              <option value="granada">Granada</option>
+              <option value="jinotega">Jinotega</option>
+              <option value="leon">León</option>
+              <option value="madriz">Madriz</option>
+              <option value="managua">Managua</option>
+              <option value="masaya">Masaya</option>
+              <option value="matagalpa">Matagalpa</option>
+              <option value="nueva segovia">Nueva Segovia</option>
+              <option value="rivas">Rivas</option>
+              <option value="rio san juan">Río San Juan</option>
+            </select>
+          </label>
+          <label>Rango de precio
+            <select id="sharedFilterPrice">
+              <option value="">Todos</option>
+              <option value="0-50000">Hasta $50,000</option>
+              <option value="50000-100000">$50,000 - $100,000</option>
+              <option value="100000-200000">$100,000 - $200,000</option>
+              <option value="200000-500000">$200,000 - $500,000</option>
+              <option value="500000-">Más de $500,000</option>
+            </select>
+          </label>
+          <label class="shared-inventory-filters__search">Buscador libre
+            <input type="search" id="sharedInventorySearch" placeholder="Título, ubicación, ciudad o código interno" />
+          </label>
+          <div class="shared-inventory-filters__actions">
+            <button type="submit" class="button-secondary">Buscar</button>
+            <button type="button" id="sharedFiltersReset" class="button-outline">Limpiar</button>
+          </div>
+        </form>
+        <p id="sharedInventoryResultsSummary" class="dashboard-helper-text shared-inventory-results" aria-live="polite"></p>
         <div id="sharedInventoryList" class="properties-grid"></div>
         <div class="shared-inventory-header shared-history-heading">
           <div>
