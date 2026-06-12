@@ -182,14 +182,23 @@
   }
 
   function formatDetailValue(value) {
-    if (Array.isArray(value)) return value.filter(Boolean).join(', ');
+    if (Array.isArray(value)) return value.map((item) => formatDetailValue(item)).filter(Boolean).join(', ');
     if (typeof value === 'boolean') return value ? 'Sí' : 'No';
     if (value === null || value === undefined || value === '') return '';
-    return String(value);
+    if (typeof value === 'number' && value === 0) return '';
+    const text = String(value).trim();
+    if (!text || ['null', 'undefined', 'nan'].includes(text.toLowerCase())) return '';
+    return text;
   }
 
   function getDetailValue(property = {}, key = '') {
     return property.propertyDetails?.[key] ?? property[key] ?? '';
+  }
+
+  function shouldDisplayDetailValue(value) {
+    if (!value) return false;
+    const normalized = String(value).trim().toLowerCase();
+    return !['0', '0 m²', '0 varas²', '0 manzanas', '0 hectáreas', 'null', 'undefined', 'nan'].includes(normalized);
   }
 
   function buildDisplayDetails(property = {}, fields = []) {
@@ -198,32 +207,108 @@
         const config = typeof field === 'string' ? { key: field, label: humanizeKey(field) } : field;
         const rawValue = config.value !== undefined ? config.value : getDetailValue(property, config.key);
         const value = formatDetailValue(rawValue);
-        if (!value || value === '0') return null;
+        if (!shouldDisplayDetailValue(value)) return null;
         return { label: config.label || humanizeKey(config.key), value, icon: config.icon || 'type' };
       })
       .filter(Boolean);
   }
 
+  function withUnit(key, label, icon = 'area') {
+    return {
+      key,
+      label,
+      icon,
+      value: (property = {}) => {
+        const value = getDetailValue(property, key);
+        const unit = getDetailValue(property, 'areaUnit') || property.areaUnit || '';
+        return `${formatDetailValue(value)} ${formatDetailValue(unit)}`.trim();
+      }
+    };
+  }
+
   function getPropertyDisplayDetails(property = {}) {
     const type = normalizePropertyType(property.propertyType || property.type || property.tipo || '');
-    const areaUnit = property.propertyDetails?.areaUnit || property.areaUnit || '';
     const fallbackArea = getAreaValue(property);
-    const typedArea = getDetailValue(property, type === 'house' || type === 'quinta' || type === 'land' || type === 'farm' || type === 'investment' ? 'landArea' : 'constructionArea');
-    const areaValue = typedArea || (Number.isFinite(fallbackArea) ? fallbackArea : '');
-    const commonArea = { label: 'Área', value: `${formatDetailValue(areaValue)} ${formatDetailValue(areaUnit)}`.trim(), icon: 'area' };
+    const fallbackAreaUnit = property.propertyDetails?.areaUnit || property.areaUnit || '';
+    const commonArea = {
+      label: 'Área',
+      value: `${formatDetailValue(Number.isFinite(fallbackArea) ? fallbackArea : property.area)} ${formatDetailValue(fallbackAreaUnit)}`.trim(),
+      icon: 'area'
+    };
     const definitions = {
-      house: [{ key: 'bedrooms', label: 'Habitaciones', icon: 'bedrooms' }, { key: 'bathrooms', label: 'Baños', icon: 'bathrooms' }, { key: 'constructionArea', label: 'Construcción', icon: 'area' }, { key: 'landArea', label: 'Terreno', icon: 'area' }],
-      apartment: [{ key: 'bedrooms', label: 'Habitaciones', icon: 'bedrooms' }, { key: 'bathrooms', label: 'Baños', icon: 'bathrooms' }, { key: 'constructionArea', label: 'Construcción', icon: 'area' }, { key: 'floorLevel', label: 'Piso / nivel' }],
-      quinta: [{ key: 'bedrooms', label: 'Habitaciones', icon: 'bedrooms' }, { key: 'bathrooms', label: 'Baños', icon: 'bathrooms' }, { key: 'landArea', label: 'Terreno', icon: 'area' }, { key: 'pool', label: 'Piscina' }, { key: 'potentialUse', label: 'Uso potencial' }],
-      farm: [{ key: 'totalArea', label: 'Área total', icon: 'area' }, { key: 'currentUse', label: 'Uso actual' }, { key: 'topography', label: 'Topografía' }, { key: 'waterSource', label: 'Fuente de agua' }, { key: 'electricity', label: 'Energía eléctrica' }],
-      land: [{ key: 'totalArea', label: 'Área total', icon: 'area' }, { key: 'topography', label: 'Topografía' }, { key: 'accessType', label: 'Acceso' }, { key: 'potentialUse', label: 'Uso potencial' }, { key: 'landType', label: 'Tipo de terreno' }],
-      commercial: [{ key: 'constructionArea', label: 'Construcción', icon: 'area' }, { key: 'trafficLevel', label: 'Nivel de tráfico' }, { key: 'parking', label: 'Parqueo', icon: 'parking' }, { key: 'commercialFront', label: 'Frente comercial' }],
-      warehouse: [{ key: 'constructionArea', label: 'Construcción', icon: 'area' }, { key: 'height', label: 'Altura' }, { key: 'truckAccess', label: 'Acceso camiones' }, { key: 'threePhasePower', label: 'Energía trifásica' }],
-      office: [{ key: 'constructionArea', label: 'Construcción', icon: 'area' }, { key: 'privateRooms', label: 'Ambientes privados' }, { key: 'bathrooms', label: 'Baños', icon: 'bathrooms' }, { key: 'parking', label: 'Parqueo', icon: 'parking' }],
-      investment: [{ key: 'totalArea', label: 'Área total', icon: 'area' }, { key: 'projectType', label: 'Tipo de proyecto' }, { key: 'potentialUse', label: 'Uso potencial' }, { key: 'capitalGainProjection', label: 'Plusvalía' }],
+      house: [
+        { key: 'bedrooms', label: 'Habitaciones', icon: 'bedrooms' }, { key: 'bathrooms', label: 'Baños', icon: 'bathrooms' },
+        withUnit('constructionArea', 'Área de construcción'), withUnit('landArea', 'Área de terreno'), { key: 'levels', label: 'Niveles' },
+        { key: 'garage', label: 'Garaje', icon: 'parking' }, { key: 'livingRoom', label: 'Sala' }, { key: 'diningRoom', label: 'Comedor' },
+        { key: 'kitchen', label: 'Cocina' }, { key: 'patio', label: 'Patio' }, { key: 'terrace', label: 'Terraza' },
+        { key: 'laundryArea', label: 'Área de lavado' }, { key: 'security', label: 'Seguridad' },
+        { key: 'constructionStatus', label: 'Estado de construcción' }, { key: 'furnished', label: 'Amueblada' }
+      ],
+      apartment: [
+        { key: 'bedrooms', label: 'Habitaciones', icon: 'bedrooms' }, { key: 'bathrooms', label: 'Baños', icon: 'bathrooms' },
+        withUnit('constructionArea', 'Área de construcción'), { key: 'floorLevel', label: 'Piso / nivel' }, { key: 'parking', label: 'Parqueo', icon: 'parking' },
+        { key: 'elevator', label: 'Ascensor' }, { key: 'security', label: 'Seguridad' }, { key: 'balcony', label: 'Balcón' },
+        { key: 'furnished', label: 'Amueblado' }, { key: 'maintenanceFee', label: 'Cuota de mantenimiento' }, { key: 'amenities', label: 'Amenidades' }
+      ],
+      quinta: [
+        { key: 'bedrooms', label: 'Habitaciones', icon: 'bedrooms' }, { key: 'bathrooms', label: 'Baños', icon: 'bathrooms' },
+        withUnit('constructionArea', 'Área de construcción'), withUnit('landArea', 'Área de terreno'), { key: 'areaUnit', label: 'Unidad de área', icon: 'area' },
+        { key: 'pool', label: 'Piscina' }, { key: 'gardens', label: 'Jardines' }, { key: 'socialArea', label: 'Área social' },
+        { key: 'mainHouse', label: 'Casa principal' }, { key: 'caretakerHouse', label: 'Casa de cuidador' }, { key: 'well', label: 'Pozo' },
+        { key: 'vehicleAccess', label: 'Acceso vehicular' }, { key: 'streetType', label: 'Tipo de calle' },
+        { key: 'naturalEnvironment', label: 'Entorno natural' }, { key: 'potentialUse', label: 'Uso potencial' }
+      ],
+      farm: [
+        withUnit('totalArea', 'Área total'), { key: 'areaUnit', label: 'Unidad de área', icon: 'area' }, { key: 'currentUse', label: 'Uso actual' },
+        { key: 'topography', label: 'Topografía' }, { key: 'accessType', label: 'Tipo de acceso' }, { key: 'streetType', label: 'Tipo de calle' },
+        { key: 'potableWater', label: 'Agua potable' }, { key: 'electricity', label: 'Energía eléctrica' }, { key: 'well', label: 'Pozo' },
+        { key: 'waterSource', label: 'Río / quebrada / fuente de agua' }, { key: 'fences', label: 'Cercas' }, { key: 'paddocks', label: 'Potreros' },
+        { key: 'crops', label: 'Cultivos' }, { key: 'existingInfrastructure', label: 'Infraestructura existente' },
+        { key: 'documentation', label: 'Documentación' }, { key: 'potentialUse', label: 'Potencial' }
+      ],
+      land: [
+        withUnit('totalArea', 'Área total'), { key: 'areaUnit', label: 'Unidad de área', icon: 'area' }, { key: 'landType', label: 'Tipo de terreno' },
+        { key: 'topography', label: 'Topografía' }, { key: 'landShape', label: 'Forma del terreno' }, { key: 'soilType', label: 'Tipo de suelo' },
+        { key: 'accessType', label: 'Acceso' }, { key: 'streetType', label: 'Tipo de calle' }, { key: 'availableServices', label: 'Servicios disponibles' },
+        { key: 'environment', label: 'Entorno' }, { key: 'zoneSecurity', label: 'Seguridad de la zona' }, { key: 'trafficLevel', label: 'Nivel de tráfico' },
+        { key: 'potentialUse', label: 'Uso potencial' }, { key: 'nearbyUrbanDevelopment', label: 'Desarrollo urbano cercano' },
+        { key: 'naturalResources', label: 'Recursos naturales' }, { key: 'vegetationCoverage', label: 'Cobertura vegetal' }
+      ],
+      commercial: [
+        withUnit('constructionArea', 'Área de construcción'), { key: 'bathrooms', label: 'Baños', icon: 'bathrooms' },
+        { key: 'commercialFront', label: 'Frente comercial' }, { key: 'parking', label: 'Parqueo', icon: 'parking' },
+        { key: 'trafficLevel', label: 'Nivel de tráfico' }, { key: 'streetType', label: 'Tipo de calle' }, { key: 'commercialZone', label: 'Zona comercial' },
+        { key: 'security', label: 'Seguridad' }, { key: 'internalWarehouse', label: 'Bodega interna' },
+        { key: 'basicServices', label: 'Servicios básicos' }, { key: 'permittedUse', label: 'Uso permitido' }, { key: 'idealFor', label: 'Ideal para' }
+      ],
+      warehouse: [
+        withUnit('constructionArea', 'Área de construcción'), { key: 'height', label: 'Altura' }, { key: 'truckAccess', label: 'Acceso para camiones' },
+        { key: 'internalOffices', label: 'Oficinas internas' }, { key: 'bathrooms', label: 'Baños', icon: 'bathrooms' },
+        { key: 'parking', label: 'Parqueo', icon: 'parking' }, { key: 'security', label: 'Seguridad' },
+        { key: 'threePhasePower', label: 'Energía trifásica' }, { key: 'industrialZone', label: 'Zona industrial / comercial' },
+        { key: 'constructionStatus', label: 'Estado de construcción' }
+      ],
+      office: [
+        withUnit('constructionArea', 'Área de construcción'), { key: 'privateRooms', label: 'Ambientes privados' },
+        { key: 'bathrooms', label: 'Baños', icon: 'bathrooms' }, { key: 'parking', label: 'Parqueo', icon: 'parking' },
+        { key: 'meetingRoom', label: 'Sala de reuniones' }, { key: 'reception', label: 'Recepción' }, { key: 'security', label: 'Seguridad' },
+        { key: 'elevator', label: 'Ascensor' }, { key: 'furnished', label: 'Amueblada' }, { key: 'connectivity', label: 'Internet / conectividad' },
+        { key: 'corporateLocation', label: 'Ubicación corporativa' }
+      ],
+      investment: [
+        withUnit('totalArea', 'Área total'), { key: 'areaUnit', label: 'Unidad de área', icon: 'area' }, { key: 'projectType', label: 'Tipo de proyecto' },
+        { key: 'potentialUse', label: 'Uso potencial' }, { key: 'existingPermits', label: 'Permisos existentes' },
+        { key: 'availableStudies', label: 'Estudios disponibles' }, { key: 'accesses', label: 'Accesos' }, { key: 'basicServices', label: 'Servicios básicos' },
+        { key: 'capitalGainProjection', label: 'Proyección de plusvalía' }, { key: 'mainRoadsProximity', label: 'Cercanía a vías principales' },
+        { key: 'documentation', label: 'Documentación' }, { key: 'investorIdeal', label: 'Ideal para inversionistas' }
+      ],
       other: [{ key: 'specificFeatures', label: 'Características específicas' }]
     };
-    const details = buildDisplayDetails(property, definitions[type] || [commonArea]);
+    const fields = (definitions[type] || [commonArea]).map((field) => {
+      if (field && typeof field.value === 'function') return { ...field, value: field.value(property) };
+      return field;
+    });
+    const details = buildDisplayDetails(property, fields);
     return details.length ? details : buildDisplayDetails(property, [commonArea]);
   }
 

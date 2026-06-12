@@ -9457,3 +9457,288 @@ html[data-theme="dark"] #agentsGrid .agent-social a,
     gap: 0.15rem;
   }
 }
+
+/* Public properties listing: compact entry without oversized hero */
+.properties-compact-header {
+  margin: 0 0 1.15rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid rgba(176, 0, 8, 0.12);
+}
+
+.properties-compact-header h1 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: clamp(1.45rem, 2.6vw, 2.2rem) !important;
+  line-height: 1.1;
+  color: var(--luxury-navy, #0f1f33);
+}
+
+body:not(.home-page) .section.section-properties.container {
+  margin-top: clamp(1.25rem, 3vw, 2rem);
+  padding-top: clamp(1.2rem, 3vw, 2rem) !important;
+  padding-bottom: clamp(2.5rem, 5vw, 4rem) !important;
+}
+
+/* Property detail: denser premium two-column layout */
+#propertyDetail.section.container {
+  padding-top: clamp(1.4rem, 3vw, 2.4rem);
+}
+
+.detail-grid.detail-grid--top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(340px, 0.9fr);
+  gap: clamp(1rem, 2vw, 1.5rem);
+  align-items: stretch;
+}
+
+.detail-grid--top .detail-gallery,
+.detail-grid--top .detail-summary-card {
+  min-width: 0;
+}
+
+.detail-grid--top .detail-gallery {
+  align-self: stretch;
+}
+
+.detail-grid--top .detail-gallery .gallery-viewport {
+  height: 100%;
+  min-height: clamp(360px, 46vw, 620px);
+  aspect-ratio: auto;
+}
+
+.detail-summary-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 0.68rem;
+  height: 100%;
+  padding: clamp(1rem, 2vw, 1.45rem) !important;
+}
+
+.detail-summary-card .badge {
+  align-self: flex-start;
+  margin-bottom: 0.1rem;
+}
+
+.detail-summary-title {
+  margin: 0;
+  font-size: clamp(1.65rem, 3.1vw, 2.7rem) !important;
+  line-height: 1.04;
+}
+
+.detail-summary-location,
+.detail-summary-type,
+.detail-summary-price,
+.detail-summary-metric {
+  margin: 0;
+}
+
+.detail-summary-price {
+  padding: 0.6rem 0;
+  border-top: 1px solid rgba(176, 0, 8, 0.11);
+  border-bottom: 1px solid rgba(176, 0, 8, 0.11);
+}
+
+.detail-summary-metrics {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0.1rem 0;
+}
+
+.detail-summary-metric {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.68rem 0.75rem;
+  border: 1px solid rgba(15, 31, 51, 0.08);
+  border-radius: 14px;
+  background: rgba(176, 0, 8, 0.035);
+}
+
+.detail-summary-card .property-main-actions {
+  margin: 0.1rem 0 0;
+}
+
+.property-share-panel {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: auto;
+  padding-top: 0.4rem;
+}
+
+.property-share-button,
+.property-share-options a,
+.property-share-options button {
+  min-height: 44px;
+  border: 1px solid #B00008;
+  border-radius: 999px;
+  background: transparent;
+  color: #B00008;
+  font: inherit;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.22s ease, border-color 0.22s ease, color 0.22s ease, transform 0.22s ease;
+}
+
+.property-share-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.42rem;
+  width: 100%;
+  padding: 0.72rem 1rem;
+}
+
+.property-share-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.property-share-options a,
+.property-share-options button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.58rem 0.7rem;
+  font-size: 0.86rem;
+}
+
+.property-share-button:hover,
+.property-share-button:focus-visible,
+.property-share-options a:hover,
+.property-share-options a:focus-visible,
+.property-share-options button:hover,
+.property-share-options button:focus-visible {
+  background: #930006;
+  border-color: #930006;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.property-share-feedback {
+  min-height: 1.15rem;
+  margin: 0;
+  color: #B00008;
+  font-size: 0.87rem;
+  font-weight: 700;
+}
+
+.detail-extended-card {
+  margin-top: clamp(1.2rem, 2.5vw, 1.8rem);
+  padding: clamp(1rem, 2vw, 1.5rem) !important;
+}
+
+.detail-extended-block h2 {
+  margin-bottom: 0.85rem;
+  font-size: clamp(1.35rem, 2.4vw, 2rem) !important;
+}
+
+.property-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.property-feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.62rem;
+  min-width: 0;
+  padding: 0.82rem 0.9rem;
+  border: 1px solid rgba(15, 31, 51, 0.09);
+  border-radius: 16px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(176, 0, 8, 0.035));
+  box-shadow: 0 10px 24px rgba(15, 31, 51, 0.06);
+}
+
+.property-feature-item svg {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  margin-top: 0.12rem;
+  fill: #B00008;
+}
+
+.property-feature-item span {
+  display: grid;
+  gap: 0.14rem;
+  min-width: 0;
+}
+
+.property-feature-item strong {
+  color: #111827;
+  font-size: 0.84rem;
+  line-height: 1.2;
+}
+
+.property-feature-item em {
+  color: #4b5563;
+  font-size: 0.93rem;
+  font-style: normal;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+body.dark .properties-compact-header h1,
+body.dark-mode .properties-compact-header h1,
+html[data-theme="dark"] .properties-compact-header h1 {
+  color: #ffffff;
+}
+
+body.dark .detail-summary-metric,
+body.dark-mode .detail-summary-metric,
+html[data-theme="dark"] .detail-summary-metric,
+body.dark .property-feature-item,
+body.dark-mode .property-feature-item,
+html[data-theme="dark"] .property-feature-item {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+body.dark .property-feature-item strong,
+body.dark-mode .property-feature-item strong,
+html[data-theme="dark"] .property-feature-item strong {
+  color: #ffffff;
+}
+
+body.dark .property-feature-item em,
+body.dark-mode .property-feature-item em,
+html[data-theme="dark"] .property-feature-item em {
+  color: #d8dee8;
+}
+
+@media (max-width: 980px) {
+  .detail-grid.detail-grid--top {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-grid--top .detail-gallery .gallery-viewport {
+    min-height: 0;
+    aspect-ratio: 16 / 11;
+  }
+
+  .property-share-panel {
+    margin-top: 0.25rem;
+  }
+
+  .property-feature-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  body:not(.home-page) .section.section-properties.container {
+    margin-top: 0.8rem;
+  }
+
+  .detail-summary-metric {
+    display: grid;
+  }
+
+  .property-share-options,
+  .property-feature-grid {
+    grid-template-columns: 1fr;
+  }
+}
