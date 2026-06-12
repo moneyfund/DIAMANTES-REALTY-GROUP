@@ -120,16 +120,54 @@
       </div>
     </section>
 
-    <section class="section section-properties container premium-properties-v2">
-      <div class="premium-section-heading">
+    <section class="section section-properties container premium-properties-v2 home-property-section" aria-labelledby="featuredPropertiesTitle">
+      <div class="premium-section-heading home-property-heading">
         <p class="premium-kicker">Selección exclusiva</p>
         <div>
-          <h2>Propiedades destacadas</h2>
-          <p>Oportunidades cuidadosamente presentadas para compradores, familias e inversionistas que buscan respaldo profesional.</p>
+          <h2 id="featuredPropertiesTitle">Propiedades destacadas</h2>
+          <p>Oportunidades cuidadosamente seleccionadas para compradores e inversionistas.</p>
+        </div>
+        <div class="home-property-actions">
+          <a href="propiedades.html" class="premium-text-link">Ver catálogo</a>
+          <div class="home-slider-controls" aria-label="Navegación de propiedades destacadas">
+            <button class="home-slider-button" type="button" data-featured-prev aria-label="Ver propiedades destacadas anteriores">‹</button>
+            <button class="home-slider-button" type="button" data-featured-next aria-label="Ver más propiedades destacadas">›</button>
+          </div>
+        </div>
+      </div>
+      <div id="featuredGrid" class="properties-grid premium-property-grid home-property-slider" aria-label="Propiedades destacadas"></div>
+    </section>
+
+    <section class="section section-properties container premium-properties-v2 home-property-section" id="recentPropertiesSection" aria-labelledby="recentPropertiesTitle">
+      <div class="premium-section-heading home-property-heading">
+        <p class="premium-kicker">Nuevo ingreso</p>
+        <div>
+          <h2 id="recentPropertiesTitle">Propiedades recientes</h2>
+          <p>Las últimas oportunidades agregadas a nuestro inventario.</p>
         </div>
         <a href="propiedades.html" class="premium-text-link">Ver catálogo</a>
       </div>
-      <div id="featuredGrid" class="properties-grid premium-property-grid" aria-label="Propiedades destacadas"></div>
+      <div id="recentPropertiesGrid" class="properties-grid premium-property-grid home-recent-grid" aria-label="Propiedades recientes"></div>
+      <p id="recentPropertiesEmpty" class="home-property-empty hidden">Pronto tendremos nuevas propiedades disponibles.</p>
+    </section>
+
+    <section class="section section-properties container premium-properties-v2 home-property-section" id="farmsLandSection" aria-labelledby="farmsLandTitle">
+      <div class="premium-section-heading home-property-heading">
+        <p class="premium-kicker">Tierra e inversión</p>
+        <div>
+          <h2 id="farmsLandTitle">Fincas y terrenos</h2>
+          <p>Opciones ideales para inversión, desarrollo, producción o patrimonio familiar.</p>
+        </div>
+        <div class="home-property-actions">
+          <a href="propiedades.html?tipo=land" class="premium-text-link">Ver más fincas y terrenos</a>
+          <div class="home-slider-controls" id="farmsLandSliderControls" aria-label="Navegación de fincas y terrenos">
+            <button class="home-slider-button" type="button" data-farms-land-prev aria-label="Ver fincas y terrenos anteriores">‹</button>
+            <button class="home-slider-button" type="button" data-farms-land-next aria-label="Ver más fincas y terrenos">›</button>
+          </div>
+        </div>
+      </div>
+      <div id="farmsLandGrid" class="properties-grid premium-property-grid home-farms-land-grid" aria-label="Fincas y terrenos"></div>
+      <p id="farmsLandEmpty" class="home-property-empty hidden">Pronto tendremos fincas y terrenos disponibles.</p>
     </section>
 
     <section class="section container premium-services" aria-labelledby="premiumServicesTitle">

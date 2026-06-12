@@ -395,21 +395,132 @@ function getPrimaryPropertyImage(property) {
   return primaryImage || PROPERTY_IMAGE_PLACEHOLDER;
 }
 
-function renderFeatured(properties) {
-  const featuredGrid = document.getElementById('featuredGrid');
-  if (!featuredGrid) return;
-  featuredGrid.innerHTML = properties.slice(0, 12).map(propertyCardTemplate).join('');
-  applyCardRevealAnimation(featuredGrid);
-  initializeFeaturedSlider(featuredGrid);
+function getHighlightedTags(property = {}) {
+  const tags = property.highlightedTags || property.highlightTags || property.tags || [];
+  return (Array.isArray(tags) ? tags : [tags])
+    .map((tag) => String(tag || '').trim().toLowerCase())
+    .filter(Boolean);
 }
 
-function initializeFeaturedSlider(slider) {
+function isFeaturedProperty(property = {}) {
+  if (property.featured === true || property.destacado === true) return true;
+  const highlightedTags = getHighlightedTags(property);
+  return highlightedTags.includes('exclusiva') || highlightedTags.includes('oportunidad');
+}
+
+function getPropertyTimestamp(property = {}, primaryField = 'createdAt') {
+  const candidates = primaryField === 'createdAt'
+    ? [property.createdAt, property.updatedAt]
+    : [property.updatedAt, property.createdAt];
+
+  for (const value of candidates) {
+    if (!value) continue;
+    if (typeof value.toMillis === 'function') return value.toMillis();
+    if (typeof value.seconds === 'number') return value.seconds * 1000;
+    if (typeof value === 'number') return value;
+    const parsed = Date.parse(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+
+  return 0;
+}
+
+function getRecentProperties(properties = []) {
+  return properties
+    .map((property, index) => ({ property, index, timestamp: getPropertyTimestamp(property, 'createdAt') }))
+    .sort((a, b) => {
+      if (b.timestamp !== a.timestamp) return b.timestamp - a.timestamp;
+      return a.index - b.index;
+    })
+    .map((entry) => entry.property)
+    .slice(0, 3);
+}
+
+function isFarmOrLandProperty(property = {}) {
+  const type = normalizePropertyType(property.propertyType || property.type || property.tipo || '');
+  return type === 'farm' || type === 'land';
+}
+
+function renderFeaturedSlider(properties) {
+  const featuredGrid = document.getElementById('featuredGrid');
+  if (!featuredGrid) return;
+
+  const featuredProperties = properties.filter(isFeaturedProperty);
+  const selectedProperties = (featuredProperties.length ? featuredProperties : properties).slice(0, featuredProperties.length ? 12 : 8);
+  featuredGrid.innerHTML = selectedProperties.map(propertyCardTemplate).join('');
+  applyCardRevealAnimation(featuredGrid);
+  initializeHorizontalSlider(featuredGrid, {
+    prevButton: document.querySelector('[data-featured-prev]'),
+    nextButton: document.querySelector('[data-featured-next]')
+  });
+}
+
+function renderFeatured(properties) {
+  renderFeaturedSlider(properties);
+}
+
+function renderRecentProperties(properties) {
+  const grid = document.getElementById('recentPropertiesGrid');
+  const section = document.getElementById('recentPropertiesSection');
+  const emptyState = document.getElementById('recentPropertiesEmpty');
+  if (!grid) return;
+
+  const recentProperties = getRecentProperties(properties);
+  grid.innerHTML = recentProperties.map(propertyCardTemplate).join('');
+  section?.classList.toggle('is-empty', recentProperties.length === 0);
+  emptyState?.classList.toggle('hidden', recentProperties.length !== 0);
+  applyCardRevealAnimation(grid);
+}
+
+function renderFarmsAndLand(properties) {
+  const grid = document.getElementById('farmsLandGrid');
+  const section = document.getElementById('farmsLandSection');
+  const emptyState = document.getElementById('farmsLandEmpty');
+  const controls = document.getElementById('farmsLandSliderControls');
+  if (!grid) return;
+
+  const farmsAndLand = properties.filter(isFarmOrLandProperty).slice(0, 6);
+  const useSlider = farmsAndLand.length > 3;
+
+  if (!useSlider && typeof grid._homeSliderCleanup === 'function') {
+    grid._homeSliderCleanup();
+    grid._homeSliderCleanup = null;
+  }
+
+  grid.classList.toggle('home-property-slider', useSlider);
+  grid.classList.toggle('home-farms-land-grid', !useSlider);
+  controls?.classList.toggle('hidden', !useSlider);
+  section?.classList.toggle('is-empty', farmsAndLand.length === 0);
+  emptyState?.classList.toggle('hidden', farmsAndLand.length !== 0);
+  grid.innerHTML = farmsAndLand.map(propertyCardTemplate).join('');
+  applyCardRevealAnimation(grid);
+
+  if (useSlider) {
+    initializeHorizontalSlider(grid, {
+      prevButton: document.querySelector('[data-farms-land-prev]'),
+      nextButton: document.querySelector('[data-farms-land-next]')
+    });
+    return;
+  }
+
+  const prevButton = document.querySelector('[data-farms-land-prev]');
+  const nextButton = document.querySelector('[data-farms-land-next]');
+  if (prevButton) prevButton.onclick = null;
+  if (nextButton) nextButton.onclick = null;
+}
+
+function initializeHorizontalSlider(slider, options = {}) {
   if (!slider) return;
+  if (typeof slider._homeSliderCleanup === 'function') slider._homeSliderCleanup();
 
   const cards = Array.from(slider.querySelectorAll('.property-card'));
-  const prevButton = document.querySelector('[data-featured-prev]');
-  const nextButton = document.querySelector('[data-featured-next]');
-  if (!cards.length || !prevButton || !nextButton) return;
+  const prevButton = options.prevButton || null;
+  const nextButton = options.nextButton || null;
+  if (!cards.length) {
+    prevButton?.setAttribute('disabled', '');
+    nextButton?.setAttribute('disabled', '');
+    return;
+  }
 
   const getStepSize = () => {
     const cardWidth = cards[0]?.getBoundingClientRect().width || slider.clientWidth;
@@ -420,31 +531,82 @@ function initializeFeaturedSlider(slider) {
 
   const getVisibleCount = () => {
     const rootStyles = window.getComputedStyle(slider);
-    return Number.parseInt(rootStyles.getPropertyValue('--featured-columns'), 10) || 1;
+    return Number.parseInt(rootStyles.getPropertyValue('--featured-columns'), 10)
+      || Number.parseInt(rootStyles.getPropertyValue('--home-slider-columns'), 10)
+      || 1;
+  };
+
+  const updateButtons = () => {
+    const hasOverflow = slider.scrollWidth > slider.clientWidth + 2;
+    const atStart = slider.scrollLeft <= 1;
+    const atEnd = slider.scrollLeft + slider.clientWidth >= slider.scrollWidth - 2;
+    if (prevButton) prevButton.disabled = !hasOverflow || atStart;
+    if (nextButton) nextButton.disabled = !hasOverflow || atEnd;
   };
 
   const slideBy = (direction = 1) => {
-    const step = getStepSize() * getVisibleCount() * direction;
+    const step = getStepSize() * Math.max(1, getVisibleCount()) * direction;
     slider.scrollBy({ left: step, behavior: 'smooth' });
   };
 
-  prevButton.onclick = () => slideBy(-1);
-  nextButton.onclick = () => slideBy(1);
+  if (prevButton) prevButton.onclick = () => slideBy(-1);
+  if (nextButton) nextButton.onclick = () => slideBy(1);
 
-  let pointerStartX = null;
-  slider.onpointerdown = (event) => {
-    pointerStartX = event.clientX;
+  let isDragging = false;
+  let startX = 0;
+  let startScrollLeft = 0;
+  let pointerId = null;
+
+  const handlePointerDown = (event) => {
+    if (event.button !== undefined && event.button !== 0) return;
+    isDragging = true;
+    startX = event.clientX;
+    startScrollLeft = slider.scrollLeft;
+    pointerId = event.pointerId;
+    slider.classList.add('is-dragging');
+    slider.setPointerCapture?.(event.pointerId);
   };
-  slider.onpointerup = (event) => {
-    if (pointerStartX === null) return;
-    const delta = event.clientX - pointerStartX;
-    pointerStartX = null;
-    if (Math.abs(delta) < 40) return;
-    slideBy(delta < 0 ? 1 : -1);
+
+  const handlePointerMove = (event) => {
+    if (!isDragging) return;
+    const delta = event.clientX - startX;
+    if (Math.abs(delta) > 6) event.preventDefault();
+    slider.scrollLeft = startScrollLeft - delta;
   };
-  slider.onpointercancel = () => {
-    pointerStartX = null;
+
+  const stopDragging = (event) => {
+    if (!isDragging) return;
+    isDragging = false;
+    slider.classList.remove('is-dragging');
+    if (pointerId !== null) slider.releasePointerCapture?.(pointerId);
+    pointerId = null;
+    if (Math.abs(event.clientX - startX) > 12) {
+      window.setTimeout(updateButtons, 180);
+    }
   };
+
+  slider.addEventListener('pointerdown', handlePointerDown);
+  slider.addEventListener('pointermove', handlePointerMove);
+  slider.addEventListener('pointerup', stopDragging);
+  slider.addEventListener('pointercancel', stopDragging);
+  slider.addEventListener('scroll', updateButtons, { passive: true });
+  window.addEventListener('resize', updateButtons);
+  slider._homeSliderCleanup = () => {
+    slider.removeEventListener('pointerdown', handlePointerDown);
+    slider.removeEventListener('pointermove', handlePointerMove);
+    slider.removeEventListener('pointerup', stopDragging);
+    slider.removeEventListener('pointercancel', stopDragging);
+    slider.removeEventListener('scroll', updateButtons);
+    window.removeEventListener('resize', updateButtons);
+  };
+  window.setTimeout(updateButtons, 0);
+}
+
+function initializeFeaturedSlider(slider) {
+  initializeHorizontalSlider(slider, {
+    prevButton: document.querySelector('[data-featured-prev]'),
+    nextButton: document.querySelector('[data-featured-next]')
+  });
 }
 
 function renderCategory(properties, gridId, filterFn) {
@@ -1025,7 +1187,9 @@ function renderGlobalMap(properties) {
       const marketProperties = properties.filter((property) => String(property.status || 'available').toLowerCase() !== 'sold');
       const agentFiltered = filterByAgent(marketProperties, initial.agent);
 
-      renderFeatured(marketProperties);
+      renderFeaturedSlider(marketProperties);
+      renderRecentProperties(marketProperties);
+      renderFarmsAndLand(marketProperties);
       renderTerrenos(marketProperties);
       renderAlquileres(marketProperties);
 
