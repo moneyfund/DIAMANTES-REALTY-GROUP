@@ -622,6 +622,88 @@ function buildAgentProfileUrl(agentId) {
   return `agente.html?id=${encodeURIComponent(agentId)}`;
 }
 
+function buildShareText(property = {}) {
+  const title = property.titulo || property.title || document.title || 'Propiedad';
+  return `Mira esta propiedad en Diamantes Realty Group: ${title}`;
+}
+
+function buildPropertyShareMarkup(property = {}) {
+  const currentUrl = window.location.href;
+  const encodedUrl = encodeURIComponent(currentUrl);
+  const encodedText = encodeURIComponent(buildShareText(property));
+
+  return `
+    <div class="property-share-panel" aria-label="Opciones para compartir propiedad">
+      <button class="property-share-button" type="button" data-share-property>
+        <span aria-hidden="true">↗</span> Compartir propiedad
+      </button>
+      <div class="property-share-options">
+        <a href="https://wa.me/?text=${encodedText}%20${encodedUrl}" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+        <a href="https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}" target="_blank" rel="noopener noreferrer">Facebook</a>
+        <button type="button" data-copy-property-link>Copiar enlace</button>
+      </div>
+      <p class="property-share-feedback" data-share-feedback aria-live="polite"></p>
+    </div>
+  `;
+}
+
+async function copyPropertyLink(feedbackElement) {
+  const url = window.location.href;
+
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(url);
+    } else {
+      const tempInput = document.createElement('textarea');
+      tempInput.value = url;
+      tempInput.setAttribute('readonly', '');
+      tempInput.style.position = 'fixed';
+      tempInput.style.opacity = '0';
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand('copy');
+      tempInput.remove();
+    }
+
+    if (feedbackElement) feedbackElement.textContent = 'Enlace copiado al portapapeles.';
+  } catch (error) {
+    console.error('No se pudo copiar el enlace:', error);
+    if (feedbackElement) feedbackElement.textContent = 'No se pudo copiar el enlace automáticamente.';
+  }
+}
+
+function initPropertyShare(scope = document) {
+  const shareButton = scope.querySelector('[data-share-property]');
+  const copyButton = scope.querySelector('[data-copy-property-link]');
+  const feedbackElement = scope.querySelector('[data-share-feedback]');
+
+  if (shareButton) {
+    shareButton.addEventListener('click', async () => {
+      const shareData = {
+        title: document.title,
+        text: 'Mira esta propiedad en Diamantes Realty Group',
+        url: window.location.href
+      };
+
+      if (navigator.share) {
+        try {
+          await navigator.share(shareData);
+          return;
+        } catch (error) {
+          if (error?.name === 'AbortError') return;
+          console.warn('Web Share API no disponible para esta acción:', error);
+        }
+      }
+
+      await copyPropertyLink(feedbackElement);
+    });
+  }
+
+  if (copyButton) {
+    copyButton.addEventListener('click', () => copyPropertyLink(feedbackElement));
+  }
+}
+
 async function renderPropertyDetail() {
   const detailContainer = document.getElementById('propertyDetail');
   if (!detailContainer) return;
@@ -653,6 +735,9 @@ async function renderPropertyDetail() {
   const status = String(property.status || 'available').toLowerCase();
   const detailFeatures = getPropertyDisplayDetails(property);
   const propertyVideoMarkup = buildPropertyVideoSectionMarkup(property);
+  const propertyShareMarkup = buildPropertyShareMarkup(property);
+
+  document.title = property.titulo ? `${property.titulo} | Diamantes Realty Group` : document.title;
 
   const galleryMarkup = buildGalleryControlsMarkup(galleryImages);
 
@@ -672,11 +757,14 @@ async function renderPropertyDetail() {
         <p class="detail-summary-location">${property.ubicacion}</p>
         <p class="detail-summary-type"><strong>${property.typeLabel || getPropertyTypeLabel(property.tipo) || 'Propiedad'} en ${(property.operationLabel || formatPropertyOperation(property.operacion) || 'venta').toLowerCase()}</strong></p>
         <p class="price detail-summary-price">${formatDualPriceMarkup(getPriceUsd(property))}</p>
+        <div class="detail-summary-metrics">
+          <p class="detail-summary-metric"><strong>Área:</strong> ${getAreaDisplay(property)}</p>
+          <p class="detail-summary-metric"><strong>Precio por área:</strong> ${formatPricePerArea(getPricePerAreaUsd(property), property.areaUnit)}</p>
+        </div>
         <div class="property-main-actions">
           <div id="propertyLikeMount" class="property-like-mount" aria-live="polite"></div>
         </div>
-        <p class="detail-summary-metric"><strong>Área:</strong> ${getAreaDisplay(property)}</p>
-        <p class="detail-summary-metric"><strong>Precio por área:</strong> ${formatPricePerArea(getPricePerAreaUsd(property), property.areaUnit)}</p>
+        ${propertyShareMarkup}
       </section>
     </div>
     <section class="detail-extended-card" aria-label="Información extendida de la propiedad">
@@ -686,10 +774,10 @@ async function renderPropertyDetail() {
       </div>
       <div class="detail-extended-block">
         <h2>Características de la propiedad</h2>
-        <ul class="checklist property-feature-list">
-          ${detailFeatures.map((detail) => `<li>${featureIcon(detail.icon)} <strong>${escapeHtml(detail.label)}:</strong> ${escapeHtml(detail.value)}</li>`).join('')}
-          <li>${featureIcon('location')} <strong>Ubicación:</strong> ${property.ubicacion || property.city || 'Ubicación no disponible'}</li>
-        </ul>
+        <div class="property-feature-grid">
+          ${detailFeatures.map((detail) => `<article class="property-feature-item">${featureIcon(detail.icon)}<span><strong>${escapeHtml(detail.label)}</strong><em>${escapeHtml(detail.value)}</em></span></article>`).join('')}
+          <article class="property-feature-item">${featureIcon('location')}<span><strong>Ubicación</strong><em>${escapeHtml(property.ubicacion || property.city || 'Ubicación no disponible')}</em></span></article>
+        </div>
       </div>
       <div class="detail-extended-footer">
         ${publishedByName ? `<p><strong>Publicado por</strong><br>${publishedByName}</p>` : ''}
@@ -730,6 +818,7 @@ async function renderPropertyDetail() {
   `;
 
   initPropertyGallery(detailContainer);
+  initPropertyShare(detailContainer, property);
   renderPropertyDetailMap(property);
   window.dispatchEvent(new CustomEvent('propertyDetailReady', {
     detail: {
