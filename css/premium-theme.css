@@ -1435,3 +1435,361 @@ body.dark-mode .home-page .hero-search-content .premium-search input:focus,
     padding: 0.66rem 0.9rem !important;
   }
 }
+/* Public property sections: compact, consistent cards without affecting admin/agent dashboard. */
+.home-page .section.section-properties.container.premium-properties-v2.home-property-section {
+  padding-top: 64px !important;
+  padding-bottom: 64px !important;
+  margin-block: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+}
+
+.properties-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 340px)) !important;
+  justify-content: center !important;
+  align-items: stretch !important;
+  gap: 24px !important;
+  overflow: visible;
+}
+
+.property-slider .property-card,
+.property-slider.properties-grid .property-card,
+.home-property-slider .property-card,
+.home-property-slider.properties-grid .property-card {
+  flex-shrink: 0 !important;
+}
+
+.properties-grid:not(.property-slider):not(.home-property-slider) .property-card {
+  width: 100% !important;
+  max-width: 340px !important;
+  justify-self: center;
+}
+
+.property-card,
+#propertiesGrid .property-card,
+.home-page #featuredGrid .property-card,
+.home-page .home-recent-grid .property-card,
+.home-page .home-farms-land-grid .property-card,
+.home-page .home-matched-properties-grid .property-card {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100%;
+  max-width: 340px !important;
+  min-height: 0 !important;
+  height: auto !important;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  border-radius: 16px !important;
+  box-shadow: 0 16px 42px rgba(15, 31, 51, 0.08) !important;
+}
+
+.property-cover,
+#propertiesGrid .property-cover,
+.home-page #featuredGrid .property-cover,
+.home-page .home-recent-grid .property-cover,
+.home-page .home-farms-land-grid .property-cover,
+.home-page .home-matched-properties-grid .property-cover,
+.property-card > img {
+  width: 100%;
+  height: 210px !important;
+  min-height: 210px !important;
+  max-height: 210px !important;
+  aspect-ratio: auto !important;
+  overflow: hidden;
+}
+
+.property-cover-image {
+  width: 100%;
+  height: 100% !important;
+  object-fit: cover;
+}
+
+.property-card > img {
+  width: 100%;
+  object-fit: cover;
+}
+
+.property-card-content,
+#propertiesGrid .property-card-content,
+.home-page #featuredGrid .property-card-content,
+.home-page .home-recent-grid .property-card-content,
+.home-page .home-farms-land-grid .property-card-content,
+.home-page .home-matched-properties-grid .property-card-content {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  gap: 0.5rem !important;
+  padding: 22px !important;
+  min-width: 0;
+}
+
+.property-card h1,
+.property-card h2,
+.property-card h3,
+#propertiesGrid .property-card h3,
+.home-page #featuredGrid .property-card h3,
+.home-page .home-recent-grid .property-card h3,
+.home-page .home-farms-land-grid .property-card h3,
+.home-page .home-matched-properties-grid .property-card h3 {
+  display: -webkit-box !important;
+  margin: 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 1.22rem !important;
+  line-height: 1.2 !important;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.property-card .badge,
+.property-card p,
+.property-location,
+.property-price-area {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.property-card .price,
+#propertiesGrid .price,
+.home-page #featuredGrid .price,
+.home-page .home-recent-grid .price,
+.home-page .home-farms-land-grid .price,
+.home-page .home-matched-properties-grid .price,
+.shared-detail-grid .price {
+  display: block;
+  margin: 0.08rem 0 !important;
+  color: #B00008 !important;
+  font-size: 1.55rem !important;
+  line-height: 1.05 !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+}
+
+.property-card .price .price-usd,
+#propertiesGrid .price .price-usd,
+.home-page #featuredGrid .price .price-usd,
+.home-page .home-recent-grid .price .price-usd,
+.home-page .home-farms-land-grid .price .price-usd,
+.home-page .home-matched-properties-grid .price .price-usd {
+  font-size: 1.55rem !important;
+  line-height: 1.05 !important;
+  overflow-wrap: anywhere;
+  white-space: normal !important;
+}
+
+.property-card .price .price-nio,
+.property-card .price .price-unavailable,
+#propertiesGrid .price .price-nio,
+#propertiesGrid .price .price-unavailable,
+.home-page #featuredGrid .price .price-nio,
+.home-page #featuredGrid .price .price-unavailable,
+.home-page .home-recent-grid .price .price-nio,
+.home-page .home-recent-grid .price .price-unavailable,
+.home-page .home-farms-land-grid .price .price-nio,
+.home-page .home-farms-land-grid .price .price-unavailable,
+.home-page .home-matched-properties-grid .price .price-nio,
+.home-page .home-matched-properties-grid .price .price-unavailable {
+  font-size: 1.05rem !important;
+  line-height: 1.08 !important;
+  overflow-wrap: anywhere;
+  white-space: normal !important;
+}
+
+.property-meta.property-meta-icons,
+#propertiesGrid .property-meta.property-meta-icons,
+.home-page #featuredGrid .property-meta.property-meta-icons,
+.home-page .home-recent-grid .property-meta.property-meta-icons,
+.home-page .home-farms-land-grid .property-meta.property-meta-icons,
+.home-page .home-matched-properties-grid .property-meta.property-meta-icons {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 0.36rem 0.5rem !important;
+  margin-top: 0 !important;
+  padding-top: 0.65rem !important;
+  font-size: 0.88rem !important;
+  min-width: 0;
+}
+
+.property-meta-icons span,
+#propertiesGrid .property-meta-icons span,
+.home-page #featuredGrid .property-meta-icons span,
+.home-page .home-recent-grid .property-meta-icons span,
+.home-page .home-farms-land-grid .property-meta-icons span,
+.home-page .home-matched-properties-grid .property-meta-icons span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.88rem !important;
+  line-height: 1.18 !important;
+}
+
+.property-card-actions,
+.property-card-content > .agent-actions,
+#propertiesGrid .property-card-actions,
+.home-page #featuredGrid .property-card-actions,
+.home-page .home-recent-grid .property-card-actions,
+.home-page .home-farms-land-grid .property-card-actions,
+.home-page .home-matched-properties-grid .property-card-actions {
+  width: 100%;
+  margin-top: auto !important;
+  padding-top: 0.5rem !important;
+}
+
+.property-card-content > .btn-primary-property {
+  margin-top: auto !important;
+}
+
+.btn-primary-property,
+#propertiesGrid .btn-primary-property,
+.home-page #featuredGrid .btn-primary-property,
+.home-page .home-recent-grid .btn-primary-property,
+.home-page .home-farms-land-grid .btn-primary-property,
+.home-page .home-matched-properties-grid .btn-primary-property {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100% !important;
+  min-height: 42px !important;
+  padding: 0.72rem 1rem !important;
+  line-height: 1.1 !important;
+}
+
+.home-page .home-property-slider,
+.home-page #featuredGrid.home-property-slider.properties-grid,
+.property-slider.properties-grid {
+  display: flex !important;
+  grid-template-columns: none !important;
+  justify-content: flex-start !important;
+  gap: 24px !important;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+}
+
+.home-page .home-property-slider .property-card,
+.home-page #featuredGrid.home-property-slider .property-card,
+.property-slider .property-card {
+  flex: 0 0 340px !important;
+  min-width: 340px !important;
+  max-width: 340px !important;
+  width: 340px !important;
+}
+
+.home-page .home-recent-grid,
+.home-page .home-farms-land-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 340px)) !important;
+  justify-content: center !important;
+}
+
+@media (max-width: 640px) {
+  .home-page .section.section-properties.container.premium-properties-v2.home-property-section {
+    padding-top: 32px !important;
+    padding-bottom: 40px !important;
+  }
+
+  .properties-grid:not(.property-slider):not(.home-property-slider),
+  #propertiesGrid.properties-grid,
+  .home-page .home-recent-grid,
+  .home-page .home-farms-land-grid {
+    grid-template-columns: 1fr !important;
+    justify-content: center !important;
+    gap: 18px !important;
+  }
+
+  .properties-grid:not(.property-slider):not(.home-property-slider) .property-card,
+  #propertiesGrid .property-card,
+  .home-page .home-recent-grid .property-card,
+  .home-page .home-farms-land-grid .property-card {
+    max-width: 92vw !important;
+    width: 100% !important;
+    margin-inline: auto !important;
+  }
+
+  .home-page .home-property-slider,
+  .home-page #featuredGrid.home-property-slider.properties-grid,
+  .property-slider.properties-grid {
+    gap: 16px !important;
+    padding-inline: 16px !important;
+    padding-bottom: 12px !important;
+    margin-inline: -16px;
+  }
+
+  .home-page .home-property-slider .property-card,
+  .home-page #featuredGrid.home-property-slider .property-card,
+  .property-slider .property-card {
+    flex: 0 0 78vw !important;
+    min-width: 78vw !important;
+    max-width: 78vw !important;
+    width: 78vw !important;
+  }
+
+  .property-cover,
+  #propertiesGrid .property-cover,
+  .home-page #featuredGrid .property-cover,
+  .home-page .home-recent-grid .property-cover,
+  .home-page .home-farms-land-grid .property-cover,
+  .home-page .home-matched-properties-grid .property-cover,
+  .property-card > img {
+    height: 180px !important;
+    min-height: 180px !important;
+    max-height: 180px !important;
+  }
+
+  .property-card-content,
+  #propertiesGrid .property-card-content,
+  .home-page #featuredGrid .property-card-content,
+  .home-page .home-recent-grid .property-card-content,
+  .home-page .home-farms-land-grid .property-card-content,
+  .home-page .home-matched-properties-grid .property-card-content {
+    gap: 0.42rem !important;
+    padding: 18px !important;
+  }
+
+  .property-card h1,
+  .property-card h2,
+  .property-card h3,
+  #propertiesGrid .property-card h3,
+  .home-page #featuredGrid .property-card h3,
+  .home-page .home-recent-grid .property-card h3,
+  .home-page .home-farms-land-grid .property-card h3,
+  .home-page .home-matched-properties-grid .property-card h3 {
+    font-size: 1.08rem !important;
+    line-height: 1.18 !important;
+  }
+
+  .property-card .price,
+  #propertiesGrid .price,
+  .home-page #featuredGrid .price,
+  .home-page .home-recent-grid .price,
+  .home-page .home-farms-land-grid .price,
+  .home-page .home-matched-properties-grid .price,
+  .property-card .price .price-usd,
+  #propertiesGrid .price .price-usd,
+  .home-page #featuredGrid .price .price-usd,
+  .home-page .home-recent-grid .price .price-usd,
+  .home-page .home-farms-land-grid .price .price-usd,
+  .home-page .home-matched-properties-grid .price .price-usd {
+    font-size: 1.35rem !important;
+    line-height: 1.05 !important;
+  }
+
+  .property-card .price .price-nio,
+  .property-card .price .price-unavailable,
+  #propertiesGrid .price .price-nio,
+  #propertiesGrid .price .price-unavailable,
+  .home-page #featuredGrid .price .price-nio,
+  .home-page #featuredGrid .price .price-unavailable,
+  .home-page .home-recent-grid .price .price-nio,
+  .home-page .home-recent-grid .price .price-unavailable,
+  .home-page .home-farms-land-grid .price .price-nio,
+  .home-page .home-farms-land-grid .price .price-unavailable,
+  .home-page .home-matched-properties-grid .price .price-nio,
+  .home-page .home-matched-properties-grid .price .price-unavailable {
+    font-size: 0.95rem !important;
+    line-height: 1.05 !important;
+  }
+}
