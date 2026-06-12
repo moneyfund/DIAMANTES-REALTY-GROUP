@@ -54,24 +54,29 @@ function agentCardTemplate(agent) {
 
   const profileUrl = `agent.html?id=${encodeURIComponent(agent.id || '')}`;
   const photo = agent.photo || 'assets/placeholder.svg';
+  const socialLinks = [
+    socialLinkTemplate(agent.instagram, 'Instagram', instagramIcon),
+    socialLinkTemplate(agent.facebook, 'Facebook', facebookIcon),
+    socialLinkTemplate(agent.tiktok, 'TikTok', tiktokIcon),
+    socialLinkTemplate(agent.whatsapp, 'WhatsApp', whatsappIcon)
+  ].join('');
 
   return `
     <article class="agent-card reveal-on-scroll">
-      <img class="agent-photo" src="${photo}" alt="${agent.name}">
+      <div class="agent-diamond-photo">
+        <img class="agent-photo" src="${photo}" alt="${agent.name || 'Agente Diamantes Realty Group'}">
+      </div>
       <div class="agent-content">
-        <h2>${agent.name || 'Agente Diamantes Realty Group'}</h2>
-        <p>${agent.description || ''}</p>
-        ${agent.phone ? `<p><strong>Tel:</strong> <a class="text-link" href="tel:${String(agent.phone).replace(/\s+/g, '')}">${agent.phone}</a></p>` : ''}
-        ${agent.email ? `<p><strong>Email:</strong> <a class="text-link" href="mailto:${agent.email}">${agent.email}</a></p>` : ''}
-        <div class="agent-social" aria-label="Redes sociales de ${agent.name}">
-          ${socialLinkTemplate(agent.instagram, 'Instagram', instagramIcon)}
-          ${socialLinkTemplate(agent.facebook, 'Facebook', facebookIcon)}
-          ${socialLinkTemplate(agent.tiktok, 'TikTok', tiktokIcon)}
-          ${socialLinkTemplate(agent.whatsapp, 'WhatsApp', whatsappIcon)}
+        <h2 class="agent-name">${agent.name || 'Agente Diamantes Realty Group'}</h2>
+        ${agent.description ? `<p class="agent-description">${agent.description}</p>` : ''}
+        <div class="agent-contact-list">
+          ${agent.phone ? `<p class="agent-contact-row"><strong>Tel:</strong> <a class="text-link" href="tel:${String(agent.phone).replace(/\s+/g, '')}">${agent.phone}</a></p>` : ''}
+          ${agent.email ? `<p class="agent-contact-row"><strong>Email:</strong> <a class="text-link" href="mailto:${agent.email}">${agent.email}</a></p>` : ''}
         </div>
+        ${socialLinks ? `<div class="agent-social" aria-label="Redes sociales de ${agent.name || 'agente'}">${socialLinks}</div>` : ''}
         <div class="agent-actions">
-          <a class="button-outline" href="propiedades.html?agent=${encodeURIComponent(agent.id || '')}">Ver propiedades</a>
-          <a class="button-outline" href="${profileUrl}">Perfil público</a>
+          <a class="agent-button agent-button-primary" href="propiedades.html?agent=${encodeURIComponent(agent.id || '')}">Ver propiedades</a>
+          <a class="agent-button agent-button-secondary" href="${profileUrl}">Perfil público</a>
         </div>
       </div>
     </article>
