@@ -2145,3 +2145,89 @@ body.dark-mode .premium-final-cta .premium-final-cta-card:hover,
 .site-footer .footer-text span {
   color: #ffffff !important;
 }
+
+/* === 2026-06-13 Definitive global footer fixed-color lock ===
+   The footer must never inherit day/night theme text variables. */
+.site-footer,
+body.dark .site-footer,
+body.dark-mode .site-footer,
+[data-theme="dark"] .site-footer,
+[data-theme="light"] .site-footer {
+  background: #071a33 !important;
+  color: #e5e7eb !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.22) !important;
+  color-scheme: only dark !important;
+}
+
+.site-footer,
+.site-footer * {
+  color: inherit;
+}
+
+.site-footer .footer-brand-title,
+.site-footer h1,
+.site-footer h2,
+.site-footer h3,
+.site-footer .footer-section-title,
+.site-footer h4,
+.site-footer h5,
+.site-footer h6 {
+  color: #ffffff !important;
+}
+
+.site-footer .footer-description,
+.site-footer .footer-link,
+.site-footer .footer-contact,
+.site-footer .footer-legal-link,
+.site-footer a,
+.site-footer a:link,
+.site-footer a:visited,
+.site-footer a:active,
+.site-footer p,
+.site-footer span,
+.site-footer small,
+.site-footer li {
+  color: #e5e7eb !important;
+  opacity: 1 !important;
+}
+
+.site-footer .footer-copy,
+.site-footer .footer-copy span,
+.site-footer .footer-text,
+.site-footer .footer-text span,
+.site-footer .copyright {
+  color: #9ca3af !important;
+}
+
+.site-footer .footer-social-link,
+.site-footer .footer-social a,
+.site-footer .footer-social-link:visited,
+.site-footer .footer-social a:visited,
+.site-footer .footer-social-link:active,
+.site-footer .footer-social a:active {
+  background: transparent !important;
+  border-color: rgba(255, 255, 255, 0.56) !important;
+  color: #ffffff !important;
+}
+
+.site-footer svg,
+.site-footer .footer-social-link svg,
+.site-footer .footer-social a svg {
+  color: #ffffff !important;
+  fill: currentColor !important;
+}
+
+.site-footer a:hover,
+.site-footer a:focus-visible,
+.site-footer .footer-legal-link:hover,
+.site-footer .footer-legal-link:focus-visible,
+.site-footer .footer-contact:hover,
+.site-footer .footer-contact:focus-visible {
+  color: #ffffff !important;
+}
+
+.site-footer .footer-cta,
+.site-footer .footer-cta:visited,
+.site-footer .footer-cta:active {
+  color: #ffffff !important;
+}
