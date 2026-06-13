@@ -180,8 +180,8 @@ function renderSiteFooter() {
     <div class="container footer-content">
       <div class="footer-brand-row">
         <div>
-          <h3>${APP_NAME}</h3>
-          <p>Inmobiliaria corporativa en Nicaragua con enfoque en propiedades premium y asesoría integral.</p>
+          <h3 class="footer-brand-title">${APP_NAME}</h3>
+          <p class="footer-description">Inmobiliaria corporativa en Nicaragua con enfoque en propiedades premium y asesoría integral.</p>
         </div>
         <a class="footer-cta" href="contacto.html">Agendar asesoría</a>
       </div>
@@ -189,18 +189,18 @@ function renderSiteFooter() {
       <div class="footer-columns">
         <div>
           <h4>Legal</h4>
-          ${footerLinks.map((link) => `<a class="footer-legal-link" href="${link.href}">${link.label}</a>`).join('')}
+          ${footerLinks.map((link) => `<a class="footer-legal-link footer-link" href="${link.href}">${link.label}</a>`).join('')}
         </div>
         <div>
           <h4>Contacto</h4>
-          <a href="tel:+50577265009">+505 7726 5009</a>
-          <a href="mailto:diamantesrealtygroup@gmail.com">diamantesrealtygroup@gmail.com</a>
+          <a class="footer-contact" href="tel:+50577265009">+505 7726 5009</a>
+          <a class="footer-contact" href="mailto:diamantesrealtygroup@gmail.com">diamantesrealtygroup@gmail.com</a>
           <div class="footer-social" aria-label="Redes sociales de Diamantes Realty Group">
             ${footerSocialLinks.map((link) => `<a class="footer-social-link" href="${link.href}" ${link.href.startsWith('mailto:') ? '' : 'target="_blank" rel="noopener noreferrer"'} aria-label="${link.label}" title="${link.label}">${link.icon}</a>`).join('')}
           </div>
         </div>
       </div>
-      <p class="footer-text">© <span id="currentYear"></span> ${APP_NAME}</p>
+      <p class="footer-text footer-copy">© <span id="currentYear"></span> ${APP_NAME}</p>
     </div>
   `;
 
