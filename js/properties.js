@@ -554,6 +554,8 @@ function initializeHorizontalSlider(slider, options = {}) {
 
   const handlePointerDown = (event) => {
     if (event.button !== undefined && event.button !== 0) return;
+    const detailLink = event.target.closest?.(PROPERTY_DETAIL_LINK_SELECTOR);
+    if (detailLink) return;
     isPointerDown = true;
     isDragging = false;
     startX = event.clientX;

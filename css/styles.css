@@ -10074,3 +10074,216 @@ body::before {
   content: "DEPLOY TEST";
   display: none;
 }
+
+/* PUBLIC FIX VERIFIED 2026-06-13 */
+/* Public web hard lock: footer, property cards, detail buttons, home sliders. */
+.site-footer,
+.site-footer * {
+  color: #ffffff !important;
+}
+
+.site-footer {
+  background: linear-gradient(135deg, #07162F 0%, #0A1E3A 55%, #030914 100%) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.34) !important;
+}
+
+.footer-cta,
+.site-footer .btn,
+.site-footer .footer-button {
+  background: #B00008 !important;
+  color: #ffffff !important;
+  border-color: #B00008 !important;
+}
+
+.footer-cta:hover,
+.site-footer .btn:hover,
+.site-footer .footer-button:hover {
+  background: #930006 !important;
+  color: #ffffff !important;
+  border-color: #930006 !important;
+}
+
+.site-footer .footer-social-link,
+.site-footer .footer-social a {
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.42) !important;
+  background: transparent !important;
+}
+
+.site-footer .footer-social-link:hover,
+.site-footer .footer-social-link:focus-visible,
+.site-footer .footer-social a:hover,
+.site-footer .footer-social a:focus-visible {
+  background: #B00008 !important;
+  border-color: #B00008 !important;
+  color: #ffffff !important;
+}
+
+.property-card,
+#propertiesGrid .property-card,
+.home-page #featuredGrid .property-card,
+.home-page #recentPropertiesGrid .property-card,
+.home-page #farmsLandGrid .property-card,
+.home-page .home-property-slider .property-card,
+.shared-property-card {
+  cursor: default !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
+}
+
+.property-card h1,
+.property-card h2,
+.property-card h3,
+.property-card p,
+.property-card span,
+.property-card .property-meta,
+.shared-property-card h1,
+.shared-property-card h2,
+.shared-property-card h3,
+.shared-property-card p,
+.shared-property-card span {
+  color: inherit;
+}
+
+body.dark .property-card,
+body.dark-mode .property-card,
+[data-theme="dark"] .property-card,
+body.dark #propertiesGrid .property-card,
+body.dark-mode #propertiesGrid .property-card,
+body.dark .home-page .home-property-slider .property-card,
+body.dark-mode .home-page .home-property-slider .property-card,
+body.dark .shared-property-card,
+body.dark-mode .shared-property-card {
+  background: linear-gradient(135deg, #101827 0%, #07162F 100%) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+}
+
+body.dark .property-card :not(.property-detail-button):not(.btn-primary-property),
+body.dark-mode .property-card :not(.property-detail-button):not(.btn-primary-property),
+[data-theme="dark"] .property-card :not(.property-detail-button):not(.btn-primary-property),
+body.dark .shared-property-card :not(.property-detail-button):not(.btn-primary-property),
+body.dark-mode .shared-property-card :not(.property-detail-button):not(.btn-primary-property) {
+  color: #ffffff !important;
+}
+
+.property-slider .property-card,
+.home-property-slider .property-card,
+.home-page .home-property-slider .property-card,
+.home-page #featuredGrid .property-card,
+.home-page #recentPropertiesGrid .property-card,
+.home-page #farmsLandGrid .property-card {
+  flex: 0 0 340px !important;
+  max-width: 340px !important;
+  min-width: 340px !important;
+  scroll-snap-align: start;
+}
+
+.property-slider .property-cover,
+.home-property-slider .property-cover,
+.home-page #featuredGrid .property-cover,
+.home-page #recentPropertiesGrid .property-cover,
+.home-page #farmsLandGrid .property-cover {
+  aspect-ratio: auto !important;
+  height: 210px !important;
+}
+
+.property-slider .property-cover-image,
+.home-property-slider .property-cover-image,
+.property-slider .property-card > img,
+.home-property-slider .property-card > img {
+  height: 210px !important;
+  object-fit: cover !important;
+}
+
+.home-property-slider .property-card h3,
+.property-slider .property-card h3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.home-property-slider .price,
+.property-slider .price {
+  font-size: clamp(1.15rem, 2vw, 1.45rem) !important;
+  line-height: 1.1 !important;
+}
+
+.property-detail-button,
+.btn-detail,
+.btn-outline,
+.btn-primary-property,
+.property-card a[href*="propiedad.html"] {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 20;
+  display: block !important;
+  width: 100%;
+  text-align: center;
+  background: #B00008 !important;
+  color: #FFFFFF !important;
+  border: 1px solid #B00008 !important;
+}
+
+.property-detail-button:hover,
+.property-detail-button:focus-visible,
+.btn-detail:hover,
+.btn-detail:focus-visible,
+.btn-outline:hover,
+.btn-outline:focus-visible,
+.btn-primary-property:hover,
+.btn-primary-property:focus-visible,
+.property-card a[href*="propiedad.html"]:hover,
+.property-card a[href*="propiedad.html"]:focus-visible {
+  background: #930006 !important;
+  border-color: #930006 !important;
+  color: #FFFFFF !important;
+}
+
+@media (max-width: 640px) {
+  .property-slider .property-card,
+  .home-property-slider .property-card,
+  .home-page .home-property-slider .property-card,
+  .home-page #featuredGrid .property-card,
+  .home-page #recentPropertiesGrid .property-card,
+  .home-page #farmsLandGrid .property-card {
+    flex: 0 0 78vw !important;
+    max-width: 78vw !important;
+    min-width: 78vw !important;
+  }
+
+  .property-slider .property-cover,
+  .home-property-slider .property-cover,
+  .home-page #featuredGrid .property-cover,
+  .home-page #recentPropertiesGrid .property-cover,
+  .home-page #farmsLandGrid .property-cover,
+  .property-slider .property-cover-image,
+  .home-property-slider .property-cover-image,
+  .property-slider .property-card > img,
+  .home-property-slider .property-card > img {
+    height: 180px !important;
+  }
+}
+
+.home-property-slider,
+.property-slider,
+.home-page #featuredGrid.home-property-slider,
+.home-page #recentPropertiesGrid.home-property-slider,
+.home-page #farmsLandGrid.home-property-slider {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 1.2rem !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  padding-bottom: 0.75rem;
+  scrollbar-width: none;
+}
+
+.home-property-slider::-webkit-scrollbar,
+.property-slider::-webkit-scrollbar {
+  display: none;
+}
