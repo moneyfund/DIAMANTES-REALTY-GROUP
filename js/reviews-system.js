@@ -28,10 +28,12 @@ const state = {
   reviewHover: 0,
   comments: [],
   reviews: [],
-  favoritesCount: 0,
+  likesCount: 0,
+  isLiked: false,
   isFavorite: false,
   commentsStatus: 'idle',
   reviewsStatus: 'idle',
+  likesStatus: 'idle',
   favoritesStatus: 'idle',
   isSubmittingComment: false,
   isSubmittingReview: false,
@@ -41,6 +43,7 @@ const state = {
   loadTimeouts: {
     comments: null,
     reviews: null,
+    likes: null,
     favorites: null
   }
 };
@@ -115,12 +118,16 @@ function renderFavoriteShell() {
   if (!mount) return false;
 
   mount.innerHTML = `
-    <div class="pi-like-top" data-pi-favorites>
-      <button type="button" class="pi-like-btn" data-pi-favorite-btn aria-pressed="false">
+    <div class="pi-like-top" data-pi-interactions>
+      <button type="button" class="pi-like-btn" data-pi-like-btn aria-pressed="false">
         <span class="pi-like-icon" aria-hidden="true">❤</span>
+        <span data-pi-like-label>Me gusta</span>
+      </button>
+      <p class="pi-like-count"><strong data-pi-like-count>0</strong> likes</p>
+      <button type="button" class="pi-like-btn" data-pi-favorite-btn aria-pressed="false">
+        <span class="pi-like-icon" aria-hidden="true">★</span>
         <span data-pi-favorite-label>Guardar en favoritos</span>
       </button>
-      <p class="pi-like-count"><strong data-pi-favorite-count>0</strong> favoritos</p>
       <p class="pi-form-message" data-pi-favorite-message></p>
     </div>
   `;
@@ -263,7 +270,7 @@ function renderCommentList() {
     return;
   }
   if (!comments.length) {
-    renderCommentsState('Aún no hay comentarios');
+    renderCommentsState('Sé el primero en comentar esta propiedad.');
     return;
   }
 
@@ -316,7 +323,7 @@ function renderReviewList() {
     return;
   }
   if (!reviews.length) {
-    renderReviewsState('Aún no hay reseñas');
+    renderReviewsState('Todavía no hay reseñas para esta propiedad.');
     return;
   }
 
@@ -345,12 +352,21 @@ function renderReviewList() {
 }
 
 function renderFavoriteState() {
+  const likeButton = document.querySelector('[data-pi-like-btn]');
+  const likeCount = document.querySelector('[data-pi-like-count]');
+  const likeLabel = document.querySelector('[data-pi-like-label]');
   const button = document.querySelector('[data-pi-favorite-btn]');
-  const count = document.querySelector('[data-pi-favorite-count]');
   const label = document.querySelector('[data-pi-favorite-label]');
-  if (!button || !count || !label) return;
+  if (!button || !label) return;
 
-  count.textContent = String(state.favoritesCount);
+  if (likeButton && likeCount && likeLabel) {
+    likeCount.textContent = String(state.likesCount);
+    likeButton.classList.toggle('is-liked', state.isLiked);
+    likeButton.setAttribute('aria-pressed', String(state.isLiked));
+    likeLabel.textContent = state.isLiked ? 'Te gusta' : 'Me gusta';
+    likeButton.disabled = !state.authReady || state.isSubmittingFavorite || !state.user;
+  }
+
   button.classList.toggle('is-liked', state.isFavorite);
   button.setAttribute('aria-pressed', String(state.isFavorite));
   label.textContent = state.isFavorite ? 'En favoritos' : 'Guardar en favoritos';
@@ -364,8 +380,8 @@ function renderFavoriteState() {
   button.disabled = state.isSubmittingFavorite || !state.user;
   if (!state.user) {
     setFavoriteMessage('Inicia sesión para guardar favoritos.');
-  } else if (state.favoritesStatus === 'loading') {
-    setFavoriteMessage('Verificando estado de favorito...');
+  } else if (state.likesStatus === 'loading' || state.favoritesStatus === 'loading') {
+    setFavoriteMessage('Verificando interacciones...');
   } else if (state.favoritesStatus === 'success') {
     setFavoriteMessage('');
   }
@@ -452,10 +468,17 @@ function startLoadTimeout(scope) {
     }
     if (scope === 'favorites' && state.favoritesStatus === 'loading') {
       state.favoritesStatus = 'error';
-      state.favoritesCount = 0;
       state.isFavorite = false;
       debugLog('[Favorites] timeout', { propertyId: state.propertyId });
       setFavoriteMessage('No se pudo verificar el favorito.', 'is-error');
+      renderFavoriteState();
+    }
+    if (scope === 'likes' && state.likesStatus === 'loading') {
+      state.likesStatus = 'error';
+      state.likesCount = 0;
+      state.isLiked = false;
+      debugLog('[Likes] timeout', { propertyId: state.propertyId });
+      setFavoriteMessage('No se pudo verificar likes.', 'is-error');
       renderFavoriteState();
     }
   }, 12000);
@@ -471,92 +494,150 @@ function subscribeComments() {
   state.commentsStatus = 'loading';
   renderCommentList();
 
-  const commentsRef = collection(db, 'properties', state.propertyId, 'comments');
-  const commentsQuery = query(commentsRef, orderBy('createdAt', 'desc'), limit(MAX_ITEMS));
-  debugLog('[Comments] propertyId', { propertyId: state.propertyId });
-  debugLog('[Comments] loading start', { propertyId: state.propertyId });
-  startLoadTimeout('comments');
+  try {
+    const commentsRef = collection(db, 'properties', state.propertyId, 'comments');
+    const commentsQuery = query(commentsRef, orderBy('createdAt', 'desc'), limit(MAX_ITEMS));
+    debugLog('[Comments] propertyId', { propertyId: state.propertyId });
+    debugLog('[Comments] loading start', { propertyId: state.propertyId });
+    startLoadTimeout('comments');
 
-  const unsubscribe = onSnapshot(commentsQuery, (snapshot) => {
-    resolveLoadTimeout('comments');
-    state.comments = normalizeSnapshot(snapshot);
-    state.commentsStatus = 'success';
-    debugLog('[Comments] snapshot received', { propertyId: state.propertyId, total: state.comments.length });
-    renderCommentList();
-  }, (error) => {
+    const unsubscribe = onSnapshot(commentsQuery, (snapshot) => {
+      resolveLoadTimeout('comments');
+      state.comments = normalizeSnapshot(snapshot);
+      state.commentsStatus = 'success';
+      debugLog('[Comments] snapshot received', { propertyId: state.propertyId, total: state.comments.length });
+      renderCommentList();
+    }, (error) => {
+      resolveLoadTimeout('comments');
+      state.comments = [];
+      state.commentsStatus = 'error';
+      console.error('No se pudieron cargar comentarios:', error);
+      debugLog('[Comments] error', { propertyId: state.propertyId, error });
+      renderCommentsState('No fue posible cargar esta sección.');
+    });
+
+    state.unsubscribers.push(unsubscribe);
+  } catch (error) {
     resolveLoadTimeout('comments');
     state.comments = [];
     state.commentsStatus = 'error';
-    console.error('No se pudieron cargar comentarios:', error);
-    debugLog('[Comments] error', { propertyId: state.propertyId, error });
-    renderCommentList();
-  });
-
-  state.unsubscribers.push(unsubscribe);
+    console.error('No se pudieron iniciar comentarios:', error);
+    renderCommentsState('No fue posible cargar esta sección.');
+  }
 }
 
 function subscribeReviews() {
   state.reviewsStatus = 'loading';
   renderReviewList();
 
-  const reviewsRef = collection(db, 'properties', state.propertyId, 'reviews');
-  const reviewsQuery = query(reviewsRef, orderBy('createdAt', 'desc'), limit(MAX_ITEMS));
-  debugLog('[Reviews] propertyId', { propertyId: state.propertyId });
-  debugLog('[Reviews] loading start', { propertyId: state.propertyId });
-  startLoadTimeout('reviews');
+  try {
+    const reviewsRef = collection(db, 'properties', state.propertyId, 'reviews');
+    const reviewsQuery = query(reviewsRef, orderBy('createdAt', 'desc'), limit(MAX_ITEMS));
+    debugLog('[Reviews] propertyId', { propertyId: state.propertyId });
+    debugLog('[Reviews] loading start', { propertyId: state.propertyId });
+    startLoadTimeout('reviews');
 
-  const unsubscribe = onSnapshot(reviewsQuery, (snapshot) => {
-    resolveLoadTimeout('reviews');
-    state.reviews = normalizeSnapshot(snapshot);
-    state.reviewsStatus = 'success';
-    debugLog('[Reviews] snapshot received', { propertyId: state.propertyId, total: state.reviews.length });
-    renderReviewList();
-  }, (error) => {
+    const unsubscribe = onSnapshot(reviewsQuery, (snapshot) => {
+      resolveLoadTimeout('reviews');
+      state.reviews = normalizeSnapshot(snapshot);
+      state.reviewsStatus = 'success';
+      debugLog('[Reviews] snapshot received', { propertyId: state.propertyId, total: state.reviews.length });
+      renderReviewList();
+    }, (error) => {
+      resolveLoadTimeout('reviews');
+      state.reviews = [];
+      state.reviewsStatus = 'error';
+      console.error('No se pudieron cargar reseñas:', error);
+      debugLog('[Reviews] error', { propertyId: state.propertyId, error });
+      renderReviewsState('No fue posible cargar esta sección.');
+    });
+
+    state.unsubscribers.push(unsubscribe);
+  } catch (error) {
     resolveLoadTimeout('reviews');
     state.reviews = [];
     state.reviewsStatus = 'error';
-    console.error('No se pudieron cargar reseñas:', error);
-    debugLog('[Reviews] error', { propertyId: state.propertyId, error });
-    renderReviewList();
-  });
+    console.error('No se pudieron iniciar reseñas:', error);
+    renderReviewsState('No fue posible cargar esta sección.');
+  }
+}
 
-  state.unsubscribers.push(unsubscribe);
+function subscribeLikes() {
+  state.likesStatus = 'loading';
+  renderFavoriteState();
+
+  try {
+    const likesRef = collection(db, 'properties', state.propertyId, 'likes');
+    const likesQuery = query(likesRef, limit(1000));
+    debugLog('[Likes] loading start', { propertyId: state.propertyId, user: state.user?.uid || null });
+    startLoadTimeout('likes');
+
+    const unsubscribe = onSnapshot(likesQuery, (snapshot) => {
+      resolveLoadTimeout('likes');
+      const likes = normalizeSnapshot(snapshot);
+      state.likesCount = likes.length;
+      state.isLiked = Boolean(state.user?.uid && likes.some((entry) => entry.id === state.user.uid || entry.userId === state.user.uid));
+      state.likesStatus = 'success';
+      renderFavoriteState();
+    }, (error) => {
+      resolveLoadTimeout('likes');
+      state.likesStatus = 'error';
+      state.likesCount = 0;
+      state.isLiked = false;
+      console.error('No se pudieron cargar likes:', error);
+      setFavoriteMessage('No fue posible cargar esta sección.', 'is-error');
+      renderFavoriteState();
+    });
+
+    state.unsubscribers.push(unsubscribe);
+  } catch (error) {
+    resolveLoadTimeout('likes');
+    state.likesStatus = 'error';
+    console.error('No se pudieron iniciar likes:', error);
+    setFavoriteMessage('No fue posible cargar esta sección.', 'is-error');
+    renderFavoriteState();
+  }
 }
 
 function subscribeFavorites() {
+  if (!state.user?.uid) {
+    resolveLoadTimeout('favorites');
+    state.favoritesStatus = 'success';
+    state.isFavorite = false;
+    renderFavoriteState();
+    return;
+  }
+
   state.favoritesStatus = 'loading';
   renderFavoriteState();
 
-  const favoritesRef = collection(db, 'properties', state.propertyId, 'favorites');
-  const favoritesQuery = query(favoritesRef, limit(1000));
-  debugLog('[Favorites] propertyId', { propertyId: state.propertyId });
-  debugLog('[Favorites] loading start', { propertyId: state.propertyId, user: state.user?.uid || null });
-  startLoadTimeout('favorites');
+  try {
+    const favoriteRef = doc(db, 'properties', state.propertyId, 'favorites', state.user.uid);
+    debugLog('[Favorites] loading start', { propertyId: state.propertyId, user: state.user.uid });
+    startLoadTimeout('favorites');
 
-  const unsubscribe = onSnapshot(favoritesQuery, (snapshot) => {
-    resolveLoadTimeout('favorites');
-    const favorites = normalizeSnapshot(snapshot);
-    state.favoritesCount = favorites.length;
-    state.isFavorite = Boolean(state.user?.uid && favorites.some((entry) => entry.userId === state.user.uid));
-    state.favoritesStatus = 'success';
-    debugLog('[Favorites] snapshot received', {
-      propertyId: state.propertyId,
-      total: state.favoritesCount,
-      isFavorite: state.isFavorite
+    const unsubscribe = onSnapshot(favoriteRef, (snapshot) => {
+      resolveLoadTimeout('favorites');
+      state.isFavorite = snapshot.exists();
+      state.favoritesStatus = 'success';
+      renderFavoriteState();
+    }, (error) => {
+      resolveLoadTimeout('favorites');
+      state.favoritesStatus = 'error';
+      state.isFavorite = false;
+      console.error('No se pudieron cargar favoritos:', error);
+      setFavoriteMessage('No fue posible cargar esta sección.', 'is-error');
+      renderFavoriteState();
     });
-    renderFavoriteState();
-  }, (error) => {
+
+    state.unsubscribers.push(unsubscribe);
+  } catch (error) {
     resolveLoadTimeout('favorites');
     state.favoritesStatus = 'error';
-    state.favoritesCount = 0;
-    state.isFavorite = false;
-    console.error('No se pudieron cargar favoritos:', error);
-    debugLog('[Favorites] error', { propertyId: state.propertyId, error });
-    setFavoriteMessage('No se pudo cargar favoritos.', 'is-error');
+    console.error('No se pudieron iniciar favoritos:', error);
+    setFavoriteMessage('No fue posible cargar esta sección.', 'is-error');
     renderFavoriteState();
-  });
-
-  state.unsubscribers.push(unsubscribe);
+  }
 }
 
 function restartSubscriptions() {
@@ -564,6 +645,7 @@ function restartSubscriptions() {
   clearSubscriptions();
   subscribeComments();
   subscribeReviews();
+  subscribeLikes();
   subscribeFavorites();
 }
 
@@ -677,6 +759,49 @@ function bindReviewForm() {
 }
 
 function bindFavoriteButton() {
+  const likeButton = document.querySelector('[data-pi-like-btn]');
+  if (likeButton) {
+    likeButton.addEventListener('click', async () => {
+      if (!state.user) {
+        setFavoriteMessage('Inicia sesión para dar like.', 'is-error');
+        return;
+      }
+      if (state.isSubmittingFavorite || !state.propertyId) return;
+
+      state.isSubmittingFavorite = true;
+      const likeRef = doc(db, 'properties', state.propertyId, 'likes', state.user.uid);
+      const nextValue = !state.isLiked;
+      state.isLiked = nextValue;
+      state.likesCount = Math.max(0, state.likesCount + (nextValue ? 1 : -1));
+      renderFavoriteState();
+
+      try {
+        if (nextValue) {
+          await setDoc(likeRef, {
+            propertyId: state.propertyId,
+            userId: state.user.uid,
+            userName: state.user.displayName || 'Usuario',
+            userPhoto: state.user.photoURL || '',
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          });
+          setFavoriteMessage('Like agregado.', 'is-success');
+        } else {
+          await deleteDoc(likeRef);
+          setFavoriteMessage('Like eliminado.', 'is-success');
+        }
+      } catch (error) {
+        console.error('No se pudo actualizar like:', error);
+        state.isLiked = !nextValue;
+        state.likesCount = Math.max(0, state.likesCount + (nextValue ? -1 : 1));
+        setFavoriteMessage('No se pudo actualizar like.', 'is-error');
+      } finally {
+        state.isSubmittingFavorite = false;
+        renderFavoriteState();
+      }
+    });
+  }
+
   const button = document.querySelector('[data-pi-favorite-btn]');
   if (!button) return;
 
@@ -692,7 +817,6 @@ function bindFavoriteButton() {
     const favoriteRef = doc(db, 'properties', state.propertyId, 'favorites', state.user.uid);
     const nextValue = !state.isFavorite;
     state.isFavorite = nextValue;
-    state.favoritesCount = Math.max(0, state.favoritesCount + (nextValue ? 1 : -1));
     renderFavoriteState();
 
     try {
@@ -714,7 +838,6 @@ function bindFavoriteButton() {
       console.error('No se pudo actualizar favorito:', error);
       debugLog('Error guardando favorito', { propertyId: state.propertyId, error });
       state.isFavorite = !nextValue;
-      state.favoritesCount = Math.max(0, state.favoritesCount + (nextValue ? -1 : 1));
       setFavoriteMessage('No se pudo actualizar favorito.', 'is-error');
     } finally {
       state.isSubmittingFavorite = false;
@@ -732,6 +855,9 @@ function bindAuth() {
     renderAuthBox();
     updateFormsAvailability();
     renderFavoriteState();
+    if (state.propertyId && state.initializedFor === state.propertyId) {
+      restartSubscriptions();
+    }
   });
   state.authBound = true;
 }
@@ -764,10 +890,12 @@ async function initInteractionSystem(propertyIdFromEvent = '') {
   state.propertyId = propertyId;
   state.comments = [];
   state.reviews = [];
-  state.favoritesCount = 0;
+  state.likesCount = 0;
+  state.isLiked = false;
   state.isFavorite = false;
   state.commentsStatus = 'loading';
   state.reviewsStatus = 'loading';
+  state.likesStatus = 'loading';
   state.favoritesStatus = 'loading';
   state.reviewRating = 0;
   state.reviewHover = 0;
