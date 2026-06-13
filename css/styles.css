@@ -7278,6 +7278,7 @@ body.dark-mode .site-header,
   border-radius: 0 !important;
   box-shadow: none !important;
   overflow: hidden;
+  cursor: pointer;
   transition: transform 320ms ease, box-shadow 320ms ease, border-color 320ms ease, background-color 320ms ease !important;
 }
 
