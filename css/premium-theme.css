@@ -2157,3 +2157,41 @@ body.dark-mode .premium-final-cta .premium-final-cta-card:hover,
 .home-property-slider .btn-property-detail {
   pointer-events: auto;
 }
+
+/* Footer fixed colors: independent from light/dark theme */
+.site-footer {
+  background: #071a33 !important;
+  color: #e5e7eb !important;
+}
+
+.site-footer h1,
+.site-footer h2,
+.site-footer h3,
+.site-footer .footer-brand-title {
+  color: #ffffff !important;
+}
+
+.site-footer p,
+.site-footer span,
+.site-footer li,
+.site-footer a,
+.site-footer .footer-description,
+.site-footer .footer-link,
+.site-footer .footer-contact {
+  color: #e5e7eb !important;
+}
+
+.site-footer .footer-copy,
+.site-footer small {
+  color: #9ca3af !important;
+}
+
+.site-footer svg,
+.site-footer i {
+  color: #ffffff !important;
+  fill: currentColor;
+}
+
+.site-footer a:hover {
+  color: #ffffff !important;
+}
