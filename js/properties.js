@@ -359,7 +359,7 @@ function propertyCardTemplate(property) {
   const propertyId = String(property.id ?? '');
 
   return `
-    <article class="property-card${featuredClass}" role="link" tabindex="0" data-property-id="${escapeHtml(propertyId)}">
+    <a class="property-card property-card-link${featuredClass}" href="${detailUrl}" data-property-id="${escapeHtml(propertyId)}">
       <section class="property-cover">
         <img class="property-cover-image" src="${imageSrc}" alt="${imageAlt}" loading="lazy" onerror="this.onerror=null;this.src='${PROPERTY_IMAGE_PLACEHOLDER}'">
       </section>
@@ -375,9 +375,9 @@ function propertyCardTemplate(property) {
           <span>${featureIcon('type')} ${property.typeLabel || getPropertyTypeLabel(property.tipo) || 'Propiedad'}</span>
         </div>
         <p class="property-price-area">${formatPricePerArea(getPricePerAreaUsd(property), property.areaUnit)}</p>
-        <div class="property-card-actions"><a class="btn-primary-property" href="${detailUrl}">Ver detalle</a></div>
+        <div class="property-card-actions"><span class="btn-primary-property">Ver detalle</span></div>
       </div>
-    </article>
+    </a>
   `;
 }
 
@@ -500,6 +500,12 @@ function renderFarmsAndLand(properties) {
 }
 
 function openPropertyCard(card) {
+  const detailLink = card?.matches?.('a[href]') ? card : card?.querySelector?.('a[href*="propiedad.html?id="]');
+  if (detailLink?.href) {
+    window.location.href = detailLink.href;
+    return;
+  }
+
   const propertyId = card?.dataset?.propertyId;
   if (!propertyId) return;
 
@@ -511,10 +517,16 @@ function initializeHomePropertyCardNavigation(container) {
   if (!cards.length) return;
 
   cards.forEach((card) => {
-    card.setAttribute('role', 'link');
-    card.setAttribute('tabindex', '0');
+    const detailLink = card.matches?.('a[href]') ? card : card.querySelector('a[href*="propiedad.html?id="]');
 
-    const detailLink = card.querySelector('a[href*="propiedad.html?id="]');
+    if (card.matches?.('a[href]')) {
+      card.removeAttribute('role');
+      card.removeAttribute('tabindex');
+    } else {
+      card.setAttribute('role', 'link');
+      card.setAttribute('tabindex', '0');
+    }
+
     if (!card.dataset.propertyId && detailLink) {
       const detailUrl = new URL(detailLink.getAttribute('href'), window.location.href);
       const propertyId = detailUrl.searchParams.get('id');
@@ -554,8 +566,8 @@ function initializeHorizontalSlider(slider, options = {}) {
 
   cards.forEach((card) => {
     card.addEventListener('click', (event) => {
-      if (slider.classList.contains('is-dragging')) return;
       if (event.target.closest(interactiveSelector)) return;
+      if (slider.classList.contains('is-dragging')) return;
 
       openPropertyCard(card);
     });
@@ -590,6 +602,7 @@ function initializeHorizontalSlider(slider, options = {}) {
   let startY = 0;
   let startScrollLeft = 0;
   let pointerId = null;
+  let suppressSliderClick = false;
 
   const handlePointerDown = (event) => {
     if (event.button !== undefined && event.button !== 0) return;
@@ -607,8 +620,9 @@ function initializeHorizontalSlider(slider, options = {}) {
 
     const dx = Math.abs(event.clientX - startX);
     const dy = Math.abs(event.clientY - startY);
-    if (dx > 12 || dy > 12) {
+    if (dx > 12 && dx > dy) {
       isDragging = true;
+      suppressSliderClick = true;
       slider.classList.add('is-dragging');
     }
 
@@ -634,10 +648,11 @@ function initializeHorizontalSlider(slider, options = {}) {
   };
 
   const handleClickCapture = (event) => {
-    if (!slider.classList.contains('is-dragging')) return;
+    if (!suppressSliderClick) return;
 
     event.preventDefault();
     event.stopPropagation();
+    suppressSliderClick = false;
   };
 
   slider.addEventListener('pointerdown', handlePointerDown);

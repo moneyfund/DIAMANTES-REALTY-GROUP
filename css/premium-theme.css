@@ -2195,3 +2195,105 @@ body.dark-mode .premium-final-cta .premium-final-cta-card:hover,
 .site-footer a:hover {
   color: #ffffff !important;
 }
+
+/* Unified clickable public property cards across home/catalog sliders. */
+.property-card-link {
+  display: flex !important;
+  flex-direction: column !important;
+  text-decoration: none !important;
+  color: inherit !important;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.property-card-link * {
+  pointer-events: none;
+}
+
+.property-card::before,
+.property-card::after,
+.property-card-link::before,
+.property-card-link::after {
+  pointer-events: none;
+}
+
+.slider-arrow,
+.slider-control,
+.property-slider-arrow,
+.home-slider-button,
+.home-slider-controls {
+  pointer-events: auto;
+}
+
+.property-card,
+#propertiesGrid .property-card,
+.home-page #featuredGrid .property-card,
+.home-page #recentPropertiesGrid .property-card,
+.home-page #farmsLandGrid .property-card,
+.home-page .home-property-slider .property-card,
+.home-page .home-recent-grid .property-card,
+.home-page .home-farms-land-grid .property-card,
+.home-page .home-matched-properties-grid .property-card {
+  background: #ffffff !important;
+  color: #102a43 !important;
+  border: 1px solid rgba(15, 31, 51, 0.08) !important;
+}
+
+.property-card h1,
+.property-card h2,
+.property-card h3,
+.property-card p,
+.property-card .badge,
+.property-card .property-location,
+.property-card .property-price-area,
+.property-card .property-meta,
+.property-card .property-meta span,
+.home-page #featuredGrid .property-card h3,
+.home-page #recentPropertiesGrid .property-card h3,
+.home-page #farmsLandGrid .property-card h3 {
+  color: inherit;
+}
+
+body.dark .property-card,
+body.dark-mode .property-card,
+body.dark #propertiesGrid .property-card,
+body.dark-mode #propertiesGrid .property-card,
+body.dark .home-page #featuredGrid .property-card,
+body.dark-mode .home-page #featuredGrid .property-card,
+body.dark .home-page #recentPropertiesGrid .property-card,
+body.dark-mode .home-page #recentPropertiesGrid .property-card,
+body.dark .home-page #farmsLandGrid .property-card,
+body.dark-mode .home-page #farmsLandGrid .property-card,
+body.dark .home-page .home-property-slider .property-card,
+body.dark-mode .home-page .home-property-slider .property-card,
+body.dark .home-page .home-recent-grid .property-card,
+body.dark-mode .home-page .home-recent-grid .property-card,
+body.dark .home-page .home-farms-land-grid .property-card,
+body.dark-mode .home-page .home-farms-land-grid .property-card,
+body.dark .home-page .home-matched-properties-grid .property-card,
+body.dark-mode .home-page .home-matched-properties-grid .property-card {
+  background: #102a43 !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+body.dark .property-card h1,
+body.dark-mode .property-card h1,
+body.dark .property-card h2,
+body.dark-mode .property-card h2,
+body.dark .property-card h3,
+body.dark-mode .property-card h3,
+body.dark .property-card p,
+body.dark-mode .property-card p,
+body.dark .property-card .badge,
+body.dark-mode .property-card .badge,
+body.dark .property-card .property-location,
+body.dark-mode .property-card .property-location,
+body.dark .property-card .property-price-area,
+body.dark-mode .property-card .property-price-area,
+body.dark .property-card .property-meta,
+body.dark-mode .property-card .property-meta,
+body.dark .property-card .property-meta span,
+body.dark-mode .property-card .property-meta span {
+  color: #ffffff !important;
+}
