@@ -1238,6 +1238,39 @@ function renderGlobalMap(properties) {
   map.fitBounds(bounds, { padding: [40, 40] });
 }
 
+function initializeIndexPropertyCardClickCapture() {
+  document.addEventListener('click', function (event) {
+    const isIndexPage =
+      window.location.pathname.endsWith('/') ||
+      window.location.pathname.endsWith('/index.html') ||
+      window.location.pathname.includes('index.html');
+
+    if (!isIndexPage) return;
+
+    const blockedControl = event.target.closest(
+      '.property-slider-arrow, .slider-arrow, .slider-control, button, select, input, textarea'
+    );
+
+    if (blockedControl) return;
+
+    const propertyLink = event.target.closest('a[href*="propiedad.html?id="]');
+
+    if (!propertyLink) return;
+
+    const href = propertyLink.getAttribute('href');
+
+    if (!href) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+
+    window.location.href = href;
+  }, true);
+}
+
+initializeIndexPropertyCardClickCapture();
+
 (async function initProperties() {
   try {
     const agents = await loadAgents().catch(() => []);
