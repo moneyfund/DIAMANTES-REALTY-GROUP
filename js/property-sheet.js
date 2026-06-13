@@ -234,8 +234,10 @@ async function getPropertyImages(property = {}) {
 
 function getResolvedImageSet(property = {}) {
   const resolved = property.__propertySheetImages || {};
-  const coverImage = resolved.coverImage || 'assets/placeholder.svg';
-  const galleryImages = Array.isArray(resolved.galleryImages) ? resolved.galleryImages : [];
+  const coverImage = typeof resolved.coverImage === 'string' ? resolved.coverImage.trim() : '';
+  const galleryImages = Array.isArray(resolved.galleryImages)
+    ? resolved.galleryImages.filter((image) => typeof image === 'string' && image.trim())
+    : [];
   return { coverImage, galleryImages };
 }
 
@@ -313,14 +315,18 @@ function FeatureItem(icon, label, value) {
   return `<div class="sheet-feature-item"><span class="sheet-feature-icon">${icon}</span><small>${escapeHtml(label)}</small><strong>${escapeHtml(fallback(value))}</strong></div>`;
 }
 
-function imageErrorHandlerMarkup() {
-  return "this.onerror=null;console.warn('Image failed to load:', this.src);this.src='assets/placeholder.svg';";
+function coverImageErrorHandlerMarkup() {
+  return "console.warn('Cover image failed:', this.src);this.style.display='none';this.closest('.sheet-hero')?.classList.add('sheet-hero--fallback');";
+}
+
+function galleryImageErrorHandlerMarkup() {
+  return "console.warn('Gallery image failed:', this.src);this.style.display='none';";
 }
 
 function GalleryStrip(images = []) {
-  const realGallery = images.slice(0, 4);
-  const gallery = realGallery.length ? realGallery : ['assets/placeholder.svg', 'assets/placeholder.svg', 'assets/placeholder.svg'];
-  return `<div class="sheet-gallery-strip">${gallery.map((src, index) => `<img src="${escapeHtml(src)}" alt="Imagen secundaria ${index + 1}" crossorigin="anonymous" onerror="${imageErrorHandlerMarkup()}" />`).join('')}</div>`;
+  const gallery = images.slice(0, 4).filter((img) => typeof img === 'string' && img.trim());
+  if (!gallery.length) return '';
+  return `<div class="sheet-gallery-strip">${gallery.map((src) => `<img key="${escapeHtml(src)}" src="${escapeHtml(src)}" alt="Imagen secundaria de la propiedad" class="sheet-gallery-image" crossorigin="anonymous" referrerpolicy="no-referrer" onerror="${galleryImageErrorHandlerMarkup()}" />`).join('')}</div>`;
 }
 
 function AgentContactCard(agent = {}) {
@@ -342,6 +348,8 @@ function AgentContactCard(agent = {}) {
 
 function PropertySheetTemplate(property = {}, agent = {}) {
   const { coverImage, galleryImages } = getResolvedImageSet(property);
+  console.log('Final coverImage used by template:', coverImage);
+  console.log('Final galleryImages used by template:', galleryImages);
   const title = `${propertyType(property)} en ${operationLabel(property.tipoOperacion || property.operation || property.operacion)}`;
   const location = [property.location || property.ubicacion, property.city || property.ciudad].filter(Boolean).join(', ');
   const features = [
@@ -353,15 +361,16 @@ function PropertySheetTemplate(property = {}, agent = {}) {
   ];
 
   return `<article class="property-sheet-a4" id="propertySheetA4">
-    <header class="sheet-hero">
-      <img class="sheet-hero-logo" src="assets/logo.png" alt="Diamantes Realty Group" crossorigin="anonymous" />
-      <img class="sheet-hero-image" src="${escapeHtml(coverImage)}" alt="Imagen principal de la propiedad" crossorigin="anonymous" onerror="${imageErrorHandlerMarkup()}" />
-      <small class="sheet-debug-image-url">Debug image URL: ${escapeHtml(coverImage)}</small>
+    <header class="sheet-hero${coverImage ? '' : ' sheet-hero--fallback'}">
+      ${coverImage ? `<img src="${escapeHtml(coverImage)}" alt="Imagen principal de la propiedad" class="sheet-hero-image" crossorigin="anonymous" referrerpolicy="no-referrer" onerror="${coverImageErrorHandlerMarkup()}" />` : '<div class="sheet-image-placeholder">Imagen no disponible</div>'}
       <div class="sheet-hero-overlay">
-        <span>Ficha Técnica</span>
-        <h1>${escapeHtml(title)}</h1>
-        <p>${escapeHtml(fallback(location))}</p>
-        <strong>${escapeHtml(formatPrice(property))}</strong>
+        <img class="sheet-hero-logo" src="assets/logo.png" alt="Diamantes Realty Group" crossorigin="anonymous" />
+        <div class="sheet-hero-copy">
+          <span>Ficha Técnica</span>
+          <h1>${escapeHtml(title)}</h1>
+          <p>${escapeHtml(fallback(location))}</p>
+          <strong>${escapeHtml(formatPrice(property))}</strong>
+        </div>
       </div>
     </header>
     ${GalleryStrip(galleryImages)}
