@@ -1066,11 +1066,16 @@ async function guardarPropiedad(data, propertyId = '') {
   return propertyRef;
 }
 
+function getPropertySheetUrl(propertyId = '') {
+  const encodedId = encodeURIComponent(String(propertyId || ''));
+  return `property-sheet.html#/property-sheet/${encodedId}`;
+}
+
 function updatePropertySheetPreviewLink(propertyId = '') {
   const link = document.getElementById('propertySheetPreviewLink');
   if (!link) return;
   if (propertyId) {
-    link.href = `/property-sheet/${encodeURIComponent(propertyId)}`;
+    link.href = getPropertySheetUrl(propertyId);
     link.classList.remove('hidden');
   } else {
     link.href = '#';
@@ -1156,20 +1161,20 @@ function propertyCard(property) {
   const coverImage = imageUtils.getCoverImage(property);
 
   return `
-    <article class="property-card">
-      <img src="${coverImage}" alt="${property.title || property.titulo || 'Propiedad'}">
+    <article class="property-card agent-property-card">
+      <img class="property-cover" src="${coverImage}" alt="${property.title || property.titulo || 'Propiedad'}">
       <div class="property-card-content">
         <p class="badge">${formatPropertyType(property.type || property.tipo)} en ${String(formatPropertyOperation(property.tipoOperacion || property.operation || property.operacion) || 'Venta').toLowerCase()}</p>
         <h3>${property.title || property.titulo || 'Propiedad'}</h3>
-        <p>${property.location || property.ubicacion || ''}</p>
+        <p class="property-location">${property.location || property.ubicacion || ''}</p>
         <p class="price">${formatDualPriceMarkup(property.priceUsd ?? property.price ?? property.precio)}</p>
-        <p>${formatPricePerArea(property.pricePerAreaUsd ?? calculatePricePerArea(property.priceUsd ?? property.price ?? property.precio, property.areaValue ?? property.area), property.areaUnit)}</p>
+        <p class="property-price-area">${formatPricePerArea(property.pricePerAreaUsd ?? calculatePricePerArea(property.priceUsd ?? property.price ?? property.precio, property.areaValue ?? property.area), property.areaUnit)}</p>
         <p class="property-status-tag">Estado comercial: ${statusLabel}</p>
         ${getPublicationBadgeMarkup(property)}
         ${getPublicationStatus(property) === 'rejected' && property.rejectionReason ? `<p class="rejection-reason"><strong>Motivo:</strong> ${escapeHtml(property.rejectionReason)}</p>` : ''}
         <div class="agent-actions">
           <button type="button" data-edit-property="${property.id}">Editar</button>
-          <a class="button-secondary property-sheet-link" href="/property-sheet/${property.id}" target="_blank" rel="noopener">Generar ficha técnica</a>
+          <a class="button-secondary property-sheet-link" href="${getPropertySheetUrl(property.id)}" target="_blank" rel="noopener">Generar ficha técnica</a>
           <button type="button" data-sold-property="${property.id}">Marcar vendida</button>
           <button type="button" data-delete-property="${property.id}">Eliminar</button>
         </div>
