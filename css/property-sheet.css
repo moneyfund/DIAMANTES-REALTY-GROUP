@@ -60,6 +60,7 @@
 .sheet-hero-image { display: block; height: 100%; object-fit: cover; width: 100%; }
 .sheet-hero::after { background: linear-gradient(90deg, rgba(111,15,19,.92), rgba(159,22,26,.58), rgba(0,0,0,.08)); content: ''; inset: 0; position: absolute; }
 .sheet-hero-logo { background: rgba(255,255,255,.95); border-radius: 4mm; box-shadow: 0 10px 30px rgba(0,0,0,.18); left: 10mm; max-height: 22mm; object-fit: contain; padding: 2mm 4mm; position: absolute; top: 8mm; width: 42mm; z-index: 2; }
+.sheet-debug-image-url { background: rgba(255,255,255,.86); border-radius: 2mm; bottom: 2mm; color: #1f1f1f; font-size: 6.5pt; left: 10mm; max-width: 180mm; overflow: hidden; padding: 1mm 2mm; position: absolute; text-overflow: ellipsis; white-space: nowrap; z-index: 3; }
 .sheet-hero-overlay { bottom: 9mm; color: #fff; left: 10mm; max-width: 128mm; position: absolute; z-index: 1; }
 .sheet-hero-overlay span { background: var(--sheet-red); border: 1px solid rgba(255,255,255,.32); border-radius: 999px; color: #fff; display: inline-block; font-weight: 800; letter-spacing: .16em; padding: .42rem .85rem; text-transform: uppercase; }
 .sheet-hero-overlay h1 { color: #fff; font-family: 'Playfair Display', serif; font-size: 28pt; line-height: .98; margin: 3mm 0 2mm; text-shadow: 0 2px 14px rgba(0,0,0,.28); }
