@@ -2125,3 +2125,23 @@ body.dark-mode .premium-final-cta .premium-final-cta-card:hover,
   color: #FFFFFF !important;
   text-decoration: none !important;
 }
+
+/* Footer fixed text color: keep brand, description, and copyright white in all themes. */
+.site-footer,
+.site-footer * {
+  color-scheme: normal;
+}
+
+.site-footer .footer-brand,
+.site-footer .footer-brand-title,
+.site-footer .footer-description,
+.site-footer .footer-copy,
+.site-footer .copyright,
+.site-footer .footer-bottom,
+.site-footer .footer-bottom span,
+.site-footer .footer-brand-row h3,
+.site-footer .footer-brand-row p,
+.site-footer .footer-text,
+.site-footer .footer-text span {
+  color: #ffffff !important;
+}
