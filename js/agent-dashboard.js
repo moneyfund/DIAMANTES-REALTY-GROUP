@@ -1066,9 +1066,22 @@ async function guardarPropiedad(data, propertyId = '') {
   return propertyRef;
 }
 
+function updatePropertySheetPreviewLink(propertyId = '') {
+  const link = document.getElementById('propertySheetPreviewLink');
+  if (!link) return;
+  if (propertyId) {
+    link.href = `/property-sheet/${encodeURIComponent(propertyId)}`;
+    link.classList.remove('hidden');
+  } else {
+    link.href = '#';
+    link.classList.add('hidden');
+  }
+}
+
 function resetPropertyForm() {
   document.getElementById('propertyForm').reset();
   document.getElementById('propertyDocId').value = '';
+  updatePropertySheetPreviewLink('');
   state.propertyImages = [];
   resetLegalDocumentState();
   setUploaderStatus('');
@@ -1089,6 +1102,7 @@ function resetPropertyForm() {
 
 function fillPropertyForm(property) {
   document.getElementById('propertyDocId').value = property.id;
+  updatePropertySheetPreviewLink(property.id);
   document.getElementById('propertyTitle').value = property.title || property.titulo || '';
   document.getElementById('propertyPrice').value = property.price || property.precio || '';
   document.getElementById('propertyLocation').value = property.location || property.ubicacion || '';
@@ -1155,6 +1169,7 @@ function propertyCard(property) {
         ${getPublicationStatus(property) === 'rejected' && property.rejectionReason ? `<p class="rejection-reason"><strong>Motivo:</strong> ${escapeHtml(property.rejectionReason)}</p>` : ''}
         <div class="agent-actions">
           <button type="button" data-edit-property="${property.id}">Editar</button>
+          <a class="button-secondary property-sheet-link" href="/property-sheet/${property.id}" target="_blank" rel="noopener">Generar ficha técnica</a>
           <button type="button" data-sold-property="${property.id}">Marcar vendida</button>
           <button type="button" data-delete-property="${property.id}">Eliminar</button>
         </div>

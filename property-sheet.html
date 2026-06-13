@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="title" content="Ficha técnica inmobiliaria | Diamantes Realty Group" />
+  <meta name="description" content="Ficha técnica inmobiliaria en PDF de Diamantes Realty Group" />
+  <title>Ficha técnica | Diamantes Realty Group</title>
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css?v=2" />
+  <link rel="stylesheet" href="css/property-sheet.css?v=1" />
+</head>
+<body class="property-sheet-body">
+  <header class="property-sheet-topbar" aria-label="Controles de ficha técnica">
+    <a class="property-sheet-brand" href="agent-dashboard.html">
+      <img src="assets/logo.png" alt="Diamantes Realty Group" />
+      <span>Diamantes Realty Group</span>
+    </a>
+    <div class="property-sheet-actions">
+      <a class="button-secondary" href="agent-dashboard.html">Volver al panel</a>
+      <button type="button" id="downloadPropertySheetPdf">Descargar PDF</button>
+    </div>
+  </header>
+
+  <main class="property-sheet-page" id="propertySheetPage">
+    <p class="property-sheet-status" id="propertySheetStatus">Cargando ficha técnica...</p>
+    <div id="propertySheetRoot"></div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="js/image-utils.js"></script>
+  <script src="js/property-utils.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js",
+        "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+        "firebase/storage": "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js"
+      }
+    }
+  </script>
+  <script type="module" src="js/property-sheet.js"></script>
+</body>
+</html>
