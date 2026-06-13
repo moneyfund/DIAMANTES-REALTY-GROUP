@@ -356,8 +356,10 @@ function propertyCardTemplate(property) {
   const locationLabel = property.city || property.ubicacion || 'Ubicación no disponible';
   const displayDetails = getPropertyDisplayDetails(property).slice(0, 4);
 
+  const propertyId = String(property.id ?? '');
+
   return `
-    <article class="property-card${featuredClass}">
+    <article class="property-card${featuredClass}" role="link" tabindex="0" data-property-id="${escapeHtml(propertyId)}">
       <section class="property-cover">
         <img class="property-cover-image" src="${imageSrc}" alt="${imageAlt}" loading="lazy" onerror="this.onerror=null;this.src='${PROPERTY_IMAGE_PLACEHOLDER}'">
       </section>
@@ -450,6 +452,7 @@ function renderPropertySlider({ containerId, properties = [], prevSelector, next
   slider.classList.add('home-property-slider');
   slider.classList.remove('home-recent-grid', 'home-farms-land-grid');
   slider.innerHTML = properties.map(propertyCardTemplate).join('');
+  initializeHomePropertyCardNavigation(slider);
   section?.classList.toggle('is-empty', properties.length === 0);
   emptyState?.classList.toggle('hidden', properties.length !== 0);
   applyCardRevealAnimation(slider);
@@ -496,6 +499,30 @@ function renderFarmsAndLand(properties) {
   });
 }
 
+function openPropertyCard(card) {
+  const propertyId = card?.dataset?.propertyId;
+  if (!propertyId) return;
+
+  window.location.href = `propiedad.html?id=${encodeURIComponent(propertyId)}`;
+}
+
+function initializeHomePropertyCardNavigation(container) {
+  const cards = Array.from(container?.querySelectorAll?.('.property-card') || []);
+  if (!cards.length) return;
+
+  cards.forEach((card) => {
+    card.setAttribute('role', 'link');
+    card.setAttribute('tabindex', '0');
+
+    const detailLink = card.querySelector('a[href*="propiedad.html?id="]');
+    if (!card.dataset.propertyId && detailLink) {
+      const detailUrl = new URL(detailLink.getAttribute('href'), window.location.href);
+      const propertyId = detailUrl.searchParams.get('id');
+      if (propertyId) card.dataset.propertyId = propertyId;
+    }
+  });
+}
+
 function initializeHorizontalSlider(slider, options = {}) {
   if (!slider) return;
   if (typeof slider._homeSliderCleanup === 'function') slider._homeSliderCleanup();
@@ -522,6 +549,45 @@ function initializeHorizontalSlider(slider, options = {}) {
       || Number.parseInt(rootStyles.getPropertyValue('--home-slider-columns'), 10)
       || 1;
   };
+
+  const interactiveSelector = 'a, button, input, select, textarea';
+
+  cards.forEach((card) => {
+    let cardStartX = 0;
+    let cardStartY = 0;
+    let cardIsDragging = false;
+
+    card.addEventListener('pointerdown', (event) => {
+      cardStartX = event.clientX;
+      cardStartY = event.clientY;
+      cardIsDragging = false;
+    });
+
+    card.addEventListener('pointermove', (event) => {
+      const dx = Math.abs(event.clientX - cardStartX);
+      const dy = Math.abs(event.clientY - cardStartY);
+
+      if (dx > 8 || dy > 8) {
+        cardIsDragging = true;
+      }
+    });
+
+    card.addEventListener('pointerup', (event) => {
+      const clickedInteractive = event.target.closest(interactiveSelector);
+
+      if (clickedInteractive) return;
+      if (cardIsDragging) return;
+
+      openPropertyCard(card);
+    });
+
+    card.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+
+      event.preventDefault();
+      openPropertyCard(card);
+    });
+  });
 
   const updateButtons = () => {
     const hasOverflow = slider.scrollWidth > slider.clientWidth + 2;
