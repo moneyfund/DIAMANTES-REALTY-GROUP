@@ -39,9 +39,18 @@ function getPropertyId() {
   const params = new URLSearchParams(window.location.search);
   const fromQuery = params.get('propertyId') || params.get('id');
   if (fromQuery) return fromQuery;
+
+  const hashPath = window.location.hash.replace(/^#/, '').split('?')[0];
+  const hashParts = hashPath.split('/').filter(Boolean);
+  const hashRouteIndex = hashParts.findIndex((part) => part === 'property-sheet');
+  if (hashRouteIndex >= 0 && hashParts[hashRouteIndex + 1]) {
+    return decodeURIComponent(hashParts[hashRouteIndex + 1]);
+  }
+
   const parts = window.location.pathname.split('/').filter(Boolean);
   const routeIndex = parts.findIndex((part) => part === 'property-sheet');
-  return routeIndex >= 0 ? parts[routeIndex + 1] : parts.at(-1);
+  const pathId = routeIndex >= 0 ? parts[routeIndex + 1] : parts.at(-1);
+  return pathId && pathId !== 'property-sheet.html' ? decodeURIComponent(pathId) : '';
 }
 
 function getImages(property = {}) {
@@ -195,9 +204,10 @@ async function downloadPdf() {
 
 async function PropertySheetPage() {
   const propertyId = getPropertyId();
-  if (!propertyId) throw new Error('No se recibió el ID de la propiedad.');
+  statusEl.textContent = 'Cargando ficha técnica...';
+  if (!propertyId) throw new Error('No se encontró la propiedad');
   const snapshot = await getDoc(doc(db, 'properties', propertyId));
-  if (!snapshot.exists()) throw new Error('No se encontró la propiedad solicitada.');
+  if (!snapshot.exists()) throw new Error('No se encontró la propiedad');
   currentProperty = { id: snapshot.id, ...snapshot.data() };
   currentAgent = await findAgent(currentProperty);
   rootEl.innerHTML = PropertySheetTemplate(currentProperty, currentAgent);
