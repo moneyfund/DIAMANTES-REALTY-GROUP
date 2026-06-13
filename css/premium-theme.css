@@ -2056,3 +2056,72 @@ body.dark-mode .premium-final-cta .premium-final-cta-card:hover,
     border-radius: 18px;
   }
 }
+
+/* === 2026-06-13 Global footer institutional color lock ===
+   Footer is intentionally independent from day/night theme selectors. */
+.site-footer {
+  background: linear-gradient(135deg, #07162F 0%, #0A1E3A 55%, #030914 100%) !important;
+  color: #FFFFFF !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.34) !important;
+}
+
+.site-footer :is(h1, h2, h3, h4, h5, h6, p, span, small, strong, em, li, label),
+.site-footer :is(a, a:link, a:visited, a:active),
+.site-footer .footer-brand-row h3,
+.site-footer .footer-brand-row p,
+.site-footer .footer-columns h4,
+.site-footer .footer-columns a,
+.site-footer .footer-legal-link,
+.site-footer .footer-text {
+  color: #FFFFFF !important;
+  opacity: 1 !important;
+}
+
+.site-footer :is(a:hover, a:focus-visible),
+.site-footer .footer-legal-link:is(:hover, :focus-visible),
+.site-footer .footer-columns a:is(:hover, :focus-visible) {
+  color: #FFFFFF !important;
+}
+
+.site-footer .footer-cta,
+.site-footer .footer-cta:visited,
+.site-footer .footer-cta:active {
+  background: #C00000 !important;
+  background-color: #C00000 !important;
+  border-color: #C00000 !important;
+  color: #FFFFFF !important;
+  opacity: 1 !important;
+  text-decoration: none !important;
+}
+
+.site-footer .footer-cta:is(:hover, :focus-visible) {
+  background: #A80000 !important;
+  background-color: #A80000 !important;
+  border-color: #A80000 !important;
+  color: #FFFFFF !important;
+  text-decoration: none !important;
+}
+
+.site-footer .footer-social-link,
+.site-footer .footer-social a,
+.site-footer .footer-social-link:visited,
+.site-footer .footer-social a:visited,
+.site-footer .footer-social-link:active,
+.site-footer .footer-social a:active {
+  background: transparent !important;
+  border-color: #FFFFFF !important;
+  color: #FFFFFF !important;
+}
+
+.site-footer .footer-social-link svg,
+.site-footer .footer-social a svg {
+  fill: currentColor !important;
+}
+
+.site-footer .footer-social-link:is(:hover, :focus-visible),
+.site-footer .footer-social a:is(:hover, :focus-visible) {
+  background: #C00000 !important;
+  border-color: #C00000 !important;
+  color: #FFFFFF !important;
+  text-decoration: none !important;
+}
