@@ -149,24 +149,24 @@ const footerLinks = [
 
 const footerSocialLinks = [
   {
-    href: 'https://instagram.com/',
-    label: 'Instagram',
-    icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2Zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.5a4.25 4.25 0 0 0 4.25 4.25h8.5a4.25 4.25 0 0 0 4.25-4.25v-8.5a4.25 4.25 0 0 0-4.25-4.25h-8.5Zm8.9 2.35a1.15 1.15 0 1 1 0 2.3 1.15 1.15 0 0 1 0-2.3ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 1.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/></svg>'
-  },
-  {
-    href: 'https://facebook.com/',
+    href: 'https://www.facebook.com/profile.php?id=100092004164726',
     label: 'Facebook',
     icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.7 22v-8.2h2.76l.41-3.2H13.7V8.56c0-.93.26-1.56 1.6-1.56h1.7V4.14A22.8 22.8 0 0 0 14.52 4c-2.45 0-4.14 1.5-4.14 4.24v2.36H7.6v3.2h2.78V22h3.32Z"/></svg>'
   },
   {
-    href: 'https://www.tiktok.com/',
+    href: 'https://www.tiktok.com/@diamantesrealtygroupnic?_r=1&_t=ZS-97AUtJhUdgi',
     label: 'TikTok',
     icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.1 3c.38 1.96 1.55 3.38 3.43 4.13 1.03.4 1.93.5 2.47.52v3.14a9.26 9.26 0 0 1-4.36-1.14v5.9c0 3.1-2.55 5.45-5.72 5.45S4 18.65 4 15.52c0-3.12 2.55-5.48 5.92-5.48.33 0 .67.03 1 .1v3.2a2.94 2.94 0 0 0-.99-.17c-1.62 0-2.88 1.06-2.88 2.36 0 1.37 1.19 2.33 2.78 2.33 1.82 0 2.76-1.17 2.76-2.87V3h1.5Z"/></svg>'
   },
   {
-    href: 'mailto:correo@inmonicaragua.com',
-    label: 'Gmail',
-    icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.75 5.5h16.5A1.75 1.75 0 0 1 22 7.25v9.5a1.75 1.75 0 0 1-1.75 1.75H3.75A1.75 1.75 0 0 1 2 16.75v-9.5A1.75 1.75 0 0 1 3.75 5.5Zm0 1.5v.2l8.25 5.7 8.25-5.7V7H3.75Zm16.75 9.75V8.91l-8.07 5.57a.75.75 0 0 1-.86 0L3.5 8.91v7.84c0 .14.11.25.25.25h16.5c.14 0 .25-.11.25-.25Z"/></svg>'
+    href: 'https://youtube.com/@bienesraicesennicaragua?si=6m1dBlXb0LDiwHFQ',
+    label: 'YouTube',
+    icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.58 7.2a2.74 2.74 0 0 0-1.93-1.94C17.95 4.8 12 4.8 12 4.8s-5.95 0-7.65.46A2.74 2.74 0 0 0 2.42 7.2 28.58 28.58 0 0 0 2 12a28.58 28.58 0 0 0 .42 4.8 2.74 2.74 0 0 0 1.93 1.94c1.7.46 7.65.46 7.65.46s5.95 0 7.65-.46a2.74 2.74 0 0 0 1.93-1.94A28.58 28.58 0 0 0 22 12a28.58 28.58 0 0 0-.42-4.8ZM10 15.2V8.8l5.2 3.2L10 15.2Z"/></svg>'
+  },
+  {
+    href: 'https://wa.me/50577265009',
+    label: 'WhatsApp',
+    icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.04 2a9.93 9.93 0 0 0-8.6 14.9L2 22l5.27-1.38A9.97 9.97 0 0 0 12.04 22C17.53 22 22 17.54 22 12.05 22 6.47 17.54 2 12.04 2Zm0 18.26c-1.47 0-2.9-.4-4.15-1.15l-.3-.17-3.12.82.84-3.03-.2-.31a8.2 8.2 0 1 1 6.93 3.84Zm4.5-6.18c-.25-.12-1.47-.72-1.69-.8-.23-.08-.4-.12-.56.12-.16.24-.64.8-.79.96-.14.16-.3.18-.56.06-.25-.12-1.08-.4-2.06-1.27-.76-.67-1.28-1.5-1.43-1.75-.15-.24-.02-.37.11-.49.12-.12.26-.3.39-.45.13-.16.18-.27.27-.45.09-.18.05-.33-.02-.46-.07-.12-.56-1.35-.77-1.85-.2-.47-.4-.4-.56-.4h-.48c-.16 0-.42.06-.64.3-.22.24-.84.82-.84 2s.86 2.31.98 2.47c.12.16 1.68 2.56 4.07 3.59.57.25 1.02.4 1.37.52.58.19 1.11.16 1.53.1.46-.07 1.47-.6 1.68-1.17.21-.56.21-1.04.14-1.16-.07-.11-.23-.18-.48-.3Z"/></svg>'
   }
 ];
 
@@ -188,7 +188,7 @@ function renderSiteFooter() {
         </div>
         <div>
           <h4>Contacto</h4>
-          <a href="tel:+50557251888">+505 5725-1888</a>
+          <a href="tel:+50577265009">+505 7726 5009</a>
           <a href="mailto:correo@inmonicaragua.com">correo@inmonicaragua.com</a>
           <div class="footer-social" aria-label="Redes sociales de Diamantes Realty Group">
             ${footerSocialLinks.map((link) => `<a class="footer-social-link" href="${link.href}" ${link.href.startsWith('mailto:') ? '' : 'target="_blank" rel="noopener noreferrer"'} aria-label="${link.label}" title="${link.label}">${link.icon}</a>`).join('')}
