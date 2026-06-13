@@ -7,6 +7,7 @@ import {
   query,
   onSnapshot,
   orderBy,
+  where,
   limit,
   serverTimestamp,
   doc,
@@ -501,26 +502,44 @@ function subscribeComments() {
     debugLog('[Comments] loading start', { propertyId: state.propertyId });
     startLoadTimeout('comments');
 
+    const fallbackCommentsQuery = query(collection(db, 'comments'), where('propertyId', '==', state.propertyId), orderBy('createdAt', 'desc'), limit(MAX_ITEMS));
+
     const unsubscribe = onSnapshot(commentsQuery, (snapshot) => {
       resolveLoadTimeout('comments');
       state.comments = normalizeSnapshot(snapshot);
       state.commentsStatus = 'success';
+      console.log('[ReviewsSystem] propertyId:', state.propertyId);
+      console.log('[ReviewsSystem] comments loaded:', state.comments.length);
       debugLog('[Comments] snapshot received', { propertyId: state.propertyId, total: state.comments.length });
       renderCommentList();
     }, (error) => {
       resolveLoadTimeout('comments');
       state.comments = [];
       state.commentsStatus = 'error';
+      console.error('[ReviewsSystem] error:', error);
       console.error('No se pudieron cargar comentarios:', error);
       debugLog('[Comments] error', { propertyId: state.propertyId, error });
       renderCommentsState('No fue posible cargar esta sección.');
     });
 
-    state.unsubscribers.push(unsubscribe);
+    const unsubscribeGlobal = onSnapshot(fallbackCommentsQuery, (snapshot) => {
+      const globalComments = normalizeSnapshot(snapshot);
+      const merged = [...state.comments, ...globalComments];
+      state.comments = Array.from(new Map(merged.map((item) => [item.id, item])).values()).slice(0, MAX_ITEMS);
+      state.commentsStatus = 'success';
+      console.log('[ReviewsSystem] propertyId:', state.propertyId);
+      console.log('[ReviewsSystem] comments loaded:', state.comments.length);
+      renderCommentList();
+    }, (error) => {
+      console.error('[ReviewsSystem] error:', error);
+    });
+
+    state.unsubscribers.push(unsubscribe, unsubscribeGlobal);
   } catch (error) {
     resolveLoadTimeout('comments');
     state.comments = [];
     state.commentsStatus = 'error';
+    console.error('[ReviewsSystem] error:', error);
     console.error('No se pudieron iniciar comentarios:', error);
     renderCommentsState('No fue posible cargar esta sección.');
   }
@@ -537,26 +556,44 @@ function subscribeReviews() {
     debugLog('[Reviews] loading start', { propertyId: state.propertyId });
     startLoadTimeout('reviews');
 
+    const fallbackReviewsQuery = query(collection(db, 'reviews'), where('propertyId', '==', state.propertyId), orderBy('createdAt', 'desc'), limit(MAX_ITEMS));
+
     const unsubscribe = onSnapshot(reviewsQuery, (snapshot) => {
       resolveLoadTimeout('reviews');
       state.reviews = normalizeSnapshot(snapshot);
       state.reviewsStatus = 'success';
+      console.log('[ReviewsSystem] propertyId:', state.propertyId);
+      console.log('[ReviewsSystem] reviews loaded:', state.reviews.length);
       debugLog('[Reviews] snapshot received', { propertyId: state.propertyId, total: state.reviews.length });
       renderReviewList();
     }, (error) => {
       resolveLoadTimeout('reviews');
       state.reviews = [];
       state.reviewsStatus = 'error';
+      console.error('[ReviewsSystem] error:', error);
       console.error('No se pudieron cargar reseñas:', error);
       debugLog('[Reviews] error', { propertyId: state.propertyId, error });
       renderReviewsState('No fue posible cargar esta sección.');
     });
 
-    state.unsubscribers.push(unsubscribe);
+    const unsubscribeGlobal = onSnapshot(fallbackReviewsQuery, (snapshot) => {
+      const globalReviews = normalizeSnapshot(snapshot);
+      const merged = [...state.reviews, ...globalReviews];
+      state.reviews = Array.from(new Map(merged.map((item) => [item.id, item])).values()).slice(0, MAX_ITEMS);
+      state.reviewsStatus = 'success';
+      console.log('[ReviewsSystem] propertyId:', state.propertyId);
+      console.log('[ReviewsSystem] reviews loaded:', state.reviews.length);
+      renderReviewList();
+    }, (error) => {
+      console.error('[ReviewsSystem] error:', error);
+    });
+
+    state.unsubscribers.push(unsubscribe, unsubscribeGlobal);
   } catch (error) {
     resolveLoadTimeout('reviews');
     state.reviews = [];
     state.reviewsStatus = 'error';
+    console.error('[ReviewsSystem] error:', error);
     console.error('No se pudieron iniciar reseñas:', error);
     renderReviewsState('No fue posible cargar esta sección.');
   }
