@@ -56,12 +56,36 @@
   width: 210mm;
 }
 
-.sheet-hero { height: 80mm; position: relative; }
-.sheet-hero-image { display: block; height: 100%; object-fit: cover; width: 100%; }
-.sheet-hero::after { background: linear-gradient(90deg, rgba(111,15,19,.92), rgba(159,22,26,.58), rgba(0,0,0,.08)); content: ''; inset: 0; position: absolute; }
-.sheet-hero-logo { background: rgba(255,255,255,.95); border-radius: 4mm; box-shadow: 0 10px 30px rgba(0,0,0,.18); left: 10mm; max-height: 22mm; object-fit: contain; padding: 2mm 4mm; position: absolute; top: 8mm; width: 42mm; z-index: 2; }
-.sheet-debug-image-url { background: rgba(255,255,255,.86); border-radius: 2mm; bottom: 2mm; color: #1f1f1f; font-size: 6.5pt; left: 10mm; max-width: 180mm; overflow: hidden; padding: 1mm 2mm; position: absolute; text-overflow: ellipsis; white-space: nowrap; z-index: 3; }
-.sheet-hero-overlay { bottom: 9mm; color: #fff; left: 10mm; max-width: 128mm; position: absolute; z-index: 1; }
+.sheet-hero {
+  position: relative;
+  width: 100%;
+  height: 330px;
+  overflow: hidden;
+  background: #f3f3f3;
+}
+.sheet-hero-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.sheet-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(120,0,10,.82), rgba(120,0,10,.35), rgba(0,0,0,.15));
+  z-index: 1;
+}
+.sheet-hero-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  color: #fff;
+}
+.sheet-hero-logo { background: rgba(255,255,255,.95); border-radius: 4mm; box-shadow: 0 10px 30px rgba(0,0,0,.18); left: 10mm; max-height: 22mm; object-fit: contain; padding: 2mm 4mm; position: absolute; top: 8mm; width: 42mm; z-index: 3; }
+.sheet-hero-copy { bottom: 9mm; left: 10mm; max-width: 128mm; position: absolute; }
+.sheet-image-placeholder { align-items: center; color: var(--sheet-muted); display: flex; font-size: 13pt; font-weight: 800; height: 100%; justify-content: center; letter-spacing: .08em; text-transform: uppercase; }
+.sheet-hero--fallback::after { background: linear-gradient(135deg, rgba(111,15,19,.90), rgba(159,22,26,.55)); }
 .sheet-hero-overlay span { background: var(--sheet-red); border: 1px solid rgba(255,255,255,.32); border-radius: 999px; color: #fff; display: inline-block; font-weight: 800; letter-spacing: .16em; padding: .42rem .85rem; text-transform: uppercase; }
 .sheet-hero-overlay h1 { color: #fff; font-family: 'Playfair Display', serif; font-size: 28pt; line-height: .98; margin: 3mm 0 2mm; text-shadow: 0 2px 14px rgba(0,0,0,.28); }
 .sheet-hero-overlay p { font-size: 11pt; font-weight: 600; margin: 0 0 2mm; }
@@ -69,7 +93,14 @@
 
 .sheet-gallery-strip { display: grid; gap: 3mm; grid-template-columns: repeat(4, 1fr); padding: 4mm 8mm 1mm; }
 .sheet-gallery-strip:has(img:nth-child(3):last-child) { grid-template-columns: repeat(3, 1fr); }
-.sheet-gallery-strip img { border: 1px solid rgba(198,161,91,.45); border-radius: 4mm; height: 26mm; object-fit: cover; width: 100%; }
+.sheet-gallery-image {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  display: block;
+  border-radius: 12px;
+  border: 1px solid rgba(198,161,91,.45);
+}
 
 .sheet-section { padding: 3mm 8mm; }
 .sheet-section h2 { color: var(--sheet-red); font-family: 'Playfair Display', serif; font-size: 16pt; margin: 0 0 4mm; position: relative; }
