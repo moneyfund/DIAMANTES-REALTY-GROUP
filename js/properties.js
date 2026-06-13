@@ -553,30 +553,9 @@ function initializeHorizontalSlider(slider, options = {}) {
   const interactiveSelector = 'a, button, input, select, textarea';
 
   cards.forEach((card) => {
-    let cardStartX = 0;
-    let cardStartY = 0;
-    let cardIsDragging = false;
-
-    card.addEventListener('pointerdown', (event) => {
-      cardStartX = event.clientX;
-      cardStartY = event.clientY;
-      cardIsDragging = false;
-    });
-
-    card.addEventListener('pointermove', (event) => {
-      const dx = Math.abs(event.clientX - cardStartX);
-      const dy = Math.abs(event.clientY - cardStartY);
-
-      if (dx > 8 || dy > 8) {
-        cardIsDragging = true;
-      }
-    });
-
-    card.addEventListener('pointerup', (event) => {
-      const clickedInteractive = event.target.closest(interactiveSelector);
-
-      if (clickedInteractive) return;
-      if (cardIsDragging) return;
+    card.addEventListener('click', (event) => {
+      if (slider.classList.contains('is-dragging')) return;
+      if (event.target.closest(interactiveSelector)) return;
 
       openPropertyCard(card);
     });
@@ -605,43 +584,67 @@ function initializeHorizontalSlider(slider, options = {}) {
   if (prevButton) prevButton.onclick = () => slideBy(-1);
   if (nextButton) nextButton.onclick = () => slideBy(1);
 
+  let isPointerDown = false;
   let isDragging = false;
   let startX = 0;
+  let startY = 0;
   let startScrollLeft = 0;
   let pointerId = null;
 
   const handlePointerDown = (event) => {
     if (event.button !== undefined && event.button !== 0) return;
-    isDragging = true;
+    isPointerDown = true;
+    isDragging = false;
     startX = event.clientX;
+    startY = event.clientY;
     startScrollLeft = slider.scrollLeft;
     pointerId = event.pointerId;
-    slider.classList.add('is-dragging');
     slider.setPointerCapture?.(event.pointerId);
   };
 
   const handlePointerMove = (event) => {
+    if (!isPointerDown) return;
+
+    const dx = Math.abs(event.clientX - startX);
+    const dy = Math.abs(event.clientY - startY);
+    if (dx > 12 || dy > 12) {
+      isDragging = true;
+      slider.classList.add('is-dragging');
+    }
+
     if (!isDragging) return;
-    const delta = event.clientX - startX;
-    if (Math.abs(delta) > 6) event.preventDefault();
-    slider.scrollLeft = startScrollLeft - delta;
+    event.preventDefault();
+    slider.scrollLeft = startScrollLeft - (event.clientX - startX);
   };
 
   const stopDragging = (event) => {
-    if (!isDragging) return;
-    isDragging = false;
-    slider.classList.remove('is-dragging');
+    if (!isPointerDown) return;
+    isPointerDown = false;
     if (pointerId !== null) slider.releasePointerCapture?.(pointerId);
     pointerId = null;
-    if (Math.abs(event.clientX - startX) > 12) {
+
+    if (isDragging && Math.abs(event.clientX - startX) > 12) {
       window.setTimeout(updateButtons, 180);
     }
+
+    window.setTimeout(() => {
+      isDragging = false;
+      slider.classList.remove('is-dragging');
+    }, 0);
+  };
+
+  const handleClickCapture = (event) => {
+    if (!slider.classList.contains('is-dragging')) return;
+
+    event.preventDefault();
+    event.stopPropagation();
   };
 
   slider.addEventListener('pointerdown', handlePointerDown);
   slider.addEventListener('pointermove', handlePointerMove);
   slider.addEventListener('pointerup', stopDragging);
   slider.addEventListener('pointercancel', stopDragging);
+  slider.addEventListener('click', handleClickCapture, true);
   slider.addEventListener('scroll', updateButtons, { passive: true });
   window.addEventListener('resize', updateButtons);
   slider._homeSliderCleanup = () => {
@@ -649,6 +652,7 @@ function initializeHorizontalSlider(slider, options = {}) {
     slider.removeEventListener('pointermove', handlePointerMove);
     slider.removeEventListener('pointerup', stopDragging);
     slider.removeEventListener('pointercancel', stopDragging);
+    slider.removeEventListener('click', handleClickCapture, true);
     slider.removeEventListener('scroll', updateButtons);
     window.removeEventListener('resize', updateButtons);
   };

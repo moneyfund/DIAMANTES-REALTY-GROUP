@@ -2145,3 +2145,15 @@ body.dark-mode .premium-final-cta .premium-final-cta-card:hover,
 .site-footer .footer-text span {
   color: #ffffff !important;
 }
+
+/* Ensure home property slider cards remain clickable while only decorative overlays ignore pointers. */
+.property-slider .property-card,
+.property-slider .property-card a,
+.property-slider .property-card button,
+.property-slider .btn-property-detail,
+.home-property-slider .property-card,
+.home-property-slider .property-card a,
+.home-property-slider .property-card button,
+.home-property-slider .btn-property-detail {
+  pointer-events: auto;
+}
