@@ -1483,6 +1483,18 @@ body.dark-mode .home-page .hero-search-content .premium-search input:focus,
   word-break: break-word;
   border-radius: 16px !important;
   box-shadow: 0 16px 42px rgba(15, 31, 51, 0.08) !important;
+  cursor: default;
+}
+
+.property-card:hover,
+.home-page .property-card:hover {
+  cursor: default;
+}
+
+.property-detail-button {
+  pointer-events: auto;
+  position: relative;
+  z-index: 5;
 }
 
 .property-cover,
@@ -2146,15 +2158,15 @@ body.dark-mode .premium-final-cta .premium-final-cta-card:hover,
   color: #ffffff !important;
 }
 
-/* Ensure home property slider cards remain clickable while only decorative overlays ignore pointers. */
+/* Ensure slider controls and the explicit detail button receive pointer events. */
 .property-slider .property-card,
 .property-slider .property-card a,
 .property-slider .property-card button,
-.property-slider .btn-property-detail,
+.property-slider .property-detail-button,
 .home-property-slider .property-card,
 .home-property-slider .property-card a,
 .home-property-slider .property-card button,
-.home-property-slider .btn-property-detail {
+.home-property-slider .property-detail-button {
   pointer-events: auto;
 }
 
@@ -2202,12 +2214,12 @@ body.dark-mode .premium-final-cta .premium-final-cta-card:hover,
   flex-direction: column !important;
   text-decoration: none !important;
   color: inherit !important;
-  cursor: pointer;
+  cursor: default;
   pointer-events: auto;
 }
 
 .property-card-link * {
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .property-card::before,
@@ -2296,4 +2308,26 @@ body.dark-mode .property-card .property-meta,
 body.dark .property-card .property-meta span,
 body.dark-mode .property-card .property-meta span {
   color: #ffffff !important;
+}
+
+/* Home/public property detail button: the only clickable entry point for property cards. */
+.property-detail-button,
+.property-card .btn-detail,
+.property-card .btn-outline,
+.property-card a[href*="propiedad.html"] {
+  background: #B00008 !important;
+  color: #FFFFFF !important;
+  border: 1px solid #B00008 !important;
+  pointer-events: auto;
+  position: relative;
+  z-index: 5;
+}
+
+.property-detail-button:hover,
+.property-card .btn-detail:hover,
+.property-card .btn-outline:hover,
+.property-card a[href*="propiedad.html"]:hover {
+  background: #930006 !important;
+  color: #FFFFFF !important;
+  border-color: #930006 !important;
 }

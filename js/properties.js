@@ -12,16 +12,7 @@ const imageUtils = window.inmoImageUtils || {
 };
 const videoUtils = window.inmoVideoUtils || {};
 
-const PROPERTY_DETAIL_LINK_SELECTOR = 'a[href*="propiedad.html?id="]';
-
-const PROPERTY_SLIDER_CONTROL_SELECTOR = [
-  '.property-slider-arrow',
-  '.slider-arrow',
-  '.slider-control',
-  'button',
-  'select',
-  'input'
-].join(', ');
+const PROPERTY_DETAIL_LINK_SELECTOR = '.property-detail-button, a[href*="propiedad.html?id="]';
 
 function getPropertyDetailLinkFromEvent(event) {
   return event.target?.closest?.(PROPERTY_DETAIL_LINK_SELECTOR) || null;
@@ -370,11 +361,8 @@ function propertyCardTemplate(property) {
   const detailUrl = getPropertyDetailUrl(property);
   const locationLabel = property.city || property.ubicacion || 'Ubicación no disponible';
   const displayDetails = getPropertyDisplayDetails(property).slice(0, 4);
-
-  const propertyId = String(property.id ?? '');
-
   return `
-    <a class="property-card property-card-link${featuredClass}" href="${detailUrl}" data-property-id="${escapeHtml(propertyId)}">
+    <div class="property-card${featuredClass}">
       <section class="property-cover">
         <img class="property-cover-image" src="${imageSrc}" alt="${imageAlt}" loading="lazy" onerror="this.onerror=null;this.src='${PROPERTY_IMAGE_PLACEHOLDER}'">
       </section>
@@ -390,9 +378,9 @@ function propertyCardTemplate(property) {
           <span>${featureIcon('type')} ${property.typeLabel || getPropertyTypeLabel(property.tipo) || 'Propiedad'}</span>
         </div>
         <p class="property-price-area">${formatPricePerArea(getPricePerAreaUsd(property), property.areaUnit)}</p>
-        <div class="property-card-actions"><span class="btn-primary-property">Ver detalle</span></div>
+        <div class="property-card-actions"><a class="property-detail-button btn-primary-property" href="${detailUrl}">VER DETALLE</a></div>
       </div>
-    </a>
+    </div>
   `;
 }
 
@@ -467,7 +455,6 @@ function renderPropertySlider({ containerId, properties = [], prevSelector, next
   slider.classList.add('home-property-slider');
   slider.classList.remove('home-recent-grid', 'home-farms-land-grid');
   slider.innerHTML = properties.map(propertyCardTemplate).join('');
-  initializeHomePropertyCardNavigation(slider);
   section?.classList.toggle('is-empty', properties.length === 0);
   emptyState?.classList.toggle('hidden', properties.length !== 0);
   applyCardRevealAnimation(slider);
@@ -514,42 +501,6 @@ function renderFarmsAndLand(properties) {
   });
 }
 
-function openPropertyCard(card) {
-  const detailLink = card?.matches?.('a[href]') ? card : card?.querySelector?.('a[href*="propiedad.html?id="]');
-  if (detailLink?.href) {
-    window.location.href = detailLink.href;
-    return;
-  }
-
-  const propertyId = card?.dataset?.propertyId;
-  if (!propertyId) return;
-
-  window.location.href = `propiedad.html?id=${encodeURIComponent(propertyId)}`;
-}
-
-function initializeHomePropertyCardNavigation(container) {
-  const cards = Array.from(container?.querySelectorAll?.('.property-card') || []);
-  if (!cards.length) return;
-
-  cards.forEach((card) => {
-    const detailLink = card.matches?.('a[href]') ? card : card.querySelector('a[href*="propiedad.html?id="]');
-
-    if (card.matches?.('a[href]')) {
-      card.removeAttribute('role');
-      card.removeAttribute('tabindex');
-    } else {
-      card.setAttribute('role', 'link');
-      card.setAttribute('tabindex', '0');
-    }
-
-    if (!card.dataset.propertyId && detailLink) {
-      const detailUrl = new URL(detailLink.getAttribute('href'), window.location.href);
-      const propertyId = detailUrl.searchParams.get('id');
-      if (propertyId) card.dataset.propertyId = propertyId;
-    }
-  });
-}
-
 function initializeHorizontalSlider(slider, options = {}) {
   if (!slider) return;
   if (typeof slider._homeSliderCleanup === 'function') slider._homeSliderCleanup();
@@ -576,24 +527,6 @@ function initializeHorizontalSlider(slider, options = {}) {
       || Number.parseInt(rootStyles.getPropertyValue('--home-slider-columns'), 10)
       || 1;
   };
-
-  const interactiveSelector = 'a, button, input, select, textarea';
-
-  cards.forEach((card) => {
-    card.addEventListener('click', (event) => {
-      if (event.target.closest(interactiveSelector)) return;
-      if (slider.classList.contains('is-dragging')) return;
-
-      openPropertyCard(card);
-    });
-
-    card.addEventListener('keydown', (event) => {
-      if (event.key !== 'Enter' && event.key !== ' ') return;
-
-      event.preventDefault();
-      openPropertyCard(card);
-    });
-  });
 
   const updateButtons = () => {
     const hasOverflow = slider.scrollWidth > slider.clientWidth + 2;
@@ -1260,45 +1193,6 @@ function renderGlobalMap(properties) {
 
   map.fitBounds(bounds, { padding: [40, 40] });
 }
-
-function initializeIndexPropertyCardClickCapture() {
-  document.addEventListener('click', function (event) {
-    const link = getPropertyDetailLinkFromEvent(event);
-
-    if (!link) return;
-
-    const isIndexPage =
-      window.location.pathname.endsWith('/') ||
-      window.location.pathname.endsWith('/index.html') ||
-      window.location.pathname.includes('index.html');
-
-    if (!isIndexPage) return;
-
-    const blockedControl = event.target.closest(PROPERTY_SLIDER_CONTROL_SELECTOR);
-    const blockedSliderControl = blockedControl?.closest?.('.property-slider-arrow, .slider-arrow, .slider-control');
-    const blockedFormControl = blockedControl?.matches?.('select, input');
-    const blockedButtonOutsideLink = blockedControl?.matches?.('button') && !link.contains(blockedControl);
-
-    if (blockedSliderControl || blockedFormControl || blockedButtonOutsideLink) return;
-
-    const isInsidePropertySlider = link.closest(
-      '.property-slider, .property-slider-track, .featured-properties, .recent-properties, .land-properties'
-    );
-
-    if (!isInsidePropertySlider) return;
-
-    const href = link.getAttribute('href');
-    if (!href) return;
-
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation();
-
-    window.location.assign(href);
-  }, true);
-}
-
-initializeIndexPropertyCardClickCapture();
 
 (async function initProperties() {
   try {
