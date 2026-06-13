@@ -384,20 +384,30 @@ function propertyCardTemplate(property) {
   `;
 }
 
-function getPropertyImages(property) {
-  const normalizedImages = imageUtils.getPropertyImages(property)
-    .map(normalizePropertyImageUrl)
-    .filter(Boolean);
+function getPropertyPhotoUrls(property) {
+  const photoUrls = imageUtils.getPropertyPhotoUrls
+    ? imageUtils.getPropertyPhotoUrls(property)
+    : {
+      coverImage: imageUtils.getCoverImage(property),
+      galleryImages: imageUtils.getPropertyImages(property).filter((image) => image !== imageUtils.getCoverImage(property))
+    };
 
-  return normalizedImages;
+  return {
+    coverImage: normalizePropertyImageUrl(photoUrls.coverImage),
+    galleryImages: (photoUrls.galleryImages || [])
+      .map(normalizePropertyImageUrl)
+      .filter(Boolean)
+  };
+}
+
+function getPropertyImages(property) {
+  const { coverImage, galleryImages } = getPropertyPhotoUrls(property);
+  return [coverImage, ...galleryImages].filter(Boolean);
 }
 
 function getPrimaryPropertyImage(property) {
-  const coverImage = normalizePropertyImageUrl(imageUtils.getCoverImage(property));
-  if (coverImage) return coverImage;
-
-  const [primaryImage] = getPropertyImages(property);
-  return primaryImage || PROPERTY_IMAGE_PLACEHOLDER;
+  const { coverImage } = getPropertyPhotoUrls(property);
+  return coverImage || PROPERTY_IMAGE_PLACEHOLDER;
 }
 
 function getHighlightedTags(property = {}) {
