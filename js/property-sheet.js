@@ -1,8 +1,7 @@
-import { db, doc, getDoc, collection, query, where, getDocs } from './firebase-services.js';
+import { db, storage, doc, getDoc, collection, query, where, getDocs, ref, getDownloadURL } from './firebase-services.js';
 
 const NOT_SPECIFIED = 'No especificado';
 const logoUrl = 'assets/logo.png';
-const imageUtils = window.inmoImageUtils || {};
 const propertyUtils = window.inmoPropertyUtils || {};
 
 const statusEl = document.getElementById('propertySheetStatus');
@@ -74,78 +73,113 @@ function firstText(...values) {
   return values.map((value) => String(value ?? '').trim()).find(Boolean) || '';
 }
 
-function isImageCandidate(value) {
-  if (!value) return false;
-  const text = String(value).trim();
-  return /^https?:\/\//i.test(text) || text.startsWith('assets/') || text.startsWith('/assets/');
+function isDirectImageUrl(value) {
+  const text = String(value || '').trim();
+  return /^https?:\/\//i.test(text) || text.startsWith('assets/') || text.startsWith('/assets/') || /^data:image\//i.test(text) || /^blob:/i.test(text);
+}
+
+function isStoragePathCandidate(value) {
+  const text = String(value || '').trim();
+  if (!text || isDirectImageUrl(text)) return false;
+  if (/^(mailto:|tel:|javascript:)/i.test(text)) return false;
+  return text.startsWith('gs://') || text.startsWith('properties/') || text.startsWith('/properties/') || text.includes('/properties/') || /\.(avif|gif|jpe?g|png|webp|svg)(\?.*)?$/i.test(text);
 }
 
 function extractImageValue(item) {
   if (!item) return '';
   if (typeof item === 'string') return item;
   if (typeof item === 'object') {
-    return firstText(item.url, item.src, item.imageUrl, item.downloadURL, item.path, item.fullPath);
+    return firstText(item.url, item.src, item.downloadURL, item.imageUrl, item.publicUrl, item.path, item.fullPath);
   }
   return '';
 }
 
-function normalizeImages(...sources) {
+function collectImageCandidates(...sources) {
   const unique = new Set();
   return sources
     .flatMap((source) => Array.isArray(source) ? source : [source])
     .map(extractImageValue)
     .map((item) => String(item || '').trim())
     .filter((item) => {
-      if (!isImageCandidate(item) || unique.has(item)) return false;
+      if (!item || unique.has(item)) return false;
       unique.add(item);
       return true;
     });
 }
 
-function getPropertyImageSet(property = {}) {
-  const explicitCover = normalizeImages(
+async function resolveImageCandidate(value) {
+  const image = String(value || '').trim();
+  if (!image) return '';
+  if (isDirectImageUrl(image)) return image;
+  if (!isStoragePathCandidate(image)) return '';
+
+  const storagePath = image.replace(/^\/+/, '');
+  try {
+    return await getDownloadURL(ref(storage, storagePath));
+  } catch (error) {
+    console.warn('Could not resolve Firebase Storage image path:', image, error);
+    return '';
+  }
+}
+
+async function resolveImageCandidates(candidates = []) {
+  const resolved = await Promise.all(candidates.map(resolveImageCandidate));
+  const unique = new Set();
+  return resolved
+    .map((item) => String(item || '').trim())
+    .filter((item) => {
+      if (!item || unique.has(item)) return false;
+      unique.add(item);
+      return true;
+    });
+}
+
+async function getPropertyImages(property = {}) {
+  const coverCandidates = collectImageCandidates(
+    property.coverImageUrl,
     property.coverImage,
+    property.mainImageUrl,
     property.mainImage,
     property.imageUrl,
-    property.image,
-    property.imagen,
-    property.featuredImage,
-    property.thumbnail
+    property.image
   );
-  const gallery = normalizeImages(
+
+  const galleryCandidates = collectImageCandidates(
     property.images,
+    property.imageUrls,
     property.photos,
     property.gallery,
     property.media,
+    property.multimedia,
+    property.propertyImages,
     property.imagenes,
     property.photoUrls,
     property.galleryImages,
     property.propertyDetails?.images,
+    property.propertyDetails?.imageUrls,
     property.propertyDetails?.photos,
     property.propertyDetails?.gallery,
-    property.propertyDetails?.media
+    property.propertyDetails?.media,
+    property.propertyDetails?.multimedia,
+    property.propertyDetails?.propertyImages
   );
-  const ordered = normalizeImages(...explicitCover, ...gallery);
-  return {
-    cover: explicitCover[0] || ordered[0] || 'assets/placeholder.svg',
-    gallery: ordered
-  };
+
+  const [resolvedCoverCandidates, resolvedGalleryCandidates] = await Promise.all([
+    resolveImageCandidates(coverCandidates),
+    resolveImageCandidates(galleryCandidates)
+  ]);
+
+  const coverImage = resolvedCoverCandidates[0] || resolvedGalleryCandidates[0] || '';
+  const galleryImages = resolvedGalleryCandidates.filter((image) => image !== coverImage);
+
+  return { coverImage, galleryImages };
 }
 
-function getImages(property = {}) {
-  if (imageUtils.getPropertyImages) {
-    const utilityImages = normalizeImages(imageUtils.getPropertyImages(property));
-    const detected = getPropertyImageSet(property);
-    return normalizeImages(detected.cover, detected.gallery, utilityImages);
-  }
-  return getPropertyImageSet(property).gallery;
-}
-
-function getCover(property = {}) {
-  const detected = getPropertyImageSet(property);
-  if (detected.cover !== 'assets/placeholder.svg') return detected.cover;
-  if (imageUtils.getCoverImage) return imageUtils.getCoverImage(property);
-  return detected.gallery[0] || 'assets/placeholder.svg';
+function getResolvedImageSet(property = {}) {
+  const resolved = property.__propertySheetImages || {};
+  const coverImage = resolved.coverImage || 'assets/placeholder.svg';
+  const galleryImages = Array.isArray(resolved.galleryImages) ? resolved.galleryImages : [];
+  return { coverImage, galleryImages };
 }
 
 function propertyType(property = {}) {
@@ -222,10 +256,14 @@ function FeatureItem(icon, label, value) {
   return `<div class="sheet-feature-item"><span class="sheet-feature-icon">${icon}</span><small>${escapeHtml(label)}</small><strong>${escapeHtml(fallback(value))}</strong></div>`;
 }
 
+function imageErrorHandlerMarkup() {
+  return "this.onerror=null;console.warn('Image failed to load:', this.src);this.src='assets/placeholder.svg';";
+}
+
 function GalleryStrip(images = []) {
-  const realGallery = images.slice(1, 5);
+  const realGallery = images.slice(0, 4);
   const gallery = realGallery.length ? realGallery : ['assets/placeholder.svg', 'assets/placeholder.svg', 'assets/placeholder.svg'];
-  return `<div class="sheet-gallery-strip">${gallery.map((src, index) => `<img src="${escapeHtml(src)}" alt="Imagen secundaria ${index + 1}" crossorigin="anonymous" />`).join('')}</div>`;
+  return `<div class="sheet-gallery-strip">${gallery.map((src, index) => `<img src="${escapeHtml(src)}" alt="Imagen secundaria ${index + 1}" crossorigin="anonymous" onerror="${imageErrorHandlerMarkup()}" />`).join('')}</div>`;
 }
 
 function AgentContactCard(agent = {}) {
@@ -246,7 +284,7 @@ function AgentContactCard(agent = {}) {
 }
 
 function PropertySheetTemplate(property = {}, agent = {}) {
-  const images = getImages(property);
+  const { coverImage, galleryImages } = getResolvedImageSet(property);
   const title = `${propertyType(property)} en ${operationLabel(property.tipoOperacion || property.operation || property.operacion)}`;
   const location = [property.location || property.ubicacion, property.city || property.ciudad].filter(Boolean).join(', ');
   const features = [
@@ -260,7 +298,7 @@ function PropertySheetTemplate(property = {}, agent = {}) {
   return `<article class="property-sheet-a4" id="propertySheetA4">
     <header class="sheet-hero">
       <img class="sheet-hero-logo" src="assets/logo.png" alt="Diamantes Realty Group" crossorigin="anonymous" />
-      <img class="sheet-hero-image" src="${escapeHtml(getCover(property))}" alt="Imagen principal de la propiedad" crossorigin="anonymous" />
+      <img class="sheet-hero-image" src="${escapeHtml(coverImage)}" alt="Imagen principal de la propiedad" crossorigin="anonymous" onerror="${imageErrorHandlerMarkup()}" />
       <div class="sheet-hero-overlay">
         <span>Ficha Técnica</span>
         <h1>${escapeHtml(title)}</h1>
@@ -268,7 +306,7 @@ function PropertySheetTemplate(property = {}, agent = {}) {
         <strong>${escapeHtml(formatPrice(property))}</strong>
       </div>
     </header>
-    ${GalleryStrip(images)}
+    ${GalleryStrip(galleryImages)}
     <section class="sheet-section sheet-features"><h2>Características</h2><div>${features.map(([i, l, v]) => FeatureItem(i, l, v)).join('')}</div></section>
     <section class="sheet-section sheet-info-grid"><div><h2>Información general</h2><p><strong>Título:</strong> ${escapeHtml(fallback(property.title || property.titulo))}</p><p><strong>Ubicación:</strong> ${escapeHtml(fallback(location))}</p><p><strong>Operación:</strong> ${escapeHtml(operationLabel(property.tipoOperacion || property.operation || property.operacion))}</p><p><strong>Tipo:</strong> ${escapeHtml(propertyType(property))}</p><p><strong>Estado:</strong> ${escapeHtml(fallback(detail(property, 'status', 'constructionStatus')))}</p></div><div><h2>Descripción</h2><p>${escapeHtml(fallback(property.description || property.descripcion))}</p></div></section>
     <footer class="sheet-footer">
@@ -308,6 +346,11 @@ async function PropertySheetPage() {
   const snapshot = await getDoc(doc(db, 'properties', propertyId));
   if (!snapshot.exists()) throw new Error('No se encontró la propiedad');
   currentProperty = { id: snapshot.id, ...snapshot.data() };
+  const resolvedImages = await getPropertyImages(currentProperty);
+  currentProperty.__propertySheetImages = resolvedImages;
+  console.log('Property data:', currentProperty);
+  console.log('Resolved cover image:', resolvedImages.coverImage);
+  console.log('Resolved gallery images:', resolvedImages.galleryImages);
   currentAgent = await findAgent(currentProperty);
   rootEl.innerHTML = PropertySheetTemplate(currentProperty, currentAgent);
   statusEl.textContent = '';
