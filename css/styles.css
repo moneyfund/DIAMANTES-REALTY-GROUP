@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap');
 :root {
+  --deploy-test-public: "2026-06-13";
   --primary-red: #d32f2f;
   --primary-red-dark: #b71c1c;
   --primary-red-soft: #ef5350;
