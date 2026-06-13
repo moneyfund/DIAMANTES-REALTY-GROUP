@@ -82,23 +82,59 @@ function isStoragePathCandidate(value) {
   const text = String(value || '').trim();
   if (!text || isDirectImageUrl(text)) return false;
   if (/^(mailto:|tel:|javascript:)/i.test(text)) return false;
-  return text.startsWith('gs://') || text.startsWith('properties/') || text.startsWith('/properties/') || text.includes('/properties/') || /\.(avif|gif|jpe?g|png|webp|svg)(\?.*)?$/i.test(text);
+  return text.startsWith('gs://')
+    || text.startsWith('properties/')
+    || text.startsWith('/properties/')
+    || text.includes('/properties/')
+    || text.includes('firebasestorage.googleapis.com')
+    || /\.(avif|gif|jpe?g|png|webp|svg)(\?.*)?$/i.test(text);
 }
 
-function extractImageValue(item) {
-  if (!item) return '';
-  if (typeof item === 'string') return item;
-  if (typeof item === 'object') {
-    return firstText(item.url, item.src, item.downloadURL, item.imageUrl, item.publicUrl, item.path, item.fullPath);
+function getStoragePath(value = '') {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  if (text.startsWith('gs://')) return text;
+  return text.replace(/^\/+/, '');
+}
+
+function getStorageErrorMessage(error) {
+  const code = error?.code || '';
+  if (code === 'storage/unauthorized') return 'Firebase Storage rules are blocking this image';
+  if (code === 'storage/object-not-found') return 'Storage file path does not exist';
+  if (code === 'storage/cors-unsupported' || /cors/i.test(error?.message || '')) return 'Possible CORS/PDF image issue';
+  return 'Could not resolve Firebase Storage image path';
+}
+
+function extractImageValues(value, values = []) {
+  if (!value) return values;
+  if (typeof value === 'string') {
+    values.push(value);
+    return values;
   }
-  return '';
+  if (Array.isArray(value)) {
+    value.forEach((item) => extractImageValues(item, values));
+    return values;
+  }
+  if (typeof value === 'object') {
+    const direct = firstText(
+      value.url,
+      value.src,
+      value.downloadURL,
+      value.imageUrl,
+      value.publicUrl,
+      value.fullPath,
+      value.path,
+      value.storagePath
+    );
+    if (direct) values.push(direct);
+  }
+  return values;
 }
 
 function collectImageCandidates(...sources) {
   const unique = new Set();
   return sources
-    .flatMap((source) => Array.isArray(source) ? source : [source])
-    .map(extractImageValue)
+    .flatMap((source) => extractImageValues(source))
     .map((item) => String(item || '').trim())
     .filter((item) => {
       if (!item || unique.has(item)) return false;
@@ -107,23 +143,39 @@ function collectImageCandidates(...sources) {
     });
 }
 
-async function resolveImageCandidate(value) {
-  const image = String(value || '').trim();
-  if (!image) return '';
-  if (isDirectImageUrl(image)) return image;
-  if (!isStoragePathCandidate(image)) return '';
-
-  const storagePath = image.replace(/^\/+/, '');
-  try {
-    return await getDownloadURL(ref(storage, storagePath));
-  } catch (error) {
-    console.warn('Could not resolve Firebase Storage image path:', image, error);
-    return '';
+async function resolveImageUrl(value) {
+  const candidates = extractImageValues(value);
+  if (!candidates.length) {
+    console.warn('Empty image value detected:', value);
+    return null;
   }
+
+  for (const candidate of candidates) {
+    const image = String(candidate || '').trim();
+    if (!image) continue;
+    if (isDirectImageUrl(image)) return image;
+
+    if (!isStoragePathCandidate(image)) {
+      console.warn('Image value is not a URL or recognized Firebase Storage path:', image);
+      continue;
+    }
+
+    const storagePath = getStoragePath(image);
+    try {
+      console.log('Resolving Firebase Storage image path:', storagePath);
+      return await getDownloadURL(ref(storage, storagePath));
+    } catch (error) {
+      const message = getStorageErrorMessage(error);
+      console.error(message, { image, storagePath, code: error?.code, error });
+      console.warn('Failed image candidate:', image);
+    }
+  }
+
+  return null;
 }
 
 async function resolveImageCandidates(candidates = []) {
-  const resolved = await Promise.all(candidates.map(resolveImageCandidate));
+  const resolved = await Promise.all(candidates.map(resolveImageUrl));
   const unique = new Set();
   return resolved
     .map((item) => String(item || '').trim())
@@ -136,12 +188,12 @@ async function resolveImageCandidates(candidates = []) {
 
 async function getPropertyImages(property = {}) {
   const coverCandidates = collectImageCandidates(
-    property.coverImageUrl,
     property.coverImage,
-    property.mainImageUrl,
+    property.coverImageUrl,
     property.mainImage,
-    property.imageUrl,
-    property.image
+    property.mainImageUrl,
+    property.image,
+    property.imageUrl
   );
 
   const galleryCandidates = collectImageCandidates(
@@ -164,6 +216,8 @@ async function getPropertyImages(property = {}) {
     property.propertyDetails?.propertyImages
   );
 
+  console.log('Image candidates:', { coverCandidates, galleryCandidates });
+
   const [resolvedCoverCandidates, resolvedGalleryCandidates] = await Promise.all([
     resolveImageCandidates(coverCandidates),
     resolveImageCandidates(galleryCandidates)
@@ -172,8 +226,11 @@ async function getPropertyImages(property = {}) {
   const coverImage = resolvedCoverCandidates[0] || resolvedGalleryCandidates[0] || '';
   const galleryImages = resolvedGalleryCandidates.filter((image) => image !== coverImage);
 
+  if (!coverImage) console.warn('No usable image URL found for this property. Check Firestore image fields, empty URLs, Storage paths, rules, or deleted files.');
+
   return { coverImage, galleryImages };
 }
+
 
 function getResolvedImageSet(property = {}) {
   const resolved = property.__propertySheetImages || {};
@@ -299,6 +356,7 @@ function PropertySheetTemplate(property = {}, agent = {}) {
     <header class="sheet-hero">
       <img class="sheet-hero-logo" src="assets/logo.png" alt="Diamantes Realty Group" crossorigin="anonymous" />
       <img class="sheet-hero-image" src="${escapeHtml(coverImage)}" alt="Imagen principal de la propiedad" crossorigin="anonymous" onerror="${imageErrorHandlerMarkup()}" />
+      <small class="sheet-debug-image-url">Debug image URL: ${escapeHtml(coverImage)}</small>
       <div class="sheet-hero-overlay">
         <span>Ficha Técnica</span>
         <h1>${escapeHtml(title)}</h1>
@@ -327,7 +385,7 @@ async function downloadPdf() {
   downloadBtn.disabled = true;
   downloadBtn.textContent = 'Generando PDF...';
   try {
-    const canvas = await html2canvas(sheet, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+    const canvas = await html2canvas(sheet, { scale: 2, useCORS: true, allowTaint: false, backgroundColor: '#ffffff' });
     const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
     const image = canvas.toDataURL('image/png');
     pdf.addImage(image, 'PNG', 0, 0, 210, 297, undefined, 'FAST');
@@ -341,14 +399,30 @@ async function downloadPdf() {
 
 async function PropertySheetPage() {
   const propertyId = getPropertyId();
+  console.log('Property ID:', propertyId);
   statusEl.textContent = 'Cargando ficha técnica...';
   if (!propertyId) throw new Error('No se encontró la propiedad');
   const snapshot = await getDoc(doc(db, 'properties', propertyId));
   if (!snapshot.exists()) throw new Error('No se encontró la propiedad');
   currentProperty = { id: snapshot.id, ...snapshot.data() };
+  console.log('Property data:', currentProperty);
+  console.log('Image fields:', {
+    coverImage: currentProperty.coverImage,
+    coverImageUrl: currentProperty.coverImageUrl,
+    mainImage: currentProperty.mainImage,
+    mainImageUrl: currentProperty.mainImageUrl,
+    image: currentProperty.image,
+    imageUrl: currentProperty.imageUrl,
+    images: currentProperty.images,
+    imageUrls: currentProperty.imageUrls,
+    photos: currentProperty.photos,
+    gallery: currentProperty.gallery,
+    media: currentProperty.media,
+    multimedia: currentProperty.multimedia,
+    propertyImages: currentProperty.propertyImages
+  });
   const resolvedImages = await getPropertyImages(currentProperty);
   currentProperty.__propertySheetImages = resolvedImages;
-  console.log('Property data:', currentProperty);
   console.log('Resolved cover image:', resolvedImages.coverImage);
   console.log('Resolved gallery images:', resolvedImages.galleryImages);
   currentAgent = await findAgent(currentProperty);
