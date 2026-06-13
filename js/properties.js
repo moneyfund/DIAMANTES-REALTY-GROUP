@@ -433,7 +433,7 @@ function getRecentProperties(properties = []) {
       return a.index - b.index;
     })
     .map((entry) => entry.property)
-    .slice(0, 3);
+    .slice(0, 12);
 }
 
 function isFarmOrLandProperty(property = {}) {
@@ -441,17 +441,32 @@ function isFarmOrLandProperty(property = {}) {
   return type === 'farm' || type === 'land';
 }
 
-function renderFeaturedSlider(properties) {
-  const featuredGrid = document.getElementById('featuredGrid');
-  if (!featuredGrid) return;
+function renderPropertySlider({ containerId, properties = [], prevSelector, nextSelector, sectionId, emptyStateId }) {
+  const slider = document.getElementById(containerId);
+  const section = sectionId ? document.getElementById(sectionId) : null;
+  const emptyState = emptyStateId ? document.getElementById(emptyStateId) : null;
+  if (!slider) return;
 
+  slider.classList.add('home-property-slider');
+  slider.classList.remove('home-recent-grid', 'home-farms-land-grid');
+  slider.innerHTML = properties.map(propertyCardTemplate).join('');
+  section?.classList.toggle('is-empty', properties.length === 0);
+  emptyState?.classList.toggle('hidden', properties.length !== 0);
+  applyCardRevealAnimation(slider);
+  initializeHorizontalSlider(slider, {
+    prevButton: prevSelector ? document.querySelector(prevSelector) : null,
+    nextButton: nextSelector ? document.querySelector(nextSelector) : null
+  });
+}
+
+function renderFeaturedSlider(properties) {
   const featuredProperties = properties.filter(isFeaturedProperty);
   const selectedProperties = (featuredProperties.length ? featuredProperties : properties).slice(0, featuredProperties.length ? 12 : 8);
-  featuredGrid.innerHTML = selectedProperties.map(propertyCardTemplate).join('');
-  applyCardRevealAnimation(featuredGrid);
-  initializeHorizontalSlider(featuredGrid, {
-    prevButton: document.querySelector('[data-featured-prev]'),
-    nextButton: document.querySelector('[data-featured-next]')
+  renderPropertySlider({
+    containerId: 'featuredGrid',
+    properties: selectedProperties,
+    prevSelector: '[data-featured-prev]',
+    nextSelector: '[data-featured-next]'
   });
 }
 
@@ -460,53 +475,25 @@ function renderFeatured(properties) {
 }
 
 function renderRecentProperties(properties) {
-  const grid = document.getElementById('recentPropertiesGrid');
-  const section = document.getElementById('recentPropertiesSection');
-  const emptyState = document.getElementById('recentPropertiesEmpty');
-  if (!grid) return;
-
-  const recentProperties = getRecentProperties(properties);
-  grid.innerHTML = recentProperties.map(propertyCardTemplate).join('');
-  section?.classList.toggle('is-empty', recentProperties.length === 0);
-  emptyState?.classList.toggle('hidden', recentProperties.length !== 0);
-  applyCardRevealAnimation(grid);
+  renderPropertySlider({
+    containerId: 'recentPropertiesGrid',
+    properties: getRecentProperties(properties),
+    prevSelector: '[data-recent-prev]',
+    nextSelector: '[data-recent-next]',
+    sectionId: 'recentPropertiesSection',
+    emptyStateId: 'recentPropertiesEmpty'
+  });
 }
 
 function renderFarmsAndLand(properties) {
-  const grid = document.getElementById('farmsLandGrid');
-  const section = document.getElementById('farmsLandSection');
-  const emptyState = document.getElementById('farmsLandEmpty');
-  const controls = document.getElementById('farmsLandSliderControls');
-  if (!grid) return;
-
-  const farmsAndLand = properties.filter(isFarmOrLandProperty).slice(0, 6);
-  const useSlider = farmsAndLand.length > 3;
-
-  if (!useSlider && typeof grid._homeSliderCleanup === 'function') {
-    grid._homeSliderCleanup();
-    grid._homeSliderCleanup = null;
-  }
-
-  grid.classList.toggle('home-property-slider', useSlider);
-  grid.classList.toggle('home-farms-land-grid', !useSlider);
-  controls?.classList.toggle('hidden', !useSlider);
-  section?.classList.toggle('is-empty', farmsAndLand.length === 0);
-  emptyState?.classList.toggle('hidden', farmsAndLand.length !== 0);
-  grid.innerHTML = farmsAndLand.map(propertyCardTemplate).join('');
-  applyCardRevealAnimation(grid);
-
-  if (useSlider) {
-    initializeHorizontalSlider(grid, {
-      prevButton: document.querySelector('[data-farms-land-prev]'),
-      nextButton: document.querySelector('[data-farms-land-next]')
-    });
-    return;
-  }
-
-  const prevButton = document.querySelector('[data-farms-land-prev]');
-  const nextButton = document.querySelector('[data-farms-land-next]');
-  if (prevButton) prevButton.onclick = null;
-  if (nextButton) nextButton.onclick = null;
+  renderPropertySlider({
+    containerId: 'farmsLandGrid',
+    properties: properties.filter(isFarmOrLandProperty).slice(0, 12),
+    prevSelector: '[data-farms-land-prev]',
+    nextSelector: '[data-farms-land-next]',
+    sectionId: 'farmsLandSection',
+    emptyStateId: 'farmsLandEmpty'
+  });
 }
 
 function initializeHorizontalSlider(slider, options = {}) {

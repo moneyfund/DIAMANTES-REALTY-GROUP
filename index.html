@@ -139,20 +139,24 @@
 
     <section class="section section-properties container premium-properties-v2 home-property-section" id="recentPropertiesSection" aria-labelledby="recentPropertiesTitle">
       <div class="premium-section-heading home-property-heading">
-        <p class="premium-kicker">Nuevo ingreso</p>
         <div>
           <h2 id="recentPropertiesTitle">Propiedades recientes</h2>
           <p>Las últimas oportunidades agregadas a nuestro inventario.</p>
         </div>
-        <a href="propiedades.html" class="premium-text-link">Ver catálogo</a>
+        <div class="home-property-actions">
+          <a href="propiedades.html" class="premium-text-link">Ver catálogo</a>
+          <div class="home-slider-controls" aria-label="Navegación de propiedades recientes">
+            <button class="home-slider-button" type="button" data-recent-prev aria-label="Ver propiedades recientes anteriores">‹</button>
+            <button class="home-slider-button" type="button" data-recent-next aria-label="Ver más propiedades recientes">›</button>
+          </div>
+        </div>
       </div>
-      <div id="recentPropertiesGrid" class="properties-grid premium-property-grid home-recent-grid" aria-label="Propiedades recientes"></div>
+      <div id="recentPropertiesGrid" class="properties-grid premium-property-grid home-property-slider" aria-label="Propiedades recientes"></div>
       <p id="recentPropertiesEmpty" class="home-property-empty hidden">Pronto tendremos nuevas propiedades disponibles.</p>
     </section>
 
     <section class="section section-properties container premium-properties-v2 home-property-section" id="farmsLandSection" aria-labelledby="farmsLandTitle">
       <div class="premium-section-heading home-property-heading">
-        <p class="premium-kicker">Tierra e inversión</p>
         <div>
           <h2 id="farmsLandTitle">Fincas y terrenos</h2>
           <p>Opciones ideales para inversión, desarrollo, producción o patrimonio familiar.</p>
@@ -165,7 +169,7 @@
           </div>
         </div>
       </div>
-      <div id="farmsLandGrid" class="properties-grid premium-property-grid home-farms-land-grid" aria-label="Fincas y terrenos"></div>
+      <div id="farmsLandGrid" class="properties-grid premium-property-grid home-property-slider" aria-label="Fincas y terrenos"></div>
       <p id="farmsLandEmpty" class="home-property-empty hidden">Pronto tendremos fincas y terrenos disponibles.</p>
     </section>
 

@@ -1384,9 +1384,9 @@ body.dark-mode .home-page .hero-search-content .premium-search input:focus,
   .home-page .home-property-slider .property-card > img,
   .home-page #featuredGrid.home-property-slider .property-card > img {
     aspect-ratio: auto !important;
-    height: 190px !important;
-    min-height: 190px !important;
-    max-height: 190px !important;
+    height: 180px !important;
+    min-height: 180px !important;
+    max-height: 180px !important;
   }
 
   .home-page .home-property-slider .property-card-content,
