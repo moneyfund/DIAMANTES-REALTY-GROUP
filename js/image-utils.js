@@ -46,11 +46,21 @@
     return images.includes(explicitCover) ? explicitCover : images[0];
   }
 
+  function getPropertyPhotoUrls(property = {}) {
+    const images = getPropertyImages(property);
+    const cover = getCoverImage(property);
+    const coverImage = cover === PLACEHOLDER ? '' : cover;
+    const galleryImages = images.filter((image) => image && image !== coverImage);
+
+    return { coverImage, galleryImages };
+  }
+
   globalScope.inmoImageUtils = {
     PLACEHOLDER,
     isValidHttpUrl,
     normalizeImageList,
     getPropertyImages,
-    getCoverImage
+    getCoverImage,
+    getPropertyPhotoUrls
   };
 })(window);

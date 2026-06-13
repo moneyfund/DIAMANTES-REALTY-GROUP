@@ -1,8 +1,9 @@
-import { db, storage, doc, getDoc, collection, query, where, getDocs, ref, getDownloadURL } from './firebase-services.js';
+import { db, doc, getDoc, collection, query, where, getDocs } from './firebase-services.js';
 
 const NOT_SPECIFIED = 'No especificado';
 const logoUrl = 'assets/logo.png';
 const propertyUtils = window.inmoPropertyUtils || {};
+const imageUtils = window.inmoImageUtils || {};
 
 const statusEl = document.getElementById('propertySheetStatus');
 const rootEl = document.getElementById('propertySheetRoot');
@@ -73,162 +74,23 @@ function firstText(...values) {
   return values.map((value) => String(value ?? '').trim()).find(Boolean) || '';
 }
 
-function isDirectImageUrl(value) {
-  const text = String(value || '').trim();
-  return /^https?:\/\//i.test(text) || text.startsWith('assets/') || text.startsWith('/assets/') || /^data:image\//i.test(text) || /^blob:/i.test(text);
-}
-
-function isStoragePathCandidate(value) {
-  const text = String(value || '').trim();
-  if (!text || isDirectImageUrl(text)) return false;
-  if (/^(mailto:|tel:|javascript:)/i.test(text)) return false;
-  return text.startsWith('gs://')
-    || text.startsWith('properties/')
-    || text.startsWith('/properties/')
-    || text.includes('/properties/')
-    || text.includes('firebasestorage.googleapis.com')
-    || /\.(avif|gif|jpe?g|png|webp|svg)(\?.*)?$/i.test(text);
-}
-
-function getStoragePath(value = '') {
-  const text = String(value || '').trim();
-  if (!text) return '';
-  if (text.startsWith('gs://')) return text;
-  return text.replace(/^\/+/, '');
-}
-
-function getStorageErrorMessage(error) {
-  const code = error?.code || '';
-  if (code === 'storage/unauthorized') return 'Firebase Storage rules are blocking this image';
-  if (code === 'storage/object-not-found') return 'Storage file path does not exist';
-  if (code === 'storage/cors-unsupported' || /cors/i.test(error?.message || '')) return 'Possible CORS/PDF image issue';
-  return 'Could not resolve Firebase Storage image path';
-}
-
-function extractImageValues(value, values = []) {
-  if (!value) return values;
-  if (typeof value === 'string') {
-    values.push(value);
-    return values;
-  }
-  if (Array.isArray(value)) {
-    value.forEach((item) => extractImageValues(item, values));
-    return values;
-  }
-  if (typeof value === 'object') {
-    const direct = firstText(
-      value.url,
-      value.src,
-      value.downloadURL,
-      value.imageUrl,
-      value.publicUrl,
-      value.fullPath,
-      value.path,
-      value.storagePath
-    );
-    if (direct) values.push(direct);
-  }
-  return values;
-}
-
-function collectImageCandidates(...sources) {
-  const unique = new Set();
-  return sources
-    .flatMap((source) => extractImageValues(source))
-    .map((item) => String(item || '').trim())
-    .filter((item) => {
-      if (!item || unique.has(item)) return false;
-      unique.add(item);
-      return true;
-    });
-}
-
-async function resolveImageUrl(value) {
-  const candidates = extractImageValues(value);
-  if (!candidates.length) {
-    console.warn('Empty image value detected:', value);
-    return null;
+function getPropertyPhotoUrls(property = {}) {
+  if (imageUtils.getPropertyPhotoUrls) {
+    return imageUtils.getPropertyPhotoUrls(property);
   }
 
-  for (const candidate of candidates) {
-    const image = String(candidate || '').trim();
-    if (!image) continue;
-    if (isDirectImageUrl(image)) return image;
-
-    if (!isStoragePathCandidate(image)) {
-      console.warn('Image value is not a URL or recognized Firebase Storage path:', image);
-      continue;
-    }
-
-    const storagePath = getStoragePath(image);
-    try {
-      console.log('Resolving Firebase Storage image path:', storagePath);
-      return await getDownloadURL(ref(storage, storagePath));
-    } catch (error) {
-      const message = getStorageErrorMessage(error);
-      console.error(message, { image, storagePath, code: error?.code, error });
-      console.warn('Failed image candidate:', image);
-    }
-  }
-
-  return null;
-}
-
-async function resolveImageCandidates(candidates = []) {
-  const resolved = await Promise.all(candidates.map(resolveImageUrl));
-  const unique = new Set();
-  return resolved
-    .map((item) => String(item || '').trim())
-    .filter((item) => {
-      if (!item || unique.has(item)) return false;
-      unique.add(item);
-      return true;
-    });
+  const images = imageUtils.getPropertyImages ? imageUtils.getPropertyImages(property) : [];
+  const cover = imageUtils.getCoverImage ? imageUtils.getCoverImage(property) : images[0];
+  const coverImage = cover === imageUtils.PLACEHOLDER ? '' : (cover || '');
+  const galleryImages = images.filter((image) => image && image !== coverImage);
+  return { coverImage, galleryImages };
 }
 
 async function getPropertyImages(property = {}) {
-  const coverCandidates = collectImageCandidates(
-    property.coverImage,
-    property.coverImageUrl,
-    property.mainImage,
-    property.mainImageUrl,
-    property.image,
-    property.imageUrl
-  );
-
-  const galleryCandidates = collectImageCandidates(
-    property.images,
-    property.imageUrls,
-    property.photos,
-    property.gallery,
-    property.media,
-    property.multimedia,
-    property.propertyImages,
-    property.imagenes,
-    property.photoUrls,
-    property.galleryImages,
-    property.propertyDetails?.images,
-    property.propertyDetails?.imageUrls,
-    property.propertyDetails?.photos,
-    property.propertyDetails?.gallery,
-    property.propertyDetails?.media,
-    property.propertyDetails?.multimedia,
-    property.propertyDetails?.propertyImages
-  );
-
-  console.log('Image candidates:', { coverCandidates, galleryCandidates });
-
-  const [resolvedCoverCandidates, resolvedGalleryCandidates] = await Promise.all([
-    resolveImageCandidates(coverCandidates),
-    resolveImageCandidates(galleryCandidates)
-  ]);
-
-  const coverImage = resolvedCoverCandidates[0] || resolvedGalleryCandidates[0] || '';
-  const galleryImages = resolvedGalleryCandidates.filter((image) => image !== coverImage);
-
-  if (!coverImage) console.warn('No usable image URL found for this property. Check Firestore image fields, empty URLs, Storage paths, rules, or deleted files.');
-
-  return { coverImage, galleryImages };
+  const { coverImage, galleryImages } = getPropertyPhotoUrls(property);
+  const photoUrls = { coverImage, galleryImages };
+  console.log('Public image logic result:', photoUrls);
+  return photoUrls;
 }
 
 
@@ -325,8 +187,10 @@ function galleryImageErrorHandlerMarkup() {
 
 function GalleryStrip(images = []) {
   const gallery = images.slice(0, 4).filter((img) => typeof img === 'string' && img.trim());
-  if (!gallery.length) return '';
-  return `<div class="sheet-gallery-strip">${gallery.map((src) => `<img key="${escapeHtml(src)}" src="${escapeHtml(src)}" alt="Imagen secundaria de la propiedad" class="sheet-gallery-image" crossorigin="anonymous" referrerpolicy="no-referrer" onerror="${galleryImageErrorHandlerMarkup()}" />`).join('')}</div>`;
+  if (!gallery.length) {
+    return `<div class="sheet-gallery-strip sheet-gallery-strip--placeholder">${Array.from({ length: 4 }, () => '<div class="sheet-gallery-placeholder">Imagen secundaria</div>').join('')}</div>`;
+  }
+  return `<div class="sheet-gallery-strip">${gallery.map((url) => `<img src="${escapeHtml(url)}" alt="Imagen secundaria" class="sheet-gallery-image" onerror="${galleryImageErrorHandlerMarkup()}" />`).join('')}</div>`;
 }
 
 function AgentContactCard(agent = {}) {
@@ -348,8 +212,8 @@ function AgentContactCard(agent = {}) {
 
 function PropertySheetTemplate(property = {}, agent = {}) {
   const { coverImage, galleryImages } = getResolvedImageSet(property);
-  console.log('Final coverImage used by template:', coverImage);
-  console.log('Final galleryImages used by template:', galleryImages);
+  console.log('Cover used in sheet:', coverImage);
+  console.log('Gallery used in sheet:', galleryImages);
   const title = `${propertyType(property)} en ${operationLabel(property.tipoOperacion || property.operation || property.operacion)}`;
   const location = [property.location || property.ubicacion, property.city || property.ciudad].filter(Boolean).join(', ');
   const features = [
@@ -362,8 +226,13 @@ function PropertySheetTemplate(property = {}, agent = {}) {
 
   return `<article class="property-sheet-a4" id="propertySheetA4">
     <header class="sheet-hero${coverImage ? '' : ' sheet-hero--fallback'}">
-      ${coverImage ? `<img src="${escapeHtml(coverImage)}" alt="Imagen principal de la propiedad" class="sheet-hero-image" crossorigin="anonymous" referrerpolicy="no-referrer" onerror="${coverImageErrorHandlerMarkup()}" />` : '<div class="sheet-image-placeholder">Imagen no disponible</div>'}
-      <div class="sheet-hero-overlay">
+      ${coverImage ? `<img
+        src="${escapeHtml(coverImage)}"
+        alt="${escapeHtml(property.title || property.titulo || 'Imagen principal de la propiedad')}"
+        class="sheet-hero-image"
+        onerror="${coverImageErrorHandlerMarkup()}"
+      />` : '<div class="sheet-image-placeholder">Imagen no disponible</div>'}
+      <div class="sheet-hero-overlay sheet-hero-content">
         <img class="sheet-hero-logo" src="assets/logo.png" alt="Diamantes Realty Group" crossorigin="anonymous" />
         <div class="sheet-hero-copy">
           <span>Ficha Técnica</span>
@@ -432,8 +301,8 @@ async function PropertySheetPage() {
   });
   const resolvedImages = await getPropertyImages(currentProperty);
   currentProperty.__propertySheetImages = resolvedImages;
-  console.log('Resolved cover image:', resolvedImages.coverImage);
-  console.log('Resolved gallery images:', resolvedImages.galleryImages);
+  console.log('Cover used in sheet:', resolvedImages.coverImage);
+  console.log('Gallery used in sheet:', resolvedImages.galleryImages);
   currentAgent = await findAgent(currentProperty);
   rootEl.innerHTML = PropertySheetTemplate(currentProperty, currentAgent);
   statusEl.textContent = '';
