@@ -12,6 +12,21 @@ const imageUtils = window.inmoImageUtils || {
 };
 const videoUtils = window.inmoVideoUtils || {};
 
+const PROPERTY_DETAIL_LINK_SELECTOR = 'a[href*="propiedad.html?id="]';
+
+const PROPERTY_SLIDER_CONTROL_SELECTOR = [
+  '.property-slider-arrow',
+  '.slider-arrow',
+  '.slider-control',
+  'button',
+  'select',
+  'input'
+].join(', ');
+
+function getPropertyDetailLinkFromEvent(event) {
+  return event.target?.closest?.(PROPERTY_DETAIL_LINK_SELECTOR) || null;
+}
+
 const PROPERTY_IMAGE_PLACEHOLDER = 'assets/placeholder.svg';
 const AGENT_IMAGE_PLACEHOLDER = 'assets/placeholder.svg';
 const FIREBASE_CONFIG = {
@@ -627,6 +642,8 @@ function initializeHorizontalSlider(slider, options = {}) {
     }
 
     if (!isDragging) return;
+    const link = getPropertyDetailLinkFromEvent(event);
+    if (link) return;
     event.preventDefault();
     slider.scrollLeft = startScrollLeft - (event.clientX - startX);
   };
@@ -649,6 +666,12 @@ function initializeHorizontalSlider(slider, options = {}) {
 
   const handleClickCapture = (event) => {
     if (!suppressSliderClick) return;
+
+    const link = getPropertyDetailLinkFromEvent(event);
+    if (link) {
+      suppressSliderClick = false;
+      return;
+    }
 
     event.preventDefault();
     event.stopPropagation();
@@ -1240,6 +1263,10 @@ function renderGlobalMap(properties) {
 
 function initializeIndexPropertyCardClickCapture() {
   document.addEventListener('click', function (event) {
+    const link = getPropertyDetailLinkFromEvent(event);
+
+    if (!link) return;
+
     const isIndexPage =
       window.location.pathname.endsWith('/') ||
       window.location.pathname.endsWith('/index.html') ||
@@ -1247,25 +1274,27 @@ function initializeIndexPropertyCardClickCapture() {
 
     if (!isIndexPage) return;
 
-    const blockedControl = event.target.closest(
-      '.property-slider-arrow, .slider-arrow, .slider-control, button, select, input, textarea'
+    const blockedControl = event.target.closest(PROPERTY_SLIDER_CONTROL_SELECTOR);
+    const blockedSliderControl = blockedControl?.closest?.('.property-slider-arrow, .slider-arrow, .slider-control');
+    const blockedFormControl = blockedControl?.matches?.('select, input');
+    const blockedButtonOutsideLink = blockedControl?.matches?.('button') && !link.contains(blockedControl);
+
+    if (blockedSliderControl || blockedFormControl || blockedButtonOutsideLink) return;
+
+    const isInsidePropertySlider = link.closest(
+      '.property-slider, .property-slider-track, .featured-properties, .recent-properties, .land-properties'
     );
 
-    if (blockedControl) return;
+    if (!isInsidePropertySlider) return;
 
-    const propertyLink = event.target.closest('a[href*="propiedad.html?id="]');
-
-    if (!propertyLink) return;
-
-    const href = propertyLink.getAttribute('href');
-
+    const href = link.getAttribute('href');
     if (!href) return;
 
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
 
-    window.location.href = href;
+    window.location.assign(href);
   }, true);
 }
 
