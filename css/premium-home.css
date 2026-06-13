@@ -802,3 +802,49 @@ button,
     grid-template-columns: 1fr;
   }
 }
+
+/* Final home CTA image button */
+.premium-final-cta .premium-final-cta-card {
+  display: block;
+  padding: clamp(0.65rem, 1.6vw, 1rem);
+  overflow: hidden;
+  border-radius: 32px;
+  background: transparent;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.12);
+  line-height: 0;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.premium-final-cta .premium-final-cta-card:hover,
+.premium-final-cta .premium-final-cta-card:focus-visible {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+}
+
+.premium-final-cta .premium-final-cta-card:focus-visible {
+  outline: 3px solid rgba(176, 0, 8, 0.35);
+  outline-offset: 4px;
+}
+
+.premium-final-cta-image {
+  display: block;
+  width: 100%;
+  height: clamp(220px, 28vw, 360px);
+  border-radius: 24px;
+  object-fit: cover;
+}
+
+@media (max-width: 768px) {
+  .premium-final-cta .premium-final-cta-card {
+    width: 100%;
+    padding: 0.55rem;
+    border-radius: 24px;
+  }
+
+  .premium-final-cta-image {
+    height: auto;
+    border-radius: 18px;
+  }
+}
