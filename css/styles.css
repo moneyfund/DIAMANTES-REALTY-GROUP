@@ -10,11 +10,11 @@
   --card-bg: #ffffff;
   --card-text: var(--primary-red-dark);
   --section-dark: var(--primary-red-dark);
-  --footer-premium-bg: linear-gradient(135deg, #c0c0c0 0%, #4b4b4b 40%, #050505 100%);
-  --footer-premium-text: #d4af37;
-  --footer-premium-text-hover: #f3d27a;
-  --footer-premium-border: rgba(243, 210, 122, 0.34);
-  --footer-premium-social-bg: rgba(5, 5, 5, 0.34);
+  --footer-premium-bg: linear-gradient(135deg, #07162F 0%, #0A1E3A 55%, #030914 100%);
+  --footer-premium-text: #FFFFFF;
+  --footer-premium-text-hover: #FFCDD2;
+  --footer-premium-border: rgba(255, 255, 255, 0.34);
+  --footer-premium-social-bg: transparent;
   --footer-bg: var(--footer-premium-bg);
   --text-main: #ffffff;
   --text-secondary: #4b5563;
@@ -8434,11 +8434,11 @@ body.dark-mode .dashboard-form textarea {
 body.dark,
 body.dark-mode,
 [data-theme="dark"] {
-  --footer-premium-bg: linear-gradient(135deg, #c0c0c0 0%, #4b4b4b 40%, #050505 100%);
-  --footer-premium-text: #d4af37;
-  --footer-premium-text-hover: #f3d27a;
-  --footer-premium-border: rgba(243, 210, 122, 0.34);
-  --footer-premium-social-bg: rgba(5, 5, 5, 0.34);
+  --footer-premium-bg: linear-gradient(135deg, #07162F 0%, #0A1E3A 55%, #030914 100%);
+  --footer-premium-text: #FFFFFF;
+  --footer-premium-text-hover: #FFCDD2;
+  --footer-premium-border: rgba(255, 255, 255, 0.34);
+  --footer-premium-social-bg: transparent;
   --footer-bg: var(--footer-premium-bg);
 }
 
