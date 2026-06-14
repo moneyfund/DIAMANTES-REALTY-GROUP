@@ -50,10 +50,16 @@
   color: var(--sheet-text) !important;
   display: flex;
   flex-direction: column;
-  height: 297mm;
+  min-height: 1123px;
   margin: 0 auto;
   overflow: hidden;
-  width: 210mm;
+  width: 794px;
+}
+
+
+body.is-generating-pdf .property-sheet-a4 {
+  min-height: 1123px;
+  width: 794px;
 }
 
 .sheet-hero {
@@ -147,6 +153,7 @@ body.dark-mode .property-sheet-a4,
 
 @media (max-width: 900px) {
   .property-sheet-a4 { height: auto; min-height: 297mm; transform-origin: top center; width: min(100%, 210mm); }
+  body.is-generating-pdf .property-sheet-a4 { min-height: 1123px; width: 794px; }
   .sheet-features > div { grid-template-columns: repeat(2, 1fr); }
   .sheet-info-grid, .sheet-agent-card, .sheet-agent-card ul { grid-template-columns: 1fr; }
   .property-sheet-topbar { align-items: flex-start; flex-direction: column; }

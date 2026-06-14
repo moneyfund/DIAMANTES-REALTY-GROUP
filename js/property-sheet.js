@@ -10,6 +10,7 @@ const rootEl = document.getElementById('propertySheetRoot');
 const downloadBtn = document.getElementById('downloadPropertySheetPdf');
 let currentProperty = null;
 let currentAgent = null;
+let isGeneratingPdf = false;
 
 
 const icons = {
@@ -190,13 +191,13 @@ function GalleryStrip(images = []) {
   if (!gallery.length) {
     return `<div class="sheet-gallery-strip sheet-gallery-strip--placeholder">${Array.from({ length: 4 }, () => '<div class="sheet-gallery-placeholder">Imagen secundaria</div>').join('')}</div>`;
   }
-  return `<div class="sheet-gallery-strip">${gallery.map((url) => `<img src="${escapeHtml(url)}" alt="Imagen secundaria" class="sheet-gallery-image" onerror="${galleryImageErrorHandlerMarkup()}" />`).join('')}</div>`;
+  return `<div class="sheet-gallery-strip">${gallery.map((url) => `<img src="${escapeHtml(url)}" alt="Imagen secundaria" class="sheet-gallery-image" crossOrigin="anonymous" referrerPolicy="no-referrer" onerror="${galleryImageErrorHandlerMarkup()}" />`).join('')}</div>`;
 }
 
 function AgentContactCard(agent = {}) {
   const role = agent.role || agent.cargo || agent.position || 'Asesor inmobiliario';
   return `<section class="sheet-agent-card">
-    <img src="${escapeHtml(agent.photo || agent.profilePhoto || 'assets/placeholder.svg')}" alt="Foto del agente" crossorigin="anonymous" />
+    <img src="${escapeHtml(agent.photo || agent.profilePhoto || 'assets/placeholder.svg')}" alt="Foto del agente" crossOrigin="anonymous" referrerPolicy="no-referrer" />
     <div>
       <small>Agente responsable</small>
       <h3>${escapeHtml(fallback(agent.name || agent.nombre))}</h3>
@@ -224,16 +225,18 @@ function PropertySheetTemplate(property = {}, agent = {}) {
     [icons.check, 'Estado', detail(property, 'status', 'constructionStatus')], [icons.map, 'Uso de suelo', detail(property, 'landUse', 'permittedUse', 'potentialUse')]
   ];
 
-  return `<article class="property-sheet-a4" id="propertySheetA4">
+  return `<article class="property-sheet-a4" id="property-sheet-pdf">
     <header class="sheet-hero${coverImage ? '' : ' sheet-hero--fallback'}">
       ${coverImage ? `<img
         src="${escapeHtml(coverImage)}"
         alt="${escapeHtml(property.title || property.titulo || 'Imagen principal de la propiedad')}"
         class="sheet-hero-image"
+        crossOrigin="anonymous"
+        referrerPolicy="no-referrer"
         onerror="${coverImageErrorHandlerMarkup()}"
       />` : '<div class="sheet-image-placeholder">Imagen no disponible</div>'}
       <div class="sheet-hero-overlay sheet-hero-content">
-        <img class="sheet-hero-logo" src="assets/logo.png" alt="Diamantes Realty Group" crossorigin="anonymous" />
+        <img class="sheet-hero-logo" src="${escapeHtml(property.logoPdf || logoUrl)}" alt="Diamantes Realty Group" crossOrigin="anonymous" referrerPolicy="no-referrer" />
         <div class="sheet-hero-copy">
           <span>Ficha Técnica</span>
           <h1>${escapeHtml(title)}</h1>
@@ -247,7 +250,7 @@ function PropertySheetTemplate(property = {}, agent = {}) {
     <section class="sheet-section sheet-info-grid"><div><h2>Información general</h2><p><strong>Título:</strong> ${escapeHtml(fallback(property.title || property.titulo))}</p><p><strong>Ubicación:</strong> ${escapeHtml(fallback(location))}</p><p><strong>Operación:</strong> ${escapeHtml(operationLabel(property.tipoOperacion || property.operation || property.operacion))}</p><p><strong>Tipo:</strong> ${escapeHtml(propertyType(property))}</p><p><strong>Estado:</strong> ${escapeHtml(fallback(detail(property, 'status', 'constructionStatus')))}</p></div><div><h2>Descripción</h2><p>${escapeHtml(fallback(property.description || property.descripcion))}</p></div></section>
     <footer class="sheet-footer">
       ${AgentContactCard(agent)}
-      <div class="sheet-broker-brand"><img src="${escapeHtml(agent.brokerLogo || agent.logoCorreduria || logoUrl)}" alt="Logo correduría" crossorigin="anonymous" /><p>Diamantes Realty Group</p></div>
+      <div class="sheet-broker-brand"><img src="${escapeHtml(agent.logoPdf || agent.brokerLogo || agent.logoCorreduria || logoUrl)}" alt="Logo correduría" crossOrigin="anonymous" referrerPolicy="no-referrer" /><p>Diamantes Realty Group</p></div>
       <p class="sheet-legal-note">La información contenida en esta ficha es aproximada y puede estar sujeta a cambios sin previo aviso.</p>
     </footer>
   </article>`;
@@ -257,19 +260,119 @@ function fileSlug(value = '') {
   return String(value || NOT_SPECIFIED).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 70) || 'propiedad';
 }
 
+async function waitForImages(container) {
+  const images = Array.from(container.querySelectorAll('img'));
+
+  await Promise.all(
+    images.map((img) => {
+      if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+
+      return new Promise((resolve) => {
+        img.onload = resolve;
+        img.onerror = resolve;
+      });
+    })
+  );
+}
+
+async function imageUrlToBase64(url) {
+  const response = await fetch(url, { mode: 'cors' });
+  const blob = await response.blob();
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function toPdfImage(url) {
+  const value = String(url || '').trim();
+  if (!value || value.startsWith('data:')) return value;
+
+  try {
+    return await imageUrlToBase64(value);
+  } catch (error) {
+    console.warn('No fue posible convertir la imagen para PDF:', value, error);
+    return value;
+  }
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function buildPdfImageData(property = {}, agent = {}) {
+  const { coverImage, galleryImages } = getResolvedImageSet(property);
+  const [coverImagePdf, galleryImagesPdf, agentPhotoPdf, logoPdf, brokerLogoPdf] = await Promise.all([
+    toPdfImage(coverImage),
+    Promise.all(galleryImages.map((image) => toPdfImage(image))),
+    toPdfImage(agent.photo || agent.profilePhoto || 'assets/placeholder.svg'),
+    toPdfImage(logoUrl),
+    toPdfImage(agent.brokerLogo || agent.logoCorreduria || logoUrl)
+  ]);
+
+  return { coverImagePdf, galleryImagesPdf, agentPhotoPdf, logoPdf, brokerLogoPdf };
+}
+
 async function downloadPdf() {
-  const sheet = document.getElementById('propertySheetA4');
-  if (!sheet || !window.html2canvas || !window.jspdf?.jsPDF) return;
+  if (!window.html2canvas || !window.jspdf?.jsPDF || !currentProperty) return;
+  const originalImages = currentProperty.__propertySheetImages;
+  const originalAgent = currentAgent;
+  isGeneratingPdf = true;
+  document.body.classList.toggle('is-generating-pdf', isGeneratingPdf);
   downloadBtn.disabled = true;
   downloadBtn.textContent = 'Generando PDF...';
+
   try {
-    const canvas = await html2canvas(sheet, { scale: 2, useCORS: true, allowTaint: false, backgroundColor: '#ffffff' });
+    const pdfImages = await buildPdfImageData(currentProperty, currentAgent || {});
+    currentProperty.__propertySheetImages = {
+      coverImage: pdfImages.coverImagePdf || originalImages?.coverImage || '',
+      galleryImages: pdfImages.galleryImagesPdf?.length ? pdfImages.galleryImagesPdf : (originalImages?.galleryImages || [])
+    };
+    currentProperty.coverImagePdf = pdfImages.coverImagePdf;
+    currentProperty.galleryImagesPdf = pdfImages.galleryImagesPdf;
+    currentProperty.logoPdf = pdfImages.logoPdf || logoUrl;
+    currentAgent = {
+      ...(currentAgent || {}),
+      photo: pdfImages.agentPhotoPdf || currentAgent?.photo,
+      profilePhoto: pdfImages.agentPhotoPdf || currentAgent?.profilePhoto,
+      logoPdf: pdfImages.brokerLogoPdf || pdfImages.logoPdf || logoUrl,
+      agentPhotoPdf: pdfImages.agentPhotoPdf
+    };
+
+    rootEl.innerHTML = PropertySheetTemplate(currentProperty, currentAgent);
+    await delay(300);
+
+    const element = document.getElementById('property-sheet-pdf');
+    if (!element) return;
+    await waitForImages(element);
+
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: false,
+      backgroundColor: '#ffffff',
+      logging: true
+    });
+
     const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
-    const image = canvas.toDataURL('image/png');
-    pdf.addImage(image, 'PNG', 0, 0, 210, 297, undefined, 'FAST');
-    const filename = `ficha-tecnica-${fileSlug(propertyType(currentProperty))}-${fileSlug(currentProperty?.location || currentProperty?.ubicacion)}.pdf`;
-    pdf.save(filename);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+    pdf.save(`ficha-tecnica-${currentProperty.title || currentProperty.id || 'propiedad'}.pdf`);
   } finally {
+    currentProperty.__propertySheetImages = originalImages;
+    currentAgent = originalAgent;
+    delete currentProperty.coverImagePdf;
+    delete currentProperty.galleryImagesPdf;
+    delete currentProperty.logoPdf;
+    rootEl.innerHTML = PropertySheetTemplate(currentProperty, currentAgent || {});
+    isGeneratingPdf = false;
+    document.body.classList.toggle('is-generating-pdf', isGeneratingPdf);
     downloadBtn.disabled = false;
     downloadBtn.textContent = 'Descargar PDF';
   }
