@@ -45,6 +45,7 @@ initializePremiumPreloader();
 const menuToggle = document.getElementById('menuToggle');
 const mainNav = document.getElementById('mainNav');
 const APP_NAME = 'DIAMANTES REALTY GROUP';
+const TEMPORARILY_DISABLE_DARK_MODE = true;
 
 if (menuToggle && mainNav) {
   menuToggle.addEventListener('click', () => {
@@ -54,7 +55,7 @@ if (menuToggle && mainNav) {
 }
 
 const themeToggle = document.getElementById('themeToggle');
-const savedTheme = localStorage.getItem('themeMode');
+const savedTheme = TEMPORARILY_DISABLE_DARK_MODE ? 'light' : localStorage.getItem('themeMode');
 
 const siteHeader = document.querySelector('.site-header');
 
@@ -63,12 +64,19 @@ if (siteHeader) {
 }
 
 function applyTheme(theme) {
-  const isDarkMode = theme === 'dark';
+  const selectedTheme = TEMPORARILY_DISABLE_DARK_MODE ? 'light' : theme;
+  const isDarkMode = selectedTheme === 'dark';
+
+  document.documentElement.classList.toggle('dark-mode', isDarkMode);
+  document.documentElement.classList.toggle('dark', isDarkMode);
   document.body.classList.toggle('dark', isDarkMode);
   document.body.classList.toggle('dark-mode', isDarkMode);
   document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+  document.body.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
 
   if (themeToggle) {
+    themeToggle.hidden = TEMPORARILY_DISABLE_DARK_MODE;
+    themeToggle.style.display = TEMPORARILY_DISABLE_DARK_MODE ? 'none' : '';
     themeToggle.textContent = isDarkMode ? '☀️' : '🌙';
     themeToggle.setAttribute('aria-label', isDarkMode ? 'Activar modo claro' : 'Activar modo oscuro');
   }
@@ -81,7 +89,7 @@ function initializeLucideIcons() {
 
 applyTheme(savedTheme === 'dark' ? 'dark' : 'light');
 
-if (themeToggle) {
+if (themeToggle && !TEMPORARILY_DISABLE_DARK_MODE) {
   themeToggle.addEventListener('click', () => {
     const nextTheme = document.body.classList.contains('dark-mode') ? 'light' : 'dark';
     localStorage.setItem('themeMode', nextTheme);
