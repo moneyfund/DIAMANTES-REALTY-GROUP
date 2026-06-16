@@ -10298,3 +10298,23 @@ button[title*="modo"],
 button[title*="tema"] {
   display: none !important;
 }
+
+/* Footer brand text color lock: keep these texts white in every theme. */
+.site-footer .footer-brand-title,
+.site-footer .footer-brand-description,
+.site-footer .footer-copyright {
+    color: #FFFFFF !important;
+    opacity: 1 !important;
+}
+
+html.dark-mode .site-footer .footer-brand-title,
+html.dark-mode .site-footer .footer-brand-description,
+html.dark-mode .site-footer .footer-copyright,
+body.dark-mode .site-footer .footer-brand-title,
+body.dark-mode .site-footer .footer-brand-description,
+body.dark-mode .site-footer .footer-copyright,
+[data-theme="dark"] .site-footer .footer-brand-title,
+[data-theme="dark"] .site-footer .footer-brand-description,
+[data-theme="dark"] .site-footer .footer-copyright {
+    color: #FFFFFF !important;
+}
