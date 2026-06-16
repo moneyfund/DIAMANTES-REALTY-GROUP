@@ -189,7 +189,7 @@ function renderSiteFooter() {
       <div class="footer-brand-row">
         <div>
           <h3 class="footer-brand-title">${APP_NAME}</h3>
-          <p class="footer-description">Inmobiliaria corporativa en Nicaragua con enfoque en propiedades premium y asesoría integral.</p>
+          <p class="footer-brand-description">Inmobiliaria corporativa en Nicaragua con enfoque en propiedades premium y asesoría integral.</p>
         </div>
         <a class="footer-cta" href="contacto.html">Agendar asesoría</a>
       </div>
@@ -208,7 +208,7 @@ function renderSiteFooter() {
           </div>
         </div>
       </div>
-      <p class="footer-text footer-copy">© <span id="currentYear"></span> ${APP_NAME}</p>
+      <div class="footer-copyright">© <span id="currentYear"></span> ${APP_NAME}</div>
     </div>
   `;
 
