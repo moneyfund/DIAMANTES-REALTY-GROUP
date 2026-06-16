@@ -98,6 +98,9 @@ const state = {
   isSavingProperty: false,
   sharedSelectedPropertyIds: new Set(),
   sharedInventory: [],
+  sharedInventoryLoaded: false,
+  sharedInventoryLoadingPromise: null,
+  hasSharedListSearchStarted: false,
   agentProfile: null,
   agentProfileId: '',
   unsubscribeSharedLists: null
@@ -267,6 +270,9 @@ function isAllowedAgentUser(user) {
 
 function clearAgentPrivateState() {
   state.sharedInventory = [];
+  state.sharedInventoryLoaded = false;
+  state.sharedInventoryLoadingPromise = null;
+  state.hasSharedListSearchStarted = false;
   state.sharedSelectedPropertyIds.clear();
   state.agentProfile = null;
   state.agentProfileId = '';
@@ -1643,13 +1649,18 @@ function matchesPriceRange(price = 0, range = '') {
   return amount >= min && amount <= max;
 }
 
+function normalizeSharedFilterValue(value = '') {
+  const normalized = String(value || '').trim();
+  return normalized.toLowerCase() === 'all' ? '' : normalized;
+}
+
 function getSharedInventoryFilters() {
   return {
-    operation: document.getElementById('sharedFilterOperation')?.value || '',
-    type: document.getElementById('sharedFilterType')?.value || '',
-    department: document.getElementById('sharedFilterDepartment')?.value || '',
-    price: document.getElementById('sharedFilterPrice')?.value || '',
-    term: document.getElementById('sharedInventorySearch')?.value || ''
+    operation: normalizeSharedFilterValue(document.getElementById('sharedFilterOperation')?.value),
+    type: normalizeSharedFilterValue(document.getElementById('sharedFilterType')?.value),
+    department: normalizeSharedFilterValue(document.getElementById('sharedFilterDepartment')?.value),
+    price: normalizeSharedFilterValue(document.getElementById('sharedFilterPrice')?.value),
+    term: normalizeSharedFilterValue(document.getElementById('sharedInventorySearch')?.value)
   };
 }
 
@@ -1668,11 +1679,32 @@ function propertyMatchesSharedFilters(property = {}, filters = getSharedInventor
     && (!freeNeedle || freeSearch.includes(freeNeedle));
 }
 
-function updateSharedInventorySummary(visibleCount = 0) {
+function hasActiveSharedListFilters(filters = getSharedInventoryFilters()) {
+  return Boolean(
+    normalizeFilterText(filters.term) ||
+    filters.operation ||
+    filters.type ||
+    filters.department ||
+    filters.price
+  );
+}
+
+function updateSharedInventorySummary(visibleCount = 0, message = '') {
   const summary = document.getElementById('sharedInventoryResultsSummary');
   if (!summary) return;
+  if (message) {
+    summary.textContent = `${message} · ${state.sharedSelectedPropertyIds.size} seleccionadas`;
+    return;
+  }
   const total = state.sharedInventory.length;
   summary.textContent = `${visibleCount} de ${total} propiedades compartibles visibles · ${state.sharedSelectedPropertyIds.size} seleccionadas`;
+}
+
+function renderShareableInitialState(message = 'Busca por tipo, ubicación, precio o palabra clave para encontrar propiedades y agregarlas a tu lista compartida.') {
+  const list = document.getElementById('sharedInventoryList');
+  updateSharedInventorySummary(0, message);
+  if (!list) return;
+  list.innerHTML = `<p class="empty-state">${escapeHtml(message)}</p>`;
 }
 
 function renderSharedInventory() {
@@ -1680,11 +1712,21 @@ function renderSharedInventory() {
   if (!list) return;
 
   const filters = getSharedInventoryFilters();
+  if (!state.hasSharedListSearchStarted) {
+    renderShareableInitialState();
+    return;
+  }
+
+  if (!hasActiveSharedListFilters(filters)) {
+    renderShareableInitialState('Selecciona al menos un filtro o escribe una búsqueda.');
+    return;
+  }
+
   const filtered = state.sharedInventory.filter((property) => propertyMatchesSharedFilters(property, filters));
   updateSharedInventorySummary(filtered.length);
 
   if (!filtered.length) {
-    list.innerHTML = '<p class="empty-state">No hay propiedades compartibles que coincidan con los filtros.</p>';
+    list.innerHTML = '<p class="empty-state">No encontramos propiedades con esos filtros.</p>';
     return;
   }
 
@@ -1732,21 +1774,49 @@ function renderSharedInventory() {
 
 async function loadShareInventory() {
   if (!state.user) return;
+  if (state.sharedInventoryLoaded) return;
+  if (state.sharedInventoryLoadingPromise) return state.sharedInventoryLoadingPromise;
 
-  const snapshot = await getDocs(collection(db, 'properties'));
-  const properties = snapshot.docs
-    .map((item) => normalizePropertyForShare(item.data(), item.id))
-    .filter((property) => isShareableProperty(property));
+  state.sharedInventoryLoadingPromise = (async () => {
+    const snapshot = await getDocs(collection(db, 'properties'));
+    const properties = snapshot.docs
+      .map((item) => normalizePropertyForShare(item.data(), item.id))
+      .filter((property) => isShareableProperty(property));
 
-  state.sharedInventory = properties;
-  console.log('[AgentDashboard] Listas compartidas cargadas. Inventario disponible:', properties.length);
-  renderSharedInventory();
+    state.sharedInventory = properties;
+    state.sharedInventoryLoaded = true;
+    console.log('[AgentDashboard] Listas compartidas cargadas. Inventario disponible:', properties.length);
+  })().finally(() => {
+    state.sharedInventoryLoadingPromise = null;
+  });
+
+  return state.sharedInventoryLoadingPromise;
+}
+
+async function handleSharedInventorySearch() {
+  const filters = getSharedInventoryFilters();
+  state.hasSharedListSearchStarted = true;
+
+  if (!hasActiveSharedListFilters(filters)) {
+    renderShareableInitialState('Selecciona al menos un filtro o escribe una búsqueda.');
+    return;
+  }
+
+  renderShareableInitialState('Buscando propiedades compartibles...');
+
+  try {
+    await loadShareInventory();
+    renderSharedInventory();
+  } catch (error) {
+    console.error('[AgentDashboard] No se pudo cargar el inventario compartible.', error);
+    renderShareableInitialState('No pudimos cargar propiedades en este momento. Inténtalo nuevamente.');
+  }
 }
 
 const loadSharedLists = async (user, agentProfile = state.agentProfile) => {
   state.agentProfile = agentProfile || state.agentProfile;
   listenOwnSharedLists(user);
-  await loadShareInventory();
+  renderShareableInitialState();
 };
 
 function generateShareToken() {
@@ -1940,15 +2010,16 @@ function bindSharedListModule() {
   document.getElementById('sharedListForm')?.addEventListener('submit', createSharedList);
   document.getElementById('sharedInventoryFilters')?.addEventListener('submit', (event) => {
     event.preventDefault();
-    renderSharedInventory();
+    handleSharedInventorySearch();
   });
   ['sharedFilterOperation', 'sharedFilterType', 'sharedFilterDepartment', 'sharedFilterPrice', 'sharedInventorySearch'].forEach((id) => {
-    document.getElementById(id)?.addEventListener('input', renderSharedInventory);
-    document.getElementById(id)?.addEventListener('change', renderSharedInventory);
+    document.getElementById(id)?.addEventListener('input', handleSharedInventorySearch);
+    document.getElementById(id)?.addEventListener('change', handleSharedInventorySearch);
   });
   document.getElementById('sharedFiltersReset')?.addEventListener('click', () => {
     document.getElementById('sharedInventoryFilters')?.reset();
-    renderSharedInventory();
+    state.hasSharedListSearchStarted = false;
+    renderShareableInitialState();
   });
   updateSharedCounter();
 }
