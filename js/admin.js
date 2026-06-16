@@ -1,7 +1,11 @@
 const NICARAGUA_CENTER = [12.8654, -85.2072];
 const DEFAULT_ZOOM = 7;
 const SELECTED_ZOOM = 15;
-const ALLOWED_ADMIN_EMAIL = 'norvingarcia220@gmail.com';
+const ADMIN_EMAILS = [
+  "norvingarcia220@gmail.com",
+  "diego.valdivia.52056@gmail.com",
+  "diamantesrealtygroup@gmail.com"
+];
 
 const state = {
   user: null,
@@ -719,12 +723,12 @@ async function savePropertyUpdate() {
 }
 
 function hasAllowedAdminEmail(user) {
-  const userEmail = String(user?.email || '').trim().toLowerCase();
-  return userEmail === ALLOWED_ADMIN_EMAIL;
+  const email = String(user?.email || '').toLowerCase().trim();
+  return ADMIN_EMAILS.includes(email);
 }
 
 function logAuthDebug(user) {
-  const userEmail = String(user?.email || '').trim().toLowerCase();
+  const userEmail = String(user?.email || '').toLowerCase().trim();
   const adminAllowed = hasAllowedAdminEmail(user);
 
   console.log('[admin] user email:', userEmail || 'none');

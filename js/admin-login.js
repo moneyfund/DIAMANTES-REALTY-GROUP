@@ -1,4 +1,8 @@
-const ALLOWED_ADMIN_EMAIL = 'norvingarcia220@gmail.com';
+const ADMIN_EMAILS = [
+  "norvingarcia220@gmail.com",
+  "diego.valdivia.52056@gmail.com",
+  "diamantesrealtygroup@gmail.com"
+];
 
 const loginState = {
   authListenerAttached: false,
@@ -14,11 +18,12 @@ function getFirebaseClient() {
 }
 
 function getUserEmail(user) {
-  return String(user?.email || '').trim().toLowerCase();
+  return String(user?.email || '').toLowerCase().trim();
 }
 
 function hasAllowedAdminEmail(user) {
-  return getUserEmail(user) === ALLOWED_ADMIN_EMAIL;
+  const email = getUserEmail(user);
+  return ADMIN_EMAILS.includes(email);
 }
 
 function redirectTo(path) {
