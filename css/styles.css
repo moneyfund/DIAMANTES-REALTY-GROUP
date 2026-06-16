@@ -10287,3 +10287,14 @@ body.dark-mode .shared-property-card :not(.property-detail-button):not(.btn-prim
 .property-slider::-webkit-scrollbar {
   display: none;
 }
+/* Temporary visual hide for dark-mode controls while colors are corrected. */
+.theme-toggle,
+.dark-mode-toggle,
+#themeToggle,
+#darkModeToggle,
+button[aria-label*="modo"],
+button[aria-label*="tema"],
+button[title*="modo"],
+button[title*="tema"] {
+  display: none !important;
+}
