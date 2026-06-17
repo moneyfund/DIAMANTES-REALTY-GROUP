@@ -578,6 +578,17 @@ section h2,
   color: var(--text-main);
 }
 .split-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 1.5rem; align-items: start; }
+.about-section--video-hidden {
+  grid-template-columns: minmax(0, 820px);
+  justify-content: center;
+}
+.about-section--video-hidden > div:first-child,
+.about-section--video-hidden .highlight-card {
+  width: 100%;
+}
+.about-section--video-hidden .highlight-card {
+  max-width: 820px;
+}
 .highlight-card {
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid var(--diamond-red);
