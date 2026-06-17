@@ -589,6 +589,9 @@ section h2,
 .about-section--video-hidden .highlight-card {
   max-width: 820px;
 }
+.about-section > div:first-child > p {
+  text-align: justify;
+}
 .highlight-card {
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid var(--diamond-red);
