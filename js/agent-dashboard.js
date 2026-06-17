@@ -117,6 +117,24 @@ const formatDualPrice = (usd) => propertyUtils.formatDualPrice ? propertyUtils.f
 const formatDualPriceMarkup = (usd) => propertyUtils.formatDualPriceMarkup ? propertyUtils.formatDualPriceMarkup(usd) : formatDualPrice(usd);
 const calculatePricePerArea = (priceUsd, areaValue) => propertyUtils.calculatePricePerArea ? propertyUtils.calculatePricePerArea(priceUsd, areaValue) : NaN;
 const formatPricePerArea = (value, unit) => propertyUtils.formatPricePerArea ? propertyUtils.formatPricePerArea(value, unit) : '';
+const NICARAGUA_MAP_CENTER = [12.8654, -85.2072];
+const NICARAGUA_MAP_ZOOM = 7;
+const diamondPinIcon = typeof L === 'undefined' ? null : L.divIcon({
+  className: 'drg-diamond-pin',
+  html: `
+    <div class="drg-pin">
+      <div class="drg-pin-diamond"></div>
+    </div>
+  `,
+  iconSize: [42, 42],
+  iconAnchor: [21, 42],
+  popupAnchor: [0, -42]
+});
+
+const DEPARTMENTS = new Set([
+  'Boaco', 'Carazo', 'Chinandega', 'Chontales', 'Estelí', 'Granada', 'Jinotega',
+  'León', 'Madriz', 'Managua', 'Masaya', 'Matagalpa', 'Nueva Segovia', 'Rivas', 'Río San Juan'
+]);
 
 const PROPERTY_STATUS_LABELS = {
   available: 'Disponible',
@@ -449,6 +467,15 @@ function updateCoordinatesLabel(lat, lng) {
   label.textContent = `Lat: ${lat.toFixed(6)} | Lng: ${lng.toFixed(6)}`;
 }
 
+function hasValidPropertyCoordinates(lat, lng) {
+  const parsedLat = Number(lat);
+  const parsedLng = Number(lng);
+  return Number.isFinite(parsedLat)
+    && Number.isFinite(parsedLng)
+    && parsedLat !== 0
+    && parsedLng !== 0;
+}
+
 function setPropertyCoordinates(lat, lng) {
   const latInput = document.getElementById('propertyLat');
   const lngInput = document.getElementById('propertyLng');
@@ -467,12 +494,21 @@ function setPropertyCoordinates(lat, lng) {
   updateCoordinatesLabel(lat, lng);
 }
 
+function clearPropertyMapMarker() {
+  if (state.mapMarker && state.map) {
+    state.map.removeLayer(state.mapMarker);
+    state.mapMarker = null;
+  }
+}
+
 function setPropertyMapMarker(lat, lng) {
   if (!state.map || typeof L === 'undefined' || !Number.isFinite(lat) || !Number.isFinite(lng)) return;
 
   const point = [lat, lng];
+  const markerOptions = { draggable: true };
+  if (diamondPinIcon) markerOptions.icon = diamondPinIcon;
   if (!state.mapMarker) {
-    state.mapMarker = L.marker(point, { draggable: true }).addTo(state.map);
+    state.mapMarker = L.marker(point, markerOptions).addTo(state.map);
     state.mapMarker.on('dragend', (event) => {
       const position = event.target.getLatLng();
       setPropertyCoordinates(position.lat, position.lng);
@@ -507,8 +543,7 @@ function initPropertyMap() {
     state.mapMarker = null;
   }
 
-  const defaultPoint = [12.8654, -85.2072];
-  state.map = L.map(mapElement).setView(defaultPoint, 7);
+  state.map = L.map(mapElement).setView(NICARAGUA_MAP_CENTER, NICARAGUA_MAP_ZOOM);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
@@ -521,12 +556,13 @@ function initPropertyMap() {
     setPropertyMapMarker(lat, lng);
   });
 
-  const currentLat = Number(document.getElementById('propertyLat')?.value);
-  const currentLng = Number(document.getElementById('propertyLng')?.value);
-  if (Number.isFinite(currentLat) && Number.isFinite(currentLng)) {
-    setPropertyMapMarker(currentLat, currentLng);
+  const currentLat = document.getElementById('propertyLat')?.value;
+  const currentLng = document.getElementById('propertyLng')?.value;
+  if (hasValidPropertyCoordinates(currentLat, currentLng)) {
+    setPropertyMapMarker(Number(currentLat), Number(currentLng));
   } else {
     setPropertyCoordinates(NaN, NaN);
+    state.map.setView(NICARAGUA_MAP_CENTER, NICARAGUA_MAP_ZOOM);
   }
 
   setTimeout(() => state.map?.invalidateSize(), 300);
@@ -862,8 +898,10 @@ function handleFileSelection(event) {
 }
 
 function getPropertyPayload(user, profileName, images, coverImage, videoData) {
-  const lat = Number(document.getElementById('propertyLat').value);
-  const lng = Number(document.getElementById('propertyLng').value);
+  const latValue = document.getElementById('propertyLat').value;
+  const lngValue = document.getElementById('propertyLng').value;
+  const lat = Number(latValue);
+  const lng = Number(lngValue);
   const title = document.getElementById('propertyTitle').value.trim();
   const price = Number(document.getElementById('propertyPrice').value || 0);
   const description = document.getElementById('propertyDescription').value.trim();
@@ -871,7 +909,7 @@ function getPropertyPayload(user, profileName, images, coverImage, videoData) {
   const operation = document.getElementById('operacion-propiedad').value.trim();
   const status = document.getElementById('propertyStatus')?.value || 'available';
   const location = document.getElementById('propertyLocation').value.trim();
-  const city = document.getElementById('propertyCity')?.value.trim() || location;
+  const selectedDepartment = document.getElementById('propertyCity')?.value.trim() || '';
   const details = collectPropertyDetails();
   const areaValue = getPrimaryAreaFromDetails(details);
   const areaUnit = getAreaUnitFromDetails(details);
@@ -895,8 +933,8 @@ function getPropertyPayload(user, profileName, images, coverImage, videoData) {
     imagen: coverImage || images[0] || fallbackPhoto,
     location,
     ubicacion: location,
-    city,
-    department: city,
+    city: selectedDepartment,
+    department: selectedDepartment,
     priceUsd: price,
     propertyType: type,
     type,
@@ -917,8 +955,8 @@ function getPropertyPayload(user, profileName, images, coverImage, videoData) {
     propertyDetails: details,
     highlightedTags: tags,
     tags,
-    lat: Number.isFinite(lat) ? lat : null,
-    lng: Number.isFinite(lng) ? lng : null,
+    lat: hasValidPropertyCoordinates(latValue, lngValue) ? lat : null,
+    lng: hasValidPropertyCoordinates(latValue, lngValue) ? lng : null,
     agenteId: user.uid,
     agentId: user.uid,
     agentEmail: user.email || '',
@@ -1099,10 +1137,8 @@ function resetPropertyForm() {
   setPropertyCoordinates(NaN, NaN);
   renderImagePreview();
 
-  if (state.mapMarker && state.map) {
-    state.map.removeLayer(state.mapMarker);
-    state.mapMarker = null;
-  }
+  clearPropertyMapMarker();
+  if (state.map) state.map.setView(NICARAGUA_MAP_CENTER, NICARAGUA_MAP_ZOOM);
 
   setSelectedPropertyTags([]);
   renderDynamicPropertyFields();
@@ -1117,7 +1153,8 @@ function fillPropertyForm(property) {
   document.getElementById('propertyTitle').value = property.title || property.titulo || '';
   document.getElementById('propertyPrice').value = property.price || property.precio || '';
   document.getElementById('propertyLocation').value = property.location || property.ubicacion || '';
-  document.getElementById('propertyCity').value = property.city || property.department || '';
+  const departmentValue = property.department || property.city || '';
+  document.getElementById('propertyCity').value = DEPARTMENTS.has(departmentValue) ? departmentValue : '';
   document.getElementById('propertyDescription').value = property.description || property.descripcion || '';
   document.getElementById('tipo-propiedad').value = normalizePropertyType(property.propertyType || property.type || property.tipo || '');
   document.getElementById('operacion-propiedad').value = (property.operationType || property.tipoOperacion || property.operation || property.operacion || '').toLowerCase();
@@ -1148,13 +1185,17 @@ function fillPropertyForm(property) {
   const coverInput = document.querySelector(`input[name="propertyCoverImage"][value="${CSS.escape(coverUrl)}"]`);
   if (coverInput) coverInput.checked = true;
 
-  const lat = Number(property.lat ?? property.latitude);
-  const lng = Number(property.lng ?? property.longitude);
-  if (Number.isFinite(lat) && Number.isFinite(lng)) {
+  const propertyLat = property.lat ?? property.latitude;
+  const propertyLng = property.lng ?? property.longitude;
+  if (hasValidPropertyCoordinates(propertyLat, propertyLng)) {
+    const lat = Number(propertyLat);
+    const lng = Number(propertyLng);
     setPropertyCoordinates(lat, lng);
     setPropertyMapMarker(lat, lng);
   } else {
     setPropertyCoordinates(NaN, NaN);
+    clearPropertyMapMarker();
+    if (state.map) state.map.setView(NICARAGUA_MAP_CENTER, NICARAGUA_MAP_ZOOM);
   }
 
   document.getElementById('propertyForm')?.scrollIntoView({ behavior: 'smooth', block: 'start' });

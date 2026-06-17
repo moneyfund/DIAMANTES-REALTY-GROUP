@@ -119,8 +119,25 @@
                   <option value="sold">Vendida</option>
                   <option value="rented">Rentada</option>
                 </select></label>
-                <label>Ubicación<input type="text" id="propertyLocation" placeholder="Barrio, zona o referencia" required /></label>
-                <label>Ciudad / Departamento<input type="text" id="propertyCity" placeholder="Managua, Granada, León..." /></label>
+                <label>Barrio, zona y ciudad<input type="text" id="propertyLocation" placeholder="Ej: Barrio Guanuca, zona norte, Matagalpa" required /></label>
+                <label>Departamento<select id="propertyCity" required>
+                  <option value="">Seleccionar departamento</option>
+                  <option value="Boaco">Boaco</option>
+                  <option value="Carazo">Carazo</option>
+                  <option value="Chinandega">Chinandega</option>
+                  <option value="Chontales">Chontales</option>
+                  <option value="Estelí">Estelí</option>
+                  <option value="Granada">Granada</option>
+                  <option value="Jinotega">Jinotega</option>
+                  <option value="León">León</option>
+                  <option value="Madriz">Madriz</option>
+                  <option value="Managua">Managua</option>
+                  <option value="Masaya">Masaya</option>
+                  <option value="Matagalpa">Matagalpa</option>
+                  <option value="Nueva Segovia">Nueva Segovia</option>
+                  <option value="Rivas">Rivas</option>
+                  <option value="Río San Juan">Río San Juan</option>
+                </select></label>
                 <label class="form-span-2">Agente responsable<input type="text" id="propertyAgentName" placeholder="Se completa con tu perfil, puedes ajustarlo" /></label>
                 <label class="form-span-2">Descripción<textarea id="propertyDescription" rows="5" placeholder="Describe diferenciales, entorno, accesos y oportunidad comercial"></textarea></label>
                 <fieldset class="dashboard-checkbox-group form-span-2">
