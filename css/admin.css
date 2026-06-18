@@ -519,3 +519,8 @@ button:active,
   opacity: 0.9;
   margin-top: 0.15rem;
 }
+
+/* Preserve manually entered property descriptions in admin previews and review modals. */
+.preserve-description-format {
+  white-space: pre-wrap;
+}

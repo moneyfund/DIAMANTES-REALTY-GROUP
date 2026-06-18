@@ -357,7 +357,7 @@ function showReviewDetails(propertyId) {
         <p><strong>Precio:</strong> ${formatCurrency(property.priceUsd ?? property.price ?? property.precio)}</p>
         <p><strong>Estado comercial:</strong> ${formatStatus(property.status)}</p>
         <p><strong>Ubicación:</strong> ${escapeHtml(getPropertyLocation(property))}</p>
-        <p><strong>Descripción:</strong> ${escapeHtml(property.description || property.descripcion || '')}</p>
+        <p class="preserve-description-format"><strong>Descripción:</strong> ${escapeHtml(property.description || property.descripcion || '')}</p>
         <h3>Características dinámicas</h3>
         <ul>${buildDetailsList(property)}</ul>
         <h3>Video</h3>

@@ -10360,3 +10360,8 @@ body.dark-mode .site-footer .footer-copyright,
   transform: rotate(45deg);
   clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
 }
+
+/* Preserve manually entered property and agent description formatting. */
+.preserve-description-format {
+  white-space: pre-wrap;
+}
