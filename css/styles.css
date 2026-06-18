@@ -9154,7 +9154,7 @@ body.dark-mode .home-page .hero-search-content .premium-search .hero-search-subm
 #agentsGrid.agents-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: clamp(24px, 3vw, 32px);
+  gap: clamp(18px, 2.4vw, 26px);
   align-items: stretch;
 }
 
@@ -9166,7 +9166,7 @@ body.dark-mode .home-page .hero-search-content .premium-search .hero-search-subm
   height: auto !important;
   min-height: 0 !important;
   max-height: none !important;
-  padding: clamp(1.5rem, 2.5vw, 2rem);
+  padding: clamp(1.15rem, 2vw, 1.45rem);
   overflow: visible !important;
   border: 1px solid rgba(176, 0, 8, 0.16) !important;
   border-radius: 26px !important;
@@ -9193,7 +9193,7 @@ body.dark-mode .home-page .hero-search-content .premium-search .hero-search-subm
   width: 120px;
   height: 120px;
   flex: 0 0 120px;
-  margin: 0.75rem auto 2rem;
+  margin: 0.2rem auto 1rem;
   overflow: hidden;
   border: 3px solid #B00008;
   border-radius: 50%;
@@ -9225,13 +9225,13 @@ body.dark-mode .home-page .hero-search-content .premium-search .hero-search-subm
 #agentsGrid .agent-name,
 #agentsGrid .agent-card h2.agent-name {
   width: 100%;
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.45rem;
   overflow-wrap: anywhere;
   color: #14323b !important;
   font-family: "Playfair Display", Georgia, serif;
-  font-size: clamp(2rem, 2.6vw, 2.5rem);
+  font-size: clamp(1.75rem, 2.25vw, 2.15rem);
   font-weight: 700;
-  line-height: 1.05;
+  line-height: 1.08;
   letter-spacing: -0.03em;
   white-space: normal !important;
 }
@@ -9240,22 +9240,22 @@ body.dark-mode .home-page .hero-search-content .premium-search .hero-search-subm
 #agentsGrid .agent-card p.agent-description {
   display: -webkit-box;
   width: 100%;
-  margin: 0 0 1.15rem;
+  margin: 0 0 0.75rem;
   overflow: hidden;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 3;
   color: #5f6b74 !important;
   font-family: "Inter", system-ui, sans-serif;
-  font-size: clamp(0.95rem, 1.5vw, 1rem);
-  line-height: 1.65;
+  font-size: clamp(0.9rem, 1.35vw, 0.96rem);
+  line-height: 1.45;
   white-space: normal !important;
 }
 
 #agentsGrid .agent-contact-list {
   display: grid;
-  gap: 0.55rem;
+  gap: 0.3rem;
   width: 100%;
-  margin: 0.15rem 0 1.1rem;
+  margin: 0 0 0.65rem;
 }
 
 #agentsGrid .agent-contact-row,
@@ -9268,8 +9268,8 @@ body.dark-mode .home-page .hero-search-content .premium-search .hero-search-subm
   margin: 0;
   color: #334155 !important;
   font-family: "Inter", system-ui, sans-serif;
-  font-size: 0.96rem;
-  line-height: 1.5;
+  font-size: 0.9rem;
+  line-height: 1.35;
   white-space: normal !important;
 }
 
@@ -9295,9 +9295,9 @@ body.dark-mode .home-page .hero-search-content .premium-search .hero-search-subm
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 0.65rem;
+  gap: 0.5rem;
   width: 100%;
-  margin: auto 0 1.25rem;
+  margin: 0.1rem 0 0.85rem;
 }
 
 #agentsGrid .agent-social:empty {
@@ -9308,8 +9308,8 @@ body.dark-mode .home-page .hero-search-content .premium-search .hero-search-subm
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
   border: 1px solid rgba(176, 0, 8, 0.16);
   border-radius: 999px;
   background: rgba(176, 0, 8, 0.06) !important;
@@ -9319,8 +9319,8 @@ body.dark-mode .home-page .hero-search-content .premium-search .hero-search-subm
 }
 
 #agentsGrid .agent-social a svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   fill: currentColor;
 }
 
@@ -9336,7 +9336,7 @@ body.dark-mode .home-page .hero-search-content .premium-search .hero-search-subm
 #agentsGrid .agent-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.8rem;
+  gap: 0.6rem;
   width: 100%;
   margin-top: 0;
 }
@@ -9346,8 +9346,8 @@ body.dark-mode .home-page .hero-search-content .premium-search .hero-search-subm
   align-items: center;
   justify-content: center;
   min-width: 0;
-  min-height: 46px;
-  padding: 0.8rem 1rem;
+  min-height: 40px;
+  padding: 0.65rem 0.9rem;
   border: 1.5px solid #B00008;
   border-radius: 999px;
   font-family: "Inter", system-ui, sans-serif;
@@ -9450,14 +9450,14 @@ html[data-theme="dark"] #agentsGrid .agent-social a,
   }
 
   #agentsGrid .agent-card {
-    padding: 1.35rem;
+    padding: 1.1rem;
   }
 
   #agentsGrid .agent-avatar {
     width: 112px;
     height: 112px;
     flex-basis: 112px;
-    margin-bottom: 1.75rem;
+    margin: 0.15rem auto 0.85rem;
   }
 
   #agentsGrid .agent-actions {
