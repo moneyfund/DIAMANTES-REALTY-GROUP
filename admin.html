@@ -93,12 +93,12 @@
 
           <div>
             <label for="propertyType">Property Type</label>
-            <select id="propertyType" required>
-              <option value="Casa">Casa</option>
-              <option value="Apartamento">Apartamento</option>
-              <option value="Terreno">Terreno</option>
-              <option value="Comercial">Comercial</option>
-            </select>
+            <select id="propertyType" required></select>
+          </div>
+
+          <div class="full-width" id="dynamicFieldsWrapper">
+            <p id="dynamicFieldsHint" class="dynamic-fields-hint">Selecciona un tipo de propiedad para cargar sus características.</p>
+            <div id="dynamicPropertyFields" class="dynamic-property-fields"></div>
           </div>
 
           <div>
@@ -215,6 +215,8 @@
   </div>
 
   <script src="js/firebase-client.js" defer></script>
+  <script src="js/property-utils.js" defer></script>
+  <script src="js/property-fields-config.js?v=20260618-admin-dynamic" defer></script>
   <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
