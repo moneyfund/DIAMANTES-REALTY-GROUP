@@ -29,6 +29,13 @@ const adminPanelMount = {
 
 let accessDeniedPanel = null;
 
+const propertyUtils = window.inmoPropertyUtils || {};
+const propertyFields = window.inmoPropertyFieldsConfig || {};
+const normalizePropertyType = (value = '') => propertyUtils.normalizePropertyType ? propertyUtils.normalizePropertyType(value) : String(value || '').trim().toLowerCase();
+const getPropertyTypeLabel = (value = '') => propertyUtils.getPropertyTypeLabel ? propertyUtils.getPropertyTypeLabel(value) : value;
+const calculatePricePerArea = (priceUsd, areaValue) => propertyUtils.calculatePricePerArea ? propertyUtils.calculatePricePerArea(priceUsd, areaValue) : NaN;
+const PROPERTY_TYPE_ORDER = ['house', 'apartment', 'land', 'farm', 'quinta', 'commercial', 'warehouse', 'office', 'investment', 'beach_house', 'other'];
+
 function mountAdminPanel() {
   if (!adminPanel || !adminPanelMount.parent || adminPanel.isConnected) return;
   adminPanelMount.parent.insertBefore(adminPanel, adminPanelMount.nextSibling);
@@ -108,6 +115,77 @@ const preview = {
 
 let locationMap;
 let locationMarker;
+
+
+function getDynamicFieldsForType(type = '') {
+  if (propertyFields.getDynamicFieldsForType) return propertyFields.getDynamicFieldsForType(type);
+  return propertyFields.PROPERTY_FIELDS_CONFIG?.[normalizePropertyType(type)] || [];
+}
+
+function dynamicFieldId(key = '') {
+  return `adminPropertyDetail_${key}`;
+}
+
+function createDynamicFieldMarkup(field = [], value = '') {
+  const [key, inputType, label, options = []] = field;
+  const id = dynamicFieldId(key);
+  const safeValue = escapeHtml(value ?? '');
+  if (inputType === 'select') {
+    return `<label>${label}<select id="${id}" data-detail-key="${key}"><option value="">Seleccionar</option>${options.map((option) => `<option value="${escapeHtml(option)}" ${String(value || '') === option ? 'selected' : ''}>${escapeHtml(option)}</option>`).join('')}</select></label>`;
+  }
+  if (inputType === 'textarea') {
+    return `<label class="form-span-2">${label}<textarea id="${id}" data-detail-key="${key}" rows="3" placeholder="${label}">${safeValue}</textarea></label>`;
+  }
+  const step = inputType === 'number' ? ' min="0" step="0.01"' : '';
+  return `<label>${label}<input type="${inputType}" id="${id}" data-detail-key="${key}" value="${safeValue}" placeholder="${label}"${step}></label>`;
+}
+
+function renderDynamicPropertyFields(prefill = {}) {
+  const container = document.getElementById('dynamicPropertyFields');
+  const hint = document.getElementById('dynamicFieldsHint');
+  if (!container) return;
+
+  const type = normalizePropertyType(fields.type?.value || '');
+  const dynamicFields = getDynamicFieldsForType(type);
+  if (!dynamicFields.length) {
+    container.innerHTML = '';
+    if (hint) hint.textContent = 'Selecciona un tipo de propiedad para cargar sus características.';
+    return;
+  }
+
+  if (hint) hint.textContent = `Campos activos para ${getPropertyTypeLabel(type) || type}.`;
+  container.innerHTML = dynamicFields.map((field) => createDynamicFieldMarkup(field, prefill[field[0]] ?? '')).join('');
+  container.querySelectorAll('[data-detail-key]').forEach((input) => {
+    input.addEventListener('input', updatePreview);
+    input.addEventListener('change', updatePreview);
+  });
+}
+
+function collectPropertyDetails() {
+  const details = {};
+  document.querySelectorAll('#dynamicPropertyFields [data-detail-key]').forEach((input) => {
+    const key = input.dataset.detailKey;
+    const rawValue = input.value?.trim?.() ?? '';
+    if (rawValue === '') return;
+    details[key] = input.type === 'number' ? Number(rawValue) : rawValue;
+  });
+  return details;
+}
+
+function getPrimaryAreaFromDetails(details = {}) {
+  return Number(details.totalArea || details.landArea || details.constructionArea || details.areaValue || 0);
+}
+
+function getAreaUnitFromDetails(details = {}) {
+  return details.areaUnit || '';
+}
+
+function populatePropertyTypeOptions() {
+  if (!fields.type) return;
+  const config = propertyFields.PROPERTY_FIELDS_CONFIG || {};
+  const types = PROPERTY_TYPE_ORDER.filter((type) => config[type]).concat(Object.keys(config).filter((type) => !PROPERTY_TYPE_ORDER.includes(type)));
+  fields.type.innerHTML = types.map((type) => `<option value="${escapeHtml(type)}">${escapeHtml(getPropertyTypeLabel(type) || type)}</option>`).join('');
+}
 
 function getFirebaseOrNotify() {
   const client = window.inmoFirebase;
@@ -464,7 +542,9 @@ async function loadAgents() {
 
 function getImagesFromProperty(property) {
   if (Array.isArray(property.images) && property.images.length) return property.images;
-  return property.image ? [property.image] : [];
+  if (Array.isArray(property.imagenes) && property.imagenes.length) return property.imagenes;
+  if (property.coverImage) return [property.coverImage];
+  return property.image || property.imagen ? [property.image || property.imagen] : [];
 }
 
 function getImageUrlsFromForm() {
@@ -521,11 +601,12 @@ function resetImageFields(values = ['']) {
 function fillForm(property) {
   fields.id.value = property.id;
   fields.title.value = property.title || property.titulo || '';
-  fields.type.value = property.type || property.tipo || 'Casa';
+  const normalizedType = normalizePropertyType(property.propertyType || property.type || property.tipo || 'house');
+  fields.type.value = normalizedType;
   fields.price.value = property.price || property.precio || '';
   fields.bedrooms.value = property.bedrooms || property.habitaciones || 0;
   fields.bathrooms.value = property.bathrooms || property.banos || 0;
-  fields.size.value = property.area || 0;
+  fields.size.value = property.areaValue ?? property.area ?? 0;
 
   const locationValue = property.location || property.ubicacion || '';
   const [city = '', ...addressParts] = String(locationValue).split(',');
@@ -533,8 +614,15 @@ function fillForm(property) {
   fields.address.value = addressParts.join(',').trim();
 
   fields.description.value = property.description || property.descripcion || '';
-  fields.agentId.value = property.agentId || '';
+  fields.agentId.value = property.agentId || property.agenteId || property.ownerId || '';
   if (fields.operation) fields.operation.value = String(property.tipoOperacion || property.operation || property.operacion || 'venta').toLowerCase();
+
+  const details = { ...(property.propertyDetails || {}) };
+  if (!details.bedrooms) details.bedrooms = property.bedrooms || property.habitaciones || '';
+  if (!details.bathrooms) details.bathrooms = property.bathrooms || property.banos || '';
+  if (!details.totalArea && !details.landArea && !details.constructionArea) details.totalArea = property.areaValue || property.area || '';
+  if (!details.areaUnit) details.areaUnit = property.areaUnit || '';
+  renderDynamicPropertyFields(details);
 
   const images = getImagesFromProperty(property);
   resetImageFields(images.length ? images : ['']);
@@ -557,10 +645,13 @@ function buildPropertyPayload(existing = {}) {
   const price = sanitizePrice(fields.price.value);
   const location = `${fields.city.value.trim()}, ${fields.address.value.trim()}`;
   const description = fields.description.value.trim();
-  const type = fields.type.value;
+  const type = normalizePropertyType(fields.type.value);
   const bedrooms = Number(fields.bedrooms.value || 0);
   const bathrooms = Number(fields.bathrooms.value || 0);
-  const area = Number(fields.size.value || 0);
+  const details = collectPropertyDetails();
+  const area = Number(fields.size.value || getPrimaryAreaFromDetails(details) || 0);
+  const areaUnit = getAreaUnitFromDetails(details) || existing.areaUnit || '';
+  const pricePerAreaUsd = calculatePricePerArea(price, area);
   const images = getImageUrlsFromForm();
   const selectedAgentId = fields.agentId.value;
   const operation = String(fields.operation?.value || 'venta').trim().toLowerCase();
@@ -575,6 +666,7 @@ function buildPropertyPayload(existing = {}) {
     ubicacion: location,
     description,
     descripcion: description,
+    propertyType: type,
     type,
     tipo: type,
     operation,
@@ -585,14 +677,22 @@ function buildPropertyPayload(existing = {}) {
     bathrooms,
     banos: bathrooms,
     area,
+    areaValue: area || null,
+    areaUnit,
+    pricePerAreaUsd: Number.isFinite(pricePerAreaUsd) ? pricePerAreaUsd : (existing.pricePerAreaUsd ?? null),
+    propertyDetails: { ...(existing.propertyDetails || {}), ...details },
     images,
-    image: images[0] || existing.image || 'assets/placeholder.svg',
+    imagenes: images,
+    coverImage: images[0] || existing.coverImage || existing.image || existing.imagen || 'assets/placeholder.svg',
+    image: images[0] || existing.image || existing.imagen || 'assets/placeholder.svg',
+    imagen: images[0] || existing.imagen || existing.image || 'assets/placeholder.svg',
     latitude: Number.isFinite(latitude) ? latitude : null,
     longitude: Number.isFinite(longitude) ? longitude : null,
     lat: Number.isFinite(latitude) ? latitude : null,
     lng: Number.isFinite(longitude) ? longitude : null,
     agentId: selectedAgentId,
-    agentName: getAgentNameById(selectedAgentId),
+    agenteId: selectedAgentId,
+    agentName: getAgentNameById(selectedAgentId) || existing.agentName || '',
     status: String(existing.status || 'available').toLowerCase(),
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
@@ -615,6 +715,7 @@ function clearFormState() {
   fields.longitude.value = '';
   if (fields.agentId) fields.agentId.value = '';
   resetImageFields(['']);
+  renderDynamicPropertyFields();
 
   if (locationMap) locationMap.setView(NICARAGUA_CENTER, DEFAULT_ZOOM);
   if (locationMarker && locationMap) {
@@ -743,6 +844,8 @@ function finishAuthCheck() {
 function prepareAdminUI() {
   if (state.uiReady) return;
   resetImageFields(['']);
+  populatePropertyTypeOptions();
+  renderDynamicPropertyFields();
   bindActions();
   updatePreview();
   state.uiReady = true;
@@ -794,6 +897,7 @@ function redirectTo(path) {
 function bindActions() {
   addImageBtn.addEventListener('click', () => addImageField(''));
   form.addEventListener('input', updatePreview);
+  fields.type?.addEventListener('change', () => { renderDynamicPropertyFields(); updatePreview(); });
 
   document.getElementById('addBtn')?.addEventListener('click', () => {
     alert('Desde este panel solo se editan propiedades existentes.');
