@@ -972,7 +972,7 @@ async function renderPropertyDetail() {
     <section class="detail-extended-card" aria-label="Información extendida de la propiedad">
       <div class="detail-extended-block">
         <h2>Descripción de la propiedad</h2>
-        <p>${property.descripcion}</p>
+        <p class="preserve-description-format">${escapeHtml(property.descripcion)}</p>
       </div>
       <div class="detail-extended-block">
         <h2>Características de la propiedad</h2>
@@ -1137,7 +1137,7 @@ function renderGlobalMap(properties) {
           <p class="map-preview-price">${getMapMarkerPriceLabel(property)}</p>
           <h3>${safeTitle}</h3>
           <p class="map-preview-location">${escapeHtml(locationLabel)}</p>
-          ${shortSummary ? `<p class="map-preview-summary">${escapeHtml(shortSummary)}</p>` : ''}
+          ${shortSummary ? `<p class="map-preview-summary preserve-description-format">${escapeHtml(shortSummary)}</p>` : ''}
         </div>
       </a>
     `;

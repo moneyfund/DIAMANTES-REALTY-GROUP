@@ -8,6 +8,16 @@ const formatPricePerArea = (value, unit) => propertyUtils.formatPricePerArea ? p
 const calculatePricePerArea = (price, area) => propertyUtils.calculatePricePerArea ? propertyUtils.calculatePricePerArea(price, area) : NaN;
 const getAreaDisplay = (property = {}) => propertyUtils.getAreaDisplay ? propertyUtils.getAreaDisplay(property) : `${property.area || 0} m²`;
 
+
+function escapeHtml(value = '') {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 const isPublicProperty = window.inmoPublicPropertyFilter.isPublicProperty;
 const socialIcons = {
   instagram: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2Zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.5a4.25 4.25 0 0 0 4.25 4.25h8.5a4.25 4.25 0 0 0 4.25-4.25v-8.5a4.25 4.25 0 0 0-4.25-4.25h-8.5Zm8.9 2.35a1.15 1.15 0 1 1 0 2.3 1.15 1.15 0 0 1 0-2.3ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 1.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/></svg>',
@@ -147,7 +157,7 @@ function renderAgentProfile(agent, properties) {
         <img class="agent-public-photo" src="${photo}" alt="${agent.name || 'Agente'}">
         <h2>${agent.name || 'Agente Diamantes Realty Group'}</h2>
         ${basicInfo.length ? `<p class="agent-public-basic-info">${basicInfo.join(' · ')}</p>` : ''}
-        <p class="agent-public-description">${agent.description || 'Este agente todavía no ha agregado una descripción en su perfil.'}</p>
+        <p class="agent-public-description preserve-description-format">${escapeHtml(agent.description || 'Este agente todavía no ha agregado una descripción en su perfil.')}</p>
         ${(agent.phone || agent.email) ? `
           <div class="agent-public-contact">
             ${agent.phone ? `<p><strong>Tel:</strong> <a class="text-link" href="tel:${String(agent.phone).replace(/\s+/g, '')}">${agent.phone}</a></p>` : ''}

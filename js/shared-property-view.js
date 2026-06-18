@@ -175,7 +175,7 @@ function renderSharedProperty(sharedList, property) {
         <p class="price">${formatPriceMarkup(property.price)}</p>
         <p><strong>Área:</strong> ${property.areaValue || 0} ${property.areaUnit}</p>
         <p><strong>Precio por área:</strong> ${formatPricePerArea(property.price, property.areaValue, property.areaUnit)}</p>
-        <p>${escapeHtml(property.description)}</p>
+        <p class="preserve-description-format">${escapeHtml(property.description)}</p>
         <ul class="checklist property-feature-list">
           ${getDisplayDetails(property).map((detail) => `<li><strong>${escapeHtml(detail.label)}:</strong> ${escapeHtml(detail.value)}</li>`).join('')}
         </ul>

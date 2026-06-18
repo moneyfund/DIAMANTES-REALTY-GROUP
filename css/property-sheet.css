@@ -164,3 +164,9 @@ body.dark-mode .property-sheet-a4,
   .property-sheet-page { padding: 0; }
   .property-sheet-a4 { box-shadow: none; height: 297mm; margin: 0; }
 }
+
+/* Preserve manually entered property description formatting in PDF sheets. */
+.preserve-description-format,
+.sheet-description {
+  white-space: pre-wrap;
+}

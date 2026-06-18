@@ -8,6 +8,16 @@ const FIREBASE_CONFIG = {
   measurementId: 'G-DXTBSYNR95'
 };
 
+
+function escapeHtml(value = '') {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 let modularFirestorePromise;
 
 async function getModularFirestore() {
@@ -68,7 +78,7 @@ function agentCardTemplate(agent) {
       </div>
       <div class="agent-content">
         <h2 class="agent-name">${agent.name || 'Agente Diamantes Realty Group'}</h2>
-        ${agent.description ? `<p class="agent-description">${agent.description}</p>` : ''}
+        ${agent.description ? `<p class="agent-description preserve-description-format">${escapeHtml(agent.description)}</p>` : ''}
         <div class="agent-contact-list">
           ${agent.phone ? `<p class="agent-contact-row"><strong>Tel:</strong> <a class="text-link" href="tel:${String(agent.phone).replace(/\s+/g, '')}">${agent.phone}</a></p>` : ''}
           ${agent.email ? `<p class="agent-contact-row"><strong>Email:</strong> <a class="text-link" href="mailto:${agent.email}">${agent.email}</a></p>` : ''}
