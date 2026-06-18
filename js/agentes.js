@@ -73,7 +73,7 @@ function agentCardTemplate(agent) {
 
   return `
     <article class="agent-card reveal-on-scroll">
-      <div class="agent-diamond-photo">
+      <div class="agent-avatar">
         <img class="agent-photo" src="${photo}" alt="${agent.name || 'Agente Diamantes Realty Group'}">
       </div>
       <div class="agent-content">

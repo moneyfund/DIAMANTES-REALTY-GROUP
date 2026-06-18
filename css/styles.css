@@ -9189,29 +9189,26 @@ body.dark-mode .home-page .hero-search-content .premium-search .hero-search-subm
   box-shadow: 0 26px 60px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(176, 0, 8, 0.08) !important;
 }
 
-#agentsGrid .agent-diamond-photo {
+#agentsGrid .agent-avatar {
   width: 120px;
   height: 120px;
   flex: 0 0 120px;
   margin: 0.75rem auto 2rem;
   overflow: hidden;
-  border: 4px solid #B00008;
-  border-radius: 18px;
+  border: 3px solid #B00008;
+  border-radius: 50%;
   background: #ffffff;
-  box-shadow: 0 16px 30px rgba(176, 0, 8, 0.2), 0 10px 24px rgba(15, 23, 42, 0.14);
-  transform: rotate(45deg);
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.16), 0 6px 18px rgba(176, 0, 8, 0.16);
 }
 
-#agentsGrid .agent-diamond-photo .agent-photo,
-#agentsGrid .agent-card .agent-diamond-photo img {
+#agentsGrid .agent-avatar .agent-photo,
+#agentsGrid .agent-card .agent-avatar img {
   display: block;
   width: 100% !important;
   height: 100% !important;
   max-width: none;
   object-fit: cover;
-  border-radius: 0 !important;
-  transform: rotate(-45deg) scale(1.25);
-  transform-origin: center;
+  border-radius: 50% !important;
 }
 
 #agentsGrid .agent-content {
@@ -9456,7 +9453,7 @@ html[data-theme="dark"] #agentsGrid .agent-social a,
     padding: 1.35rem;
   }
 
-  #agentsGrid .agent-diamond-photo {
+  #agentsGrid .agent-avatar {
     width: 112px;
     height: 112px;
     flex-basis: 112px;
