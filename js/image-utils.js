@@ -23,19 +23,16 @@
   }
 
   function getPropertyImages(property = {}) {
-    const fromImages = normalizeImageList(property.images);
-    if (fromImages.length) return fromImages;
-
-    const cover = normalizeImageList([property.coverImage]);
-    if (cover.length) return cover;
-
-    const legacy = normalizeImageList([
+    return normalizeImageList([
+      ...(Array.isArray(property.images) ? property.images : []),
+      ...(Array.isArray(property.imageUrls) ? property.imageUrls : []),
+      ...(Array.isArray(property.imagenes) ? property.imagenes : []),
+      property.coverImage,
+      property.mainImage,
+      property.imageUrl,
       property.image,
-      property.imagen,
-      ...(Array.isArray(property.imagenes) ? property.imagenes : [])
+      property.imagen
     ]);
-
-    return legacy;
   }
 
   function getCoverImage(property = {}) {
@@ -50,9 +47,10 @@
     const images = getPropertyImages(property);
     const cover = getCoverImage(property);
     const coverImage = cover === PLACEHOLDER ? '' : cover;
-    const galleryImages = images.filter((image) => image && image !== coverImage);
+    const orderedImages = coverImage ? [coverImage, ...images.filter((image) => image && image !== coverImage)] : images;
+    const galleryImages = orderedImages.filter((image) => image && image !== coverImage);
 
-    return { coverImage, galleryImages };
+    return { coverImage, galleryImages, orderedImages };
   }
 
   globalScope.inmoImageUtils = {

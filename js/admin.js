@@ -13,7 +13,12 @@ const state = {
   properties: [],
   unsubscribeProperties: null,
   authCheckId: 0,
-  uiReady: false
+  uiReady: false,
+  imageItems: [],
+  deletedImageUrls: [],
+  savingProperty: false,
+  editingAgent: null,
+  savingAgentName: false
 };
 
 const form = document.getElementById('propertyForm');
@@ -102,6 +107,12 @@ const fields = {
 
 const imagesContainer = document.getElementById('imagesContainer');
 const addImageBtn = document.getElementById('addImageBtn');
+const imageManagerStatus = document.getElementById('imageManagerStatus');
+const agentNameModal = document.getElementById('agentNameModal');
+const agentNameInput = document.getElementById('agentNameInput');
+const agentNameCurrent = document.getElementById('agentNameCurrent');
+const agentNameMessage = document.getElementById('agentNameMessage');
+const agentNameSaveBtn = document.getElementById('agentNameSaveBtn');
 
 const preview = {
   image: document.getElementById('previewImage'),
@@ -494,14 +505,18 @@ function refreshMapSize() {
 function getAgentNameById(agentId) {
   if (!agentId) return 'Sin agente';
   const found = state.agents.find((agent) => agent.id === agentId);
-  return found?.name || 'Agente desconocido';
+  return found?.name || found?.nombre || 'Agente desconocido';
+}
+
+function getAgentPublicName(agent = {}) {
+  return String(agent.name || agent.nombre || agent.displayName || '').trim();
 }
 
 function renderAgentOptions() {
   if (!fields.agentId) return;
 
   const options = ['<option value="">Seleccionar agente</option>']
-    .concat(state.agents.map((agent) => `<option value="${agent.id}">${agent.name}</option>`));
+    .concat(state.agents.map((agent) => `<option value="${agent.id}">${escapeHtml(getAgentPublicName(agent) || 'Sin nombre')}</option>`));
   fields.agentId.innerHTML = options.join('');
 }
 
@@ -511,7 +526,7 @@ function renderAgentsTable() {
   agentList.innerHTML = '';
   if (!state.agents.length) {
     const row = document.createElement('tr');
-    row.innerHTML = '<td colspan="3">No agents found in Firestore.</td>';
+    row.innerHTML = '<td colspan="4">No agents found in Firestore.</td>';
     agentList.appendChild(row);
     return;
   }
@@ -522,10 +537,12 @@ function renderAgentsTable() {
     .forEach((agent) => {
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td>${agent.name || 'Sin nombre'}</td>
-        <td>${agent.email || 'Sin correo'}</td>
-        <td>${String(agent.role || 'agent')}</td>
+        <td>${escapeHtml(getAgentPublicName(agent) || 'Sin nombre')}</td>
+        <td>${escapeHtml(agent.email || 'Sin correo')}</td>
+        <td>${escapeHtml(String(agent.role || 'agent'))}</td>
+        <td><button type="button" class="edit-btn edit-agent-name-btn" data-agent-id="${escapeHtml(agent.id)}" title="Editar nombre público" aria-label="Editar nombre público de ${escapeHtml(getAgentPublicName(agent) || 'agente')}">Editar nombre</button></td>
       `;
+      row.querySelector('.edit-agent-name-btn')?.addEventListener('click', () => openAgentNameModal(agent.id));
       agentList.appendChild(row);
     });
 }
@@ -540,62 +557,108 @@ async function loadAgents() {
   renderAgentsTable();
 }
 
-function getImagesFromProperty(property) {
-  if (Array.isArray(property.images) && property.images.length) return property.images;
-  if (Array.isArray(property.imagenes) && property.imagenes.length) return property.imagenes;
-  if (property.coverImage) return [property.coverImage];
-  return property.image || property.imagen ? [property.image || property.imagen] : [];
+function normalizeImageUrls(values = []) {
+  const unique = new Set();
+  return (Array.isArray(values) ? values : [values])
+    .map((value) => String(value || '').trim())
+    .filter((value) => {
+      if (!value || unique.has(value)) return false;
+      unique.add(value);
+      return true;
+    });
+}
+
+function getImagesFromProperty(property = {}) {
+  return normalizeImageUrls([
+    ...(Array.isArray(property.images) ? property.images : []),
+    ...(Array.isArray(property.imagenes) ? property.imagenes : []),
+    property.coverImage,
+    property.image,
+    property.imagen
+  ]);
+}
+
+function resolveCoverFromItems(items = state.imageItems) {
+  const urls = normalizeImageUrls(items.map((item) => item.url));
+  if (!urls.length) return '';
+  const selected = items.find((item) => item.isCover)?.url;
+  return selected && urls.includes(selected) ? selected : urls[0];
+}
+
+function setImageStatus(message = '', type = '') {
+  if (!imageManagerStatus) return;
+  imageManagerStatus.textContent = message;
+  imageManagerStatus.dataset.type = type;
 }
 
 function getImageUrlsFromForm() {
-  return Array.from(imagesContainer.querySelectorAll('.image-url-input'))
-    .map((input) => String(input.value || '').trim())
-    .filter(Boolean);
+  return normalizeImageUrls(state.imageItems.map((item) => item.url));
 }
 
-function refreshImageFieldLabels() {
-  const rows = imagesContainer.querySelectorAll('.image-input-row');
-  rows.forEach((row, index) => {
-    const label = row.querySelector('label');
-    if (label) label.textContent = `Imagen ${index + 1}`;
-
-    const removeButton = row.querySelector('.remove-image-btn');
-    if (removeButton) removeButton.disabled = rows.length === 1;
+function renderImageManager() {
+  if (!imagesContainer) return;
+  const cover = resolveCoverFromItems();
+  state.imageItems = state.imageItems.map((item, index) => ({ ...item, isCover: item.url === cover || (!cover && index === 0) }));
+  imagesContainer.innerHTML = state.imageItems.length ? state.imageItems.map((item, index) => {
+    const isCover = item.url === resolveCoverFromItems();
+    return `
+      <article class="image-manager-card${isCover ? ' is-cover' : ''}" data-index="${index}">
+        <div class="image-thumb-wrap">
+          <img src="${escapeHtml(item.url)}" alt="Imagen ${index + 1} de la propiedad" loading="lazy" onerror="this.onerror=null;this.src='assets/placeholder.svg'">
+          <span class="image-position">${index + 1}</span>
+          ${isCover ? '<span class="cover-badge">PORTADA</span>' : ''}
+        </div>
+        <div class="image-card-actions">
+          <button type="button" class="ghost image-action" data-image-action="up" ${index === 0 ? 'disabled' : ''} title="Mover hacia la izquierda" aria-label="Mover imagen ${index + 1} hacia la izquierda">‹</button>
+          <button type="button" class="ghost image-action" data-image-action="down" ${index === state.imageItems.length - 1 ? 'disabled' : ''} title="Mover hacia la derecha" aria-label="Mover imagen ${index + 1} hacia la derecha">›</button>
+          <button type="button" class="secondary image-action set-cover" data-image-action="cover" ${isCover ? 'disabled' : ''} title="Establecer como portada" aria-label="Establecer imagen ${index + 1} como portada">Portada</button>
+          <button type="button" class="delete-btn image-action" data-image-action="delete" title="Eliminar imagen" aria-label="Eliminar imagen ${index + 1}">Eliminar</button>
+        </div>
+      </article>`;
+  }).join('') : '<p class="empty-image-manager">No hay imágenes configuradas. Agrega una URL para iniciar la galería.</p>';
+  imagesContainer.querySelectorAll('[data-image-action]').forEach((button) => {
+    button.addEventListener('click', () => handleImageAction(button.closest('[data-index]'), button.dataset.imageAction));
   });
+  updatePreview();
+}
+
+function handleImageAction(card, action) {
+  const index = Number(card?.dataset.index);
+  if (!Number.isInteger(index)) return;
+  if (action === 'up' && index > 0) {
+    [state.imageItems[index - 1], state.imageItems[index]] = [state.imageItems[index], state.imageItems[index - 1]];
+  } else if (action === 'down' && index < state.imageItems.length - 1) {
+    [state.imageItems[index + 1], state.imageItems[index]] = [state.imageItems[index], state.imageItems[index + 1]];
+  } else if (action === 'cover') {
+    state.imageItems = state.imageItems.map((item, itemIndex) => ({ ...item, isCover: itemIndex === index }));
+  } else if (action === 'delete') {
+    const confirmed = window.confirm('¿Seguro que deseas quitar esta imagen? Se eliminará de Storage únicamente después de guardar la propiedad correctamente.');
+    if (!confirmed) return;
+    const [removed] = state.imageItems.splice(index, 1);
+    if (removed?.persisted && removed.url) state.deletedImageUrls.push(removed.url);
+  }
+  renderImageManager();
 }
 
 function addImageField(value = '') {
-  const row = document.createElement('div');
-  row.className = 'image-input-row';
-
-  row.innerHTML = `
-    <label>Imagen</label>
-    <div class="image-input-controls">
-      <input type="url" class="image-url-input" placeholder="https://..." required>
-      <button type="button" class="ghost remove-image-btn">Quitar</button>
-    </div>
-  `;
-
-  const input = row.querySelector('.image-url-input');
-  const removeBtn = row.querySelector('.remove-image-btn');
-
-  input.value = value;
-  input.addEventListener('input', updatePreview);
-
-  removeBtn.addEventListener('click', () => {
-    if (imagesContainer.children.length === 1) return;
-    row.remove();
-    refreshImageFieldLabels();
-    updatePreview();
-  });
-
-  imagesContainer.appendChild(row);
-  refreshImageFieldLabels();
+  const url = String(value || window.prompt('Pega la URL de la imagen de Firebase Storage:') || '').trim();
+  if (!url) return;
+  if (getImageUrlsFromForm().includes(url)) {
+    setImageStatus('Esta imagen ya existe en la galería.', 'error');
+    return;
+  }
+  state.imageItems.push({ url, isCover: state.imageItems.length === 0, persisted: false });
+  setImageStatus('Imagen agregada. Recuerda guardar la propiedad para conservar los cambios.', 'success');
+  renderImageManager();
 }
 
-function resetImageFields(values = ['']) {
-  imagesContainer.innerHTML = '';
-  values.forEach((value) => addImageField(value));
+function resetImageFields(values = [], coverImage = '') {
+  const urls = normalizeImageUrls(values);
+  const resolvedCover = urls.includes(String(coverImage || '').trim()) ? String(coverImage || '').trim() : urls[0] || '';
+  state.imageItems = urls.map((url) => ({ url, isCover: url === resolvedCover, persisted: true }));
+  state.deletedImageUrls = [];
+  setImageStatus(urls.length ? 'Imágenes cargadas.' : 'Sin imágenes configuradas.', '');
+  renderImageManager();
 }
 
 function fillForm(property) {
@@ -625,7 +688,7 @@ function fillForm(property) {
   renderDynamicPropertyFields(details);
 
   const images = getImagesFromProperty(property);
-  resetImageFields(images.length ? images : ['']);
+  resetImageFields(images, property.coverImage);
 
   const coordinates = getCoordinates(property);
   if (coordinates) {
@@ -653,6 +716,7 @@ function buildPropertyPayload(existing = {}) {
   const areaUnit = getAreaUnitFromDetails(details) || existing.areaUnit || '';
   const pricePerAreaUsd = calculatePricePerArea(price, area);
   const images = getImageUrlsFromForm();
+  const coverImage = resolveCoverFromItems();
   const selectedAgentId = fields.agentId.value;
   const operation = String(fields.operation?.value || 'venta').trim().toLowerCase();
 
@@ -683,9 +747,9 @@ function buildPropertyPayload(existing = {}) {
     propertyDetails: { ...(existing.propertyDetails || {}), ...details },
     images,
     imagenes: images,
-    coverImage: images[0] || existing.coverImage || existing.image || existing.imagen || 'assets/placeholder.svg',
-    image: images[0] || existing.image || existing.imagen || 'assets/placeholder.svg',
-    imagen: images[0] || existing.imagen || existing.image || 'assets/placeholder.svg',
+    coverImage: coverImage || null,
+    image: coverImage || images[0] || null,
+    imagen: coverImage || images[0] || null,
     latitude: Number.isFinite(latitude) ? latitude : null,
     longitude: Number.isFinite(longitude) ? longitude : null,
     lat: Number.isFinite(latitude) ? latitude : null,
@@ -705,7 +769,7 @@ function updatePreview() {
   preview.price.textContent = formatCurrency(sanitizePrice(fields.price.value));
   preview.specs.textContent = `${fields.bedrooms.value || 0} hab • ${fields.bathrooms.value || 0} baños • ${fields.size.value || 0} m²`;
   preview.description.textContent = fields.description.value || 'Descripción de la propiedad...';
-  preview.image.src = getImageUrlsFromForm()[0] || 'assets/placeholder.svg';
+  preview.image.src = resolveCoverFromItems() || getImageUrlsFromForm()[0] || 'assets/placeholder.svg';
 }
 
 function clearFormState() {
@@ -714,7 +778,7 @@ function clearFormState() {
   fields.latitude.value = '';
   fields.longitude.value = '';
   if (fields.agentId) fields.agentId.value = '';
-  resetImageFields(['']);
+  resetImageFields([]);
   renderDynamicPropertyFields();
 
   if (locationMap) locationMap.setView(NICARAGUA_CENTER, DEFAULT_ZOOM);
@@ -795,7 +859,21 @@ async function deleteProperty(propertyId) {
   }
 }
 
+async function deleteStorageImagesAfterSave(urls = []) {
+  const client = getFirebaseOrNotify();
+  if (!client?.storage || !urls.length) return;
+  await Promise.all(urls.map(async (url) => {
+    try {
+      await client.storage.refFromURL(url).delete();
+    } catch (error) {
+      console.error('No se pudo eliminar imagen de Storage:', url, error);
+      setImageStatus('La propiedad se guardó, pero una imagen no pudo eliminarse de Storage. Revisa permisos o URL.', 'error');
+    }
+  }));
+}
+
 async function savePropertyUpdate() {
+  if (state.savingProperty) return;
   if (!form.reportValidity()) return;
 
   const client = getFirebaseOrNotify();
@@ -810,6 +888,11 @@ async function savePropertyUpdate() {
     return;
   }
 
+  state.savingProperty = true;
+  document.getElementById('updateBtn').disabled = true;
+  setImageStatus('Guardando cambios de imágenes y propiedad...', '');
+  const snapshotImageItems = state.imageItems.map((item) => ({ ...item }));
+  const snapshotDeleted = [...state.deletedImageUrls];
   const ref = client.db.collection('properties').doc(propertyId);
   const current = await ref.get();
 
@@ -818,10 +901,106 @@ async function savePropertyUpdate() {
     return;
   }
 
-  const payload = buildPropertyPayload(current.data());
-  await ref.set(payload, { merge: true });
-  alert('Propiedad actualizada.');
+  try {
+    const payload = buildPropertyPayload(current.data());
+    await ref.set(payload, { merge: true });
+    await deleteStorageImagesAfterSave(snapshotDeleted);
+    state.deletedImageUrls = [];
+    state.imageItems = state.imageItems.map((item) => ({ ...item, persisted: true }));
+    setImageStatus('Propiedad actualizada correctamente.', 'success');
+    alert('Propiedad actualizada.');
+  } catch (error) {
+    console.error(error);
+    state.imageItems = snapshotImageItems;
+    state.deletedImageUrls = snapshotDeleted;
+    renderImageManager();
+    setImageStatus('No se pudo guardar la propiedad. No se eliminó ningún archivo de Storage.', 'error');
+    alert('No se pudo actualizar la propiedad. Revisa Firestore y vuelve a intentar.');
+  } finally {
+    state.savingProperty = false;
+    document.getElementById('updateBtn').disabled = false;
+  }
 }
+
+function openAgentNameModal(agentId) {
+  const agent = state.agents.find((item) => item.id === agentId);
+  if (!agent || !agentNameModal) return;
+  state.editingAgent = agent;
+  const currentName = getAgentPublicName(agent);
+  agentNameCurrent.textContent = `Nombre actual: ${currentName || 'Sin nombre'}`;
+  agentNameInput.value = currentName;
+  agentNameMessage.textContent = '';
+  agentNameMessage.dataset.type = '';
+  agentNameModal.classList.remove('hidden');
+  agentNameInput.focus();
+}
+
+function closeAgentNameModal() {
+  if (state.savingAgentName) return;
+  agentNameModal?.classList.add('hidden');
+  state.editingAgent = null;
+  if (agentNameInput) agentNameInput.value = '';
+  if (agentNameMessage) agentNameMessage.textContent = '';
+}
+
+function validateAgentName(value = '') {
+  const name = String(value || '').trim();
+  if (name.length < 2) return { error: 'El nombre debe tener al menos 2 caracteres.' };
+  if (name.length > 80) return { error: 'El nombre no puede superar 80 caracteres.' };
+  return { name };
+}
+
+async function updateAgentName() {
+  if (state.savingAgentName || !state.editingAgent) return;
+  const validation = validateAgentName(agentNameInput.value);
+  if (validation.error) {
+    agentNameMessage.textContent = validation.error;
+    agentNameMessage.dataset.type = 'error';
+    return;
+  }
+  const client = getFirebaseOrNotify();
+  if (!client) return;
+  state.savingAgentName = true;
+  agentNameSaveBtn.disabled = true;
+  agentNameMessage.textContent = 'Guardando nombre y propiedades asociadas...';
+  agentNameMessage.dataset.type = '';
+  try {
+    const agentId = state.editingAgent.id;
+    const name = validation.name;
+    await client.db.collection('agents').doc(agentId).set({ name, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+    const fieldsToQuery = ['agentId', 'agenteId', 'ownerId', 'userId', 'createdBy'];
+    const agentIdentifiers = normalizeImageUrls([agentId, state.editingAgent.uid, state.editingAgent.userId, state.editingAgent.agentId]);
+    const docs = new Map();
+    for (const field of fieldsToQuery) {
+      for (const identifier of agentIdentifiers) {
+        const snap = await client.db.collection('properties').where(field, '==', identifier).get();
+        snap.docs.forEach((doc) => docs.set(doc.id, doc.ref));
+      }
+    }
+    const refs = Array.from(docs.values());
+    for (let i = 0; i < refs.length; i += 450) {
+      const batch = client.db.batch();
+      refs.slice(i, i + 450).forEach((ref) => batch.update(ref, { agentName: name, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }));
+      await batch.commit();
+    }
+    state.agents = state.agents.map((agent) => agent.id === agentId ? { ...agent, name } : agent);
+    state.properties = state.properties.map((property) => refs.some((ref) => ref.id === property.id) ? { ...property, agentName: name } : property);
+    renderAgentOptions();
+    renderAgentsTable();
+    renderList();
+    agentNameMessage.textContent = 'Nombre actualizado correctamente.';
+    agentNameMessage.dataset.type = 'success';
+    setTimeout(closeAgentNameModal, 800);
+  } catch (error) {
+    console.error(error);
+    agentNameMessage.textContent = 'No se pudo actualizar el nombre en Firestore. Intenta nuevamente.';
+    agentNameMessage.dataset.type = 'error';
+  } finally {
+    state.savingAgentName = false;
+    agentNameSaveBtn.disabled = false;
+  }
+}
+
 
 function hasAllowedAdminEmail(user) {
   const email = String(user?.email || '').toLowerCase().trim();
@@ -843,7 +1022,7 @@ function finishAuthCheck() {
 
 function prepareAdminUI() {
   if (state.uiReady) return;
-  resetImageFields(['']);
+  resetImageFields([]);
   populatePropertyTypeOptions();
   renderDynamicPropertyFields();
   bindActions();
@@ -896,6 +1075,9 @@ function redirectTo(path) {
 
 function bindActions() {
   addImageBtn.addEventListener('click', () => addImageField(''));
+  document.getElementById('agentNameModalClose')?.addEventListener('click', closeAgentNameModal);
+  document.getElementById('agentNameCancelBtn')?.addEventListener('click', closeAgentNameModal);
+  agentNameSaveBtn?.addEventListener('click', updateAgentName);
   form.addEventListener('input', updatePreview);
   fields.type?.addEventListener('change', () => { renderDynamicPropertyFields(); updatePreview(); });
 
