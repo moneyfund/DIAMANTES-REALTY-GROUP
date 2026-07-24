@@ -93,6 +93,17 @@ const state = {
   unsubscribeProperties: null,
   map: null,
   mapMarker: null,
+  mapSearch: {
+    query: '',
+    results: [],
+    loading: false,
+    error: '',
+    selectedResult: null,
+    open: false,
+    activeController: null,
+    activeRequestId: 0,
+    highlightedIndex: -1
+  },
   propertyImages: [],
   legalDocument: { existing: null, file: null, remove: false },
   isSavingProperty: false,
@@ -119,6 +130,10 @@ const calculatePricePerArea = (priceUsd, areaValue) => propertyUtils.calculatePr
 const formatPricePerArea = (value, unit) => propertyUtils.formatPricePerArea ? propertyUtils.formatPricePerArea(value, unit) : '';
 const NICARAGUA_MAP_CENTER = [12.8654, -85.2072];
 const NICARAGUA_MAP_ZOOM = 7;
+const MAP_SEARCH_MIN_LENGTH = 3;
+const MAP_SEARCH_DEBOUNCE_MS = 500;
+const MAP_SEARCH_RESULT_LIMIT = 5;
+const MAP_SEARCH_SELECTED_ZOOM = 15;
 const diamondPinIcon = typeof L === 'undefined' ? null : L.divIcon({
   className: 'drg-diamond-pin',
   html: `
@@ -405,7 +420,7 @@ function updateCoordinatesLabel(lat, lng) {
   if (!label) return;
 
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-    label.textContent = 'Sin coordenadas seleccionadas.';
+    label.textContent = 'Selecciona una ubicación del mapa.';
     return;
   }
 
@@ -446,7 +461,7 @@ function clearPropertyMapMarker() {
   }
 }
 
-function setPropertyMapMarker(lat, lng) {
+function setPropertyMapMarker(lat, lng, zoom = 14) {
   if (!state.map || typeof L === 'undefined' || !Number.isFinite(lat) || !Number.isFinite(lng)) return;
 
   const point = [lat, lng];
@@ -462,7 +477,155 @@ function setPropertyMapMarker(lat, lng) {
     state.mapMarker.setLatLng(point);
   }
 
-  state.map.setView(point, 14);
+  state.map.setView(point, zoom);
+}
+
+
+function getMapSearchElements() {
+  return {
+    root: document.getElementById('propertyMapSearch'),
+    input: document.getElementById('propertyMapSearchInput'),
+    clearButton: document.getElementById('propertyMapSearchClear'),
+    loading: document.getElementById('propertyMapSearchLoading'),
+    results: document.getElementById('propertyMapSearchResults')
+  };
+}
+
+function setMapSearchState(patch = {}) {
+  state.mapSearch = { ...state.mapSearch, ...patch };
+  renderMapSearch();
+}
+
+function resetMapSearchState() {
+  state.mapSearch.activeController?.abort();
+  state.mapSearch = {
+    query: '', results: [], loading: false, error: '', selectedResult: null,
+    open: false, activeController: null, activeRequestId: state.mapSearch.activeRequestId + 1,
+    highlightedIndex: -1
+  };
+  renderMapSearch();
+}
+
+function renderMapSearch() {
+  const { input, clearButton, loading, results } = getMapSearchElements();
+  if (!input || !results) return;
+
+  if (document.activeElement !== input) input.value = state.mapSearch.query;
+  input.setAttribute('aria-expanded', state.mapSearch.open ? 'true' : 'false');
+  clearButton?.classList.toggle('hidden', !state.mapSearch.query);
+  loading?.classList.toggle('hidden', !state.mapSearch.loading);
+
+  const shouldShow = state.mapSearch.open && (state.mapSearch.loading || state.mapSearch.error || state.mapSearch.results.length || state.mapSearch.query.trim().length >= MAP_SEARCH_MIN_LENGTH);
+  results.classList.toggle('hidden', !shouldShow);
+  if (!shouldShow) {
+    results.innerHTML = '';
+    return;
+  }
+
+  if (state.mapSearch.loading) {
+    results.innerHTML = '<div class="map-search-message">Buscando ubicaciones…</div>';
+    return;
+  }
+  if (state.mapSearch.error) {
+    results.innerHTML = `<div class="map-search-message map-search-message--error">${escapeHtml(state.mapSearch.error)}</div>`;
+    return;
+  }
+  if (!state.mapSearch.results.length) {
+    results.innerHTML = '<div class="map-search-message">No se encontraron resultados.</div>';
+    return;
+  }
+
+  results.innerHTML = state.mapSearch.results.map((result, index) => `
+    <button type="button" class="map-search-result ${index === state.mapSearch.highlightedIndex ? 'is-active' : ''}" role="option" aria-selected="${index === state.mapSearch.highlightedIndex ? 'true' : 'false'}" data-map-result-index="${index}">
+      <strong>${escapeHtml(result.display_name)}</strong>
+      <small>${escapeHtml(result.type || result.class || 'Ubicación')}</small>
+    </button>
+  `).join('');
+}
+
+async function searchNicaraguaLocations(queryText, requestId, controller) {
+  const params = new URLSearchParams({
+    q: queryText,
+    format: 'jsonv2',
+    countrycodes: 'ni',
+    addressdetails: '1',
+    limit: String(MAP_SEARCH_RESULT_LIMIT),
+    'accept-language': 'es'
+  });
+  const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, { signal: controller.signal });
+  if (!response.ok) throw new Error(`Nominatim HTTP ${response.status}`);
+  const data = await response.json();
+  if (requestId !== state.mapSearch.activeRequestId || controller.signal.aborted) return;
+  const results = (Array.isArray(data) ? data : [])
+    .map((item) => ({ ...item, lat: Number(item.lat), lon: Number(item.lon) }))
+    .filter((item) => Number.isFinite(item.lat) && Number.isFinite(item.lon))
+    .slice(0, MAP_SEARCH_RESULT_LIMIT);
+  setMapSearchState({ results, loading: false, error: '', open: true, highlightedIndex: results.length ? 0 : -1 });
+}
+
+function scheduleMapSearch() {
+  const queryText = state.mapSearch.query.trim();
+  window.clearTimeout(state.mapSearch.debounceTimer);
+  state.mapSearch.activeController?.abort();
+  if (queryText.length < MAP_SEARCH_MIN_LENGTH) {
+    setMapSearchState({ results: [], loading: false, error: '', open: false, highlightedIndex: -1, activeController: null });
+    return;
+  }
+  const requestId = state.mapSearch.activeRequestId + 1;
+  const controller = new AbortController();
+  state.mapSearch.debounceTimer = window.setTimeout(() => {
+    searchNicaraguaLocations(queryText, requestId, controller).catch((error) => {
+      if (error.name === 'AbortError') return;
+      console.warn('[AgentDashboard] Error en búsqueda de ubicaciones.', error);
+      if (requestId === state.mapSearch.activeRequestId) {
+        setMapSearchState({ loading: false, error: 'No fue posible realizar la búsqueda. Inténtalo nuevamente.', results: [], open: true, highlightedIndex: -1 });
+      }
+    });
+  }, MAP_SEARCH_DEBOUNCE_MS);
+  setMapSearchState({ loading: true, error: '', open: true, activeController: controller, activeRequestId: requestId, highlightedIndex: -1 });
+}
+
+function selectMapSearchResult(result) {
+  if (!result) return;
+  state.mapSearch.activeController?.abort();
+  setPropertyCoordinates(result.lat, result.lon);
+  setPropertyMapMarker(result.lat, result.lon, MAP_SEARCH_SELECTED_ZOOM);
+  setMapSearchState({ query: result.display_name || '', selectedResult: result, results: [], loading: false, error: '', open: false, highlightedIndex: -1, activeController: null });
+}
+
+function bindMapSearchControls() {
+  const { root, input, clearButton, results } = getMapSearchElements();
+  if (!root || !input || !results) return;
+  input.addEventListener('input', (event) => {
+    state.mapSearch.query = event.target.value;
+    state.mapSearch.selectedResult = null;
+    scheduleMapSearch();
+    renderMapSearch();
+  });
+  input.addEventListener('keydown', (event) => {
+    const total = state.mapSearch.results.length;
+    if (event.key === 'ArrowDown' && total) {
+      event.preventDefault();
+      setMapSearchState({ highlightedIndex: (state.mapSearch.highlightedIndex + 1) % total, open: true });
+    } else if (event.key === 'ArrowUp' && total) {
+      event.preventDefault();
+      setMapSearchState({ highlightedIndex: (state.mapSearch.highlightedIndex - 1 + total) % total, open: true });
+    } else if (event.key === 'Enter' && total && state.mapSearch.highlightedIndex >= 0) {
+      event.preventDefault();
+      selectMapSearchResult(state.mapSearch.results[state.mapSearch.highlightedIndex]);
+    } else if (event.key === 'Escape') {
+      setMapSearchState({ open: false });
+    }
+  });
+  clearButton?.addEventListener('click', resetMapSearchState);
+  results.addEventListener('click', (event) => {
+    const option = event.target.closest('[data-map-result-index]');
+    if (!option) return;
+    selectMapSearchResult(state.mapSearch.results[Number(option.dataset.mapResultIndex)]);
+  });
+  document.addEventListener('click', (event) => {
+    if (!root.contains(event.target)) setMapSearchState({ open: false });
+  });
 }
 
 function findPropertyMapElement() {
@@ -524,8 +687,17 @@ function createImageEntry({ url = '', file = null, source = 'url', status = 'rea
     source,
     status,
     progress,
-    error
+    error,
+    previewUrl: file ? URL.createObjectURL(file) : ''
   };
+}
+
+function revokeImagePreviewUrl(item) {
+  if (item?.previewUrl) URL.revokeObjectURL(item.previewUrl);
+}
+
+function clearPendingImagePreviewUrls() {
+  state.propertyImages.forEach(revokeImagePreviewUrl);
 }
 
 function setUploaderStatus(message = '') {
@@ -664,19 +836,6 @@ async function applyLegalDocumentChanges(propertyRef, existingLegalDocument = nu
   });
 }
 
-function getSelectedMode() {
-  return document.querySelector('input[name="imageInputMode"]:checked')?.value || 'url';
-}
-
-function toggleImageInputMode() {
-  const mode = getSelectedMode();
-  const urlMode = document.getElementById('imageModeUrl');
-  const uploadMode = document.getElementById('imageModeUpload');
-
-  urlMode?.classList.toggle('hidden', mode !== 'url');
-  uploadMode?.classList.toggle('hidden', mode !== 'upload');
-}
-
 function getCoverImageUrl() {
   const explicitCover = document.querySelector('input[name="propertyCoverImage"]:checked')?.value || '';
   const urls = state.propertyImages.filter((item) => item.url).map((item) => item.url);
@@ -699,19 +858,19 @@ function renderImagePreview() {
   refreshImageCounter();
 
   if (!state.propertyImages.length) {
-    container.innerHTML = '<p class="empty-state uploader-empty">Agrega URLs o sube archivos para construir la galería.</p>';
+    container.innerHTML = '<p class="empty-state uploader-empty">Selecciona archivos de imagen para construir la galería.</p>';
     return;
   }
 
   const coverUrl = getCoverImageUrl();
   container.innerHTML = state.propertyImages.map((item, index) => {
-    const previewSrc = item.url || (item.file ? URL.createObjectURL(item.file) : fallbackPhoto);
+    const previewSrc = item.url || item.previewUrl || fallbackPhoto;
     const errorBadge = item.error ? `<small class="uploader-error">${item.error}</small>` : '';
     const progressBadge = item.status === 'uploading'
       ? `<small class="uploader-progress">Subiendo: ${Math.round(item.progress)}%</small>`
       : '';
 
-    const sourceLabel = item.source === 'upload' ? 'Archivo' : 'URL manual';
+    const sourceLabel = item.source === 'upload' ? 'Archivo' : 'Imagen existente';
     const uploadedClass = item.status === 'uploaded' || item.status === 'ready' ? 'is-uploaded' : '';
     const errorClass = item.error ? 'has-error' : '';
 
@@ -740,6 +899,8 @@ function renderImagePreview() {
 }
 
 function removeImageById(imageId) {
+  const removed = state.propertyImages.find((item) => item.id === imageId);
+  revokeImagePreviewUrl(removed);
   state.propertyImages = state.propertyImages.filter((item) => item.id !== imageId);
   renderImagePreview();
 }
@@ -774,32 +935,6 @@ function bindImagePreviewActions() {
     const imageId = button.dataset.imageId;
     if (moveDirection && imageId) moveImage(imageId, moveDirection);
   });
-}
-
-function addUrlImage() {
-  const input = document.getElementById('propertyImageUrlInput');
-  if (!input) return;
-
-  const value = input.value.trim();
-  if (!value) {
-    setUploaderStatus('Ingresa una URL antes de agregarla.');
-    return;
-  }
-
-  if (!imageUtils?.isValidHttpUrl(value)) {
-    setUploaderStatus('La URL ingresada no es válida. Usa una URL http(s) completa.');
-    return;
-  }
-
-  if (state.propertyImages.some((item) => item.url === value)) {
-    setUploaderStatus('Esa imagen ya existe en el listado.');
-    return;
-  }
-
-  state.propertyImages.push(createImageEntry({ url: value, source: 'url', status: 'ready' }));
-  input.value = '';
-  setUploaderStatus('URL agregada correctamente.');
-  renderImagePreview();
 }
 
 function fileFingerprint(file) {
@@ -974,7 +1109,7 @@ async function uploadPendingFiles(agentId, propertyId) {
 function validateFinalImages() {
   const urls = state.propertyImages.map((item) => item.url).filter(Boolean);
   if (!urls.length) {
-    throw new Error('Debes agregar al menos una imagen por URL o subida de archivo.');
+    throw new Error('Debes seleccionar al menos una imagen de la propiedad.');
   }
 
   const invalidUrls = urls.filter((url) => !imageUtils?.isValidHttpUrl(url));
@@ -1076,6 +1211,7 @@ function resetPropertyForm() {
   document.getElementById('propertyForm').reset();
   document.getElementById('propertyDocId').value = '';
   updatePropertySheetPreviewLink('');
+  clearPendingImagePreviewUrls();
   state.propertyImages = [];
   resetLegalDocumentState();
   setUploaderStatus('');
@@ -1087,7 +1223,7 @@ function resetPropertyForm() {
 
   setSelectedPropertyTags([]);
   renderDynamicPropertyFields();
-  toggleImageInputMode();
+  resetMapSearchState();
   updateVideoPreview();
   updatePricePerAreaPreview();
 }
@@ -1117,6 +1253,7 @@ function fillPropertyForm(property) {
   document.getElementById('propertyVideoUrl').value = propertyVideo?.url || '';
   updateVideoPreview();
 
+  clearPendingImagePreviewUrls();
   const normalizedImages = imageUtils.getPropertyImages(property);
   state.propertyImages = normalizedImages.map((url) => createImageEntry({ url, source: 'url', status: 'ready' }));
   state.legalDocument = { existing: property.legalDocument || null, file: null, remove: false };
@@ -2112,19 +2249,9 @@ function bindCalculatedFields() {
 }
 
 function bindImageControls() {
-  document.querySelectorAll('input[name="imageInputMode"]').forEach((input) => {
-    input.addEventListener('change', toggleImageInputMode);
-  });
-
-  document.getElementById('addImageUrlBtn')?.addEventListener('click', addUrlImage);
-  document.getElementById('propertyImageUrlInput')?.addEventListener('keydown', (event) => {
-    if (event.key !== 'Enter') return;
-    event.preventDefault();
-    addUrlImage();
-  });
-
   document.getElementById('propertyImageFiles')?.addEventListener('change', handleFileSelection);
 }
+
 
 function bindLegalDocumentControls() {
   document.getElementById('propertyLegalDocument')?.addEventListener('change', handleLegalDocumentSelection);
@@ -2171,11 +2298,11 @@ function init() {
   document.getElementById('propertyFormReset')?.addEventListener('click', resetPropertyForm);
   bindAuthControls();
   bindImageControls();
+  bindMapSearchControls();
   bindLegalDocumentControls();
   bindSharedListModule();
   bindImagePreviewActions();
   bindCalculatedFields();
-  toggleImageInputMode();
   renderDynamicPropertyFields();
   renderImagePreview();
   renderLegalDocumentState();

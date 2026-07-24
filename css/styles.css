@@ -3168,31 +3168,13 @@ body:not(.dark):not(.dark-mode) .agent-social svg {
 }
 
 
-.image-mode-selector {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.image-mode-selector label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-weight: 500;
-}
 
 .image-mode-panel {
   display: grid;
   gap: 0.65rem;
 }
 
-.image-url-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.6rem;
-}
 
-#propertyImageUrlInput,
 #propertyImageFiles {
   width: 100%;
   padding: 0.8rem 1rem;
@@ -8223,7 +8205,6 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--premium-global-heading) !important; 
 .dashboard-form select,
 .dashboard-form textarea,
 .shared-inventory-header input,
-#propertyImageUrlInput,
 #propertyImageFiles {
   width: 100%;
   margin-top: 0.35rem;
@@ -8288,8 +8269,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--premium-global-heading) !important; 
   border-radius: 18px;
 }
 
-.dashboard-checkbox-group label,
-.image-mode-selector label {
+.dashboard-checkbox-group label {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -8440,7 +8420,6 @@ body.dark-mode .dashboard-form textarea {
   .agent-dashboard-hero { padding: 2.5rem 0; }
   .dashboard-card,
   .dashboard-auth-box { border-radius: 20px; padding: 1rem; }
-  .image-url-row { grid-template-columns: 1fr; }
   .dashboard-sticky-actions { position: static; }
 }
 
@@ -10361,4 +10340,130 @@ body.dark-mode .site-footer .footer-copyright,
 /* Preserve manually entered property and agent description formatting. */
 .preserve-description-format {
   white-space: pre-wrap;
+}
+
+.map-search-control {
+  position: relative;
+  z-index: 450;
+  display: grid;
+  gap: 0.35rem;
+  max-width: 100%;
+  overflow: visible;
+}
+
+.map-search-input-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid rgba(203, 164, 82, 0.38);
+  border-radius: 16px;
+  background: var(--bg-card);
+  box-shadow: 0 14px 30px rgba(7, 17, 31, 0.12);
+}
+
+.map-search-icon {
+  display: inline-flex;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #9a7429;
+}
+
+.map-search-icon svg { fill: currentColor; width: 100%; height: 100%; }
+
+#propertyMapSearchInput {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-main);
+  box-shadow: none;
+  outline: none;
+  padding: 0.7rem 0.15rem;
+  text-transform: uppercase;
+}
+
+.map-search-clear {
+  border: 0;
+  background: rgba(176, 0, 8, 0.08);
+  color: var(--diamond-red);
+  border-radius: 999px;
+  width: 2rem;
+  height: 2rem;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.map-search-loading {
+  width: 1.15rem;
+  height: 1.15rem;
+  border: 2px solid rgba(203, 164, 82, 0.35);
+  border-top-color: #cba452;
+  border-radius: 50%;
+  animation: drgSpin 0.8s linear infinite;
+}
+
+.map-search-results {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid rgba(203, 164, 82, 0.38);
+  border-radius: 16px;
+  background: var(--bg-card);
+  box-shadow: 0 20px 45px rgba(7, 17, 31, 0.22);
+}
+
+.map-search-result {
+  display: grid;
+  gap: 0.2rem;
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  border: 0;
+  border-bottom: 1px solid rgba(203, 164, 82, 0.18);
+  background: transparent;
+  color: var(--text-main);
+  text-align: left;
+  cursor: pointer;
+}
+
+.map-search-result:last-child { border-bottom: 0; }
+.map-search-result:hover,
+.map-search-result.is-active { background: rgba(203, 164, 82, 0.14); }
+.map-search-result small,
+.map-search-message { color: var(--text-muted, #5d6674); }
+.map-search-message { padding: 0.85rem 0.95rem; }
+.map-search-message--error { color: #d93025; }
+
+@keyframes drgSpin { to { transform: rotate(360deg); } }
+
+body.dark .map-search-input-row,
+body.dark-mode .map-search-input-row,
+body.dark .map-search-results,
+body.dark-mode .map-search-results {
+  background: #111827;
+  border-color: rgba(203, 164, 82, 0.42);
+}
+
+@media (max-width: 640px) {
+  .map-search-results { max-height: 210px; }
+  #propertyMapSearchInput { font-size: 0.9rem; }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
