@@ -122,9 +122,13 @@
           </div>
 
           <div class="full-width images-group" id="imagesGroup">
-            <label>Imágenes de la propiedad</label>
-            <div id="imagesContainer" class="images-container"></div>
-            <button type="button" id="addImageBtn" class="secondary add-image-btn">+ Agregar otra imagen</button>
+            <div class="image-manager-heading">
+              <label>IMÁGENES DE LA PROPIEDAD</label>
+              <p>ORDENA LAS IMÁGENES SEGÚN LA SECUENCIA EN QUE DEBEN APARECER EN LA WEB Y SELECCIONA LA IMAGEN PRINCIPAL DE PORTADA.</p>
+              <small id="imageManagerStatus" aria-live="polite"></small>
+            </div>
+            <div id="imagesContainer" class="images-container image-manager-grid"></div>
+            <button type="button" id="addImageBtn" class="secondary add-image-btn">Agregar imagen por URL</button>
           </div>
 
           <div>
@@ -176,6 +180,7 @@
                   <th>Name</th>
                   <th>Email</th>
                   <th>Role</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="agentList"></tbody>
@@ -203,10 +208,25 @@
       </section>
     </section>
   </main>
+  <div id="agentNameModal" class="review-modal hidden" role="dialog" aria-modal="true" aria-labelledby="agentNameModalTitle">
+    <div class="review-modal-card agent-name-modal-card">
+      <button type="button" id="agentNameModalClose" class="review-modal-close" aria-label="Cerrar">×</button>
+      <h2 id="agentNameModalTitle">Editar nombre de agente</h2>
+      <p id="agentNameCurrent" class="agent-name-current"></p>
+      <label for="agentNameInput">Nombre público</label>
+      <input type="text" id="agentNameInput" maxlength="80" autocomplete="off" />
+      <p id="agentNameMessage" class="admin-inline-message" aria-live="polite"></p>
+      <div class="review-actions modal-actions">
+        <button type="button" id="agentNameSaveBtn">Guardar</button>
+        <button type="button" id="agentNameCancelBtn" class="ghost">Cancelar</button>
+      </div>
+    </div>
+  </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js" defer></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js" defer></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js" defer></script>
   <div id="reviewModal" class="review-modal hidden" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle">
     <div class="review-modal-card">
       <button type="button" id="reviewModalClose" class="review-modal-close" aria-label="Cerrar">×</button>

@@ -524,3 +524,144 @@ button:active,
 .preserve-description-format {
   white-space: pre-wrap;
 }
+
+/* === Visual property image manager === */
+.image-manager-heading label {
+  margin-bottom: 0.25rem;
+  color: var(--text);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.image-manager-heading p {
+  margin: 0 0 0.35rem;
+  color: var(--muted);
+  font-size: 0.86rem;
+  text-transform: uppercase;
+  line-height: 1.45;
+}
+
+.image-manager-heading small,
+.admin-inline-message {
+  display: block;
+  min-height: 1.2rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.image-manager-heading small[data-type="success"],
+.admin-inline-message[data-type="success"] { color: #1d7f43; }
+.image-manager-heading small[data-type="error"],
+.admin-inline-message[data-type="error"] { color: #9e0b0f; }
+
+.image-manager-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+  max-height: 620px;
+  overflow-y: auto;
+  padding: 0.25rem 0.15rem 0.5rem;
+}
+
+.image-manager-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 0.55rem;
+  box-shadow: 0 10px 24px rgba(27, 27, 27, 0.08);
+}
+
+.image-manager-card.is-cover {
+  border: 2px solid var(--color-brand-gold);
+  box-shadow: 0 0 0 3px rgba(158, 11, 15, 0.12), 0 14px 28px rgba(27, 27, 27, 0.12);
+}
+
+.image-thumb-wrap {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--panel-alt);
+}
+
+.image-thumb-wrap img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.image-position,
+.cover-badge {
+  position: absolute;
+  top: 0.55rem;
+  border-radius: 999px;
+  padding: 0.22rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.image-position {
+  left: 0.55rem;
+  background: rgba(27, 27, 27, 0.78);
+  color: #fff;
+}
+
+.cover-badge {
+  right: 0.55rem;
+  background: var(--accent);
+  color: #fff;
+  border: 1px solid rgba(212, 175, 55, 0.75);
+}
+
+.image-card-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.image-card-actions .image-action {
+  min-height: 36px;
+  padding: 0.42rem;
+  font-size: 0.78rem;
+}
+
+.image-card-actions .set-cover { grid-column: 1 / -1; }
+
+.empty-image-manager {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 1rem;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  color: var(--muted);
+  background: var(--panel-alt);
+}
+
+.add-image-btn { margin-top: 0.7rem; }
+.edit-agent-name-btn { white-space: nowrap; }
+.agent-name-modal-card { max-width: 460px; }
+.agent-name-current { color: var(--muted); margin-top: 0; }
+
+@media (max-width: 980px) {
+  .image-manager-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 560px) {
+  .image-manager-grid { grid-template-columns: 1fr; }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #181615;
+    --panel: #211d1b;
+    --panel-alt: #2b2522;
+    --card: #25201e;
+    --text: #f7eee6;
+    --muted: #cdbfb6;
+    --border: rgba(241, 230, 221, 0.14);
+  }
+  .properties-table tbody tr:nth-child(even) { background: rgba(255, 255, 255, 0.035); }
+}
