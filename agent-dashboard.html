@@ -175,19 +175,9 @@
               </fieldset>
 
               <div class="dashboard-image-uploader">
-                <h3 class="dashboard-label">Imágenes por URL o subida de archivos</h3>
-                <div class="image-mode-selector" role="radiogroup" aria-label="Modo de carga de imágenes">
-                  <label><input type="radio" name="imageInputMode" value="url" checked> Agregar por URL</label>
-                  <label><input type="radio" name="imageInputMode" value="upload"> Subir archivos</label>
-                </div>
-                <div id="imageModeUrl" class="image-mode-panel">
-                  <label for="propertyImageUrlInput" class="dashboard-label">URL de imagen</label>
-                  <div class="image-url-row">
-                    <input type="url" id="propertyImageUrlInput" placeholder="https://ejemplo.com/imagen.jpg" />
-                    <button type="button" id="addImageUrlBtn" class="button-secondary">Agregar URL</button>
-                  </div>
-                </div>
-                <div id="imageModeUpload" class="image-mode-panel hidden">
+                <h3 class="dashboard-label">Imágenes de la propiedad</h3>
+                <p class="dashboard-helper-text">Selecciona las imágenes desde la galería o los archivos de tu dispositivo.</p>
+                <div class="image-mode-panel">
                   <label for="propertyImageFiles" class="dashboard-label">Subir archivos de imagen</label>
                   <input type="file" id="propertyImageFiles" accept="image/*" multiple />
                 </div>
@@ -219,9 +209,19 @@
               <legend><span>04</span> Ubicación en mapa</legend>
               <input type="hidden" id="propertyLat" />
               <input type="hidden" id="propertyLng" />
-              <p class="map-picker-hint">Haz clic en el mapa para seleccionar la ubicación exacta de la propiedad.</p>
+              <p class="map-picker-hint">Busca una zona o haz clic en el mapa para seleccionar la ubicación exacta de la propiedad.</p>
+              <div id="propertyMapSearch" class="map-search-control">
+                <label class="sr-only" for="propertyMapSearchInput">Buscar ciudad, barrio, zona o dirección</label>
+                <div class="map-search-input-row">
+                  <span class="map-search-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M10.5 4a6.5 6.5 0 0 1 5.18 10.43l4.45 4.44-1.42 1.42-4.44-4.45A6.5 6.5 0 1 1 10.5 4Zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Z"></path></svg></span>
+                  <input type="search" id="propertyMapSearchInput" autocomplete="off" placeholder="Buscar ciudad, barrio, zona o dirección" aria-label="Buscar ciudad, barrio, zona o dirección" aria-autocomplete="list" aria-controls="propertyMapSearchResults" aria-expanded="false" />
+                  <span id="propertyMapSearchLoading" class="map-search-loading hidden" aria-label="Buscando ubicaciones"></span>
+                  <button type="button" id="propertyMapSearchClear" class="map-search-clear hidden" aria-label="Limpiar búsqueda">×</button>
+                </div>
+                <div id="propertyMapSearchResults" class="map-search-results hidden" role="listbox" aria-label="Sugerencias de ubicación"></div>
+              </div>
               <div id="propertyLocationMap" class="dashboard-property-map" aria-label="Mapa para seleccionar coordenadas"></div>
-              <p id="propertyCoordinatesLabel" class="map-picker-coordinates">Sin coordenadas seleccionadas.</p>
+              <p id="propertyCoordinatesLabel" class="map-picker-coordinates">Selecciona una ubicación del mapa.</p>
             </fieldset>
 
             <div class="dashboard-form-actions dashboard-sticky-actions">
