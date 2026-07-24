@@ -1106,139 +1106,178 @@ function initPropertyGallery(scope = document) {
   });
 }
 
+
+function toComparableText(value = '') {
+  return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+}
+
+function getNumericValue(value) {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : NaN;
+  if (typeof value === 'string') {
+    const cleaned = value.replace(/[^0-9.,-]/g, '').replace(/,/g, '');
+    const parsed = Number(cleaned);
+    return Number.isFinite(parsed) ? parsed : NaN;
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : NaN;
+}
+
+function getPropertyNumber(property = {}, keys = []) {
+  for (const key of keys) {
+    const value = key.includes('.') ? key.split('.').reduce((acc, part) => acc?.[part], property) : property[key];
+    const number = getNumericValue(value);
+    if (Number.isFinite(number)) return number;
+  }
+  return NaN;
+}
+
+function getMapAreaValue(property = {}) {
+  const area = propertyUtils.getAreaValue ? propertyUtils.getAreaValue(property) : getNumericValue(property.areaValue ?? property.area);
+  if (Number.isFinite(area)) return area;
+  return getPropertyNumber(property, ['propertyDetails.totalArea', 'propertyDetails.constructionArea', 'propertyDetails.landArea', 'totalArea', 'constructionArea', 'landArea']);
+}
+
+function getPropertyLocationLabel(property = {}) {
+  return property.city || property.department || property.departamento || property.zone || property.zona || property.address || property.direccion || property.ubicacion || property.location || 'Ubicación no disponible';
+}
+
+function getPropertyAgentLabel(property = {}) {
+  return property.agentName || property.agent || property.nombreAgente || property.agentEmail || '';
+}
+
+function getMapFilterValue(property = {}, keys = []) {
+  for (const key of keys) {
+    const value = key.includes('.') ? key.split('.').reduce((acc, part) => acc?.[part], property) : property[key];
+    if (value !== undefined && value !== null && String(value).trim()) return value;
+  }
+  return '';
+}
+
+function getPublicMapActiveFilterCount(filters = {}) {
+  return ['operation', 'type', 'minPrice', 'maxPrice', 'bedrooms', 'bathrooms', 'city', 'agent', 'minArea', 'maxArea', 'status', 'parking', 'streetType', 'featured']
+    .filter((key) => Boolean(filters[key])).length;
+}
+
+function buildMapPropertyCard(property = {}, activePropertyId = '') {
+  const detailUrl = escapeHtml(getPropertyDetailUrl(property));
+  const title = escapeHtml(property.titulo || property.title || property.propertyTitle || property.nombre || 'Propiedad disponible');
+  const image = escapeHtml(getPrimaryPropertyImage(property) || PROPERTY_IMAGE_PLACEHOLDER);
+  const location = escapeHtml(getPropertyLocationLabel(property));
+  const bedrooms = getPropertyNumber(property, ['bedrooms', 'habitaciones', 'propertyDetails.bedrooms']);
+  const bathrooms = getPropertyNumber(property, ['bathrooms', 'banos', 'baños', 'propertyDetails.bathrooms']);
+  const area = getAreaDisplay(property);
+  const typeLabel = getPropertyTypeLabel(property.tipo || property.type || property.propertyType) || property.typeLabel || 'Propiedad';
+  const operationLabel = getOperationalLabel(property) || 'Disponible';
+  const status = String(property.status || property.estado || '').trim();
+  const agent = getPropertyAgentLabel(property);
+  return `
+    <article class="map-property-card ${String(property.id) === String(activePropertyId) ? 'is-active' : ''}" data-property-id="${escapeHtml(property.id)}" tabindex="0" role="link" aria-label="Abrir propiedad ${title}">
+      <a class="map-property-card__image" href="${detailUrl}" tabindex="-1">
+        <img src="${image}" alt="${title}" loading="lazy" onerror="this.onerror=null;this.src='${PROPERTY_IMAGE_PLACEHOLDER}'">
+        ${status ? `<span class="map-property-card__status">${escapeHtml(status)}</span>` : ''}
+      </a>
+      <div class="map-property-card__body">
+        <p class="map-property-card__price">${escapeHtml(getMapMarkerPriceLabel(property))}</p>
+        <h3><a href="${detailUrl}">${title}</a></h3>
+        <p class="map-property-card__location">${location}</p>
+        <div class="map-property-card__meta">
+          ${Number.isFinite(bedrooms) && bedrooms > 0 ? `<span>${bedrooms} hab.</span>` : ''}
+          ${Number.isFinite(bathrooms) && bathrooms > 0 ? `<span>${bathrooms} baños</span>` : ''}
+          <span>${escapeHtml(area)}</span>
+        </div>
+        <p class="map-property-card__type">${escapeHtml(typeLabel)} · ${escapeHtml(operationLabel)}</p>
+        ${agent ? `<p class="map-property-card__agent">${escapeHtml(agent)}</p>` : ''}
+      </div>
+    </article>`;
+}
+
 function renderGlobalMap(properties) {
   const mapElement = document.getElementById('propertiesMap');
-  if (!mapElement || typeof L === 'undefined') return;
+  const listElement = document.getElementById('mapPropertyList');
+  const filtersElement = document.getElementById('publicMapFilters');
+  if (!mapElement || !listElement || !filtersElement) return;
 
-  const geolocated = properties
-    .map((property) => ({ property, coordinates: getPropertyCoordinates(property) }))
-    .filter((entry) => entry.coordinates);
-  if (!geolocated.length) return;
-
-  const searchMarkup = `
-    <div id="publicMapSearch" class="map-search-control public-map-search-control">
-      <label class="sr-only" for="publicMapSearchInput">Buscar ciudad, barrio, zona o dirección</label>
-      <div class="map-search-input-row">
-        <span class="map-search-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M10.5 4a6.5 6.5 0 0 1 5.18 10.43l4.45 4.44-1.42 1.42-4.44-4.45A6.5 6.5 0 1 1 10.5 4Zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Z"></path></svg></span>
-        <input id="publicMapSearchInput" type="search" autocomplete="off" placeholder="BUSCAR CIUDAD, BARRIO, ZONA O DIRECCIÓN" aria-label="Buscar ciudad, barrio, zona o dirección" aria-expanded="false" aria-controls="publicMapSearchResults">
-        <span id="publicMapSearchLoading" class="map-search-loading hidden" aria-label="Buscando ubicaciones"></span>
-        <button type="button" id="publicMapSearchClear" class="map-search-clear hidden" aria-label="Limpiar búsqueda">×</button>
-      </div>
-      <div id="publicMapSearchResults" class="map-search-results hidden" role="listbox" aria-label="Sugerencias de ubicación"></div>
-    </div>`;
-  if (!document.getElementById('publicMapSearch')) mapElement.insertAdjacentHTML('beforebegin', searchMarkup);
-
-  const map = L.map(mapElement, {
-    zoomAnimation: true,
-    fadeAnimation: true,
-    markerZoomAnimation: true,
-    inertia: true,
-    inertiaDeceleration: 2600,
-    inertiaMaxSpeed: 1800,
-    zoomSnap: 0.5,
-    zoomDelta: 0.5,
-    wheelPxPerZoomLevel: 90,
-    scrollWheelZoom: true,
-    dragging: true,
-    touchZoom: true,
-    doubleClickZoom: true,
-    preferCanvas: true
-  }).setView([12.8654, -85.2072], 7);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    updateWhenIdle: true,
-    keepBuffer: 3,
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
-
-  const bounds = [];
+  const state = { filters: { operation: '', type: '', minPrice: '', maxPrice: '', bedrooms: '', bathrooms: '', city: '', agent: '', minArea: '', maxArea: '', status: '', parking: '', streetType: '', featured: '' }, sort: 'recent', activePropertyId: null, mobileView: 'list', markers: new Map(), activeTooltip: null, closeTimer: null, userMarker: null };
   const pointerMedia = window.matchMedia('(hover: none), (pointer: coarse)');
-  let activePropertyId = null;
-  let activeTooltip = null;
-  let closeTimer = null;
+  const map = typeof L !== 'undefined' ? L.map(mapElement, { zoomControl: true, scrollWheelZoom: true, dragging: true, touchZoom: true, preferCanvas: true }).setView([12.8654, -85.2072], 7) : null;
+  const markerLayer = map ? L.layerGroup().addTo(map) : null;
+  if (map) L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
 
-  const clearCloseTimer = () => { if (closeTimer) window.clearTimeout(closeTimer); closeTimer = null; };
-  const clearActivePreview = () => {
-    clearCloseTimer();
-    if (activeTooltip) map.closeTooltip(activeTooltip);
-    document.querySelectorAll('.map-price-marker-wrapper.is-active').forEach((el) => el.classList.remove('is-active'));
-    activeTooltip = null;
-    activePropertyId = null;
+  const typeOptions = [...new Map(properties.map((p) => [normalizePropertyType(p.tipo || p.type || p.propertyType), getPropertyTypeLabel(p.tipo || p.type || p.propertyType) || p.typeLabel || p.tipo || p.type]).filter(([value]) => value)).entries()];
+  const optionList = (items, allLabel) => `<option value="">${allLabel}</option>${items.map(([v,l]) => `<option value="${escapeHtml(v)}">${escapeHtml(l)}</option>`).join('')}`;
+  filtersElement.innerHTML = `
+    <label><span>Operación</span><select data-map-filter="operation"><option value="">Todas</option><option value="venta">En venta</option><option value="alquiler">En alquiler</option></select></label>
+    <details class="map-filter-popover"><summary>Precio</summary><div><input data-map-filter="minPrice" type="number" min="0" placeholder="Precio mínimo"><input data-map-filter="maxPrice" type="number" min="0" placeholder="Precio máximo"><button type="button" data-map-clear-price>Limpiar precio</button></div></details>
+    <details class="map-filter-popover"><summary>Habitaciones y baños</summary><div><select data-map-filter="bedrooms"><option value="">Cualquier habitación</option><option value="1">1 o más</option><option value="2">2 o más</option><option value="3">3 o más</option><option value="4">4 o más</option><option value="5">5 o más</option></select><select data-map-filter="bathrooms"><option value="">Cualquier baño</option><option value="1">1 o más</option><option value="2">2 o más</option><option value="3">3 o más</option><option value="4">4 o más</option><option value="5">5 o más</option></select></div></details>
+    <label><span>Tipo de propiedad</span><select data-map-filter="type">${optionList(typeOptions, 'Todos los tipos')}</select></label>
+    <button type="button" class="map-extra-filters-button" data-map-extra-open>Filtros</button>
+    <button type="button" class="map-clear-filters hidden" data-map-clear-all>Limpiar filtros</button>
+    <dialog class="map-extra-filters-dialog" id="mapExtraFilters"><form method="dialog"><header><h3>Filtros adicionales</h3><button type="button" data-map-extra-close aria-label="Cerrar filtros">×</button></header><div class="map-extra-filters-grid"><input data-map-filter="city" placeholder="Ciudad"><input data-map-filter="agent" placeholder="Agente"><input data-map-filter="minArea" type="number" min="0" placeholder="Área mínima"><input data-map-filter="maxArea" type="number" min="0" placeholder="Área máxima"><input data-map-filter="status" placeholder="Estado"><input data-map-filter="parking" placeholder="Parqueo"><input data-map-filter="streetType" placeholder="Tipo de calle"><label class="map-check"><input data-map-filter="featured" type="checkbox" value="1"> Propiedades destacadas</label></div><footer><button type="button" data-map-clear-all>Limpiar</button><button type="button" data-map-extra-close>Aplicar filtros</button></footer></form></dialog>`;
+
+  const getVisible = () => properties.filter((p) => {
+    const price = getPriceUsd(p), bedrooms = getPropertyNumber(p, ['bedrooms','habitaciones','propertyDetails.bedrooms']), bathrooms = getPropertyNumber(p, ['bathrooms','banos','baños','propertyDetails.bathrooms']), area = getMapAreaValue(p);
+    if (state.filters.operation && getNormalizedPropertyOperation(p) !== state.filters.operation) return false;
+    if (state.filters.type && normalizePropertyType(p.tipo || p.type || p.propertyType) !== state.filters.type) return false;
+    if (state.filters.minPrice && (!Number.isFinite(price) || price < Number(state.filters.minPrice))) return false;
+    if (state.filters.maxPrice && (!Number.isFinite(price) || price > Number(state.filters.maxPrice))) return false;
+    if (state.filters.bedrooms && (!Number.isFinite(bedrooms) || bedrooms < Number(state.filters.bedrooms))) return false;
+    if (state.filters.bathrooms && (!Number.isFinite(bathrooms) || bathrooms < Number(state.filters.bathrooms))) return false;
+    if (state.filters.minArea && (!Number.isFinite(area) || area < Number(state.filters.minArea))) return false;
+    if (state.filters.maxArea && (!Number.isFinite(area) || area > Number(state.filters.maxArea))) return false;
+    if (state.filters.city && !toComparableText(getMapFilterValue(p, ['city','department','departamento','ubicacion','location'])).includes(toComparableText(state.filters.city))) return false;
+    if (state.filters.agent && !toComparableText(getPropertyAgentLabel(p)).includes(toComparableText(state.filters.agent))) return false;
+    if (state.filters.status && !toComparableText(getMapFilterValue(p, ['status','estado'])).includes(toComparableText(state.filters.status))) return false;
+    if (state.filters.parking && !toComparableText(getMapFilterValue(p, ['parking','garage','propertyDetails.parking','propertyDetails.garage'])).includes(toComparableText(state.filters.parking))) return false;
+    if (state.filters.streetType && !toComparableText(getMapFilterValue(p, ['streetType','propertyDetails.streetType'])).includes(toComparableText(state.filters.streetType))) return false;
+    if (state.filters.featured && !(p.featured || p.destacado || isFeaturedProperty(p))) return false;
+    return true;
+  }).map((property, index) => ({ property, index, timestamp: getPropertyTimestamp(property, 'createdAt') || -1 })).sort((a,b) => {
+    if (state.sort === 'price-asc') return (getPriceUsd(a.property)||Infinity) - (getPriceUsd(b.property)||Infinity);
+    if (state.sort === 'price-desc') return (getPriceUsd(b.property)||-1) - (getPriceUsd(a.property)||-1);
+    if (state.sort === 'area-desc') return (getMapAreaValue(b.property)||-1) - (getMapAreaValue(a.property)||-1);
+    if (state.sort === 'name-asc') return String(a.property.title || a.property.titulo || '').localeCompare(String(b.property.title || b.property.titulo || ''), 'es');
+    return (b.timestamp - a.timestamp) || (a.index - b.index);
+  }).map((e) => e.property);
+
+  const closePreview = () => { if (state.closeTimer) clearTimeout(state.closeTimer); state.closeTimer = null; if (state.activeTooltip && map) map.closeTooltip(state.activeTooltip); document.querySelectorAll('.map-price-marker-wrapper.is-active').forEach((el)=>el.classList.remove('is-active')); state.activeTooltip = null; };
+  const setActive = (id, scroll = false) => { state.activePropertyId = id; document.querySelectorAll('.map-property-card').forEach((card)=>card.classList.toggle('is-active', card.dataset.propertyId === String(id))); document.querySelectorAll('.map-price-marker-wrapper.is-active').forEach((el)=>el.classList.remove('is-active')); const marker = state.markers.get(String(id)); if (marker) marker.getElement()?.classList.add('is-active'); if (scroll && id) document.querySelector(`[data-property-id="${CSS.escape(String(id))}"]`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); };
+
+  const renderMarkers = (visible) => {
+    if (!map || !markerLayer) return;
+    closePreview(); markerLayer.clearLayers(); state.markers.clear(); const bounds = [];
+    visible.forEach((property) => { const coordinates = getPropertyCoordinates(property); if (!coordinates) return; try {
+      const op = getNormalizedPropertyOperation(property); const title = escapeHtml(property.titulo || property.title || 'Propiedad disponible'); const price = escapeHtml(getMapMarkerPriceLabel(property));
+      const icon = L.divIcon({ className: 'map-price-marker-wrapper', html: `<div class="map-price-marker map-price-marker--${op === 'alquiler' ? 'alquiler' : 'venta'}" tabindex="0" role="button" aria-label="Ver propiedad ${title}">${price}</div>`, iconSize: [106, 36], iconAnchor: [53, 18] });
+      const marker = L.marker(coordinates, { icon, keyboard: true, riseOnHover: true }).addTo(markerLayer); state.markers.set(String(property.id), marker); bounds.push(coordinates);
+      const tooltip = L.tooltip({ permanent:false, interactive:true, direction:'top', offset:[0,-22], opacity:1, className:'map-preview-tooltip', pane:'tooltipPane' }).setContent(buildMapPropertyCard(property).replace('map-property-card ', 'map-preview-card map-preview-card--compact '));
+      const open = () => { closePreview(); setActive(property.id, true); state.activeTooltip = tooltip.setLatLng(coordinates).addTo(map); marker.getElement()?.classList.add('is-active'); };
+      const schedule = () => { state.closeTimer = setTimeout(() => { closePreview(); setActive(null); }, pointerMedia.matches ? 0 : 120); };
+      marker.on('mouseover focus', open); marker.on('mouseout blur', schedule); marker.on('click', (event) => { L.DomEvent.stop(event); if (pointerMedia.matches && state.activePropertyId !== property.id) { open(); return; } window.location.href = getPropertyDetailUrl(property); });
+    } catch (error) { console.error('[PublicMap] No se pudo crear el marcador:', property?.id || 'sin-identificador', error); } });
+    if (bounds.length && !state.didFitBounds) { map.fitBounds(bounds, { padding: [36,36], animate: true }); state.didFitBounds = true; }
   };
 
-  const buildPreviewMarkup = (property = {}) => {
-    const locationLabel = property.city || property.department || property.departamento || property.zone || property.zona || property.address || property.direccion || property.ubicacion || 'Ubicación no disponible';
-    const image = escapeHtml(getPrimaryPropertyImage(property) || PROPERTY_IMAGE_PLACEHOLDER);
-    const detailUrl = escapeHtml(getPropertyDetailUrl(property));
-    const safeTitle = escapeHtml(property.titulo || property.title || property.propertyTitle || property.nombre || 'Propiedad disponible');
-    const typeLabel = getPropertyTypeLabel(property.tipo || property.type || property.propertyType) || property.tipo || property.type || '';
-    const operationLabel = getOperationalLabel(property) || 'Propiedad';
-    return `
-      <a class="map-preview-card map-preview-card--compact" href="${detailUrl}" aria-label="Abrir propiedad ${safeTitle}">
-        <img src="${image}" alt="${safeTitle}" loading="lazy" onerror="this.onerror=null;this.src='${PROPERTY_IMAGE_PLACEHOLDER}'">
-        <div class="map-preview-content">
-          <p class="map-preview-price">${getMapMarkerPriceLabel(property)}</p>
-          <h3>${safeTitle}</h3>
-          <p class="map-preview-location">${escapeHtml(locationLabel)}</p>
-          <p class="map-preview-meta">${[typeLabel, operationLabel].filter(Boolean).map(escapeHtml).join(' · ')}</p>
-          <span class="map-preview-action">Ver propiedad</span>
-        </div>
-      </a>`;
+  const render = () => {
+    const visibleProperties = getVisible(); const activeCount = getPublicMapActiveFilterCount(state.filters);
+    document.getElementById('mapResultsTitle').textContent = state.filters.operation === 'venta' ? 'Propiedades en venta' : state.filters.operation === 'alquiler' ? 'Propiedades en alquiler' : state.filters.city ? `Propiedades en ${state.filters.city}` : 'Propiedades disponibles';
+    document.getElementById('mapResultsCount').textContent = `${visibleProperties.length} ${visibleProperties.length === 1 ? 'resultado' : 'resultados'}`;
+    const status = document.getElementById('mapListStatus');
+    if (!visibleProperties.length) { status.classList.remove('hidden'); status.innerHTML = 'No encontramos propiedades con estos filtros. <button type="button" data-map-clear-all>Limpiar filtros</button>'; listElement.innerHTML = ''; } else { status.classList.add('hidden'); listElement.innerHTML = visibleProperties.map((p) => buildMapPropertyCard(p, state.activePropertyId)).join(''); }
+    filtersElement.querySelector('[data-map-extra-open]').textContent = `Filtros${activeCount ? ` (${activeCount})` : ''}`; filtersElement.querySelector('.map-clear-filters').classList.toggle('hidden', activeCount === 0);
+    renderMarkers(visibleProperties); setTimeout(() => map?.invalidateSize(), 100);
   };
 
-  geolocated.forEach(({ property, coordinates }) => {
-    try {
-      const operation = getNormalizedPropertyOperation(property);
-      const markerOperationClass = ['venta', 'alquiler', 'venta_renta'].includes(operation) ? operation : 'venta';
-      const markerTitle = escapeHtml(property?.titulo || property?.title || 'Propiedad disponible');
-      const markerIcon = L.divIcon({
-        className: 'map-price-marker-wrapper',
-        html: `<div class="map-price-marker map-price-marker--${markerOperationClass}" tabindex="0" role="button" aria-label="Ver propiedad ${markerTitle}">${escapeHtml(getMapMarkerPriceLabel(property))}</div>`,
-        iconSize: [106, 36],
-        iconAnchor: [53, 18]
-      });
-      const marker = L.marker(coordinates, { icon: markerIcon, keyboard: true, riseOnHover: true }).addTo(map);
-      bounds.push(coordinates);
-      const tooltip = L.tooltip({
-        permanent: false,
-        interactive: true,
-        direction: 'top',
-        offset: [0, -22],
-        opacity: 1,
-        className: 'map-preview-tooltip',
-        pane: 'tooltipPane'
-      }).setContent(buildPreviewMarkup(property));
-
-      const openPreview = () => {
-        clearActivePreview();
-        activePropertyId = property?.id ?? null;
-        activeTooltip = tooltip.setLatLng(coordinates).addTo(map);
-        marker.getElement()?.classList.add('is-active');
-      };
-      const scheduleClose = () => { clearCloseTimer(); closeTimer = window.setTimeout(clearActivePreview, pointerMedia.matches ? 0 : 120); };
-
-      marker.on('mouseover focus', openPreview);
-      marker.on('mouseout blur', scheduleClose);
-      marker.on('click', (event) => {
-        L.DomEvent.stop(event);
-        if (pointerMedia.matches && activePropertyId !== property?.id) { openPreview(); return; }
-        window.location.href = getPropertyDetailUrl(property);
-      });
-      marker.on('keydown', (event) => {
-        if (event.originalEvent?.key === 'Enter') window.location.href = getPropertyDetailUrl(property);
-      });
-    } catch (error) {
-      console.error('[PublicMap] No se pudo crear el marcador:', property?.id ?? property?.titulo ?? property?.title ?? 'sin-identificador', error);
-    }
-  });
-
-  map.on('movestart zoomstart dragstart click resize', clearActivePreview);
-  window.addEventListener('resize', clearActivePreview);
-
-  if (bounds.length) map.fitBounds(bounds, { padding: [44, 44], animate: true });
-  setTimeout(() => map.invalidateSize(), 250);
-
-  bindPublicMapSearch(map, clearActivePreview);
+  filtersElement.addEventListener('input', (event) => { const el = event.target.closest('[data-map-filter]'); if (!el) return; state.filters[el.dataset.mapFilter] = el.type === 'checkbox' ? (el.checked ? el.value : '') : el.value; render(); });
+  filtersElement.addEventListener('click', (event) => { if (event.target.closest('[data-map-clear-price]')) { state.filters.minPrice = ''; state.filters.maxPrice = ''; filtersElement.querySelector('[data-map-filter="minPrice"]').value = ''; filtersElement.querySelector('[data-map-filter="maxPrice"]').value = ''; render(); } if (event.target.closest('[data-map-clear-all]')) { Object.keys(state.filters).forEach((k)=>state.filters[k]=''); filtersElement.querySelectorAll('[data-map-filter]').forEach((el)=>{ if (el.type === 'checkbox') el.checked = false; else el.value = ''; }); render(); } if (event.target.closest('[data-map-extra-open]')) document.getElementById('mapExtraFilters')?.showModal(); if (event.target.closest('[data-map-extra-close]')) document.getElementById('mapExtraFilters')?.close(); });
+  document.getElementById('mapSortSelect')?.addEventListener('change', (event) => { state.sort = event.target.value; render(); });
+  listElement.addEventListener('pointerenter', (event) => { const card = event.target.closest('.map-property-card'); if (card) setActive(card.dataset.propertyId); }, true);
+  listElement.addEventListener('pointerleave', (event) => { if (event.target.closest('.map-property-card')) setActive(null); }, true);
+  listElement.addEventListener('click', (event) => { const card = event.target.closest('.map-property-card'); if (card && !event.target.closest('a')) window.location.href = getPropertyDetailUrl(properties.find((p)=>String(p.id)===card.dataset.propertyId) || { id: card.dataset.propertyId }); });
+  listElement.addEventListener('keydown', (event) => { if (event.key === 'Enter') { const card = event.target.closest('.map-property-card'); if (card) window.location.href = getPropertyDetailUrl({ id: card.dataset.propertyId }); } });
+  document.querySelectorAll('[data-map-mobile-view]').forEach((button) => button.addEventListener('click', () => { state.mobileView = button.dataset.mapMobileView; document.body.classList.toggle('map-mobile-show-map', state.mobileView === 'map'); document.querySelectorAll('[data-map-mobile-view]').forEach((b)=>b.classList.toggle('is-active', b === button)); setTimeout(() => map?.invalidateSize(), 150); }));
+  if (map) map.on('movestart zoomstart dragstart click', closePreview);
+  map?.addControl(new (L.Control.extend({ options:{position:'topleft'}, onAdd(){ const div=L.DomUtil.create('div','map-quick-controls'); div.innerHTML='<button type="button" aria-label="Restablecer vista a Nicaragua">Nicaragua</button><button type="button" aria-label="Usar ubicación actual">Mi ubicación</button>'; L.DomEvent.disableClickPropagation(div); div.children[0].addEventListener('click',()=>map.setView([12.8654,-85.2072],7)); div.children[1].addEventListener('click',()=>navigator.geolocation?.getCurrentPosition((pos)=>map.setView([pos.coords.latitude,pos.coords.longitude],13))); return div; }}))());
+  bindPublicMapSearch(map, closePreview); render();
 }
 
 function bindPublicMapSearch(map, closePreview) {
@@ -1249,37 +1288,13 @@ function bindPublicMapSearch(map, closePreview) {
   const loading = document.getElementById('publicMapSearchLoading');
   const resultsBox = document.getElementById('publicMapSearchResults');
   if (!geocoding || !root || !input || !resultsBox) return;
-  let results = [];
-  let highlightedIndex = -1;
-
-  const render = (open = true, message = '') => {
-    input.setAttribute('aria-expanded', open ? 'true' : 'false');
-    clearButton?.classList.toggle('hidden', !input.value.trim());
-    resultsBox.classList.toggle('hidden', !open);
-    if (!open) return;
-    if (message) { resultsBox.innerHTML = `<div class="map-search-message">${escapeHtml(message)}</div>`; return; }
-    resultsBox.innerHTML = results.length ? results.map((result, index) => `
-      <button type="button" class="map-search-result ${index === highlightedIndex ? 'is-active' : ''}" role="option" aria-selected="${index === highlightedIndex ? 'true' : 'false'}" data-public-map-result-index="${index}">
-        <strong>${escapeHtml(result.display_name)}</strong><small>${escapeHtml(result.type || 'Ubicación')}</small>
-      </button>`).join('') : '<div class="map-search-message">No se encontraron resultados.</div>';
-  };
-  const searcher = geocoding.createDebouncedNicaraguaSearch({
-    onStart: () => { closePreview(); loading?.classList.remove('hidden'); results = []; highlightedIndex = -1; render(true, 'Buscando ubicaciones...'); },
-    onSuccess: (items, meta) => { loading?.classList.add('hidden'); results = items; highlightedIndex = items.length ? 0 : -1; render(!meta.skipped); },
-    onError: () => { loading?.classList.add('hidden'); results = []; highlightedIndex = -1; render(true, 'No fue posible realizar la búsqueda. Inténtalo nuevamente.'); }
-  });
+  let results = [], highlightedIndex = -1;
+  const render = (open = true, message = '') => { input.setAttribute('aria-expanded', open ? 'true' : 'false'); clearButton?.classList.toggle('hidden', !input.value.trim()); resultsBox.classList.toggle('hidden', !open); if (!open) return; if (message) { resultsBox.innerHTML = `<div class="map-search-message">${escapeHtml(message)}</div>`; return; } resultsBox.innerHTML = results.length ? results.map((r,i)=>`<button type="button" class="map-search-result ${i===highlightedIndex?'is-active':''}" role="option" aria-selected="${i===highlightedIndex?'true':'false'}" data-public-map-result-index="${i}"><strong>${escapeHtml(r.display_name)}</strong><small>${escapeHtml(r.type || 'Ubicación')}</small></button>`).join('') : '<div class="map-search-message">No se encontraron resultados.</div>'; };
+  const select = (result) => { closePreview(); searcher.cancel(); input.value = result.display_name || ''; results = []; render(false); map?.flyTo([result.lat, result.lon], 14, { animate: true, duration: 0.75 }); };
+  const searcher = geocoding.createDebouncedNicaraguaSearch({ onStart:()=>{ closePreview(); loading?.classList.remove('hidden'); results=[]; highlightedIndex=-1; render(true,'Buscando ubicaciones...'); }, onSuccess:(items,meta)=>{ loading?.classList.add('hidden'); results=items; highlightedIndex=items.length?0:-1; render(!meta.skipped); }, onError:()=>{ loading?.classList.add('hidden'); results=[]; highlightedIndex=-1; render(true,'No fue posible realizar la búsqueda. Inténtalo nuevamente.'); } });
   input.addEventListener('input', () => { closePreview(); searcher.schedule(input.value); render(input.value.trim().length >= geocoding.MIN_LENGTH); });
-  input.addEventListener('keydown', (event) => {
-    if (event.key === 'ArrowDown' && results.length) { event.preventDefault(); highlightedIndex = (highlightedIndex + 1) % results.length; render(true); }
-    else if (event.key === 'ArrowUp' && results.length) { event.preventDefault(); highlightedIndex = (highlightedIndex - 1 + results.length) % results.length; render(true); }
-    else if (event.key === 'Enter' && results[highlightedIndex]) { event.preventDefault(); select(results[highlightedIndex]); }
-    else if (event.key === 'Escape') render(false);
-  });
-  const select = (result) => {
-    closePreview(); searcher.cancel(); input.value = result.display_name || ''; results = []; render(false);
-    map.flyTo([result.lat, result.lon], 14, { animate: true, duration: 0.75 });
-  };
-  clearButton?.addEventListener('click', () => { closePreview(); searcher.cancel(); input.value = ''; results = []; loading?.classList.add('hidden'); render(false); input.focus(); });
+  input.addEventListener('keydown', (event) => { if (event.key === 'ArrowDown' && results.length) { event.preventDefault(); highlightedIndex=(highlightedIndex+1)%results.length; render(true); } else if (event.key === 'ArrowUp' && results.length) { event.preventDefault(); highlightedIndex=(highlightedIndex-1+results.length)%results.length; render(true); } else if (event.key === 'Enter' && results[highlightedIndex]) { event.preventDefault(); select(results[highlightedIndex]); } else if (event.key === 'Escape') render(false); });
+  clearButton?.addEventListener('click', () => { closePreview(); searcher.cancel(); input.value=''; results=[]; loading?.classList.add('hidden'); render(false); input.focus(); });
   resultsBox.addEventListener('click', (event) => { const option = event.target.closest('[data-public-map-result-index]'); if (option) select(results[Number(option.dataset.publicMapResultIndex)]); });
   document.addEventListener('click', (event) => { if (!root.contains(event.target)) render(false); });
 }
@@ -1359,5 +1374,14 @@ function bindPublicMapSearch(map, closePreview) {
     });
   } catch (error) {
     console.error('Error cargando propiedades:', error);
+    const mapStatus = document.getElementById('mapListStatus');
+    const mapCount = document.getElementById('mapResultsCount');
+    const mapList = document.getElementById('mapPropertyList');
+    if (mapCount) mapCount.textContent = 'No fue posible cargar propiedades';
+    if (mapList) mapList.innerHTML = '';
+    if (mapStatus) {
+      mapStatus.classList.remove('hidden');
+      mapStatus.innerHTML = 'No fue posible cargar las propiedades. <button type="button" onclick="window.location.reload()">Reintentar</button>';
+    }
   }
 })();
