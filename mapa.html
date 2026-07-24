@@ -41,15 +41,50 @@
     </div>
   </header>
 
-  <main class="map-page-main">
-    <section class="map-page-header">
-      <div class="container">
-        <h1>Explora propiedades en el mapa</h1>
-        <p>Haz clic en cada marcador para conocer el inmueble y abrir su ficha detallada.</p>
+  <main class="map-page-main map-search-experience" id="publicMapExperience">
+    <h1 class="sr-only">Mapa de propiedades de Diamantes Realty Group</h1>
+    <section class="map-page-toolbar" aria-label="Búsqueda y filtros de propiedades">
+      <div id="publicMapSearch" class="map-search-control public-map-search-control">
+        <label class="sr-only" for="publicMapSearchInput">Buscar ciudad, barrio, zona o dirección</label>
+        <div class="map-search-input-row">
+          <span class="map-search-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M10.5 4a6.5 6.5 0 0 1 5.18 10.43l4.45 4.44-1.42 1.42-4.44-4.45A6.5 6.5 0 1 1 10.5 4Zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Z"></path></svg></span>
+          <input id="publicMapSearchInput" type="search" autocomplete="off" placeholder="CIUDAD, BARRIO, ZONA O DIRECCIÓN" aria-label="Buscar ciudad, barrio, zona o dirección" aria-autocomplete="list" aria-expanded="false" aria-controls="publicMapSearchResults">
+          <span id="publicMapSearchLoading" class="map-search-loading hidden" aria-label="Buscando ubicaciones"></span>
+          <button type="button" id="publicMapSearchClear" class="map-search-clear hidden" aria-label="Limpiar búsqueda">×</button>
+        </div>
+        <div id="publicMapSearchResults" class="map-search-results hidden" role="listbox" aria-label="Sugerencias de ubicación"></div>
       </div>
+      <div class="map-filter-strip" id="publicMapFilters"></div>
     </section>
-    <section class="map-page-section">
-      <div id="propertiesMap" class="properties-map-full" aria-label="Mapa de propiedades"></div>
+    <div class="map-mobile-view-toggle" role="group" aria-label="Cambiar vista de propiedades">
+      <button type="button" class="is-active" data-map-mobile-view="list">Lista</button>
+      <button type="button" data-map-mobile-view="map">Mapa</button>
+    </div>
+    <section class="map-split-shell" aria-label="Resultados y mapa de propiedades">
+      <aside class="map-results-panel" aria-label="Listado de propiedades">
+        <header class="map-results-header">
+          <div>
+            <p class="map-results-kicker">Diamantes Realty Group</p>
+            <h2 id="mapResultsTitle">Propiedades disponibles</h2>
+            <p id="mapResultsCount">Cargando propiedades...</p>
+          </div>
+          <label class="map-sort-control">
+            <span>Ordenar por</span>
+            <select id="mapSortSelect" aria-label="Ordenar propiedades">
+              <option value="recent">Más recientes</option>
+              <option value="price-asc">Precio: menor a mayor</option>
+              <option value="price-desc">Precio: mayor a menor</option>
+              <option value="area-desc">Mayor área</option>
+              <option value="name-asc">Nombre A-Z</option>
+            </select>
+          </label>
+        </header>
+        <div id="mapListStatus" class="map-list-status hidden" role="status"></div>
+        <div id="mapPropertyList" class="map-property-grid" aria-live="polite"></div>
+      </aside>
+      <section class="map-canvas-panel" aria-label="Mapa interactivo">
+        <div id="propertiesMap" class="properties-map-full" aria-label="Mapa de propiedades"></div>
+      </section>
     </section>
   </main>
 
