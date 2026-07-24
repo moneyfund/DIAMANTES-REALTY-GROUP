@@ -85,6 +85,8 @@ const propertyUtils = window.inmoPropertyUtils || {};
 const normalizePropertyType = (value = '') => propertyUtils.normalizePropertyType ? propertyUtils.normalizePropertyType(value) : String(value || '').trim().toLowerCase();
 const getPropertyTypeLabel = (value = '') => propertyUtils.getPropertyTypeLabel ? propertyUtils.getPropertyTypeLabel(value) : '';
 const normalizePropertyOperation = (value = '') => propertyUtils.normalizeOperation ? propertyUtils.normalizeOperation(value) : String(value || '').trim().toLowerCase();
+const getRawPropertyOperation = (property = {}) => property.operationType ?? property.tipoOperacion ?? property.operation ?? property.operacion ?? property.transactionType ?? property.listingType ?? property.purpose ?? property.mode ?? '';
+const getNormalizedPropertyOperation = (property = {}) => normalizePropertyOperation(getRawPropertyOperation(property));
 const formatDualPrice = (usd) => propertyUtils.formatDualPrice ? propertyUtils.formatDualPrice(usd) : `$${Number(usd || 0).toLocaleString()} USD`;
 const formatDualPriceMarkup = (usd) => propertyUtils.formatDualPriceMarkup ? propertyUtils.formatDualPriceMarkup(usd) : formatDualPrice(usd);
 const getPriceUsd = (property = {}) => propertyUtils.getPriceUsd ? propertyUtils.getPriceUsd(property) : Number(property.price ?? property.precio ?? 0);
@@ -96,10 +98,14 @@ function formatPropertyOperation(value = '') {
   const normalized = normalizePropertyOperation(value);
   const labels = {
     venta: 'Venta',
-    alquiler: 'Renta',
-    venta_renta: 'Venta/Renta'
+    alquiler: 'Alquiler',
+    venta_renta: 'Venta o alquiler'
   };
-  return labels[normalized] || '';
+  return labels[normalized] || (value ? String(value) : '');
+}
+
+function getOperationalLabel(property = {}) {
+  return formatPropertyOperation(getRawPropertyOperation(property));
 }
 
 function isRentalOperation(value = '') {
@@ -109,8 +115,8 @@ function isRentalOperation(value = '') {
 function getMapMarkerPriceLabel(property = {}) {
   const price = getPriceUsd(property);
   if (!Number.isFinite(price) || price <= 0) return 'Consultar';
-  const basePrice = `$${Math.round(price).toLocaleString('en-US')}`;
-  return isRentalOperation(property.tipoOperacion || property.operacion || property.operation) ? `${basePrice}/mes` : basePrice;
+  const basePrice = `USD ${Math.round(price).toLocaleString('en-US')}`;
+  return isRentalOperation(getRawPropertyOperation(property)) ? `${basePrice}/mes` : basePrice;
 }
 
 function getPropertyDetailUrl(property = {}) {
@@ -219,7 +225,7 @@ function normalizeProperty(property = {}, id = '') {
   const normalizedAreaValue = propertyUtils.getAreaValue ? propertyUtils.getAreaValue(property) : Number(property.area ?? 0);
   const area = Number.isFinite(normalizedAreaValue) ? normalizedAreaValue : (property.area || '');
   const type = normalizePropertyType(property.type || property.tipo || '');
-  const operation = normalizePropertyOperation(property.tipoOperacion || property.operation || property.operacion || '');
+  const operation = getNormalizedPropertyOperation(property);
   const description = property.description || property.descripcion || '';
 
   return {
@@ -756,7 +762,7 @@ function applyFilters(properties) {
   return properties.filter((property) => {
     const matchesLocation = propertyMatchesLocation(property, locationInput);
     const matchesType = !typeInput || normalizePropertyType(property.tipo) === typeInput;
-    const matchesOperation = !operationInput || normalizePropertyOperation(property.tipoOperacion || property.operacion || property.operation) === operationInput;
+    const matchesOperation = !operationInput || getNormalizedPropertyOperation(property) === operationInput;
     const matchesBudget = !budgetInput || Number(getPriceUsd(property) || 0) <= budgetInput;
     return matchesLocation && matchesType && matchesOperation && matchesBudget;
   });
@@ -1160,13 +1166,13 @@ function renderGlobalMap(properties) {
     activePropertyId = null;
   };
 
-  const buildPreviewMarkup = (property) => {
-    const locationLabel = property.city || property.departamento || property.ubicacion || 'Ubicación no disponible';
-    const image = getPrimaryPropertyImage(property);
-    const detailUrl = getPropertyDetailUrl(property);
-    const safeTitle = escapeHtml(property.titulo || property.title || 'Propiedad');
-    const typeLabel = getPropertyTypeLabel(property.tipo) || property.tipo || '';
-    const operationLabel = getOperationLabel(property.tipoOperacion || property.operacion || property.operation);
+  const buildPreviewMarkup = (property = {}) => {
+    const locationLabel = property.city || property.department || property.departamento || property.zone || property.zona || property.address || property.direccion || property.ubicacion || 'Ubicación no disponible';
+    const image = escapeHtml(getPrimaryPropertyImage(property) || PROPERTY_IMAGE_PLACEHOLDER);
+    const detailUrl = escapeHtml(getPropertyDetailUrl(property));
+    const safeTitle = escapeHtml(property.titulo || property.title || property.propertyTitle || property.nombre || 'Propiedad disponible');
+    const typeLabel = getPropertyTypeLabel(property.tipo || property.type || property.propertyType) || property.tipo || property.type || '';
+    const operationLabel = getOperationalLabel(property) || 'Propiedad';
     return `
       <a class="map-preview-card map-preview-card--compact" href="${detailUrl}" aria-label="Abrir propiedad ${safeTitle}">
         <img src="${image}" alt="${safeTitle}" loading="lazy" onerror="this.onerror=null;this.src='${PROPERTY_IMAGE_PLACEHOLDER}'">
@@ -1181,49 +1187,55 @@ function renderGlobalMap(properties) {
   };
 
   geolocated.forEach(({ property, coordinates }) => {
-    bounds.push(coordinates);
-    const operation = normalizePropertyOperation(property.tipoOperacion || property.operacion || property.operation);
-    const markerIcon = L.divIcon({
-      className: 'map-price-marker-wrapper',
-      html: `<div class="map-price-marker map-price-marker--${operation || 'venta'}" tabindex="0" role="button" aria-label="Ver propiedad ${escapeHtml(property.titulo || property.title || 'Propiedad')}">${getMapMarkerPriceLabel(property)}</div>`,
-      iconSize: [106, 36],
-      iconAnchor: [53, 18]
-    });
-    const marker = L.marker(coordinates, { icon: markerIcon, keyboard: true, riseOnHover: true }).addTo(map);
-    const tooltip = L.tooltip({
-      permanent: false,
-      interactive: true,
-      direction: 'top',
-      offset: [0, -22],
-      opacity: 1,
-      className: 'map-preview-tooltip',
-      pane: 'tooltipPane'
-    }).setContent(buildPreviewMarkup(property));
+    try {
+      const operation = getNormalizedPropertyOperation(property);
+      const markerOperationClass = ['venta', 'alquiler', 'venta_renta'].includes(operation) ? operation : 'venta';
+      const markerTitle = escapeHtml(property?.titulo || property?.title || 'Propiedad disponible');
+      const markerIcon = L.divIcon({
+        className: 'map-price-marker-wrapper',
+        html: `<div class="map-price-marker map-price-marker--${markerOperationClass}" tabindex="0" role="button" aria-label="Ver propiedad ${markerTitle}">${escapeHtml(getMapMarkerPriceLabel(property))}</div>`,
+        iconSize: [106, 36],
+        iconAnchor: [53, 18]
+      });
+      const marker = L.marker(coordinates, { icon: markerIcon, keyboard: true, riseOnHover: true }).addTo(map);
+      bounds.push(coordinates);
+      const tooltip = L.tooltip({
+        permanent: false,
+        interactive: true,
+        direction: 'top',
+        offset: [0, -22],
+        opacity: 1,
+        className: 'map-preview-tooltip',
+        pane: 'tooltipPane'
+      }).setContent(buildPreviewMarkup(property));
 
-    const openPreview = () => {
-      clearActivePreview();
-      activePropertyId = property.id;
-      activeTooltip = tooltip.setLatLng(coordinates).addTo(map);
-      marker.getElement()?.classList.add('is-active');
-    };
-    const scheduleClose = () => { clearCloseTimer(); closeTimer = window.setTimeout(clearActivePreview, pointerMedia.matches ? 0 : 120); };
+      const openPreview = () => {
+        clearActivePreview();
+        activePropertyId = property?.id ?? null;
+        activeTooltip = tooltip.setLatLng(coordinates).addTo(map);
+        marker.getElement()?.classList.add('is-active');
+      };
+      const scheduleClose = () => { clearCloseTimer(); closeTimer = window.setTimeout(clearActivePreview, pointerMedia.matches ? 0 : 120); };
 
-    marker.on('mouseover focus', openPreview);
-    marker.on('mouseout blur', scheduleClose);
-    marker.on('click', (event) => {
-      L.DomEvent.stop(event);
-      if (pointerMedia.matches && activePropertyId !== property.id) { openPreview(); return; }
-      window.location.href = getPropertyDetailUrl(property);
-    });
-    marker.on('keydown', (event) => {
-      if (event.originalEvent?.key === 'Enter') window.location.href = getPropertyDetailUrl(property);
-    });
+      marker.on('mouseover focus', openPreview);
+      marker.on('mouseout blur', scheduleClose);
+      marker.on('click', (event) => {
+        L.DomEvent.stop(event);
+        if (pointerMedia.matches && activePropertyId !== property?.id) { openPreview(); return; }
+        window.location.href = getPropertyDetailUrl(property);
+      });
+      marker.on('keydown', (event) => {
+        if (event.originalEvent?.key === 'Enter') window.location.href = getPropertyDetailUrl(property);
+      });
+    } catch (error) {
+      console.error('[PublicMap] No se pudo crear el marcador:', property?.id ?? property?.titulo ?? property?.title ?? 'sin-identificador', error);
+    }
   });
 
   map.on('movestart zoomstart dragstart click resize', clearActivePreview);
   window.addEventListener('resize', clearActivePreview);
 
-  map.fitBounds(bounds, { padding: [44, 44], animate: true });
+  if (bounds.length) map.fitBounds(bounds, { padding: [44, 44], animate: true });
   setTimeout(() => map.invalidateSize(), 250);
 
   bindPublicMapSearch(map, clearActivePreview);
