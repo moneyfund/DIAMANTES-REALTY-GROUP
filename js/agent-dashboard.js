@@ -547,38 +547,23 @@ function renderMapSearch() {
   `).join('');
 }
 
-async function searchNicaraguaLocations(queryText, requestId, controller) {
-  const params = new URLSearchParams({
-    q: queryText,
-    format: 'jsonv2',
-    countrycodes: 'ni',
-    addressdetails: '1',
-    limit: String(MAP_SEARCH_RESULT_LIMIT),
-    'accept-language': 'es'
-  });
-  const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, { signal: controller.signal });
-  if (!response.ok) throw new Error(`Nominatim HTTP ${response.status}`);
-  const data = await response.json();
-  if (requestId !== state.mapSearch.activeRequestId || controller.signal.aborted) return;
-  const results = (Array.isArray(data) ? data : [])
-    .map((item) => ({ ...item, lat: Number(item.lat), lon: Number(item.lon) }))
-    .filter((item) => Number.isFinite(item.lat) && Number.isFinite(item.lon))
-    .slice(0, MAP_SEARCH_RESULT_LIMIT);
-  setMapSearchState({ results, loading: false, error: '', open: true, highlightedIndex: results.length ? 0 : -1 });
-}
-
 function scheduleMapSearch() {
+  const geocoding = window.DRGMapGeocoding;
   const queryText = state.mapSearch.query.trim();
   window.clearTimeout(state.mapSearch.debounceTimer);
   state.mapSearch.activeController?.abort();
-  if (queryText.length < MAP_SEARCH_MIN_LENGTH) {
+  if (!geocoding || queryText.length < MAP_SEARCH_MIN_LENGTH) {
     setMapSearchState({ results: [], loading: false, error: '', open: false, highlightedIndex: -1, activeController: null });
     return;
   }
+
   const requestId = state.mapSearch.activeRequestId + 1;
   const controller = new AbortController();
   state.mapSearch.debounceTimer = window.setTimeout(() => {
-    searchNicaraguaLocations(queryText, requestId, controller).catch((error) => {
+    geocoding.searchNicaraguaLocations(queryText, { signal: controller.signal, limit: MAP_SEARCH_RESULT_LIMIT }).then((results) => {
+      if (requestId !== state.mapSearch.activeRequestId || controller.signal.aborted) return;
+      setMapSearchState({ results, loading: false, error: '', open: true, highlightedIndex: results.length ? 0 : -1 });
+    }).catch((error) => {
       if (error.name === 'AbortError') return;
       console.warn('[AgentDashboard] Error en búsqueda de ubicaciones.', error);
       if (requestId === state.mapSearch.activeRequestId) {
@@ -588,6 +573,7 @@ function scheduleMapSearch() {
   }, MAP_SEARCH_DEBOUNCE_MS);
   setMapSearchState({ loading: true, error: '', open: true, activeController: controller, activeRequestId: requestId, highlightedIndex: -1 });
 }
+
 
 function selectMapSearchResult(result) {
   if (!result) return;

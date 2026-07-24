@@ -767,6 +767,8 @@ function getPropertyCoordinates(property) {
   const longitude = Number(property.longitude ?? property.lng);
 
   if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+  if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) return null;
+  if (latitude === 0 && longitude === 0) return null;
 
   return [latitude, longitude];
 }
@@ -1102,109 +1104,174 @@ function renderGlobalMap(properties) {
   const mapElement = document.getElementById('propertiesMap');
   if (!mapElement || typeof L === 'undefined') return;
 
-  const geolocated = properties.filter(hasValidCoordinates);
+  const geolocated = properties
+    .map((property) => ({ property, coordinates: getPropertyCoordinates(property) }))
+    .filter((entry) => entry.coordinates);
   if (!geolocated.length) return;
 
-  const map = L.map(mapElement).setView([12.8654, -85.2072], 7);
+  const searchMarkup = `
+    <div id="publicMapSearch" class="map-search-control public-map-search-control">
+      <label class="sr-only" for="publicMapSearchInput">Buscar ciudad, barrio, zona o dirección</label>
+      <div class="map-search-input-row">
+        <span class="map-search-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M10.5 4a6.5 6.5 0 0 1 5.18 10.43l4.45 4.44-1.42 1.42-4.44-4.45A6.5 6.5 0 1 1 10.5 4Zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Z"></path></svg></span>
+        <input id="publicMapSearchInput" type="search" autocomplete="off" placeholder="BUSCAR CIUDAD, BARRIO, ZONA O DIRECCIÓN" aria-label="Buscar ciudad, barrio, zona o dirección" aria-expanded="false" aria-controls="publicMapSearchResults">
+        <span id="publicMapSearchLoading" class="map-search-loading hidden" aria-label="Buscando ubicaciones"></span>
+        <button type="button" id="publicMapSearchClear" class="map-search-clear hidden" aria-label="Limpiar búsqueda">×</button>
+      </div>
+      <div id="publicMapSearchResults" class="map-search-results hidden" role="listbox" aria-label="Sugerencias de ubicación"></div>
+    </div>`;
+  if (!document.getElementById('publicMapSearch')) mapElement.insertAdjacentHTML('beforebegin', searchMarkup);
+
+  const map = L.map(mapElement, {
+    zoomAnimation: true,
+    fadeAnimation: true,
+    markerZoomAnimation: true,
+    inertia: true,
+    inertiaDeceleration: 2600,
+    inertiaMaxSpeed: 1800,
+    zoomSnap: 0.5,
+    zoomDelta: 0.5,
+    wheelPxPerZoomLevel: 90,
+    scrollWheelZoom: true,
+    dragging: true,
+    touchZoom: true,
+    doubleClickZoom: true,
+    preferCanvas: true
+  }).setView([12.8654, -85.2072], 7);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
+    updateWhenIdle: true,
+    keepBuffer: 3,
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
   const bounds = [];
   const pointerMedia = window.matchMedia('(hover: none), (pointer: coarse)');
-  let activeMarker = null;
-  let activePopup = null;
+  let activePropertyId = null;
+  let activeTooltip = null;
+  let closeTimer = null;
 
-  const setMarkerActiveState = (marker, isActive) => {
-    const markerElement = marker.getElement();
-    if (!markerElement) return;
-    markerElement.classList.toggle('is-active', isActive);
+  const clearCloseTimer = () => { if (closeTimer) window.clearTimeout(closeTimer); closeTimer = null; };
+  const clearActivePreview = () => {
+    clearCloseTimer();
+    if (activeTooltip) map.closeTooltip(activeTooltip);
+    document.querySelectorAll('.map-price-marker-wrapper.is-active').forEach((el) => el.classList.remove('is-active'));
+    activeTooltip = null;
+    activePropertyId = null;
   };
 
   const buildPreviewMarkup = (property) => {
-    const summary = String(property.description || property.descripcion || '').trim();
-    const shortSummary = summary.length > 92 ? `${summary.slice(0, 89)}...` : summary;
-    const locationLabel = property.city || property.ubicacion || 'Ubicación no disponible';
+    const locationLabel = property.city || property.departamento || property.ubicacion || 'Ubicación no disponible';
     const image = getPrimaryPropertyImage(property);
     const detailUrl = getPropertyDetailUrl(property);
     const safeTitle = escapeHtml(property.titulo || property.title || 'Propiedad');
-
+    const typeLabel = getPropertyTypeLabel(property.tipo) || property.tipo || '';
+    const operationLabel = getOperationLabel(property.tipoOperacion || property.operacion || property.operation);
     return `
-      <a class="map-preview-card" href="${detailUrl}" aria-label="Abrir propiedad ${safeTitle}">
+      <a class="map-preview-card map-preview-card--compact" href="${detailUrl}" aria-label="Abrir propiedad ${safeTitle}">
         <img src="${image}" alt="${safeTitle}" loading="lazy" onerror="this.onerror=null;this.src='${PROPERTY_IMAGE_PLACEHOLDER}'">
         <div class="map-preview-content">
           <p class="map-preview-price">${getMapMarkerPriceLabel(property)}</p>
           <h3>${safeTitle}</h3>
           <p class="map-preview-location">${escapeHtml(locationLabel)}</p>
-          ${shortSummary ? `<p class="map-preview-summary preserve-description-format">${escapeHtml(shortSummary)}</p>` : ''}
+          <p class="map-preview-meta">${[typeLabel, operationLabel].filter(Boolean).map(escapeHtml).join(' · ')}</p>
+          <span class="map-preview-action">Ver propiedad</span>
         </div>
-      </a>
-    `;
+      </a>`;
   };
 
-  const clearActiveMarker = () => {
-    if (activeMarker) setMarkerActiveState(activeMarker, false);
-    activeMarker = null;
-  };
-  geolocated.forEach((property) => {
-    const markerPosition = getPropertyCoordinates(property);
-    if (!markerPosition) return;
-    bounds.push(markerPosition);
-
+  geolocated.forEach(({ property, coordinates }) => {
+    bounds.push(coordinates);
     const operation = normalizePropertyOperation(property.tipoOperacion || property.operacion || property.operation);
     const markerIcon = L.divIcon({
       className: 'map-price-marker-wrapper',
-      html: `<div class="map-price-marker map-price-marker--${operation || 'venta'}">${getMapMarkerPriceLabel(property)}</div>`,
+      html: `<div class="map-price-marker map-price-marker--${operation || 'venta'}" tabindex="0" role="button" aria-label="Ver propiedad ${escapeHtml(property.titulo || property.title || 'Propiedad')}">${getMapMarkerPriceLabel(property)}</div>`,
       iconSize: [106, 36],
       iconAnchor: [53, 18]
     });
-    const marker = L.marker(markerPosition, { icon: markerIcon }).addTo(map);
-    const previewPopup = L.popup({
-      closeButton: false,
-      autoPan: true,
-      autoClose: false,
-      className: 'map-preview-popup',
-      offset: [0, -26]
+    const marker = L.marker(coordinates, { icon: markerIcon, keyboard: true, riseOnHover: true }).addTo(map);
+    const tooltip = L.tooltip({
+      permanent: false,
+      interactive: true,
+      direction: 'top',
+      offset: [0, -22],
+      opacity: 1,
+      className: 'map-preview-tooltip',
+      pane: 'tooltipPane'
     }).setContent(buildPreviewMarkup(property));
 
-    marker.on('mouseover', () => {
-      clearActiveMarker();
-      setMarkerActiveState(marker, true);
-      activeMarker = marker;
-      marker.bindPopup(previewPopup).openPopup();
-      activePopup = previewPopup;
-    });
+    const openPreview = () => {
+      clearActivePreview();
+      activePropertyId = property.id;
+      activeTooltip = tooltip.setLatLng(coordinates).addTo(map);
+      marker.getElement()?.classList.add('is-active');
+    };
+    const scheduleClose = () => { clearCloseTimer(); closeTimer = window.setTimeout(clearActivePreview, pointerMedia.matches ? 0 : 120); };
 
-    marker.on('mouseout', () => {
-      if (pointerMedia.matches) return;
-      setTimeout(() => {
-        if (activePopup && map.hasLayer(activePopup) && !document.querySelector('.map-preview-card:hover')) {
-          map.closePopup(activePopup);
-          clearActiveMarker();
-          activePopup = null;
-        }
-      }, 120);
+    marker.on('mouseover focus', openPreview);
+    marker.on('mouseout blur', scheduleClose);
+    marker.on('click', (event) => {
+      L.DomEvent.stop(event);
+      if (pointerMedia.matches && activePropertyId !== property.id) { openPreview(); return; }
+      window.location.href = getPropertyDetailUrl(property);
     });
-
-    marker.on('click', () => {
-      const detailUrl = getPropertyDetailUrl(property);
-      if (pointerMedia.matches) {
-        const isAlreadyActive = activeMarker === marker;
-        clearActiveMarker();
-        setMarkerActiveState(marker, true);
-        activeMarker = marker;
-        marker.bindPopup(previewPopup).openPopup();
-        activePopup = previewPopup;
-        if (isAlreadyActive) window.location.href = detailUrl;
-        return;
-      }
-      window.location.href = detailUrl;
+    marker.on('keydown', (event) => {
+      if (event.originalEvent?.key === 'Enter') window.location.href = getPropertyDetailUrl(property);
     });
   });
 
-  map.fitBounds(bounds, { padding: [40, 40] });
+  map.on('movestart zoomstart dragstart click resize', clearActivePreview);
+  window.addEventListener('resize', clearActivePreview);
+
+  map.fitBounds(bounds, { padding: [44, 44], animate: true });
+  setTimeout(() => map.invalidateSize(), 250);
+
+  bindPublicMapSearch(map, clearActivePreview);
 }
+
+function bindPublicMapSearch(map, closePreview) {
+  const geocoding = window.DRGMapGeocoding;
+  const root = document.getElementById('publicMapSearch');
+  const input = document.getElementById('publicMapSearchInput');
+  const clearButton = document.getElementById('publicMapSearchClear');
+  const loading = document.getElementById('publicMapSearchLoading');
+  const resultsBox = document.getElementById('publicMapSearchResults');
+  if (!geocoding || !root || !input || !resultsBox) return;
+  let results = [];
+  let highlightedIndex = -1;
+
+  const render = (open = true, message = '') => {
+    input.setAttribute('aria-expanded', open ? 'true' : 'false');
+    clearButton?.classList.toggle('hidden', !input.value.trim());
+    resultsBox.classList.toggle('hidden', !open);
+    if (!open) return;
+    if (message) { resultsBox.innerHTML = `<div class="map-search-message">${escapeHtml(message)}</div>`; return; }
+    resultsBox.innerHTML = results.length ? results.map((result, index) => `
+      <button type="button" class="map-search-result ${index === highlightedIndex ? 'is-active' : ''}" role="option" aria-selected="${index === highlightedIndex ? 'true' : 'false'}" data-public-map-result-index="${index}">
+        <strong>${escapeHtml(result.display_name)}</strong><small>${escapeHtml(result.type || 'Ubicación')}</small>
+      </button>`).join('') : '<div class="map-search-message">No se encontraron resultados.</div>';
+  };
+  const searcher = geocoding.createDebouncedNicaraguaSearch({
+    onStart: () => { closePreview(); loading?.classList.remove('hidden'); results = []; highlightedIndex = -1; render(true, 'Buscando ubicaciones...'); },
+    onSuccess: (items, meta) => { loading?.classList.add('hidden'); results = items; highlightedIndex = items.length ? 0 : -1; render(!meta.skipped); },
+    onError: () => { loading?.classList.add('hidden'); results = []; highlightedIndex = -1; render(true, 'No fue posible realizar la búsqueda. Inténtalo nuevamente.'); }
+  });
+  input.addEventListener('input', () => { closePreview(); searcher.schedule(input.value); render(input.value.trim().length >= geocoding.MIN_LENGTH); });
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowDown' && results.length) { event.preventDefault(); highlightedIndex = (highlightedIndex + 1) % results.length; render(true); }
+    else if (event.key === 'ArrowUp' && results.length) { event.preventDefault(); highlightedIndex = (highlightedIndex - 1 + results.length) % results.length; render(true); }
+    else if (event.key === 'Enter' && results[highlightedIndex]) { event.preventDefault(); select(results[highlightedIndex]); }
+    else if (event.key === 'Escape') render(false);
+  });
+  const select = (result) => {
+    closePreview(); searcher.cancel(); input.value = result.display_name || ''; results = []; render(false);
+    map.flyTo([result.lat, result.lon], 14, { animate: true, duration: 0.75 });
+  };
+  clearButton?.addEventListener('click', () => { closePreview(); searcher.cancel(); input.value = ''; results = []; loading?.classList.add('hidden'); render(false); input.focus(); });
+  resultsBox.addEventListener('click', (event) => { const option = event.target.closest('[data-public-map-result-index]'); if (option) select(results[Number(option.dataset.publicMapResultIndex)]); });
+  document.addEventListener('click', (event) => { if (!root.contains(event.target)) render(false); });
+}
+
 
 (async function initProperties() {
   try {
