@@ -120,7 +120,7 @@ async function resolveSharedAgent(sharedList = {}) {
     createdByAgentEmail: current.createdByAgentEmail || agent?.email || current.agentEmail || current.createdByEmail || '',
     createdByAgentPhone: current.createdByAgentPhone || agent?.phone || '',
     createdByAgentWhatsapp: current.createdByAgentWhatsapp || agent?.whatsapp || current.agentWhatsapp || current.createdByAgentPhone || agent?.phone || '',
-    createdByAgentPhoto: current.createdByAgentPhoto || agent?.photo || 'assets/placeholder.svg'
+    createdByAgentPhoto: agent?.photo || agent?.photoURL || agent?.photoUrl || agent?.profileImage || agent?.profilePhoto || agent?.avatar || current.createdByAgentPhoto || 'assets/placeholder.svg'
   };
 }
 

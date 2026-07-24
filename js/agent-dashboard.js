@@ -18,7 +18,7 @@ import {
   signInWithPopup,
   signOut
 } from './firebase-services.js';
-import { uploadImage, uploadLegalDocument, validateLegalPdf, deleteStorageFile } from './storage-helpers.js';
+import { uploadImage, uploadLegalDocument, validateLegalPdf, deleteStorageFile, uploadAgentProfilePhoto, validateAgentProfilePhoto, deleteStorageUrlIfOwned } from './storage-helpers.js';
 
 const fallbackImageUtils = {
   PLACEHOLDER: 'assets/placeholder.svg',
@@ -114,10 +114,15 @@ const state = {
   hasSharedListSearchStarted: false,
   agentProfile: null,
   agentProfileId: '',
+  profilePhotoFile: null,
+  profilePhotoPreviewUrl: '',
+  removeProfilePhoto: false,
+  isSavingProfile: false,
   unsubscribeSharedLists: null
 };
 
 const fallbackPhoto = imageUtils?.PLACEHOLDER || 'assets/placeholder.svg';
+const getAgentPhoto = (agent = {}, authUser = null) => agent?.photo || agent?.photoURL || agent?.photoUrl || agent?.profileImage || agent?.profilePhoto || agent?.avatar || authUser?.photoURL || fallbackPhoto;
 const AGENT_DASHBOARD_DEBUG = new URLSearchParams(window.location.search).has('debugAgentDashboard')
   || window.localStorage?.getItem('debugAgentDashboard') === 'true';
 const propertyUtils = window.inmoPropertyUtils || {};
@@ -289,7 +294,7 @@ function authMarkup(user) {
         <span>Sesión activa</span>
       </div>
       <div class="dashboard-user-chip">
-        <img src="${user.photoURL || fallbackPhoto}" alt="Avatar de ${escapeHtml(displayName)}" referrerpolicy="no-referrer">
+        <img src="${getAgentPhoto(state.agentProfile, user)}" alt="Avatar de ${escapeHtml(displayName)}" referrerpolicy="no-referrer">
         <div class="dashboard-user-chip__details">
           <strong>${escapeHtml(displayName)}</strong>
           <span>${escapeHtml(email)}</span>
@@ -303,7 +308,6 @@ function authMarkup(user) {
 function getProfilePayload(user) {
   return {
     name: document.getElementById('agentName').value.trim() || user.displayName || 'Agente Diamantes Realty Group',
-    photo: document.getElementById('agentPhoto').value.trim() || user.photoURL || fallbackPhoto,
     description: document.getElementById('agentDescription').value.trim(),
     email: document.getElementById('agentEmail').value.trim() || user.email || '',
     uid: user.uid,
@@ -1312,19 +1316,159 @@ function propertyCard(property) {
   `;
 }
 
+
+function setPhotoStatus(message = '', type = 'info') {
+  const status = document.getElementById('agentPhotoStatus');
+  if (!status) return;
+  status.textContent = message;
+  status.dataset.type = type;
+}
+
+function revokeProfilePhotoPreviewUrl() {
+  if (state.profilePhotoPreviewUrl) {
+    URL.revokeObjectURL(state.profilePhotoPreviewUrl);
+    state.profilePhotoPreviewUrl = '';
+  }
+}
+
+function updateProfilePhotoPreview(src) {
+  const preview = document.getElementById('agentPhotoPreview');
+  if (preview) preview.src = src || fallbackPhoto;
+  const selectButton = document.getElementById('agentPhotoSelect');
+  if (selectButton) selectButton.textContent = (src && src !== fallbackPhoto) ? 'Cambiar foto' : 'Seleccionar foto';
+  document.getElementById('agentPhotoRemove')?.classList.toggle('hidden', !(src && src !== fallbackPhoto));
+  document.getElementById('agentPhotoClearSelection')?.classList.toggle('hidden', !state.profilePhotoFile && !state.removeProfilePhoto);
+}
+
+function clearProfilePhotoSelection(refreshPreview = true) {
+  revokeProfilePhotoPreviewUrl();
+  state.profilePhotoFile = null;
+  state.removeProfilePhoto = false;
+  const input = document.getElementById('agentPhotoFile');
+  if (input) input.value = '';
+  if (refreshPreview) updateProfilePhotoPreview(getAgentPhoto(state.agentProfile, state.user));
+}
+
+function setProfilePhotoControlsDisabled(disabled) {
+  ['agentPhotoSelect', 'agentPhotoClearSelection', 'agentPhotoRemove', 'agentPhotoFile'].forEach((id) => {
+    const element = document.getElementById(id);
+    if (element) element.disabled = disabled;
+  });
+}
+
+function handleProfilePhotoSelected(event) {
+  const file = event.target.files?.[0];
+  clearProfilePhotoSelection(false);
+  if (!file) {
+    updateProfilePhotoPreview(getAgentPhoto(state.agentProfile, state.user));
+    return;
+  }
+
+  const validation = validateAgentProfilePhoto(file);
+  if (!validation.valid) {
+    setPhotoStatus(validation.message, 'error');
+    updateProfilePhotoPreview(getAgentPhoto(state.agentProfile, state.user));
+    return;
+  }
+
+  try {
+    const previewUrl = URL.createObjectURL(file);
+    state.profilePhotoFile = file;
+    state.profilePhotoPreviewUrl = previewUrl;
+    state.removeProfilePhoto = false;
+    updateProfilePhotoPreview(previewUrl);
+    setPhotoStatus('Foto seleccionada. Presiona “Guardar perfil” para publicarla.', 'info');
+  } catch (error) {
+    console.error('[AgentDashboard] No se pudo leer la foto seleccionada.', error);
+    setPhotoStatus('No fue posible leer el archivo seleccionado.', 'error');
+  }
+}
+
+function requestRemoveProfilePhoto() {
+  const currentPhoto = getAgentPhoto(state.agentProfile, state.user);
+  if (!currentPhoto || currentPhoto === fallbackPhoto) return;
+  if (!window.confirm('¿Quieres quitar tu foto de perfil? El cambio se aplicará cuando guardes el perfil.')) return;
+  clearProfilePhotoSelection(false);
+  state.removeProfilePhoto = true;
+  updateProfilePhotoPreview(fallbackPhoto);
+  setPhotoStatus('Foto marcada para quitar. Presiona “Guardar perfil” para confirmar.', 'info');
+}
+
+function initProfilePhotoUploader() {
+  document.getElementById('agentPhotoSelect')?.addEventListener('click', () => document.getElementById('agentPhotoFile')?.click());
+  document.getElementById('agentPhotoFile')?.addEventListener('change', handleProfilePhotoSelected);
+  document.getElementById('agentPhotoClearSelection')?.addEventListener('click', () => {
+    clearProfilePhotoSelection(true);
+    setPhotoStatus('Selección cancelada.', 'info');
+  });
+  document.getElementById('agentPhotoRemove')?.addEventListener('click', requestRemoveProfilePhoto);
+  window.addEventListener('beforeunload', revokeProfilePhotoPreviewUrl);
+}
+
 async function saveProfile(event) {
   event.preventDefault();
   if (!state.user || !isAllowedAgentUser(state.user)) {
     setMessage(UNAUTHORIZED_AGENT_MESSAGE, 'error');
     return;
   }
+  if (state.isSavingProfile) return;
 
-  const payload = { ...getProfilePayload(state.user), uid: state.user.uid };
+  const submitButton = event.submitter || document.querySelector('#agentProfileForm button[type="submit"]');
+  const previousPhoto = getAgentPhoto(state.agentProfile, state.user);
   const profileDocId = state.agentProfileId || state.user.uid;
-  await setDoc(doc(db, 'agents', profileDocId), payload, { merge: true });
-  state.agentProfileId = profileDocId;
-  state.agentProfile = { ...(state.agentProfile || {}), ...payload };
-  setMessage('Perfil actualizado correctamente.', 'success');
+  let uploadedPhoto = null;
+
+  try {
+    state.isSavingProfile = true;
+    setProfilePhotoControlsDisabled(true);
+    submitButton?.setAttribute('disabled', 'disabled');
+    submitButton && (submitButton.textContent = 'Guardando perfil...');
+    setPhotoStatus('Guardando perfil...', 'info');
+
+    const payload = { ...getProfilePayload(state.user), uid: state.user.uid };
+
+    if (state.profilePhotoFile) {
+      const validation = validateAgentProfilePhoto(state.profilePhotoFile);
+      if (!validation.valid) throw new Error(validation.message);
+      setPhotoStatus('Subiendo foto de perfil...', 'info');
+      uploadedPhoto = await uploadAgentProfilePhoto(state.profilePhotoFile, state.user.uid);
+      payload.photo = uploadedPhoto.downloadUrl;
+    } else if (state.removeProfilePhoto) {
+      payload.photo = '';
+    } else {
+      payload.photo = getAgentPhoto(state.agentProfile, state.user) === fallbackPhoto ? '' : getAgentPhoto(state.agentProfile, state.user);
+    }
+
+    await setDoc(doc(db, 'agents', profileDocId), payload, { merge: true });
+    state.agentProfileId = profileDocId;
+    state.agentProfile = { ...(state.agentProfile || {}), ...payload };
+
+    const shouldDeletePrevious = (state.profilePhotoFile || state.removeProfilePhoto) && previousPhoto && previousPhoto !== fallbackPhoto && previousPhoto !== payload.photo;
+    clearProfilePhotoSelection(false);
+    state.removeProfilePhoto = false;
+    updateProfilePhotoPreview(getAgentPhoto(state.agentProfile, state.user));
+    document.getElementById('agentAuthBox') && (document.getElementById('agentAuthBox').innerHTML = authMarkup(state.user));
+    setPhotoStatus('Foto de perfil guardada correctamente.', 'success');
+    setMessage('Perfil actualizado correctamente.', 'success');
+
+    if (shouldDeletePrevious) {
+      deleteStorageUrlIfOwned(previousPhoto).catch((cleanupError) => {
+        console.warn('[AgentDashboard] La foto nueva se guardó, pero no se pudo limpiar la anterior.', cleanupError);
+        setPhotoStatus('Perfil guardado. No fue posible limpiar la foto anterior automáticamente.', 'warning');
+      });
+    }
+  } catch (error) {
+    console.error('[AgentDashboard] Error guardando perfil.', error);
+    if (uploadedPhoto?.downloadUrl) await deleteStorageUrlIfOwned(uploadedPhoto.downloadUrl);
+    const message = error.message || 'No fue posible guardar el perfil. Revisa los datos e intenta nuevamente.';
+    setPhotoStatus(message, 'error');
+    setMessage(message, 'error');
+  } finally {
+    state.isSavingProfile = false;
+    setProfilePhotoControlsDisabled(false);
+    submitButton?.removeAttribute('disabled');
+    submitButton && (submitButton.textContent = 'Guardar perfil');
+  }
 }
 
 async function saveProperty(event) {
@@ -1500,7 +1644,7 @@ async function loadAgentProfile(user) {
   const normalizedProfile = {
     ...profile,
     name: profile.name || profile.nombre || user.displayName || 'Agente Diamantes Realty Group',
-    photo: profile.photo || profile.photoURL || profile.foto || user.photoURL || fallbackPhoto,
+    photo: getAgentPhoto(profile, user),
     description: profile.description || profile.descripcion || profile.bio || '',
     email: profile.email || profile.correo || user.email || '',
     phone: profile.phone || profile.telefono || profile.tel || '',
@@ -1511,7 +1655,7 @@ async function loadAgentProfile(user) {
   };
 
   document.getElementById('agentName').value = normalizedProfile.name;
-  document.getElementById('agentPhoto').value = normalizedProfile.photo;
+  updateProfilePhotoPreview(normalizedProfile.photo);
   document.getElementById('agentDescription').value = normalizedProfile.description;
   document.getElementById('agentEmail').value = normalizedProfile.email;
   document.getElementById('agentPhone').value = normalizedProfile.phone;
@@ -1530,7 +1674,7 @@ async function loadAgentProfile(user) {
 function fillAgentProfile(agentProfile = {}, user = state.user) {
   const normalizedProfile = {
     name: agentProfile.name || user?.displayName || '',
-    photo: agentProfile.photo || user?.photoURL || fallbackPhoto,
+    photo: getAgentPhoto(agentProfile, user),
     description: agentProfile.description || '',
     email: agentProfile.email || user?.email || '',
     phone: agentProfile.phone || '',
@@ -1541,7 +1685,7 @@ function fillAgentProfile(agentProfile = {}, user = state.user) {
   };
 
   document.getElementById('agentName').value = normalizedProfile.name;
-  document.getElementById('agentPhoto').value = normalizedProfile.photo;
+  updateProfilePhotoPreview(normalizedProfile.photo);
   document.getElementById('agentDescription').value = normalizedProfile.description;
   document.getElementById('agentEmail').value = normalizedProfile.email;
   document.getElementById('agentPhone').value = normalizedProfile.phone;
@@ -2191,6 +2335,7 @@ function bindAuthControls() {
     console.log('[AgentDashboard] Email del usuario:', user.email || '');
     debugAgentDashboard('Usuario autenticado.', { uid: user.uid, email: user.email, displayName: user.displayName });
     const agentProfile = await loadAgentProfile(user);
+    authBox.innerHTML = authMarkup(user);
     fillAgentProfile(agentProfile, user);
     await loadAgentProperties(user, agentProfile);
     await loadSharedLists(user, agentProfile);
@@ -2300,6 +2445,7 @@ function init() {
   bindImageControls();
   bindMapSearchControls();
   bindLegalDocumentControls();
+  initProfilePhotoUploader();
   bindSharedListModule();
   bindImagePreviewActions();
   bindCalculatedFields();
