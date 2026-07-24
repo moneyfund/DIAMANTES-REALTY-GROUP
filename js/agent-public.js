@@ -140,7 +140,7 @@ function getAgentBasicInfo(agent = {}) {
 
 function renderAgentProfile(agent, properties) {
   const container = document.getElementById('agentPublicContent');
-  const photo = agent.photo || fallbackPhoto;
+  const photo = agent.photo || agent.photoURL || agent.photoUrl || agent.profileImage || agent.profilePhoto || agent.avatar || fallbackPhoto;
   const basicInfo = getAgentBasicInfo(agent);
   const totalProperties = properties.length;
 

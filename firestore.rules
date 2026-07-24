@@ -109,7 +109,17 @@ service cloud.firestore {
     match /agents/{agentId} {
       allow read: if true;
       allow create: if isSignedIn() && (request.auth.uid == agentId || isAdmin());
-      allow update: if isSignedIn() && (request.auth.uid == agentId || isOwnAgentProfile(resource.data, agentId) || isAdmin());
+      allow update: if isSignedIn() && (
+        isAdmin()
+        || (
+          (request.auth.uid == agentId || isOwnAgentProfile(resource.data, agentId))
+          && (!request.resource.data.keys().hasAny(['uid']) || request.resource.data.uid == request.auth.uid || request.resource.data.uid == resource.data.uid)
+          && (!request.resource.data.keys().hasAny(['agentId']) || request.resource.data.agentId == request.auth.uid || request.resource.data.agentId == resource.data.agentId)
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+            'role', 'rol', 'admin', 'isAdmin', 'approvedAt', 'approvedBy', 'reviewedAt'
+          ])
+        )
+      );
       allow delete: if isAdmin();
     }
 

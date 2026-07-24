@@ -169,7 +169,7 @@ async function findAgent(property = {}) {
     email: property.createdByAgentEmail || property.agentEmail || property.email,
     phone: property.createdByAgentPhone || property.agentPhone || property.telefono,
     whatsapp: property.createdByAgentWhatsapp || property.agentWhatsapp || property.whatsapp,
-    photo: property.createdByAgentPhoto || property.agentPhoto || property.photo,
+    photo: property.createdByAgentPhoto || property.agentPhoto || property.photo || property.photoURL || property.profileImage || property.profilePhoto || property.avatar,
     role: property.agentRole || property.cargo || 'Asesor inmobiliario'
   };
 }
@@ -197,7 +197,7 @@ function GalleryStrip(images = []) {
 function AgentContactCard(agent = {}) {
   const role = agent.role || agent.cargo || agent.position || 'Asesor inmobiliario';
   return `<section class="sheet-agent-card">
-    <img src="${escapeHtml(agent.photo || agent.profilePhoto || 'assets/placeholder.svg')}" alt="Foto del agente" crossOrigin="anonymous" referrerPolicy="no-referrer" />
+    <img src="${escapeHtml(agent.photo || agent.photoURL || agent.photoUrl || agent.profileImage || agent.profilePhoto || agent.avatar || 'assets/placeholder.svg')}" alt="Foto del agente" crossOrigin="anonymous" referrerPolicy="no-referrer" />
     <div>
       <small>Agente responsable</small>
       <h3>${escapeHtml(fallback(agent.name || agent.nombre))}</h3>
@@ -308,7 +308,7 @@ async function buildPdfImageData(property = {}, agent = {}) {
   const [coverImagePdf, galleryImagesPdf, agentPhotoPdf, logoPdf, brokerLogoPdf] = await Promise.all([
     toPdfImage(coverImage),
     Promise.all(galleryImages.map((image) => toPdfImage(image))),
-    toPdfImage(agent.photo || agent.profilePhoto || 'assets/placeholder.svg'),
+    toPdfImage(agent.photo || agent.photoURL || agent.photoUrl || agent.profileImage || agent.profilePhoto || agent.avatar || 'assets/placeholder.svg'),
     toPdfImage(logoUrl),
     toPdfImage(agent.brokerLogo || agent.logoCorreduria || logoUrl)
   ]);

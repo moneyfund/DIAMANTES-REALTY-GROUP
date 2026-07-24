@@ -67,7 +67,23 @@
           </div>
           <form id="agentProfileForm" class="dashboard-form dashboard-form--profile">
             <label>Nombre<input type="text" id="agentName" placeholder="Nombre del agente" required /></label>
-            <label>URL de foto<input type="url" id="agentPhoto" placeholder="https://..." /></label>
+            <div class="agent-photo-uploader form-span-2" id="agentPhotoUploader">
+              <div class="agent-photo-uploader__copy">
+                <p class="dashboard-eyebrow">Foto de perfil</p>
+                <h3>Foto de perfil</h3>
+                <p>Sube una fotografía clara que será visible para los clientes en tu perfil y en tus propiedades.</p>
+              </div>
+              <div class="agent-photo-uploader__content">
+                <img id="agentPhotoPreview" class="agent-photo-preview" src="assets/placeholder.svg" alt="Foto de perfil del agente" referrerpolicy="no-referrer" />
+                <div class="agent-photo-uploader__actions">
+                  <input id="agentPhotoFile" class="sr-only" type="file" accept="image/jpeg,image/png,image/webp" />
+                  <button type="button" id="agentPhotoSelect" class="button-secondary">Seleccionar foto</button>
+                  <button type="button" id="agentPhotoClearSelection" class="button-secondary hidden">Cancelar selección</button>
+                  <button type="button" id="agentPhotoRemove" class="button-secondary button-danger hidden">Quitar foto</button>
+                  <p id="agentPhotoStatus" class="agent-photo-status" aria-live="polite"></p>
+                </div>
+              </div>
+            </div>
             <label class="form-span-2">Descripción profesional<textarea id="agentDescription" rows="4" placeholder="Especialidad, zonas de cobertura y propuesta de valor"></textarea></label>
             <label>Email<input type="email" id="agentEmail" placeholder="correo@diamantesrealtygroup.com" /></label>
             <label>Teléfono<input type="tel" id="agentPhone" placeholder="+505 0000 0000" /></label>

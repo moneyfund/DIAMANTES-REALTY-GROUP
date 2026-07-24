@@ -63,7 +63,7 @@ function agentCardTemplate(agent) {
   const whatsappIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.04 2a9.93 9.93 0 0 0-8.6 14.9L2 22l5.27-1.38A9.97 9.97 0 0 0 12.04 22C17.53 22 22 17.54 22 12.05 22 6.47 17.54 2 12.04 2Zm0 18.26c-1.47 0-2.9-.4-4.15-1.15l-.3-.17-3.12.82.84-3.03-.2-.31a8.2 8.2 0 1 1 6.93 3.84Zm4.5-6.18c-.25-.12-1.47-.72-1.69-.8-.23-.08-.4-.12-.56.12-.16.24-.64.8-.79.96-.14.16-.3.18-.56.06-.25-.12-1.08-.4-2.06-1.27-.76-.67-1.28-1.5-1.43-1.75-.15-.24-.02-.37.11-.49.12-.12.26-.3.39-.45.13-.16.18-.27.27-.45.09-.18.05-.33-.02-.46-.07-.12-.56-1.35-.77-1.85-.2-.47-.4-.4-.56-.4h-.48c-.16 0-.42.06-.64.3-.22.24-.84.82-.84 2s.86 2.31.98 2.47c.12.16 1.68 2.56 4.07 3.59.57.25 1.02.4 1.37.52.58.19 1.11.16 1.53.1.46-.07 1.47-.6 1.68-1.17.21-.56.21-1.04.14-1.16-.07-.11-.23-.18-.48-.3Z"/></svg>';
 
   const profileUrl = `agent.html?id=${encodeURIComponent(agent.id || '')}`;
-  const photo = agent.photo || 'assets/placeholder.svg';
+  const photo = agent.photo || agent.photoURL || agent.photoUrl || agent.profileImage || agent.profilePhoto || agent.avatar || 'assets/placeholder.svg';
   const socialLinks = [
     socialLinkTemplate(agent.instagram, 'Instagram', instagramIcon),
     socialLinkTemplate(agent.facebook, 'Facebook', facebookIcon),
