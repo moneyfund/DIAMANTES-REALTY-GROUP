@@ -50,6 +50,12 @@
   }, {});
 
   function toNumber(value) {
+    if (typeof value === 'number') return Number.isFinite(value) ? value : NaN;
+    if (typeof value === 'string') {
+      const cleaned = value.replace(/[^0-9.,-]/g, '').replace(/,/g, '');
+      const parsedString = Number(cleaned);
+      return Number.isFinite(parsedString) ? parsedString : NaN;
+    }
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : NaN;
   }
@@ -65,10 +71,18 @@
   }
 
   function normalizeOperation(value = '') {
-    const normalized = String(value || '').trim().toLowerCase();
-    if (normalized === 'comprar' || normalized === 'venta') return 'venta';
-    if (normalized === 'renta' || normalized === 'alquiler') return 'alquiler';
-    if (['venta/renta', 'venta-renta', 'venta y renta', 'venta/alquiler'].includes(normalized)) return 'venta_renta';
+    const normalized = String(value || '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+    if (!normalized) return '';
+    const hasSale = /\b(venta|comprar|sale)\b|for sale/.test(normalized);
+    const hasRent = /\b(alquiler|alquilar|renta|rentar|rent)\b|for rent/.test(normalized);
+    if (hasSale && hasRent) return 'venta_renta';
+    if (hasSale || ['venta (comprar)', 'comprar'].includes(normalized)) return 'venta';
+    if (hasRent) return 'alquiler';
+    if (['venta/renta', 'venta-renta', 'venta y renta', 'venta/alquiler', 'sale/rent'].includes(normalized)) return 'venta_renta';
     return normalized;
   }
 
