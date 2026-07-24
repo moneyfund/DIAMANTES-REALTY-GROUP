@@ -1168,7 +1168,9 @@ function buildMapPropertyCard(property = {}, activePropertyId = '') {
   const area = getAreaDisplay(property);
   const typeLabel = getPropertyTypeLabel(property.tipo || property.type || property.propertyType) || property.typeLabel || 'Propiedad';
   const operationLabel = getOperationalLabel(property) || 'Disponible';
-  const status = String(property.status || property.estado || '').trim();
+  const status = propertyUtils.getPropertyStatusLabel
+    ? propertyUtils.getPropertyStatusLabel(property.status || property.estado || 'available')
+    : String(property.status || property.estado || 'Disponible').trim();
   const agent = getPropertyAgentLabel(property);
   return `
     <article class="map-property-card ${String(property.id) === String(activePropertyId) ? 'is-active' : ''}" data-property-id="${escapeHtml(property.id)}" tabindex="0" role="link" aria-label="Abrir propiedad ${title}">

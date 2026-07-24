@@ -29,6 +29,38 @@
     beach_house: 'Casa cerca del mar'
   };
 
+
+  const PROPERTY_STATUS_LABELS = {
+    available: 'Disponible',
+    disponible: 'Disponible',
+    sold: 'Vendido',
+    vendido: 'Vendido',
+    vendida: 'Vendida',
+    rented: 'Alquilado',
+    rentada: 'Alquilada',
+    alquilado: 'Alquilado',
+    alquilada: 'Alquilada',
+    pending: 'Pendiente',
+    pendiente: 'Pendiente',
+    reserved: 'Reservado',
+    reservada: 'Reservada',
+    archived: 'Archivado',
+    archivada: 'Archivada'
+  };
+
+  function normalizeStatus(value = '') {
+    return String(value || 'available')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function getPropertyStatusLabel(status = '') {
+    const normalized = normalizeStatus(status);
+    return PROPERTY_STATUS_LABELS[normalized] || (normalized ? humanizeKey(normalized) : 'Disponible');
+  }
+
   const AREA_UNITS = ['metros', 'm2', 'm²', 'varas', 'varas2', 'varas²', 'manzanas', 'hectareas', 'hectáreas'];
   const AREA_UNIT_SINGULAR = {
     metros: 'metro²',
@@ -329,9 +361,12 @@
   global.inmoPropertyUtils = {
     USD_TO_NIO_RATE,
     PROPERTY_TYPE_LABELS,
+    PROPERTY_STATUS_LABELS,
     AREA_UNITS,
     normalizePropertyType,
     getPropertyTypeLabel,
+    normalizeStatus,
+    getPropertyStatusLabel,
     normalizeOperation,
     normalizeAreaUnit,
     convertUsdToNio,
