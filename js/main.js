@@ -185,43 +185,43 @@ const footerSocialLinks = [
 
 function renderSiteFooter() {
   const footerMarkup = `
-    <section class="footer-corporate" aria-labelledby="footerBrandTitle">
-      <div class="container footer-corporate-inner">
-        <div class="footer-brand-mark">
-          <img class="footer-logo" src="assets/logo.png" alt="Logo de Diamantes Realty Group" width="60" height="60" />
-          <p class="footer-license">Lic. INVUR-UCBR-PN-N°. 0153-2026</p>
+    <section class="drg-footer-corporate" aria-labelledby="drgFooterBrandTitle">
+      <div class="drg-footer-container drg-footer-corporate-inner">
+        <div class="drg-footer-brand">
+          <img class="drg-footer-logo" src="assets/logo.png" alt="Logo de Diamantes Realty Group" width="60" height="60" />
+          <p class="drg-footer-license">Lic. INVUR-UCBR-PN-N°. 0153-2026</p>
         </div>
-        <div class="footer-brand-copy">
-          <h2 class="footer-brand-title" id="footerBrandTitle">${APP_NAME}</h2>
-          <p class="footer-brand-description">Inmobiliaria corporativa en Nicaragua con enfoque en propiedades premium y asesoría integral.</p>
+        <div class="drg-footer-company">
+          <h2 class="drg-footer-company-name" id="drgFooterBrandTitle">${APP_NAME}</h2>
+          <p class="drg-footer-company-description">Inmobiliaria corporativa en Nicaragua con enfoque en propiedades premium y asesoría integral.</p>
         </div>
-        <a class="footer-cta" href="contacto.html">Agendar asesoría</a>
+        <a class="drg-footer-cta" href="contacto.html">Agendar asesoría</a>
       </div>
     </section>
 
-    <section class="footer-information" aria-label="Información legal y contacto">
-      <div class="container footer-columns">
-        <nav class="footer-legal" aria-label="Enlaces legales">
-          <h2 class="footer-heading">Legal</h2>
-          ${footerLinks.map((link) => `<a class="footer-legal-link footer-link" href="${link.href}">${link.label}</a>`).join('')}
+    <section class="drg-footer-information" aria-label="Información legal y contacto">
+      <div class="drg-footer-container drg-footer-columns">
+        <nav class="drg-footer-legal" aria-label="Enlaces legales">
+          <h2 class="drg-footer-column-title">Legal</h2>
+          ${footerLinks.map((link) => `<a class="drg-footer-legal-link" href="${link.href}">${link.label}</a>`).join('')}
         </nav>
-        <div class="footer-contact-column">
-          <h2 class="footer-heading">Contacto</h2>
-          <a class="footer-contact" href="tel:+50577265009" aria-label="Llamar al +505 7726 5009">+505 7726 5009</a>
-          <a class="footer-contact footer-email" href="mailto:diamantesrealtygroup@gmail.com">diamantesrealtygroup@gmail.com</a>
-          <div class="footer-social" aria-label="Redes sociales de Diamantes Realty Group">
-            ${footerSocialLinks.map((link) => `<a class="footer-social-link" href="${link.href}" ${link.href.startsWith('mailto:') ? '' : 'target="_blank" rel="noopener noreferrer"'} aria-label="${link.label}" title="${link.label}">${link.icon}</a>`).join('')}
+        <div class="drg-footer-contact">
+          <h2 class="drg-footer-column-title">Contacto</h2>
+          <a class="drg-footer-contact-link" href="tel:+50577265009" aria-label="Llamar al +505 7726 5009">+505 7726 5009</a>
+          <a class="drg-footer-contact-link drg-footer-email" href="mailto:diamantesrealtygroup@gmail.com">diamantesrealtygroup@gmail.com</a>
+          <div class="drg-footer-social" aria-label="Redes sociales de Diamantes Realty Group">
+            ${footerSocialLinks.map((link) => `<a class="drg-footer-social-link" href="${link.href}" ${link.href.startsWith('mailto:') ? '' : 'target="_blank" rel="noopener noreferrer"'} aria-label="${link.label}" title="${link.label}">${link.icon}</a>`).join('')}
           </div>
         </div>
       </div>
     </section>
-    <div class="footer-copyright">© <span id="currentYear">2026</span> ${APP_NAME}. Todos los derechos reservados.</div>
+    <div class="drg-footer-copyright">© <span id="drgFooterCurrentYear">2026</span> ${APP_NAME}. Todos los derechos reservados.</div>
   `;
 
-  let footer = document.querySelector('.site-footer');
+  let footer = document.querySelector('.drg-site-footer');
   if (!footer) {
     footer = document.createElement('footer');
-    footer.className = 'site-footer';
+    footer.className = 'drg-site-footer';
     document.body.appendChild(footer);
   }
 
@@ -230,7 +230,7 @@ function renderSiteFooter() {
 
 renderSiteFooter();
 
-const yearElement = document.getElementById('currentYear');
+const yearElement = document.getElementById('drgFooterCurrentYear');
 if (yearElement) {
   yearElement.textContent = new Date().getFullYear();
 }
