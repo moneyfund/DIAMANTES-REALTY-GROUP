@@ -235,6 +235,152 @@ if (yearElement) {
   yearElement.textContent = new Date().getFullYear();
 }
 
+function initializeWhatsappFloat() {
+  let whatsappFloat = document.getElementById('whatsapp-float');
+
+  if (!whatsappFloat) {
+    whatsappFloat = document.createElement('div');
+    whatsappFloat.id = 'whatsapp-float';
+    whatsappFloat.innerHTML = `
+      <a href="https://wa.me/50577265009" target="_blank" rel="noopener noreferrer" aria-label="Abrir chat de WhatsApp" title="Contactar por WhatsApp">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.04 2a9.93 9.93 0 0 0-8.6 14.9L2 22l5.27-1.38A9.97 9.97 0 0 0 12.04 22C17.53 22 22 17.54 22 12.05 22 6.47 17.54 2 12.04 2Zm0 18.26c-1.47 0-2.9-.4-4.15-1.15l-.3-.17-3.12.82.84-3.03-.2-.31a8.2 8.2 0 1 1 6.93 3.84Zm4.5-6.18c-.25-.12-1.47-.72-1.69-.8-.23-.08-.4-.12-.56.12-.16.24-.64.8-.79.96-.14.16-.3.18-.56.06-.25-.12-1.08-.4-2.06-1.27-.76-.67-1.28-1.5-1.43-1.75-.15-.24-.02-.37.11-.49.12-.12.26-.3.39-.45.13-.16.18-.27.27-.45.09-.18.05-.33-.02-.46-.07-.12-.56-1.35-.77-1.85-.2-.47-.4-.4-.56-.4h-.48c-.16 0-.42.06-.64.3-.22.24-.84.82-.84 2s.86 2.31.98 2.47c.12.16 1.68 2.56 4.07 3.59.57.25 1.02.4 1.37.52.58.19 1.11.16 1.53.1.46-.07 1.47-.6 1.68-1.17.21-.56.21-1.04.14-1.16-.07-.11-.23-.18-.48-.3Z"/></svg>
+      </a>`;
+    document.body.appendChild(whatsappFloat);
+  }
+
+  if (whatsappFloat.dataset.movementInitialized === 'true') return;
+  whatsappFloat.dataset.movementInitialized = 'true';
+  whatsappFloat.setAttribute('role', 'complementary');
+  whatsappFloat.setAttribute('aria-label', 'Contacto por WhatsApp');
+
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const safePadding = 24;
+  const initialDelay = 1500;
+  let movementTimer = null;
+  let resizeTimer = null;
+  let interactionPaused = false;
+
+  // Valores originales recuperados de Git: recorrido de 12–20 s y pausa de 2–4 s.
+  const getRandomMoveDuration = () => Math.floor(Math.random() * 8000) + 12000;
+  const getPauseBetweenMoves = () => Math.floor(Math.random() * 2000) + 2000;
+  const getRandomPosition = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+  const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+  const getViewportBounds = () => {
+    const header = document.querySelector('header, .site-header, .navbar');
+    const headerBottom = header ? Math.max(0, header.getBoundingClientRect().bottom) : 0;
+    const minX = safePadding;
+    const viewportMaxY = Math.max(window.innerHeight - whatsappFloat.offsetHeight - safePadding, safePadding);
+    const minY = Math.min(Math.max(safePadding, headerBottom + 12), viewportMaxY);
+    return {
+      minX,
+      minY,
+      maxX: Math.max(window.innerWidth - whatsappFloat.offsetWidth - safePadding, minX),
+      maxY: viewportMaxY,
+    };
+  };
+
+  const overlapsImportantControl = (x, y) => {
+    const bubbleRect = {
+      left: x - 10,
+      top: y - 10,
+      right: x + whatsappFloat.offsetWidth + 10,
+      bottom: y + whatsappFloat.offsetHeight + 10,
+    };
+    const selectors = 'dialog[open], [role="dialog"], .modal.show, .leaflet-control-container, .mapboxgl-control-container, .cookie-banner, form :focus, .drg-site-footer';
+    return Array.from(document.querySelectorAll(selectors)).some((element) => {
+      const rect = element.getBoundingClientRect();
+      if (!rect.width || !rect.height || rect.bottom <= 0 || rect.top >= window.innerHeight) return false;
+      return bubbleRect.left < rect.right && bubbleRect.right > rect.left
+        && bubbleRect.top < rect.bottom && bubbleRect.bottom > rect.top;
+    });
+  };
+
+  const choosePosition = () => {
+    const bounds = getViewportBounds();
+    let position = { x: bounds.maxX, y: bounds.maxY };
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      const candidate = {
+        x: getRandomPosition(bounds.minX, bounds.maxX),
+        y: getRandomPosition(bounds.minY, bounds.maxY),
+      };
+      position = candidate;
+      if (!overlapsImportantControl(candidate.x, candidate.y)) break;
+    }
+    return position;
+  };
+
+  const keepInViewport = () => {
+    const bounds = getViewportBounds();
+    const currentX = parseFloat(whatsappFloat.style.left);
+    const currentY = parseFloat(whatsappFloat.style.top);
+    whatsappFloat.style.left = `${clamp(Number.isFinite(currentX) ? currentX : bounds.maxX, bounds.minX, bounds.maxX)}px`;
+    whatsappFloat.style.top = `${clamp(Number.isFinite(currentY) ? currentY : bounds.maxY, bounds.minY, bounds.maxY)}px`;
+  };
+
+  const scheduleMove = (delay) => {
+    window.clearTimeout(movementTimer);
+    if (interactionPaused || reducedMotion.matches) return;
+    movementTimer = window.setTimeout(runMovement, delay);
+  };
+
+  const runMovement = () => {
+    if (interactionPaused || reducedMotion.matches) return;
+    const { x, y } = choosePosition();
+    const duration = getRandomMoveDuration();
+    whatsappFloat.style.setProperty('--whatsapp-move-duration', `${duration}ms`);
+    whatsappFloat.style.left = `${x}px`;
+    whatsappFloat.style.top = `${y}px`;
+    scheduleMove(duration + getPauseBetweenMoves());
+  };
+
+  const pauseMovement = () => {
+    interactionPaused = true;
+    window.clearTimeout(movementTimer);
+  };
+  const resumeMovement = () => {
+    interactionPaused = false;
+    scheduleMove(getPauseBetweenMoves());
+  };
+  const handleMotionPreference = () => {
+    whatsappFloat.classList.toggle('is-reduced-motion', reducedMotion.matches);
+    if (reducedMotion.matches) {
+      window.clearTimeout(movementTimer);
+      keepInViewport();
+    } else {
+      scheduleMove(initialDelay);
+    }
+  };
+  const handleResize = () => {
+    window.clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(keepInViewport, 120);
+  };
+  const cleanup = () => {
+    window.clearTimeout(movementTimer);
+    window.clearTimeout(resizeTimer);
+    window.removeEventListener('resize', handleResize);
+    window.removeEventListener('orientationchange', handleResize);
+    reducedMotion.removeEventListener('change', handleMotionPreference);
+  };
+
+  whatsappFloat.addEventListener('pointerenter', pauseMovement);
+  whatsappFloat.addEventListener('pointerleave', resumeMovement);
+  whatsappFloat.addEventListener('focusin', pauseMovement);
+  whatsappFloat.addEventListener('focusout', resumeMovement);
+  whatsappFloat.addEventListener('pointerdown', pauseMovement);
+  whatsappFloat.addEventListener('pointerup', resumeMovement);
+  whatsappFloat.addEventListener('pointercancel', resumeMovement);
+  window.addEventListener('resize', handleResize, { passive: true });
+  window.addEventListener('orientationchange', handleResize, { passive: true });
+  window.addEventListener('pagehide', cleanup, { once: true });
+  reducedMotion.addEventListener('change', handleMotionPreference);
+
+  keepInViewport();
+  handleMotionPreference();
+}
+
+initializeWhatsappFloat();
+
 
 function initializeHeroSlider() {
   const slides = Array.from(document.querySelectorAll('.hero-slide'));

@@ -511,9 +511,10 @@ section h2,
   height: 60px;
   left: calc(100vw - 86px);
   top: calc(100vh - 86px);
-  z-index: 9999;
+  z-index: 900;
   --whatsapp-move-duration: 14000ms;
   transition: left var(--whatsapp-move-duration) linear, top var(--whatsapp-move-duration) linear, transform 0.3s ease;
+  will-change: left, top;
 }
 
 #whatsapp-float a {
@@ -526,14 +527,25 @@ section h2,
   box-shadow: 0 14px 30px rgba(37, 211, 102, 0.45);
 }
 
-#whatsapp-float img {
+#whatsapp-float img,
+#whatsapp-float svg {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  fill: #fff;
 }
 
-#whatsapp-float:hover {
+#whatsapp-float:is(:hover, :focus-within) {
   transform: scale(1.08);
+}
+
+#whatsapp-float a:focus-visible {
+  outline: 3px solid #d4af37;
+  outline-offset: 4px;
+}
+
+#whatsapp-float.is-reduced-motion {
+  transition: transform 0.3s ease;
 }
 
 .section-dark {
