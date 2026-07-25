@@ -40,6 +40,10 @@
       "destination": "/nosotros.html"
     },
     {
+      "source": "/educacion",
+      "destination": "/educacion.html"
+    },
+    {
       "source": "/quieres-vender",
       "destination": "/quieres-vender.html"
     },
