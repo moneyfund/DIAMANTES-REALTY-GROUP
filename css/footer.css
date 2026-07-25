@@ -255,16 +255,6 @@
   font: inherit !important;
 }
 
-#whatsapp-float {
-  right: max(18px, env(safe-area-inset-right));
-  bottom: max(18px, env(safe-area-inset-bottom));
-  left: auto;
-  top: auto;
-  width: 54px;
-  height: 54px;
-  transition: transform 180ms ease;
-}
-
 @media (max-width: 900px) {
   .drg-site-footer .drg-footer-corporate-inner {
     grid-template-columns: minmax(170px, 0.7fr) minmax(280px, 1.5fr);
@@ -333,10 +323,4 @@
     font-size: 11px !important;
   }
 
-  #whatsapp-float {
-    right: max(14px, env(safe-area-inset-right));
-    bottom: max(14px, env(safe-area-inset-bottom));
-    width: 50px;
-    height: 50px;
-  }
 }
