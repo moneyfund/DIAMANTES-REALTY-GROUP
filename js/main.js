@@ -185,31 +185,37 @@ const footerSocialLinks = [
 
 function renderSiteFooter() {
   const footerMarkup = `
-    <div class="container footer-content">
-      <div class="footer-brand-row">
-        <div>
-          <h3 class="footer-brand-title">${APP_NAME}</h3>
+    <section class="footer-corporate" aria-labelledby="footerBrandTitle">
+      <div class="container footer-corporate-inner">
+        <div class="footer-brand-mark">
+          <img class="footer-logo" src="assets/logo.png" alt="Logo de Diamantes Realty Group" width="60" height="60" />
+          <p class="footer-license">Lic. INVUR-UCBR-PN-N°. 0153-2026</p>
+        </div>
+        <div class="footer-brand-copy">
+          <h2 class="footer-brand-title" id="footerBrandTitle">${APP_NAME}</h2>
           <p class="footer-brand-description">Inmobiliaria corporativa en Nicaragua con enfoque en propiedades premium y asesoría integral.</p>
         </div>
         <a class="footer-cta" href="contacto.html">Agendar asesoría</a>
       </div>
+    </section>
 
-      <div class="footer-columns">
-        <div>
-          <h4>Legal</h4>
+    <section class="footer-information" aria-label="Información legal y contacto">
+      <div class="container footer-columns">
+        <nav class="footer-legal" aria-label="Enlaces legales">
+          <h2 class="footer-heading">Legal</h2>
           ${footerLinks.map((link) => `<a class="footer-legal-link footer-link" href="${link.href}">${link.label}</a>`).join('')}
-        </div>
-        <div>
-          <h4>Contacto</h4>
-          <a class="footer-contact" href="tel:+50577265009">+505 7726 5009</a>
-          <a class="footer-contact" href="mailto:diamantesrealtygroup@gmail.com">diamantesrealtygroup@gmail.com</a>
+        </nav>
+        <div class="footer-contact-column">
+          <h2 class="footer-heading">Contacto</h2>
+          <a class="footer-contact" href="tel:+50577265009" aria-label="Llamar al +505 7726 5009">+505 7726 5009</a>
+          <a class="footer-contact footer-email" href="mailto:diamantesrealtygroup@gmail.com">diamantesrealtygroup@gmail.com</a>
           <div class="footer-social" aria-label="Redes sociales de Diamantes Realty Group">
             ${footerSocialLinks.map((link) => `<a class="footer-social-link" href="${link.href}" ${link.href.startsWith('mailto:') ? '' : 'target="_blank" rel="noopener noreferrer"'} aria-label="${link.label}" title="${link.label}">${link.icon}</a>`).join('')}
           </div>
         </div>
       </div>
-      <div class="footer-copyright">© <span id="currentYear"></span> ${APP_NAME}</div>
-    </div>
+    </section>
+    <div class="footer-copyright">© <span id="currentYear">2026</span> ${APP_NAME}. Todos los derechos reservados.</div>
   `;
 
   let footer = document.querySelector('.site-footer');
@@ -440,77 +446,6 @@ if (contactForm) {
     message.textContent = 'Gracias por tu consulta. Nuestro equipo te contactará en breve.';
     contactForm.reset();
   });
-}
-
-const whatsappFloat = document.getElementById('whatsapp-float');
-
-function getRandomMoveDuration() {
-  return Math.floor(Math.random() * 8000) + 12000;
-}
-
-function getPauseBetweenMoves() {
-  return Math.floor(Math.random() * 2000) + 2000;
-}
-
-function getViewportBounds(element, padding = 24) {
-  const maxX = Math.max(window.innerWidth - element.offsetWidth - padding, padding);
-  const maxY = Math.max(window.innerHeight - element.offsetHeight - padding, padding);
-
-  return {
-    minX: padding,
-    minY: padding,
-    maxX,
-    maxY,
-  };
-}
-
-function getRandomPosition(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
-}
-
-function moveWhatsappButton() {
-  if (!whatsappFloat) return;
-
-  const { minX, minY, maxX, maxY } = getViewportBounds(whatsappFloat);
-
-  const nextX = getRandomPosition(minX, maxX);
-  const nextY = getRandomPosition(minY, maxY);
-  const duration = getRandomMoveDuration();
-
-  whatsappFloat.style.setProperty('--whatsapp-move-duration', `${duration}ms`);
-  whatsappFloat.style.left = `${nextX}px`;
-  whatsappFloat.style.top = `${nextY}px`;
-
-  return duration;
-}
-
-function keepWhatsappInViewport() {
-  if (!whatsappFloat) return;
-
-  const { minX, minY, maxX, maxY } = getViewportBounds(whatsappFloat);
-  const currentX = parseFloat(whatsappFloat.style.left) || maxX;
-  const currentY = parseFloat(whatsappFloat.style.top) || maxY;
-
-  whatsappFloat.style.left = `${clamp(currentX, minX, maxX)}px`;
-  whatsappFloat.style.top = `${clamp(currentY, minY, maxY)}px`;
-}
-
-if (whatsappFloat) {
-  keepWhatsappInViewport();
-
-  const runWhatsappAnimation = () => {
-    const duration = moveWhatsappButton();
-    const pause = getPauseBetweenMoves();
-    setTimeout(runWhatsappAnimation, duration + pause);
-  };
-
-  setTimeout(runWhatsappAnimation, 1500);
-
-  window.addEventListener('resize', keepWhatsappInViewport);
 }
 
 const globalAuthState = {
