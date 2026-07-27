@@ -8093,6 +8093,49 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--premium-global-heading) !important; 
 }
 
 /* Premium agent dashboard refresh */
+.agent-dashboard-page {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.agent-dashboard-page main,
+.agent-dashboard-page .agent-dashboard-hero,
+.agent-dashboard-page .agent-dashboard-hero__inner,
+.agent-dashboard-page .agent-dashboard-shell,
+.agent-dashboard-page .dashboard-layout,
+.agent-dashboard-page .dashboard-card,
+.agent-dashboard-page .dashboard-auth-box,
+.agent-dashboard-page .dashboard-form,
+.agent-dashboard-page .dashboard-form-grid,
+.agent-dashboard-page .dashboard-form-section,
+.agent-dashboard-page .agent-photo-uploader,
+.agent-dashboard-page .shared-dashboard-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* Fieldsets retain a browser min-content width unless it is explicitly reset.
+   That intrinsic width (most visibly from the property file controls) made the
+   one-column dashboard grid wider than narrow viewports. */
+.agent-dashboard-page .dashboard-form fieldset,
+.agent-dashboard-page .dashboard-layout > *,
+.agent-dashboard-page .dashboard-form-grid > *,
+.agent-dashboard-page .dashboard-form--profile > * {
+  min-width: 0;
+  min-inline-size: 0;
+  max-width: 100%;
+}
+
+.agent-dashboard-page .dashboard-form input,
+.agent-dashboard-page .dashboard-form select,
+.agent-dashboard-page .dashboard-form textarea,
+.agent-dashboard-page #propertyImageFiles {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .agent-dashboard-hero {
   position: relative;
   overflow: hidden;
@@ -8111,6 +8154,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--premium-global-heading) !important; 
   height: 360px;
   border: 1px solid rgba(203, 164, 82, 0.35);
   border-radius: 50%;
+  pointer-events: none;
 }
 
 .agent-dashboard-hero__inner {
@@ -8129,6 +8173,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--premium-global-heading) !important; 
   font-size: clamp(2.4rem, 6vw, 4.8rem);
   line-height: 0.98;
   color: #fff;
+  overflow-wrap: anywhere;
 }
 
 .agent-dashboard-hero p:not(.dashboard-eyebrow) {
@@ -8422,17 +8467,46 @@ body.dark-mode .dashboard-form textarea {
   .dashboard-layout,
   .dashboard-form-grid,
   .dashboard-form--profile {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .form-span-2 { grid-column: auto; }
   .dashboard-property-editor { grid-row: auto; }
 }
 
 @media (max-width: 640px) {
-  .agent-dashboard-hero { padding: 2.5rem 0; }
-  .dashboard-card,
-  .dashboard-auth-box { border-radius: 20px; padding: 1rem; }
-  .dashboard-sticky-actions { position: static; }
+  .agent-dashboard-page .agent-dashboard-hero { padding: 2.5rem 0; }
+  .agent-dashboard-page .agent-dashboard-hero .container,
+  .agent-dashboard-page .agent-dashboard-shell {
+    width: calc(100% - 1.5rem);
+  }
+  .agent-dashboard-page .dashboard-hero-stats {
+    width: 100%;
+    min-width: 0;
+  }
+  .agent-dashboard-page .dashboard-card,
+  .agent-dashboard-page .dashboard-auth-box {
+    border-radius: 18px;
+    padding: 1rem;
+  }
+  .agent-dashboard-page .dashboard-form-section {
+    padding: 0.85rem;
+    border-radius: 16px;
+  }
+  .agent-dashboard-page .dashboard-active-session-card,
+  .agent-dashboard-page .dashboard-user-chip {
+    width: 100%;
+    min-width: 0;
+  }
+  .agent-dashboard-page .dashboard-user-chip__details {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .agent-dashboard-page .dashboard-form-actions,
+  .agent-dashboard-page .dashboard-sticky-actions {
+    position: static;
+    width: 100%;
+    max-width: 100%;
+  }
 }
 
 
