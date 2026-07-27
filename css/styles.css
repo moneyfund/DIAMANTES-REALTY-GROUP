@@ -8094,12 +8094,13 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--premium-global-heading) !important; 
 
 /* Premium agent dashboard refresh */
 .agent-dashboard-page {
+  --agent-mobile-gutter: 16px;
   width: 100%;
   max-width: 100%;
   min-width: 0;
+  overflow-x: clip;
 }
 
-.agent-dashboard-page main,
 .agent-dashboard-page .agent-dashboard-hero,
 .agent-dashboard-page .agent-dashboard-hero__inner,
 .agent-dashboard-page .agent-dashboard-shell,
@@ -8138,7 +8139,8 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--premium-global-heading) !important; 
 
 .agent-dashboard-hero {
   position: relative;
-  overflow: hidden;
+  /* The circle is decorative and must never contribute to document overflow. */
+  overflow: clip;
   padding: clamp(3rem, 7vw, 6rem) 0;
   background:
     radial-gradient(circle at 15% 20%, rgba(203, 164, 82, 0.24), transparent 30%),
@@ -8398,6 +8400,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--premium-global-heading) !important; 
 .dashboard-user-chip {
   justify-content: flex-start;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .dashboard-user-chip img {
@@ -8477,7 +8480,11 @@ body.dark-mode .dashboard-form textarea {
   .agent-dashboard-page .agent-dashboard-hero { padding: 2.5rem 0; }
   .agent-dashboard-page .agent-dashboard-hero .container,
   .agent-dashboard-page .agent-dashboard-shell {
-    width: calc(100% - 1.5rem);
+    width: 100%;
+    max-width: 100%;
+    margin-inline: auto;
+    padding-inline: var(--agent-mobile-gutter);
+    box-sizing: border-box;
   }
   .agent-dashboard-page .dashboard-hero-stats {
     width: 100%;
@@ -8507,6 +8514,10 @@ body.dark-mode .dashboard-form textarea {
     width: 100%;
     max-width: 100%;
   }
+}
+
+@media (max-width: 340px) {
+  .agent-dashboard-page { --agent-mobile-gutter: 12px; }
 }
 
 
@@ -8788,7 +8799,9 @@ body.dark-mode .legal-upload-dropzone {
 .dashboard-user-chip__details {
   display: grid;
   gap: 0.15rem;
-  min-width: min(260px, 100%);
+  min-width: 0;
+  max-width: 100%;
+  flex: 1 1 180px;
 }
 
 .dashboard-user-chip__details strong {
@@ -8798,7 +8811,9 @@ body.dark-mode .legal-upload-dropzone {
 
 .dashboard-user-chip__details span {
   color: #5d6674;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .nav-auth-container {
