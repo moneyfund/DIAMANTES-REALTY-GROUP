@@ -8098,7 +8098,37 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--premium-global-heading) !important; 
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  overflow-x: clip;
+}
+
+/*
+ * The dashboard header has six full navigation labels. Between 721px (the
+ * former mobile-nav breakpoint) and their intrinsic desktop width, .site-nav
+ * was the element extending the document. Switch that exact route/header to
+ * the existing collapsible navigation before the labels cease to fit; do not
+ * mask the resulting document overflow on html/body/main.
+ */
+@media (max-width: 980px) {
+  .agent-dashboard-route .nav-wrapper {
+    min-height: 74px;
+    grid-template-columns: 1fr auto auto;
+  }
+
+  .agent-dashboard-route .menu-toggle { display: block; }
+  .agent-dashboard-route .theme-toggle { justify-self: end; }
+
+  .agent-dashboard-route .site-nav {
+    position: absolute;
+    top: 70px;
+    right: 4%;
+    display: none;
+    flex-direction: column;
+    min-width: 190px;
+    gap: 1rem;
+    padding: 0.8rem;
+    border-radius: 10px;
+  }
+
+  .agent-dashboard-route .site-nav.open { display: flex; }
 }
 
 .agent-dashboard-page .agent-dashboard-hero,
