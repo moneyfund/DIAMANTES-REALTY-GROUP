@@ -179,6 +179,105 @@ const PUBLICATION_STATUS_BADGE_CLASS = {
   archived: 'publication-archived'
 };
 
+const DASHBOARD_VIEWS = new Set(['inicio', 'perfil', 'subir-propiedad', 'listas', 'mis-propiedades']);
+
+function getDashboardViewFromHash() {
+  const requestedView = decodeURIComponent(window.location.hash.replace(/^#/, '')).trim().toLowerCase();
+  return DASHBOARD_VIEWS.has(requestedView) ? requestedView : 'inicio';
+}
+
+function closeDashboardMobileMenu() {
+  const app = document.getElementById('agentDashboard');
+  const toggle = document.getElementById('dashboardMobileToggle');
+  app?.classList.remove('is-menu-open');
+  toggle?.setAttribute('aria-expanded', 'false');
+  toggle?.setAttribute('aria-label', 'Abrir menú del dashboard');
+}
+
+function showDashboardView(view = 'inicio', options = {}) {
+  const normalizedView = DASHBOARD_VIEWS.has(view) ? view : 'inicio';
+  const { updateHash = true, focus = false } = options;
+
+  document.querySelectorAll('[data-dashboard-view]').forEach((section) => {
+    const isActive = section.dataset.dashboardView === normalizedView;
+    section.classList.toggle('is-active', isActive);
+    section.hidden = !isActive;
+    section.setAttribute('aria-hidden', String(!isActive));
+    if (isActive && focus) section.focus({ preventScroll: true });
+  });
+
+  document.querySelectorAll('.dashboard-nav-link[data-dashboard-target]').forEach((button) => {
+    const isActive = button.dataset.dashboardTarget === normalizedView;
+    button.classList.toggle('is-active', isActive);
+    if (isActive) button.setAttribute('aria-current', 'page');
+    else button.removeAttribute('aria-current');
+  });
+
+  if (updateHash && window.location.hash !== `#${normalizedView}`) {
+    window.history.pushState(null, '', `#${normalizedView}`);
+  }
+  closeDashboardMobileMenu();
+
+  if (normalizedView === 'subir-propiedad' && state.map) {
+    window.setTimeout(() => state.map?.invalidateSize?.(), 230);
+  }
+}
+
+window.showDashboardView = showDashboardView;
+
+function updateDashboardIdentity() {
+  const name = state.agentProfile?.name || state.user?.displayName || 'Agente DRG';
+  const email = state.user?.email || state.agentProfile?.email || 'Correo no disponible';
+  const photo = getAgentPhoto(state.agentProfile, state.user);
+  ['dashboardSidebarName', 'dashboardHomeName'].forEach((id) => {
+    const node = document.getElementById(id);
+    if (node) node.textContent = name;
+  });
+  ['dashboardSidebarEmail', 'dashboardHomeEmail'].forEach((id) => {
+    const node = document.getElementById(id);
+    if (node) node.textContent = email;
+  });
+  ['dashboardSidebarPhoto', 'dashboardHomePhoto'].forEach((id) => {
+    const image = document.getElementById(id);
+    if (image) image.src = photo;
+  });
+  const profileStat = document.getElementById('dashboardStatProfile');
+  if (profileStat) profileStat.textContent = state.agentProfile?.name && state.agentProfile?.email ? 'Completo' : 'Pendiente';
+}
+
+function updateDashboardPropertyStats(properties = []) {
+  const total = document.getElementById('dashboardStatProperties');
+  const available = document.getElementById('dashboardStatAvailable');
+  if (total) total.textContent = String(properties.length);
+  if (available) available.textContent = String(properties.filter((property) => String(property.status || 'available').toLowerCase() === 'available').length);
+}
+
+function updateDashboardListStats(items = []) {
+  const lists = document.getElementById('dashboardStatLists');
+  if (lists) lists.textContent = String(items.length);
+}
+
+function bindDashboardNavigation() {
+  const app = document.getElementById('agentDashboard');
+  const toggle = document.getElementById('dashboardMobileToggle');
+
+  document.querySelectorAll('[data-dashboard-target]').forEach((control) => {
+    control.addEventListener('click', () => showDashboardView(control.dataset.dashboardTarget, { focus: true }));
+  });
+  toggle?.addEventListener('click', () => {
+    const isOpen = app?.classList.toggle('is-menu-open');
+    toggle.setAttribute('aria-expanded', String(Boolean(isOpen)));
+    toggle.setAttribute('aria-label', isOpen ? 'Cerrar menú del dashboard' : 'Abrir menú del dashboard');
+  });
+  document.getElementById('dashboardSidebarBackdrop')?.addEventListener('click', closeDashboardMobileMenu);
+  document.querySelectorAll('[data-dashboard-logout]').forEach((button) => button.addEventListener('click', () => signOut(auth)));
+  window.addEventListener('hashchange', () => showDashboardView(getDashboardViewFromHash(), { updateHash: false }));
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeDashboardMobileMenu();
+  });
+  showDashboardView(getDashboardViewFromHash());
+}
+
 function getPublicationStatus(property = {}) {
   if (property.publicationStatus) return String(property.publicationStatus).toLowerCase();
   if (property.publicationStatus === undefined && property.publicVisible === undefined) return 'approved';
@@ -1428,6 +1527,7 @@ async function saveProfile(event) {
     await setDoc(doc(db, 'agents', profileDocId), payload, { merge: true });
     state.agentProfileId = profileDocId;
     state.agentProfile = { ...(state.agentProfile || {}), ...payload };
+    updateDashboardIdentity();
 
     const shouldDeletePrevious = (state.profilePhotoFile || state.removeProfilePhoto) && previousPhoto && previousPhoto !== fallbackPhoto && previousPhoto !== payload.photo;
     clearProfilePhotoSelection(false);
@@ -1679,6 +1779,7 @@ function fillAgentProfile(agentProfile = {}, user = state.user) {
   document.getElementById('agentFacebook').value = normalizedProfile.facebook;
   document.getElementById('agentTiktok').value = normalizedProfile.tiktok;
   document.getElementById('agentWhatsapp').value = normalizedProfile.whatsapp;
+  updateDashboardIdentity();
 }
 
 const loadProfile = loadAgentProfile;
@@ -1713,6 +1814,8 @@ function renderOwnProperties(properties = []) {
   const card = document.getElementById('agentPropertiesCard');
   if (!list || !card) return;
 
+  updateDashboardPropertyStats(properties);
+
   card.classList.remove('hidden');
   list.innerHTML = properties.length
     ? properties.map(propertyCard).join('')
@@ -1721,7 +1824,10 @@ function renderOwnProperties(properties = []) {
   list.querySelectorAll('[data-edit-property]').forEach((button) => {
     button.addEventListener('click', () => {
       const selected = properties.find((property) => property.id === button.dataset.editProperty);
-      if (selected) fillPropertyForm(selected);
+      if (selected) {
+        showDashboardView('subir-propiedad', { focus: true });
+        fillPropertyForm(selected);
+      }
     });
   });
 
@@ -2145,6 +2251,8 @@ function renderSharedHistory(items = []) {
   const container = document.getElementById('sharedListsHistory');
   if (!container) return;
 
+  updateDashboardListStats(items);
+
   if (!items.length) {
     container.innerHTML = '<p class="empty-state">Todavía no has creado listas compartidas.</p>';
     return;
@@ -2281,8 +2389,11 @@ function updateLayoutForAuth(isAuthorized) {
   const shouldShowPrivatePanel = Boolean(isAuthorized);
   const dashboard = document.getElementById('agentDashboard');
   if (dashboard) dashboard.classList.toggle('hidden', !shouldShowPrivatePanel);
+  document.getElementById('agentAuthBox')?.classList.toggle('has-active-session', shouldShowPrivatePanel);
   document.getElementById('agentPropertiesCard')?.classList.toggle('hidden', !shouldShowPrivatePanel);
   document.getElementById('sharedListsCard')?.classList.toggle('hidden', !shouldShowPrivatePanel);
+  if (shouldShowPrivatePanel) showDashboardView(getDashboardViewFromHash(), { updateHash: false });
+  else closeDashboardMobileMenu();
 }
 
 
@@ -2317,6 +2428,7 @@ function bindAuthControls() {
 
     state.user = user;
     updateLayoutForAuth(true);
+    updateDashboardIdentity();
     console.log('[AgentDashboard] Usuario autenticado:', Boolean(user));
     console.log('[AgentDashboard] Email del usuario:', user.email || '');
     debugAgentDashboard('Usuario autenticado.', { uid: user.uid, email: user.email, displayName: user.displayName });
@@ -2427,6 +2539,7 @@ function init() {
   document.getElementById('agentProfileForm')?.addEventListener('submit', saveProfile);
   document.getElementById('propertyForm')?.addEventListener('submit', saveProperty);
   document.getElementById('propertyFormReset')?.addEventListener('click', resetPropertyForm);
+  bindDashboardNavigation();
   bindAuthControls();
   bindImageControls();
   bindMapSearchControls();

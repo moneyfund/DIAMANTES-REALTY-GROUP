@@ -20,7 +20,7 @@
   <link rel="stylesheet" href="css/premium-home.css?v=20260613-public-fix" />
   <link rel="stylesheet" href="css/premium-theme.css?v=20260727-agent-dashboard-header" />
   <link rel="stylesheet" href="css/footer.css?v=20260725-whatsapp-movement" />
-  <link rel="stylesheet" href="css/agent-dashboard-emergency-fix.css?v=20260728-final" />
+  <link rel="stylesheet" href="css/agent-dashboard-emergency-fix.css?v=20260728-app-shell" />
 </head>
 <body class="agent-dashboard-route">
   <header class="site-header">
@@ -63,8 +63,56 @@
       <div id="agentAuthBox" class="dashboard-auth-box"></div>
       <p id="dashboardMessage" class="dashboard-message" aria-live="polite"></p>
 
-      <div id="agentDashboard" class="dashboard-layout hidden">
-        <article class="dashboard-card dashboard-profile-card">
+      <div id="agentDashboard" class="dashboard-app hidden">
+        <button type="button" id="dashboardMobileToggle" class="dashboard-mobile-toggle" aria-label="Abrir menú del dashboard" aria-expanded="false" aria-controls="dashboardSidebar"><span></span><span></span><span></span></button>
+        <button type="button" id="dashboardSidebarBackdrop" class="dashboard-sidebar-backdrop" aria-label="Cerrar menú" tabindex="-1"></button>
+        <aside id="dashboardSidebar" class="dashboard-sidebar" aria-label="Navegación del dashboard">
+          <a class="dashboard-sidebar-brand" href="index.html" aria-label="Diamantes Realty Group"><img src="assets/logo.png" alt="" /><span>DRG</span></a>
+          <div class="dashboard-sidebar-agent">
+            <img id="dashboardSidebarPhoto" src="assets/placeholder.svg" alt="Foto del agente" referrerpolicy="no-referrer" />
+            <div><strong id="dashboardSidebarName">Agente DRG</strong><span id="dashboardSidebarEmail">Correo no disponible</span></div>
+          </div>
+          <nav class="dashboard-sidebar-nav" aria-label="Módulos del agente">
+              <button type="button" class="dashboard-nav-link" data-dashboard-target="inicio"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 11.5 12 4l9 7.5v8a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-8Z"></path></svg><span>Inicio</span></button>
+              <button type="button" class="dashboard-nav-link" data-dashboard-target="perfil"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0H5Z"></path></svg><span>Mi perfil</span></button>
+              <button type="button" class="dashboard-nav-link" data-dashboard-target="subir-propiedad"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z"></path></svg><span>Subir propiedad</span></button>
+              <button type="button" class="dashboard-nav-link" data-dashboard-target="listas"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 4h14v3H5V4Zm0 6h14v3H5v-3Zm0 6h14v3H5v-3Z"></path></svg><span>Listas compartidas</span></button>
+              <button type="button" class="dashboard-nav-link" data-dashboard-target="mis-propiedades"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 21V3h11v5h5v13h-2v-2h-3v2H4Zm3-14h2V5H7v2Zm4 0h2V5h-2v2Zm-4 4h2V9H7v2Zm4 0h2V9h-2v2Zm-4 4h2v-2H7v2Zm4 0h2v-2h-2v2Z"></path></svg><span>Mis propiedades</span></button>
+          </nav>
+          <button type="button" class="dashboard-sidebar-logout" data-dashboard-logout><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 4H5v16h5v-2H7V6h3V4Zm5.6 3.6L14.2 9l2 2H9v2h7.2l-2 2 1.4 1.4L20 12l-4.4-4.4Z"></path></svg><span>Cerrar sesión</span></button>
+        </aside>
+        <main class="dashboard-content" id="dashboardContent">
+          <section class="dashboard-view" data-dashboard-view="inicio" aria-labelledby="dashboardWelcomeTitle" tabindex="-1">
+            <div class="dashboard-welcome-card">
+              <div class="dashboard-welcome-profile">
+                <img id="dashboardHomePhoto" src="assets/placeholder.svg" alt="Foto del agente" referrerpolicy="no-referrer" />
+                <div><span class="dashboard-session-pill"><i></i> Sesión activa</span><p class="dashboard-eyebrow">Bienvenido a tu espacio privado</p><h2 id="dashboardWelcomeTitle">Hola, <span id="dashboardHomeName">Agente DRG</span></h2><p id="dashboardHomeEmail">Correo no disponible</p></div>
+              </div>
+              <button type="button" class="button-secondary dashboard-home-logout" data-dashboard-logout><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 4H5v16h5v-2H7V6h3V4Zm5.6 3.6L14.2 9l2 2H9v2h7.2l-2 2 1.4 1.4L20 12l-4.4-4.4Z"></path></svg><span>Cerrar sesión</span></button>
+            </div>
+            <div class="dashboard-summary-grid" aria-label="Resumen de actividad">
+              <article><span>Mis propiedades</span><strong id="dashboardStatProperties">—</strong><small>Inventario personal</small></article>
+              <article><span>Disponibles</span><strong id="dashboardStatAvailable">—</strong><small>Estado comercial</small></article>
+              <article><span>Listas compartidas</span><strong id="dashboardStatLists">—</strong><small>Selecciones creadas</small></article>
+              <article><span>Perfil</span><strong id="dashboardStatProfile">Pendiente</strong><small>Información profesional</small></article>
+            </div>
+            <div class="dashboard-quick-section"><div><p class="dashboard-eyebrow">Accesos rápidos</p><h2>¿Qué deseas gestionar?</h2></div><div class="dashboard-quick-grid">
+                <button type="button" class="dashboard-quick-card" data-dashboard-target="perfil">
+                  <span class="dashboard-quick-icon"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0H5Z"></path></svg></span><span><strong>Mi perfil</strong><small>Abrir módulo</small></span><span class="dashboard-quick-arrow" aria-hidden="true">›</span>
+                </button>
+                <button type="button" class="dashboard-quick-card" data-dashboard-target="subir-propiedad">
+                  <span class="dashboard-quick-icon"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z"></path></svg></span><span><strong>Subir propiedad</strong><small>Abrir módulo</small></span><span class="dashboard-quick-arrow" aria-hidden="true">›</span>
+                </button>
+                <button type="button" class="dashboard-quick-card" data-dashboard-target="listas">
+                  <span class="dashboard-quick-icon"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 4h14v3H5V4Zm0 6h14v3H5v-3Zm0 6h14v3H5v-3Z"></path></svg></span><span><strong>Listas compartidas</strong><small>Abrir módulo</small></span><span class="dashboard-quick-arrow" aria-hidden="true">›</span>
+                </button>
+                <button type="button" class="dashboard-quick-card" data-dashboard-target="mis-propiedades">
+                  <span class="dashboard-quick-icon"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 21V3h11v5h5v13h-2v-2h-3v2H4Zm3-14h2V5H7v2Zm4 0h2V5h-2v2Zm-4 4h2V9H7v2Zm4 0h2V9h-2v2Zm-4 4h2v-2H7v2Zm4 0h2v-2h-2v2Z"></path></svg></span><span><strong>Mis propiedades</strong><small>Abrir módulo</small></span><span class="dashboard-quick-arrow" aria-hidden="true">›</span>
+                </button>
+            </div></div>
+          </section>
+          <section class="dashboard-view" data-dashboard-view="perfil" aria-label="Mi perfil" tabindex="-1">
+            <article class="dashboard-card dashboard-profile-card">
           <div class="dashboard-card-header">
             <p class="dashboard-eyebrow">Identidad profesional</p>
             <h2>Mi perfil</h2>
@@ -98,8 +146,9 @@
             <div class="dashboard-form-actions form-span-2"><button type="submit">Guardar perfil</button></div>
           </form>
         </article>
-
-        <article class="dashboard-card dashboard-property-editor">
+          </section>
+          <section class="dashboard-view" data-dashboard-view="subir-propiedad" aria-label="Agregar o editar propiedad" tabindex="-1">
+            <article class="dashboard-card dashboard-property-editor">
           <div class="dashboard-card-header">
             <p class="dashboard-eyebrow">Inventario premium</p>
             <h2>Agregar / editar propiedad</h2>
@@ -251,9 +300,9 @@
             </div>
           </form>
         </article>
-      </div>
-
-      <article id="sharedListsCard" class="dashboard-card shared-dashboard-card hidden">
+          </section>
+          <section class="dashboard-view" data-dashboard-view="listas" aria-label="Listas compartidas" tabindex="-1">
+            <article id="sharedListsCard" class="dashboard-card shared-dashboard-card hidden">
         <div class="dashboard-card-header">
           <p class="dashboard-eyebrow">Curaduría para clientes</p>
           <h2>Listas compartidas</h2>
@@ -350,8 +399,9 @@
         </div>
         <div id="sharedListsHistory" class="shared-history-list"></div>
       </article>
-
-      <article id="agentPropertiesCard" class="dashboard-card hidden">
+          </section>
+          <section class="dashboard-view" data-dashboard-view="mis-propiedades" aria-label="Mis propiedades" tabindex="-1">
+            <article id="agentPropertiesCard" class="dashboard-card hidden">
         <div class="dashboard-card-header">
           <p class="dashboard-eyebrow">Control de inventario</p>
           <h2>Mis propiedades</h2>
@@ -359,6 +409,9 @@
         </div>
         <div id="agentPropertiesList" class="properties-grid"></div>
       </article>
+          </section>
+        </main>
+      </div>
     </section>
   </main>
 
@@ -374,6 +427,6 @@
   <script src="js/property-utils.js"></script>
   <script src="js/public-property-filter.js"></script>
   <script src="js/property-fields-config.js?v=20260618-admin-dynamic"></script>
-  <script type="module" src="js/agent-dashboard.js?v=20260613-property-sheet-cards"></script>
+  <script type="module" src="js/agent-dashboard.js?v=20260728-app-shell"></script>
 </body>
 </html>
