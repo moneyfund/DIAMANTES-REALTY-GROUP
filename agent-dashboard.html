@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="css/premium-home.css?v=20260613-public-fix" />
   <link rel="stylesheet" href="css/premium-theme.css?v=20260727-agent-dashboard-header" />
   <link rel="stylesheet" href="css/footer.css?v=20260725-whatsapp-movement" />
+  <link rel="stylesheet" href="css/agent-dashboard-v2.css?v=20260728-rebuild" />
 </head>
 <body class="agent-dashboard-route">
   <header class="site-header">
@@ -42,15 +43,15 @@
     </div>
   </header>
 
-  <main class="agent-dashboard-page">
-    <section class="agent-dashboard-hero">
-      <div class="container agent-dashboard-hero__inner">
+  <main class="agent-v2-page">
+    <section class="agent-v2-hero">
+      <div class="agent-v2-container agent-v2-hero__inner">
         <div>
           <p class="dashboard-eyebrow">Panel privado · Diamantes Realty Group</p>
           <h1>Dashboard premium de agente</h1>
           <p>Administra tu perfil, inventario, multimedia y listas compartidas desde un espacio profesional conectado a Firebase + Firestore.</p>
         </div>
-        <div class="dashboard-hero-stats" aria-label="Resumen del panel">
+        <div class="agent-v2-hero__summary" aria-label="Resumen del panel">
           <span>Perfil</span>
           <strong>Propiedades</strong>
           <span>Listas privadas</span>
@@ -58,18 +59,26 @@
       </div>
     </section>
 
-    <section class="section container agent-dashboard-shell">
-      <div id="agentAuthBox" class="dashboard-auth-box"></div>
+    <nav class="agent-v2-subnav" aria-label="Secciones del panel">
+      <div class="agent-v2-container agent-v2-subnav__inner">
+        <a href="#agentProfileForm">Perfil</a>
+        <a href="#propertyForm">Propiedades</a>
+        <a href="#sharedListsCard">Listas privadas</a>
+      </div>
+    </nav>
+
+    <section class="agent-v2-container agent-v2-content">
+      <div id="agentAuthBox" class="agent-v2-card agent-v2-session"></div>
       <p id="dashboardMessage" class="dashboard-message" aria-live="polite"></p>
 
-      <div id="agentDashboard" class="dashboard-layout hidden">
-        <article class="dashboard-card dashboard-profile-card">
+      <div id="agentDashboard" class="agent-v2-stack hidden">
+        <article class="agent-v2-card agent-v2-section">
           <div class="dashboard-card-header">
             <p class="dashboard-eyebrow">Identidad profesional</p>
             <h2>Mi perfil</h2>
             <p>Datos visibles para clientes en fichas públicas, listas y enlaces compartidos.</p>
           </div>
-          <form id="agentProfileForm" class="dashboard-form dashboard-form--profile">
+          <form id="agentProfileForm" class="agent-v2-form agent-v2-grid dashboard-form dashboard-form--profile">
             <label>Nombre<input type="text" id="agentName" placeholder="Nombre del agente" required /></label>
             <div class="agent-photo-uploader form-span-2" id="agentPhotoUploader">
               <div class="agent-photo-uploader__header">
@@ -98,18 +107,18 @@
           </form>
         </article>
 
-        <article class="dashboard-card dashboard-property-editor">
+        <article class="agent-v2-card agent-v2-section">
           <div class="dashboard-card-header">
             <p class="dashboard-eyebrow">Inventario premium</p>
             <h2>Agregar / editar propiedad</h2>
             <p>Elige el tipo de propiedad para mostrar solamente los campos que corresponden.</p>
           </div>
-          <form id="propertyForm" class="dashboard-form property-editor-form">
+          <form id="propertyForm" class="agent-v2-form dashboard-form property-editor-form">
             <input type="hidden" id="propertyDocId" />
 
-            <fieldset class="dashboard-form-section">
+            <fieldset class="agent-v2-form-section dashboard-form-section">
               <legend><span>01</span> Información general</legend>
-              <div class="dashboard-form-grid">
+              <div class="agent-v2-grid dashboard-form-grid">
                 <label class="form-span-2">Título<input type="text" id="propertyTitle" placeholder="Ej: Casa moderna en Carretera Sur" required /></label>
                 <label>Precio USD<input type="number" id="propertyPrice" placeholder="Precio (USD)" min="1" step="0.01" required /></label>
                 <label>Tipo de operación<select id="operacion-propiedad" required>
@@ -170,18 +179,18 @@
               </div>
             </fieldset>
 
-            <fieldset class="dashboard-form-section">
+            <fieldset class="agent-v2-form-section dashboard-form-section">
               <legend><span>02</span> Características de la propiedad</legend>
               <p id="dynamicFieldsHint" class="dashboard-helper-text">Selecciona un tipo de propiedad para cargar sus características.</p>
-              <div id="dynamic-property-fields" class="dashboard-form-grid dynamic-property-fields"></div>
+              <div id="dynamic-property-fields" class="agent-v2-grid dashboard-form-grid dynamic-property-fields"></div>
               <p id="propertyPricePerAreaPreview" class="dashboard-helper-text">Precio por área no disponible</p>
             </fieldset>
 
-            <fieldset class="dashboard-form-section">
+            <fieldset class="agent-v2-form-section agent-v2-media dashboard-form-section">
               <legend><span>03</span> Multimedia</legend>
               <fieldset class="property-video-fieldset">
                 <legend>Video de la propiedad</legend>
-                <div class="dashboard-form-grid">
+                <div class="agent-v2-grid dashboard-form-grid">
                   <label>Plataforma<select id="propertyVideoType">
                     <option value="">Seleccionar plataforma (opcional)</option>
                     <option value="youtube">YouTube</option>
@@ -205,7 +214,7 @@
                 <div id="propertyImagesPreview" class="image-preview-grid"></div>
               </div>
 
-              <section class="legal-document-card" aria-labelledby="legalDocumentTitle">
+              <section class="agent-v2-section agent-v2-documents legal-document-card" aria-labelledby="legalDocumentTitle">
                 <div class="legal-document-heading">
                   <span class="legal-document-icon" aria-hidden="true">📄</span>
                   <div>
@@ -224,7 +233,7 @@
               </section>
             </fieldset>
 
-            <fieldset class="dashboard-form-section">
+            <fieldset class="agent-v2-form-section agent-v2-map dashboard-form-section">
               <legend><span>04</span> Ubicación en mapa</legend>
               <input type="hidden" id="propertyLat" />
               <input type="hidden" id="propertyLng" />
@@ -252,14 +261,14 @@
         </article>
       </div>
 
-      <article id="sharedListsCard" class="dashboard-card shared-dashboard-card hidden">
+      <article id="sharedListsCard" class="agent-v2-card agent-v2-section hidden">
         <div class="dashboard-card-header">
           <p class="dashboard-eyebrow">Curaduría para clientes</p>
           <h2>Listas compartidas</h2>
           <p>Selecciona propiedades disponibles, crea una lista privada y comparte un enlace único con tu cliente.</p>
         </div>
-        <form id="sharedListForm" class="dashboard-form shared-list-form">
-          <div class="dashboard-form-grid">
+        <form id="sharedListForm" class="agent-v2-form dashboard-form shared-list-form">
+          <div class="agent-v2-grid dashboard-form-grid">
             <label>Título de la lista<input type="text" id="sharedListTitle" placeholder="Ej: Opciones para familia Martínez" required /></label>
             <label>Cliente<input type="text" id="sharedListClientName" placeholder="Nombre del cliente (opcional)" /></label>
             <label class="form-span-2">Notas internas<textarea id="sharedListNotes" rows="3" placeholder="Notas internas (opcional)"></textarea></label>
@@ -350,7 +359,7 @@
         <div id="sharedListsHistory" class="shared-history-list"></div>
       </article>
 
-      <article id="agentPropertiesCard" class="dashboard-card hidden">
+      <article id="agentPropertiesCard" class="agent-v2-card agent-v2-section hidden">
         <div class="dashboard-card-header">
           <p class="dashboard-eyebrow">Control de inventario</p>
           <h2>Mis propiedades</h2>
