@@ -8107,7 +8107,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--premium-global-heading) !important; 
  * the existing collapsible navigation before the labels cease to fit; do not
  * mask the resulting document overflow on html/body/main.
  */
-@media (max-width: 980px) {
+@media (min-width: 721px) and (max-width: 980px) {
   .agent-dashboard-route .nav-wrapper {
     min-height: 74px;
     grid-template-columns: 1fr auto auto;
