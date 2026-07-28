@@ -837,10 +837,21 @@ function buildShareText(property = {}) {
   return `Mira esta propiedad en Diamantes Realty Group: ${title}`;
 }
 
+function getCurrentPropertyUrl() {
+  if (typeof window === 'undefined' || !window.location?.href) return '';
+  return window.location.href;
+}
+
+function buildFacebookShareUrl(propertyUrl = '') {
+  if (!propertyUrl) return '';
+  return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(propertyUrl)}`;
+}
+
 function buildPropertyShareMarkup(property = {}) {
-  const currentUrl = window.location.href;
+  const currentUrl = getCurrentPropertyUrl();
   const encodedUrl = encodeURIComponent(currentUrl);
   const encodedText = encodeURIComponent(buildShareText(property));
+  const facebookShareUrl = buildFacebookShareUrl(currentUrl);
 
   return `
     <div class="property-share-panel" aria-label="Opciones para compartir propiedad">
@@ -849,7 +860,7 @@ function buildPropertyShareMarkup(property = {}) {
       </button>
       <div class="property-share-options">
         <a href="https://wa.me/?text=${encodedText}%20${encodedUrl}" target="_blank" rel="noopener noreferrer">WhatsApp</a>
-        <a href="https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}" target="_blank" rel="noopener noreferrer">Facebook</a>
+        <a href="${facebookShareUrl}" target="_blank" rel="noopener noreferrer" aria-label="Compartir esta propiedad en Facebook" data-facebook-share>Facebook</a>
         <button type="button" data-copy-property-link>Copiar enlace</button>
       </div>
       <p class="property-share-feedback" data-share-feedback aria-live="polite"></p>
@@ -884,8 +895,26 @@ async function copyPropertyLink(feedbackElement) {
 
 function initPropertyShare(scope = document) {
   const shareButton = scope.querySelector('[data-share-property]');
+  const facebookLink = scope.querySelector('[data-facebook-share]');
   const copyButton = scope.querySelector('[data-copy-property-link]');
   const feedbackElement = scope.querySelector('[data-share-feedback]');
+
+  if (facebookLink) {
+    facebookLink.addEventListener('click', (event) => {
+      const propertyUrl = getCurrentPropertyUrl();
+      const facebookShareUrl = buildFacebookShareUrl(propertyUrl);
+
+      if (!facebookShareUrl) {
+        event.preventDefault();
+        if (feedbackElement) feedbackElement.textContent = 'No se pudo obtener el enlace de esta propiedad.';
+        return;
+      }
+
+      // Keep the href current until the instant of sharing. Letting the secure
+      // target="_blank" link perform the navigation also works with popup blockers.
+      facebookLink.href = facebookShareUrl;
+    });
+  }
 
   if (shareButton) {
     shareButton.addEventListener('click', async () => {
