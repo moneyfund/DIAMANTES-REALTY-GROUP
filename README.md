@@ -59,6 +59,22 @@ firebase deploy --only firestore:rules
 
 - Usa enlaces directos que terminen en `.jpg`, `.jpeg`, `.png` o `.webp`.
 - Evita URLs de Facebook (`facebook.com`, `fbcdn.net`), porque suelen bloquear la carga directa de imágenes.
+
+## Vista previa al compartir propiedades
+
+Vercel sirve `/share/property/:propertyId` mediante `api/property-share.js`. La función consulta
+el documento público directamente en la API REST de Firestore y devuelve Open Graph/Twitter Card
+en el HTML inicial antes de dirigir al visitante a `propiedad.html?id=:propertyId`.
+
+No necesita una credencial privada. Opcionalmente se pueden configurar estas variables en Vercel:
+
+- `FIREBASE_PROJECT_ID`: reemplaza `inmo-nicaragua` si se despliega contra otro proyecto.
+- `PUBLIC_SITE_ORIGIN`: fija el origen público canónico (por ejemplo,
+  `https://www.diamantesrealtygroup.com`) en vez de inferirlo de la solicitud.
+
+Firestore debe conservar lectura pública para las propiedades publicadas. La función vuelve a
+validar `publicationStatus` y `publicVisible`, prioriza `coverImage`, `mainImage`, `featuredImage`,
+`imageUrl` y luego las colecciones de imágenes; el logo del sitio se usa solo como respaldo.
 - El frontend mantiene fallback automático para imágenes inválidas usando `assets/placeholder.svg`.
 
 

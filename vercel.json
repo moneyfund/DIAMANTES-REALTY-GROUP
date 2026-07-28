@@ -72,6 +72,10 @@
       "destination": "/share-property.html"
     },
     {
+      "source": "/share/property/:propertyId",
+      "destination": "/api/property-share?id=:propertyId"
+    },
+    {
       "source": "/access-denied",
       "destination": "/access-denied.html"
     },
