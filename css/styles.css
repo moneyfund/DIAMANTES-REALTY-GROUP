@@ -8885,6 +8885,50 @@ body.dark-mode .legal-upload-dropzone {
   font-size: 0.76rem;
 }
 
+body.agent-dashboard-route .nav-auth-container,
+body.agent-dashboard-route .nav-auth-session {
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+body.agent-dashboard-route .site-header .nav-wrapper {
+  width: 100%;
+  max-width: 1200px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+body.agent-dashboard-route .site-header .site-nav {
+  min-width: 0;
+}
+
+@media (max-width: 1200px) {
+  body.agent-dashboard-route .menu-toggle {
+    display: flex;
+  }
+
+  body.agent-dashboard-route .site-nav {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 16px;
+    width: min(320px, calc(100vw - 32px));
+    max-width: calc(100vw - 32px);
+    flex-direction: column;
+  }
+
+  body.agent-dashboard-route .site-nav.open {
+    display: flex;
+  }
+}
+
+@media (max-width: 900px) {
+  body.agent-dashboard-route .site-header .nav-auth-container {
+    display: none !important;
+  }
+}
+
 @media (max-width: 760px) {
   .nav-auth-container,
   .nav-auth-session {
