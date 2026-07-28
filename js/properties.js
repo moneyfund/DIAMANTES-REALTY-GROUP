@@ -847,11 +847,17 @@ function buildFacebookShareUrl(propertyUrl = '') {
   return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(propertyUrl)}`;
 }
 
+function getPropertyOpenGraphUrl(property = {}) {
+  const propertyId = String(property.id || '').trim();
+  if (!propertyId || typeof window === 'undefined') return '';
+  return `${window.location.origin}/share/property/${encodeURIComponent(propertyId)}`;
+}
+
 function buildPropertyShareMarkup(property = {}) {
   const currentUrl = getCurrentPropertyUrl();
   const encodedUrl = encodeURIComponent(currentUrl);
   const encodedText = encodeURIComponent(buildShareText(property));
-  const facebookShareUrl = buildFacebookShareUrl(currentUrl);
+  const facebookShareUrl = buildFacebookShareUrl(getPropertyOpenGraphUrl(property));
 
   return `
     <div class="property-share-panel" aria-label="Opciones para compartir propiedad">
@@ -893,7 +899,7 @@ async function copyPropertyLink(feedbackElement) {
   }
 }
 
-function initPropertyShare(scope = document) {
+function initPropertyShare(scope = document, property = {}) {
   const shareButton = scope.querySelector('[data-share-property]');
   const facebookLink = scope.querySelector('[data-facebook-share]');
   const copyButton = scope.querySelector('[data-copy-property-link]');
@@ -901,7 +907,7 @@ function initPropertyShare(scope = document) {
 
   if (facebookLink) {
     facebookLink.addEventListener('click', (event) => {
-      const propertyUrl = getCurrentPropertyUrl();
+      const propertyUrl = getPropertyOpenGraphUrl(property);
       const facebookShareUrl = buildFacebookShareUrl(propertyUrl);
 
       if (!facebookShareUrl) {
