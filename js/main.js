@@ -236,6 +236,23 @@ if (yearElement) {
 }
 
 function initializeWhatsappFloat() {
+  const privatePageNames = new Set([
+    'agent-dashboard.html',
+    'admin.html',
+    'admin-login.html',
+    'access-denied.html'
+  ]);
+  const currentPage = window.location.pathname.split('/').filter(Boolean).pop() || 'index.html';
+  const isPrivateRoute = privatePageNames.has(currentPage.toLowerCase())
+    || /^\/(?:admin|agent-dashboard)(?:\/|$)/i.test(window.location.pathname)
+    || document.body.matches('[data-private-route], .agent-dashboard-route, .admin-route');
+
+  // Private pages opt out by route/body marker so the public component is never created there.
+  if (isPrivateRoute) {
+    document.getElementById('whatsapp-float')?.remove();
+    return;
+  }
+
   let whatsappFloat = document.getElementById('whatsapp-float');
 
   if (!whatsappFloat) {
