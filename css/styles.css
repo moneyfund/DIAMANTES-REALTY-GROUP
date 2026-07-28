@@ -8507,6 +8507,35 @@ body.dark-mode .dashboard-form textarea {
 }
 
 @media (max-width: 640px) {
+  /* Keep the private route's header on the same mobile geometry as the
+     public header. The generic .container width must not shrink and then add
+     its padding outside the available header width. */
+  .agent-dashboard-route .site-header .container.nav-wrapper {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin-inline: auto;
+    padding-inline: 16px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .agent-dashboard-route .site-header .menu-toggle {
+    flex: 0 0 auto;
+    margin: 0;
+    transform: none;
+  }
+
+  .agent-dashboard-route .site-header .site-nav {
+    right: 16px;
+    width: min(190px, calc(100vw - 32px));
+    min-width: 0;
+    max-width: calc(100vw - 32px);
+    box-sizing: border-box;
+  }
+
   .agent-dashboard-page .agent-dashboard-hero { padding: 2.5rem 0; }
   .agent-dashboard-page .agent-dashboard-hero .container,
   .agent-dashboard-page .agent-dashboard-shell {
