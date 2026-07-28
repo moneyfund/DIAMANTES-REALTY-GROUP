@@ -1,0 +1,192 @@
+name: One-time agent dashboard overflow fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/agent-dashboard-one-time-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch dashboard overflow and mobile navbar
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          html_path = Path('agent-dashboard.html')
+          html = html_path.read_text(encoding='utf-8')
+
+          html = html.replace(
+              '<html lang="es">',
+              '<html lang="es" class="agent-dashboard-document">',
+              1,
+          )
+
+          stylesheet = '  <link rel="stylesheet" href="css/agent-dashboard-emergency-fix.css?v=20260728-final" />\n'
+          if 'agent-dashboard-emergency-fix.css' not in html:
+              html = html.replace('</head>', stylesheet + '</head>', 1)
+
+          html_path.write_text(html, encoding='utf-8')
+
+          css = r'''/* Route-only emergency containment for /agent-dashboard. */
+          html.agent-dashboard-document,
+          html.agent-dashboard-document body.agent-dashboard-route {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            overflow-x: clip !important;
+          }
+
+          body.agent-dashboard-route {
+            position: relative;
+          }
+
+          body.agent-dashboard-route .site-header,
+          body.agent-dashboard-route .agent-dashboard-page,
+          body.agent-dashboard-route .agent-dashboard-hero,
+          body.agent-dashboard-route .agent-dashboard-shell,
+          body.agent-dashboard-route .dashboard-layout,
+          body.agent-dashboard-route .dashboard-card,
+          body.agent-dashboard-route .dashboard-form,
+          body.agent-dashboard-route .dashboard-form-section,
+          body.agent-dashboard-route .dashboard-form-grid,
+          body.agent-dashboard-route .dashboard-property-map,
+          body.agent-dashboard-route .drg-site-footer {
+            max-width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+          }
+
+          body.agent-dashboard-route .agent-dashboard-page {
+            overflow-x: clip !important;
+          }
+
+          body.agent-dashboard-route .agent-dashboard-hero {
+            overflow: hidden !important;
+          }
+
+          body.agent-dashboard-route .agent-dashboard-shell {
+            width: min(1120px, calc(100% - 32px)) !important;
+            margin-inline: auto !important;
+            padding-inline: 0 !important;
+          }
+
+          body.agent-dashboard-route .agent-dashboard-hero__inner {
+            width: min(1120px, calc(100% - 32px)) !important;
+            margin-inline: auto !important;
+            padding-inline: 0 !important;
+          }
+
+          body.agent-dashboard-route :is(input, select, textarea, button, fieldset, label) {
+            min-width: 0;
+            max-width: 100%;
+            box-sizing: border-box;
+          }
+
+          @media (max-width: 1200px) {
+            body.agent-dashboard-route .site-header .nav-wrapper {
+              display: flex !important;
+              align-items: center !important;
+              justify-content: space-between !important;
+              width: min(100% - 32px, 1120px) !important;
+              max-width: calc(100% - 32px) !important;
+              min-width: 0 !important;
+              margin-inline: auto !important;
+              padding-inline: 0 !important;
+              gap: 12px !important;
+            }
+
+            body.agent-dashboard-route .site-header .brand {
+              flex: 0 0 auto !important;
+              margin-right: auto !important;
+              min-width: 0 !important;
+            }
+
+            body.agent-dashboard-route .site-header .menu-toggle {
+              display: inline-flex !important;
+              flex: 0 0 52px !important;
+              width: 52px !important;
+              height: 52px !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              align-items: center !important;
+              justify-content: center !important;
+              transform: none !important;
+            }
+
+            body.agent-dashboard-route .site-header .theme-toggle {
+              display: none !important;
+            }
+
+            body.agent-dashboard-route .site-header .site-nav {
+              position: absolute !important;
+              top: calc(100% + 8px) !important;
+              left: 16px !important;
+              right: 16px !important;
+              width: auto !important;
+              min-width: 0 !important;
+              max-width: none !important;
+              box-sizing: border-box !important;
+            }
+
+            body.agent-dashboard-route .site-header .site-nav:not(.open) {
+              display: none !important;
+            }
+
+            body.agent-dashboard-route .site-header .site-nav.open {
+              display: flex !important;
+            }
+          }
+
+          @media (max-width: 640px) {
+            body.agent-dashboard-route .agent-dashboard-shell,
+            body.agent-dashboard-route .agent-dashboard-hero__inner {
+              width: calc(100% - 32px) !important;
+              max-width: calc(100% - 32px) !important;
+              margin-inline: auto !important;
+              padding-inline: 0 !important;
+            }
+
+            body.agent-dashboard-route .dashboard-layout,
+            body.agent-dashboard-route .dashboard-form-grid,
+            body.agent-dashboard-route .dashboard-form--profile {
+              grid-template-columns: minmax(0, 1fr) !important;
+            }
+
+            body.agent-dashboard-route .dashboard-card,
+            body.agent-dashboard-route .dashboard-auth-box {
+              width: 100% !important;
+              max-width: 100% !important;
+              margin-inline: 0 !important;
+            }
+          }
+
+          @media (max-width: 340px) {
+            body.agent-dashboard-route .site-header .nav-wrapper,
+            body.agent-dashboard-route .agent-dashboard-shell,
+            body.agent-dashboard-route .agent-dashboard-hero__inner {
+              width: calc(100% - 24px) !important;
+              max-width: calc(100% - 24px) !important;
+            }
+          }
+          '''
+          Path('css/agent-dashboard-emergency-fix.css').write_text(css, encoding='utf-8')
+          PY
+
+      - name: Commit final patch and remove one-time workflow
+        run: |
+          rm -f .github/workflows/agent-dashboard-one-time-fix.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add agent-dashboard.html css/agent-dashboard-emergency-fix.css .github/workflows/agent-dashboard-one-time-fix.yml
+          git commit -m "Fix agent dashboard horizontal overflow and mobile navbar"
+          git push
