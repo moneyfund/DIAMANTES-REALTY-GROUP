@@ -8138,8 +8138,11 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--premium-global-heading) !important; 
 
 .agent-dashboard-hero {
   position: relative;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   /* The circle is decorative and must never contribute to document overflow. */
-  overflow: clip;
+  overflow: hidden;
   padding: clamp(3rem, 7vw, 6rem) 0;
   background:
     radial-gradient(circle at 15% 20%, rgba(203, 164, 82, 0.24), transparent 30%),
@@ -8150,9 +8153,13 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--premium-global-heading) !important; 
 .agent-dashboard-hero::after {
   content: "";
   position: absolute;
-  inset: 12% -8% auto auto;
-  width: 360px;
-  height: 360px;
+  top: 12%;
+  right: clamp(16px, 4vw, 64px);
+  bottom: auto;
+  left: auto;
+  width: min(360px, calc(100% - 32px));
+  max-width: 100%;
+  aspect-ratio: 1;
   border: 1px solid rgba(203, 164, 82, 0.35);
   border-radius: 50%;
   pointer-events: none;
@@ -8165,6 +8172,11 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--premium-global-heading) !important; 
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 2rem;
   align-items: center;
+  width: 100%;
+  max-width: 1152px;
+  margin-inline: auto;
+  padding-inline: 16px;
+  box-sizing: border-box;
 }
 
 .agent-dashboard-hero h1 {
@@ -8193,9 +8205,14 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--premium-global-heading) !important; 
 }
 
 .dashboard-hero-stats {
+  position: relative;
   display: grid;
   gap: 0.35rem;
   min-width: 220px;
+  max-width: 100%;
+  right: auto;
+  left: auto;
+  transform: none;
   padding: 1.25rem;
   border: 1px solid rgba(203, 164, 82, 0.42);
   border-radius: 24px;
@@ -8486,8 +8503,10 @@ body.dark-mode .dashboard-form textarea {
     box-sizing: border-box;
   }
   .agent-dashboard-page .dashboard-hero-stats {
+    position: relative;
     width: 100%;
     min-width: 0;
+    margin-inline: auto;
   }
   .agent-dashboard-page .dashboard-card,
   .agent-dashboard-page .dashboard-auth-box {
