@@ -180,6 +180,8 @@ const PUBLICATION_STATUS_BADGE_CLASS = {
 };
 
 const DASHBOARD_VIEWS = new Set(['inicio', 'perfil', 'subir-propiedad', 'listas', 'mis-propiedades']);
+const MAX_HIGHLIGHTED_TAGS = 2;
+let propertyTagsNotificationTimer = null;
 
 function getDashboardViewFromHash() {
   const requestedView = decodeURIComponent(window.location.hash.replace(/^#/, '')).trim().toLowerCase();
@@ -477,13 +479,38 @@ function collectPropertyDetails() {
 }
 
 function getSelectedPropertyTags() {
-  return Array.from(document.querySelectorAll('input[name="propertyTags"]:checked')).map((input) => input.value);
+  return Array.from(document.querySelectorAll('input[name="propertyTags"]:checked'))
+    .slice(0, MAX_HIGHLIGHTED_TAGS)
+    .map((input) => input.value);
 }
 
 function setSelectedPropertyTags(tags = []) {
-  const selected = new Set(Array.isArray(tags) ? tags : []);
+  const selected = new Set((Array.isArray(tags) ? tags : []).slice(0, MAX_HIGHLIGHTED_TAGS));
   document.querySelectorAll('input[name="propertyTags"]').forEach((input) => {
     input.checked = selected.has(input.value);
+  });
+}
+
+function showPropertyTagsLimitNotification() {
+  const notification = document.getElementById('propertyTagsNotification');
+  if (!notification) return;
+  window.clearTimeout(propertyTagsNotificationTimer);
+  notification.textContent = 'Solo puedes seleccionar un máximo de dos etiquetas destacadas.';
+  notification.dataset.type = 'error';
+  notification.dataset.visible = 'true';
+  propertyTagsNotificationTimer = window.setTimeout(() => {
+    notification.dataset.visible = 'false';
+  }, 3200);
+}
+
+function bindPropertyTagsLimit() {
+  document.querySelectorAll('input[name="propertyTags"]').forEach((input) => {
+    input.addEventListener('change', () => {
+      const selected = document.querySelectorAll('input[name="propertyTags"]:checked');
+      if (selected.length <= MAX_HIGHLIGHTED_TAGS) return;
+      input.checked = false;
+      showPropertyTagsLimitNotification();
+    });
   });
 }
 
@@ -2548,6 +2575,7 @@ function init() {
   bindSharedListModule();
   bindImagePreviewActions();
   bindCalculatedFields();
+  bindPropertyTagsLimit();
   renderDynamicPropertyFields();
   renderImagePreview();
   renderLegalDocumentState();
