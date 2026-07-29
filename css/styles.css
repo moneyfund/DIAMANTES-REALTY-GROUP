@@ -10179,11 +10179,23 @@ html[data-theme="dark"] .property-feature-item em {
 }
 
 #agentPropertiesList .agent-property-card {
-  max-height: 560px;
+  max-height: none;
   min-height: 0;
   overflow: hidden;
   border-radius: 18px;
 }
+
+.contract-form-section small { font: 600 .72rem/1.2 Inter, sans-serif; color: #64748b; }
+.contract-date-fields { min-width: 0; }
+.contract-date-fields input { width: 100%; max-width: 100%; }
+.contract-indicator { --contract-color:#64748b; display:grid; grid-template-columns:22px minmax(0,1fr); gap:.55rem; padding:.62rem .7rem; margin:.25rem 0; border:1px solid color-mix(in srgb,var(--contract-color) 35%,transparent); border-radius:12px; background:color-mix(in srgb,var(--contract-color) 8%,#fff); color:#172033; overflow-wrap:anywhere; }
+.contract-indicator-icon { width:20px; height:20px; fill:var(--contract-color); }
+.contract-indicator strong,.contract-indicator span { display:block; line-height:1.25; }
+.contract-indicator strong { font-size:.82rem; color:#172033; }
+.contract-indicator span { margin-top:.08rem; font-size:.76rem; }
+.contract-indicator dl { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.25rem .5rem; margin:.35rem 0 0; font-size:.7rem; }
+.contract-indicator dl div { min-width:0; }.contract-indicator dt,.contract-indicator dd { display:inline; margin:0; }.contract-indicator dt { font-weight:700; margin-right:.2rem; }
+.contract-active { --contract-color:#24734a; }.contract-future { --contract-color:#356aa0; }.contract-soon { --contract-color:#9a6c00; }.contract-urgent { --contract-color:#b54d08; }.contract-today { --contract-color:#c1121f; }.contract-expired { --contract-color:#7f1d1d; }
 
 #agentPropertiesList .property-cover {
   width: 100%;
@@ -10265,6 +10277,7 @@ html[data-theme="dark"] .property-feature-item em {
   #agentPropertiesList .agent-property-card {
     max-height: none;
   }
+  .contract-date-fields,.contract-indicator dl { grid-template-columns:1fr; }
 }
 
 body::before {

@@ -135,6 +135,7 @@ const formatDualPrice = (usd) => propertyUtils.formatDualPrice ? propertyUtils.f
 const formatDualPriceMarkup = (usd) => propertyUtils.formatDualPriceMarkup ? propertyUtils.formatDualPriceMarkup(usd) : formatDualPrice(usd);
 const calculatePricePerArea = (priceUsd, areaValue) => propertyUtils.calculatePricePerArea ? propertyUtils.calculatePricePerArea(priceUsd, areaValue) : NaN;
 const formatPricePerArea = (value, unit) => propertyUtils.formatPricePerArea ? propertyUtils.formatPricePerArea(value, unit) : '';
+const contractUtils = window.inmoContractUtils || {};
 const NICARAGUA_MAP_CENTER = [12.8654, -85.2072];
 const NICARAGUA_MAP_ZOOM = 7;
 const MAP_SEARCH_MIN_LENGTH = 3;
@@ -1116,6 +1117,8 @@ function getPropertyPayload(user, profileName, images, coverImage, videoData) {
   const bathrooms = Number(details.bathrooms || 0);
   const tags = getSelectedPropertyTags();
   const responsibleAgent = document.getElementById('propertyAgentName')?.value.trim() || profileName;
+  const contractStartDate = document.getElementById('contractStartDate')?.value || '';
+  const contractEndDate = document.getElementById('contractEndDate')?.value || '';
 
   const payload = {
     title,
@@ -1165,6 +1168,8 @@ function getPropertyPayload(user, profileName, images, coverImage, videoData) {
     ownerId: user.uid,
     userId: user.uid,
     agentName: responsibleAgent || state.agentProfile?.name || user.displayName || '',
+    contractStartDate,
+    contractEndDate,
     updatedAt: serverTimestamp()
   };
 
@@ -1359,6 +1364,8 @@ function fillPropertyForm(property) {
   document.getElementById('operacion-propiedad').value = (property.operationType || property.tipoOperacion || property.operation || property.operacion || '').toLowerCase();
   document.getElementById('propertyStatus').value = (property.status || 'available').toLowerCase();
   document.getElementById('propertyAgentName').value = property.agentName || '';
+  document.getElementById('contractStartDate').value = property.contractStartDate || '';
+  document.getElementById('contractEndDate').value = property.contractEndDate || '';
   const details = { ...(property.propertyDetails || {}) };
   if (!details.bedrooms) details.bedrooms = property.bedrooms || property.habitaciones || '';
   if (!details.bathrooms) details.bathrooms = property.bathrooms || property.banos || '';
@@ -1418,6 +1425,7 @@ function propertyCard(property) {
         <p class="property-price-area">${formatPricePerArea(property.pricePerAreaUsd ?? calculatePricePerArea(property.priceUsd ?? property.price ?? property.precio, property.areaValue ?? property.area), property.areaUnit)}</p>
         <p class="property-status-tag">Estado comercial: ${statusLabel}</p>
         ${getPublicationBadgeMarkup(property)}
+        ${contractUtils.renderContractIndicator ? contractUtils.renderContractIndicator(property) : ''}
         ${getPublicationStatus(property) === 'rejected' && property.rejectionReason ? `<p class="rejection-reason"><strong>Motivo:</strong> ${escapeHtml(property.rejectionReason)}</p>` : ''}
         <div class="agent-actions">
           <button type="button" data-edit-property="${property.id}">Editar</button>
@@ -1605,6 +1613,9 @@ async function saveProperty(event) {
   const areaUnit = getAreaUnitFromDetails(details);
   const videoType = document.getElementById('propertyVideoType')?.value || '';
   const videoUrl = document.getElementById('propertyVideoUrl')?.value || '';
+  const contractValidation = contractUtils.validateContractDates
+    ? contractUtils.validateContractDates(document.getElementById('contractStartDate')?.value, document.getElementById('contractEndDate')?.value)
+    : { valid: true };
 
   try {
     state.isSavingProperty = true;
@@ -1617,6 +1628,10 @@ async function saveProperty(event) {
 
     if (!propertyOperation) {
       throw new Error('Selecciona el tipo de operación antes de guardar.');
+    }
+
+    if (!contractValidation.valid) {
+      throw new Error(contractValidation.message);
     }
 
 

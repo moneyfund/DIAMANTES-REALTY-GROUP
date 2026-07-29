@@ -118,6 +118,12 @@ button:hover { background: var(--accent-hover); transform: translateY(-1px); }
 .dynamic-property-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8rem; }
 .dynamic-property-fields .form-span-2 { grid-column: 1 / -1; }
 .button-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.7rem; }
+.contract-form-section { min-width:0; margin:.5rem 0; padding:1rem; border:1px solid var(--border); border-radius:12px; }
+.contract-form-section legend { padding:0 .4rem; color:var(--text); font-weight:800; }
+.contract-form-section legend small { color:var(--muted); font-size:.72rem; }
+.contract-date-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.8rem; }
+.contract-indicator { --contract-color:#64748b; display:grid; grid-template-columns:20px minmax(150px,1fr); gap:.45rem; min-width:230px; padding:.55rem; border:1px solid color-mix(in srgb,var(--contract-color) 35%,transparent); border-radius:10px; background:color-mix(in srgb,var(--contract-color) 8%,#fff); }
+.contract-indicator-icon { width:18px; fill:var(--contract-color); }.contract-indicator strong,.contract-indicator span { display:block; font-size:.75rem; }.contract-indicator dl { margin:.25rem 0 0; font-size:.67rem; }.contract-indicator dl div { display:flex; gap:.2rem; }.contract-indicator dd { margin:0; }.contract-active { --contract-color:#24734a; }.contract-future { --contract-color:#356aa0; }.contract-soon { --contract-color:#9a6c00; }.contract-urgent { --contract-color:#b54d08; }.contract-today { --contract-color:#c1121f; }.contract-expired { --contract-color:#7f1d1d; }
 
 .secondary {
   background: #302826;
@@ -221,6 +227,7 @@ button:hover { background: var(--accent-hover); transform: translateY(-1px); }
 @media (max-width: 760px) {
   .property-form,
   .button-row { grid-template-columns: 1fr; }
+  .contract-date-fields { grid-template-columns:1fr; }
 }
 
 
