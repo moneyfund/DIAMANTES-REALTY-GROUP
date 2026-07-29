@@ -80,7 +80,8 @@ const ALLOWED_AGENT_EMAILS = [
   "marccenarokarel@gmail.com",
   "caguadamuzmoreno@gmail.com",
   "agentenorvingarcia@gmail.com",
-  "valenzuela.ing120@gmail.com"
+  "valenzuela.ing120@gmail.com",
+  "nazarethbravo.realestate@gmail.com"
 ];
 
 const UNAUTHORIZED_AGENT_MESSAGE = 'No tienes autorización para acceder al panel privado de agentes. Contacta a la administración de Diamantes Realty Group.';
