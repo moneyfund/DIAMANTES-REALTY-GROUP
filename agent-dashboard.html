@@ -294,6 +294,15 @@
               <p id="propertyCoordinatesLabel" class="map-picker-coordinates">Selecciona una ubicación del mapa.</p>
             </fieldset>
 
+            <fieldset class="dashboard-form-section contract-form-section">
+              <legend><span>05</span> Control del contrato <small>Información privada</small></legend>
+              <p class="dashboard-helper-text">Estas fechas son internas y no se muestran en la web pública.</p>
+              <div class="dashboard-form-grid contract-date-fields">
+                <label for="contractStartDate">Fecha de emisión del contrato<input type="date" id="contractStartDate" name="contractStartDate" /></label>
+                <label for="contractEndDate">Fecha de vencimiento del contrato<input type="date" id="contractEndDate" name="contractEndDate" /></label>
+              </div>
+            </fieldset>
+
             <div class="dashboard-form-actions dashboard-sticky-actions">
               <a id="propertySheetPreviewLink" class="button-secondary hidden" href="#" target="_blank" rel="noopener">Generar ficha técnica</a>
               <button type="button" id="propertyFormReset" class="button-secondary">Limpiar formulario</button>
@@ -428,6 +437,7 @@
   <script src="js/property-utils.js"></script>
   <script src="js/public-property-filter.js"></script>
   <script src="js/property-fields-config.js?v=20260618-admin-dynamic"></script>
+  <script src="js/contract-utils.js?v=20260729-contracts"></script>
   <script type="module" src="js/agent-dashboard.js?v=20260728-tag-limit"></script>
 </body>
 </html>

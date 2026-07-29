@@ -39,6 +39,7 @@ const propertyFields = window.inmoPropertyFieldsConfig || {};
 const normalizePropertyType = (value = '') => propertyUtils.normalizePropertyType ? propertyUtils.normalizePropertyType(value) : String(value || '').trim().toLowerCase();
 const getPropertyTypeLabel = (value = '') => propertyUtils.getPropertyTypeLabel ? propertyUtils.getPropertyTypeLabel(value) : value;
 const calculatePricePerArea = (priceUsd, areaValue) => propertyUtils.calculatePricePerArea ? propertyUtils.calculatePricePerArea(priceUsd, areaValue) : NaN;
+const contractUtils = window.inmoContractUtils || {};
 const PROPERTY_TYPE_ORDER = ['house', 'apartment', 'land', 'farm', 'quinta', 'commercial', 'warehouse', 'office', 'investment', 'beach_house', 'other'];
 
 function mountAdminPanel() {
@@ -102,7 +103,9 @@ const fields = {
   latitude: document.getElementById('latitude'),
   longitude: document.getElementById('longitude'),
   agentId: document.getElementById('propertyAgent'),
-  operation: document.getElementById('propertyOperation')
+  operation: document.getElementById('propertyOperation'),
+  contractStartDate: document.getElementById('contractStartDate'),
+  contractEndDate: document.getElementById('contractEndDate')
 };
 
 const imagesContainer = document.getElementById('imagesContainer');
@@ -679,6 +682,8 @@ function fillForm(property) {
   fields.description.value = property.description || property.descripcion || '';
   fields.agentId.value = property.agentId || property.agenteId || property.ownerId || '';
   if (fields.operation) fields.operation.value = String(property.tipoOperacion || property.operation || property.operacion || 'venta').toLowerCase();
+  fields.contractStartDate.value = property.contractStartDate || '';
+  fields.contractEndDate.value = property.contractEndDate || '';
 
   const details = { ...(property.propertyDetails || {}) };
   if (!details.bedrooms) details.bedrooms = property.bedrooms || property.habitaciones || '';
@@ -757,6 +762,8 @@ function buildPropertyPayload(existing = {}) {
     agentId: selectedAgentId,
     agenteId: selectedAgentId,
     agentName: getAgentNameById(selectedAgentId) || existing.agentName || '',
+    contractStartDate: fields.contractStartDate.value || '',
+    contractEndDate: fields.contractEndDate.value || '',
     status: String(existing.status || 'available').toLowerCase(),
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
@@ -797,7 +804,7 @@ function renderList() {
   if (!state.properties.length) {
     const row = document.createElement('tr');
     const cell = document.createElement('td');
-    cell.colSpan = 5;
+    cell.colSpan = 6;
     cell.textContent = 'No properties found in Firestore.';
     row.appendChild(cell);
     list.appendChild(row);
@@ -814,6 +821,7 @@ function renderList() {
         <td>${item.agentName || getAgentNameById(item.agentId)}</td>
         <td>${formatCurrency(item.price || item.precio)}</td>
         <td>${formatStatus(item.status)}</td>
+        <td>${contractUtils.renderContractIndicator ? contractUtils.renderContractIndicator(item) : 'Contrato no registrado'}</td>
         <td class="action-cell">
           <button type="button" class="edit-btn" data-id="${item.id}">Edit</button>
           <button type="button" class="delete-btn" data-id="${item.id}">Delete</button>
@@ -875,6 +883,16 @@ async function deleteStorageImagesAfterSave(urls = []) {
 async function savePropertyUpdate() {
   if (state.savingProperty) return;
   if (!form.reportValidity()) return;
+  const contractValidation = contractUtils.validateContractDates
+    ? contractUtils.validateContractDates(fields.contractStartDate.value, fields.contractEndDate.value)
+    : { valid: true };
+  if (!contractValidation.valid) {
+    setImageStatus(contractValidation.message, 'error');
+    fields.contractEndDate.setCustomValidity(contractValidation.message);
+    fields.contractEndDate.reportValidity();
+    fields.contractEndDate.setCustomValidity('');
+    return;
+  }
 
   const client = getFirebaseOrNotify();
   if (!client) {

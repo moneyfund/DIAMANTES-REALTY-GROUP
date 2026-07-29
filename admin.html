@@ -121,6 +121,14 @@
             <textarea id="description" rows="4" required></textarea>
           </div>
 
+          <fieldset class="contract-form-section full-width">
+            <legend>CONTROL DEL CONTRATO <small>Información privada</small></legend>
+            <div class="contract-date-fields">
+              <div><label for="contractStartDate">Fecha de emisión del contrato</label><input type="date" id="contractStartDate" name="contractStartDate" /></div>
+              <div><label for="contractEndDate">Fecha de vencimiento del contrato</label><input type="date" id="contractEndDate" name="contractEndDate" /></div>
+            </div>
+          </fieldset>
+
           <div class="full-width images-group" id="imagesGroup">
             <div class="image-manager-heading">
               <label>IMÁGENES DE LA PROPIEDAD</label>
@@ -164,6 +172,7 @@
                   <th>Agent</th>
                   <th>Price</th>
                   <th>Status</th>
+                  <th>Contrato</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -237,6 +246,7 @@
   <script src="js/firebase-client.js" defer></script>
   <script src="js/property-utils.js" defer></script>
   <script src="js/property-fields-config.js?v=20260618-admin-dynamic" defer></script>
+  <script src="js/contract-utils.js?v=20260729-contracts" defer></script>
   <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
