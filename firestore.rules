@@ -18,6 +18,20 @@ service cloud.firestore {
         ];
     }
 
+    function isAgent() {
+      return isSignedIn() && (
+        isAdmin()
+        || exists(/databases/$(database)/documents/agents/$(request.auth.uid))
+        || userEmail() in [
+          "valop27@gmail.com", "dra.nazarethbravo@gmail.com", "27marvin@gmail.com",
+          "rubenn2121@gmail.com", "dr.americamora@gmail.com", "norlanflores3@gmail.com",
+          "amyblandon.as@gmail.com", "marccenarokarel@gmail.com", "caguadamuzmoreno@gmail.com",
+          "agentenorvingarcia@gmail.com", "valenzuela.ing120@gmail.com",
+          "nazarethbravo.realestate@gmail.com", "uh243384@gmail.com"
+        ]
+      );
+    }
+
     function requestEmail() {
       return userEmail();
     }
@@ -50,8 +64,21 @@ service cloud.firestore {
     }
 
     function isPublicProperty(data) {
-      return (data.publicationStatus == 'approved' && data.publicVisible == true)
-        || (!data.keys().hasAny(['publicationStatus']) && !data.keys().hasAny(['publicVisible']));
+      let publicVisibility = !data.keys().hasAny(['visibility']) || data.visibility == 'public';
+      return publicVisibility && ((data.publicationStatus == 'approved' && data.publicVisible == true)
+        || (!data.keys().hasAny(['publicationStatus']) && !data.keys().hasAny(['publicVisible'])));
+    }
+
+    function canReadProperty(data) {
+      let visibility = data.keys().hasAny(['visibility']) ? data.visibility : 'public';
+      return isAdmin() || isPublicProperty(data)
+        || (visibility in ['public', 'agents'] && isAgent())
+        || (visibility == 'private' && isOwnProperty(data));
+    }
+
+    function hasValidVisibility(data) {
+      return data.keys().hasAny(['visibility'])
+        && data.visibility in ['public', 'agents', 'private'];
     }
 
     function isOwnSharedList(data) {
@@ -78,6 +105,7 @@ service cloud.firestore {
         && request.resource.data.agentId == request.auth.uid
         && request.resource.data.publicationStatus == 'pending_review'
         && request.resource.data.publicVisible == false
+        && hasValidVisibility(request.resource.data)
         && isValidCommercialStatus(request.resource.data);
     }
 
@@ -85,8 +113,11 @@ service cloud.firestore {
       return isOwnProperty(resource.data)
         && isOwnProperty(request.resource.data)
         && isValidCommercialStatus(request.resource.data)
+        && hasValidVisibility(request.resource.data)
         && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-          'approvedAt', 'approvedBy', 'rejectedAt', 'rejectedBy', 'reviewedAt'
+          'approvedAt', 'approvedBy', 'rejectedAt', 'rejectedBy', 'reviewedAt',
+          'agentId', 'agenteId', 'createdBy', 'ownerId', 'userId',
+          'agentEmail', 'createdByEmail', 'ownerEmail'
         ])
         && (
           (resource.data.publicationStatus == 'approved'
@@ -152,10 +183,7 @@ service cloud.firestore {
     }
 
     match /properties/{propertyId} {
-      allow get: if isPublicProperty(resource.data)
-        || isOwnProperty(resource.data)
-        || isAdmin();
-      allow list: if true;
+      allow read: if canReadProperty(resource.data);
       allow create: if isSignedIn() && (isAdmin() || agentCreateIsReviewOnly());
       allow update: if isSignedIn() && (isAdmin() || agentUpdateIsAllowed());
       allow delete: if isSignedIn() && (isOwnProperty(resource.data) || isAdmin());

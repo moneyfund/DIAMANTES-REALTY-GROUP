@@ -712,6 +712,10 @@ button:active,
 }
 
 .add-image-btn { margin-top: 0.7rem; }
+.visibility-badge { display:inline-flex; padding:.25rem .55rem; border-radius:999px; font-size:.72rem; font-weight:800; white-space:nowrap; }
+.visibility-public { background:#e8f7ee; color:#176b37; }.visibility-agents { background:#fff3d8; color:#8a5a00; }.visibility-private { background:#f0eafd; color:#6941a5; }
+.admin-visibility-filter { display:block; margin-top:.7rem; font-weight:800; }
+#adminVisibilityFilter { width:100%; margin:.35rem 0 1rem; }
 .edit-agent-name-btn { white-space: nowrap; }
 .agent-name-modal-card { max-width: 460px; }
 .agent-name-current { color: var(--muted); margin-top: 0; }
