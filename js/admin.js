@@ -105,7 +105,8 @@ const fields = {
   agentId: document.getElementById('propertyAgent'),
   operation: document.getElementById('propertyOperation'),
   contractStartDate: document.getElementById('contractStartDate'),
-  contractEndDate: document.getElementById('contractEndDate')
+  contractEndDate: document.getElementById('contractEndDate'),
+  visibility: document.getElementById('propertyVisibility')
 };
 
 const imagesContainer = document.getElementById('imagesContainer');
@@ -684,6 +685,7 @@ function fillForm(property) {
   if (fields.operation) fields.operation.value = String(property.tipoOperacion || property.operation || property.operacion || 'venta').toLowerCase();
   fields.contractStartDate.value = property.contractStartDate || '';
   fields.contractEndDate.value = property.contractEndDate || '';
+  fields.visibility.value = property.visibility || 'public';
 
   const details = { ...(property.propertyDetails || {}) };
   if (!details.bedrooms) details.bedrooms = property.bedrooms || property.habitaciones || '';
@@ -765,6 +767,7 @@ function buildPropertyPayload(existing = {}) {
     contractStartDate: fields.contractStartDate.value || '',
     contractEndDate: fields.contractEndDate.value || '',
     status: String(existing.status || 'available').toLowerCase(),
+    visibility: fields.visibility?.value || 'public',
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
 }
@@ -804,14 +807,16 @@ function renderList() {
   if (!state.properties.length) {
     const row = document.createElement('tr');
     const cell = document.createElement('td');
-    cell.colSpan = 6;
+    cell.colSpan = 7;
     cell.textContent = 'No properties found in Firestore.';
     row.appendChild(cell);
     list.appendChild(row);
     return;
   }
 
+  const visibilityFilter = document.getElementById('adminVisibilityFilter')?.value || '';
   state.properties
+    .filter((item) => !visibilityFilter || (item.visibility || 'public') === visibilityFilter)
     .slice()
     .sort((a, b) => String(a.title || a.titulo || '').localeCompare(String(b.title || b.titulo || '')))
     .forEach((item) => {
@@ -821,6 +826,7 @@ function renderList() {
         <td>${item.agentName || getAgentNameById(item.agentId)}</td>
         <td>${formatCurrency(item.price || item.precio)}</td>
         <td>${formatStatus(item.status)}</td>
+        <td><span class="visibility-badge visibility-${item.visibility || 'public'}">${({ public: 'Público', agents: 'Solo agentes', private: 'Solo yo' })[item.visibility || 'public']}</span></td>
         <td>${contractUtils.renderContractIndicator ? contractUtils.renderContractIndicator(item) : 'Contrato no registrado'}</td>
         <td class="action-cell">
           <button type="button" class="edit-btn" data-id="${item.id}">Edit</button>
@@ -1098,6 +1104,7 @@ function bindActions() {
   agentNameSaveBtn?.addEventListener('click', updateAgentName);
   form.addEventListener('input', updatePreview);
   fields.type?.addEventListener('change', () => { renderDynamicPropertyFields(); updatePreview(); });
+  document.getElementById('adminVisibilityFilter')?.addEventListener('change', renderList);
 
   document.getElementById('addBtn')?.addEventListener('click', () => {
     alert('Desde este panel solo se editan propiedades existentes.');

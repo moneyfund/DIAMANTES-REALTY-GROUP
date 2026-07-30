@@ -196,3 +196,16 @@ body.dark .dashboard-welcome-profile h2,body.dark-mode .dashboard-welcome-profil
  .dashboard-view .dashboard-card { padding:.85rem; }.dashboard-form-actions { align-items:stretch; }.dashboard-form-actions > * { width:100%; }
 }
 @media (prefers-reduced-motion:reduce) { .dashboard-view.is-active { animation:none; }.dashboard-sidebar,.dashboard-quick-card,.dashboard-nav-link { transition:none; } }
+
+.visibility-options { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.8rem; }
+.visibility-option { position:relative; display:grid; grid-template-columns:42px minmax(0,1fr); align-items:start; gap:.75rem; padding:1rem; border:1px solid rgba(12,31,56,.14); border-radius:16px; background:#fff; cursor:pointer; transition:.2s; }
+.visibility-option:has(input:checked) { border-color:#cba452; background:#fffaf0; box-shadow:0 0 0 3px rgba(203,164,82,.14); }
+.visibility-option input { position:absolute; opacity:0; pointer-events:none; }
+.visibility-option strong,.visibility-option small { display:block; }.visibility-option strong { color:#0c1f38; margin-bottom:.3rem; }.visibility-option small { color:#64748b; line-height:1.45; }
+.visibility-icon { display:grid; place-items:center; width:42px; height:42px; border-radius:12px; background:#eef3f8; color:#0c1f38; }.visibility-icon svg { width:23px; height:23px; fill:currentColor; }
+.visibility-badge { display:inline-flex; width:max-content; margin:.35rem 0; padding:.3rem .65rem; border-radius:999px; font-size:.72rem; font-weight:800; }
+.visibility-public { background:#e8f7ee; color:#176b37; }.visibility-agents { background:#fff3d8; color:#8a5a00; }.visibility-private { background:#f0eafd; color:#6941a5; }
+.visibility-filter { display:flex; align-items:center; gap:.6rem; width:max-content; max-width:100%; margin:0 0 1rem; font-weight:700; }.visibility-filter select { width:auto; }
+.agent-inventory-filters { display:grid; grid-template-columns:2fr repeat(3,minmax(130px,1fr)); gap:.65rem; margin:1rem 0; }.agent-inventory-filters > * { width:100%; }
+.agent-owner { display:grid; gap:.15rem; padding:.65rem 0; border-top:1px solid rgba(12,31,56,.09); }.agent-owner span { color:#64748b; font-size:.82rem; }
+@media (max-width:800px) { .visibility-options,.agent-inventory-filters { grid-template-columns:1fr; } }

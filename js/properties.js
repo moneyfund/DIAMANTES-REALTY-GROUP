@@ -296,8 +296,8 @@ function normalizePropertyImageUrl(urlString) {
 }
 
 async function loadPropertiesFromFirestore() {
-  const { db, collection, getDocs } = await getModularFirestore();
-  const snapshot = await getDocs(collection(db, 'properties'));
+  const { db, collection, getDocs, query, where } = await getModularFirestore();
+  const snapshot = await getDocs(query(collection(db, 'properties'), where('visibility', '==', 'public'), where('publicationStatus', '==', 'approved'), where('publicVisible', '==', true)));
   const loaded = [];
   const properties = [];
 
@@ -324,6 +324,9 @@ function subscribeToProperties(onUpdate) {
   if (!db) return () => {};
 
   return db.collection('properties')
+    .where('visibility', '==', 'public')
+    .where('publicationStatus', '==', 'approved')
+    .where('publicVisible', '==', true)
     .onSnapshot((snapshot) => {
     const loaded = snapshot.docs.map((doc) => ({ raw: doc.data(), id: doc.id }));
     const properties = loaded
@@ -812,7 +815,22 @@ async function loadPropertyDetailFromFirestore(propertyId) {
   }
 
   const data = propertySnap.data();
-  if (!isPublicProperty(data)) return null;
+  if (!isPublicProperty(data)) {
+    const auth = window.inmoFirebase?.auth;
+    const user = auth ? await new Promise((resolve) => {
+      let unsubscribe = () => {};
+      unsubscribe = auth.onAuthStateChanged((currentUser) => { unsubscribe(); resolve(currentUser); });
+    }) : null;
+    const email = String(user?.email || '').trim().toLowerCase();
+    const admins = ['norvingarcia220@gmail.com', 'diego.valdivia.52056@gmail.com', 'diamantesrealtygroup@gmail.com'];
+    const agents = ['valop27@gmail.com', 'dra.nazarethbravo@gmail.com', '27marvin@gmail.com', 'rubenn2121@gmail.com', 'dr.americamora@gmail.com', 'norlanflores3@gmail.com', 'amyblandon.as@gmail.com', 'marccenarokarel@gmail.com', 'caguadamuzmoreno@gmail.com', 'agentenorvingarcia@gmail.com', 'valenzuela.ing120@gmail.com', 'nazarethbravo.realestate@gmail.com', 'uh243384@gmail.com', ...admins];
+    const visibility = data.visibility || 'public';
+    const ownerValues = [data.agentId, data.agenteId, data.createdBy, data.ownerId, data.userId, data.agentEmail, data.createdByEmail, data.ownerEmail].map((value) => String(value || '').toLowerCase());
+    const allowed = admins.includes(email)
+      || (visibility === 'agents' && agents.includes(email))
+      || (visibility === 'private' && user && (ownerValues.includes(user.uid.toLowerCase()) || ownerValues.includes(email)));
+    if (!allowed) return null;
+  }
   return normalizeProperty(data, propertySnap.id);
 }
 

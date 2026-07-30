@@ -120,7 +120,9 @@ const state = {
   profilePhotoPreviewUrl: '',
   removeProfilePhoto: false,
   isSavingProfile: false,
-  unsubscribeSharedLists: null
+  unsubscribeSharedLists: null,
+  agentInventory: [],
+  ownProperties: []
 };
 
 const fallbackPhoto = imageUtils?.PLACEHOLDER || 'assets/placeholder.svg';
@@ -182,7 +184,7 @@ const PUBLICATION_STATUS_BADGE_CLASS = {
   archived: 'publication-archived'
 };
 
-const DASHBOARD_VIEWS = new Set(['inicio', 'perfil', 'subir-propiedad', 'listas', 'mis-propiedades']);
+const DASHBOARD_VIEWS = new Set(['inicio', 'perfil', 'subir-propiedad', 'listas', 'mis-propiedades', 'propiedades-agentes']);
 const MAX_HIGHLIGHTED_TAGS = 2;
 let propertyTagsNotificationTimer = null;
 
@@ -1119,6 +1121,7 @@ function getPropertyPayload(user, profileName, images, coverImage, videoData) {
   const responsibleAgent = document.getElementById('propertyAgentName')?.value.trim() || profileName;
   const contractStartDate = document.getElementById('contractStartDate')?.value || '';
   const contractEndDate = document.getElementById('contractEndDate')?.value || '';
+  const visibility = document.querySelector('input[name="propertyVisibility"]:checked')?.value || 'public';
 
   const payload = {
     title,
@@ -1145,6 +1148,7 @@ function getPropertyPayload(user, profileName, images, coverImage, videoData) {
     operacion: operation,
     tipoOperacion: operation,
     status,
+    visibility,
     bedrooms,
     habitaciones: bedrooms,
     bathrooms,
@@ -1168,6 +1172,9 @@ function getPropertyPayload(user, profileName, images, coverImage, videoData) {
     ownerId: user.uid,
     userId: user.uid,
     agentName: responsibleAgent || state.agentProfile?.name || user.displayName || '',
+    agentPhone: state.agentProfile?.phone || '',
+    agentWhatsapp: state.agentProfile?.whatsapp || '',
+    agentPhoto: getAgentPhoto(state.agentProfile, user),
     contractStartDate,
     contractEndDate,
     updatedAt: serverTimestamp()
@@ -1333,6 +1340,8 @@ function updatePropertySheetPreviewLink(propertyId = '') {
 function resetPropertyForm() {
   document.getElementById('propertyForm').reset();
   document.getElementById('propertyDocId').value = '';
+  const publicVisibility = document.querySelector('input[name="propertyVisibility"][value="public"]');
+  if (publicVisibility) publicVisibility.checked = true;
   updatePropertySheetPreviewLink('');
   clearPendingImagePreviewUrls();
   state.propertyImages = [];
@@ -1364,6 +1373,8 @@ function fillPropertyForm(property) {
   document.getElementById('operacion-propiedad').value = (property.operationType || property.tipoOperacion || property.operation || property.operacion || '').toLowerCase();
   document.getElementById('propertyStatus').value = (property.status || 'available').toLowerCase();
   document.getElementById('propertyAgentName').value = property.agentName || '';
+  const visibilityInput = document.querySelector(`input[name="propertyVisibility"][value="${property.visibility || 'public'}"]`);
+  if (visibilityInput) visibilityInput.checked = true;
   document.getElementById('contractStartDate').value = property.contractStartDate || '';
   document.getElementById('contractEndDate').value = property.contractEndDate || '';
   const details = { ...(property.propertyDetails || {}) };
@@ -1413,6 +1424,8 @@ function propertyCard(property) {
   const statusValue = String(property.status || 'available').toLowerCase();
   const statusLabel = PROPERTY_STATUS_LABELS[statusValue] || 'Disponible';
   const coverImage = imageUtils.getCoverImage(property);
+  const visibility = property.visibility || 'public';
+  const visibilityLabel = { public: 'Público', agents: 'Solo agentes', private: 'Solo yo' }[visibility];
 
   return `
     <article class="property-card agent-property-card">
@@ -1425,6 +1438,7 @@ function propertyCard(property) {
         <p class="property-price-area">${formatPricePerArea(property.pricePerAreaUsd ?? calculatePricePerArea(property.priceUsd ?? property.price ?? property.precio, property.areaValue ?? property.area), property.areaUnit)}</p>
         <p class="property-status-tag">Estado comercial: ${statusLabel}</p>
         ${getPublicationBadgeMarkup(property)}
+        <p class="visibility-badge visibility-${visibility}">${visibilityLabel}</p>
         ${contractUtils.renderContractIndicator ? contractUtils.renderContractIndicator(property) : ''}
         ${getPublicationStatus(property) === 'rejected' && property.rejectionReason ? `<p class="rejection-reason"><strong>Motivo:</strong> ${escapeHtml(property.rejectionReason)}</p>` : ''}
         <div class="agent-actions">
@@ -1858,16 +1872,19 @@ function renderOwnProperties(properties = []) {
   const card = document.getElementById('agentPropertiesCard');
   if (!list || !card) return;
 
+  state.ownProperties = properties;
   updateDashboardPropertyStats(properties);
+  const selectedVisibility = document.getElementById('ownVisibilityFilter')?.value || '';
+  const visibleProperties = selectedVisibility ? properties.filter((property) => (property.visibility || 'public') === selectedVisibility) : properties;
 
   card.classList.remove('hidden');
-  list.innerHTML = properties.length
-    ? properties.map(propertyCard).join('')
+  list.innerHTML = visibleProperties.length
+    ? visibleProperties.map(propertyCard).join('')
     : '<p class="empty-state">Todavía no tienes propiedades registradas.</p>';
 
   list.querySelectorAll('[data-edit-property]').forEach((button) => {
     button.addEventListener('click', () => {
-      const selected = properties.find((property) => property.id === button.dataset.editProperty);
+      const selected = state.ownProperties.find((property) => property.id === button.dataset.editProperty);
       if (selected) {
         showDashboardView('subir-propiedad', { focus: true });
         fillPropertyForm(selected);
@@ -1895,7 +1912,7 @@ function sortPropertiesForDashboard(properties = []) {
 
 async function loadAllOwnPropertiesFallback(user) {
   try {
-    const snapshot = await getDocs(collection(db, 'properties'));
+    const snapshot = await getDocs(query(collection(db, 'properties'), where('visibility', 'in', ['public', 'agents'])));
     const properties = snapshot.docs
       .map((entry) => ({ id: entry.id, ...entry.data() }))
       .filter((property) => ownsProperty(property, user));
@@ -1982,6 +1999,50 @@ function loadAgentProperties(user, agentProfile = state.agentProfile) {
 }
 
 const listenOwnProperties = loadAgentProperties;
+
+function renderAgentInventory() {
+  const list = document.getElementById('agentInventoryList');
+  const status = document.getElementById('agentInventoryStatus');
+  if (!list) return;
+  const search = String(document.getElementById('agentInventorySearch')?.value || '').trim().toLowerCase();
+  const type = document.getElementById('agentInventoryType')?.value || '';
+  const operation = document.getElementById('agentInventoryOperation')?.value || '';
+  const visibilityFilter = document.getElementById('agentInventoryVisibility')?.value || '';
+  const properties = state.agentInventory.filter((property) => {
+    const visibility = property.visibility || 'public';
+    const haystack = [property.title, property.titulo, property.location, property.ubicacion, property.agentName].join(' ').toLowerCase();
+    return visibility !== 'private'
+      && (!search || haystack.includes(search))
+      && (!type || normalizePropertyType(property.propertyType || property.type || property.tipo) === type)
+      && (!operation || String(property.operationType || property.operation || property.operacion || property.tipoOperacion).toLowerCase() === operation)
+      && (!visibilityFilter || visibility === visibilityFilter);
+  });
+  if (status) status.textContent = `${properties.length} propiedad${properties.length === 1 ? '' : 'es'} disponible${properties.length === 1 ? '' : 's'}.`;
+  list.innerHTML = properties.length ? properties.map((property) => {
+    const visibility = property.visibility || 'public';
+    const own = ownsProperty(property, state.user);
+    const phone = property.agentPhone || property.createdByAgentPhone || '';
+    const contact = String(property.agentWhatsapp || property.createdByAgentWhatsapp || phone).replace(/\D/g, '');
+    return `<article class="property-card agent-property-card"><img class="property-cover" src="${imageUtils.getCoverImage(property)}" alt="${escapeHtml(property.title || property.titulo || 'Propiedad')}"><div class="property-card-content"><p class="visibility-badge visibility-${visibility}">${visibility === 'agents' ? 'Solo agentes' : 'Público'}</p><h3>${escapeHtml(property.title || property.titulo || 'Propiedad')}</h3><p class="property-location">${escapeHtml(property.location || property.ubicacion || '')}</p><p class="price">${formatDualPriceMarkup(property.priceUsd ?? property.price ?? property.precio)}</p><p>${escapeHtml(formatPropertyType(property.propertyType || property.type || property.tipo))} · ${escapeHtml(formatPropertyOperation(property.operationType || property.operation || property.operacion))}</p><div class="agent-owner"><strong>${escapeHtml(property.agentName || 'Agente DRG')}</strong>${phone ? `<span>${escapeHtml(phone)}</span>` : ''}</div><div class="agent-actions"><a class="button-secondary" href="propiedad.html?id=${encodeURIComponent(property.id)}">Ver detalles</a>${contact ? `<a href="https://wa.me/${contact}" target="_blank" rel="noopener">Contactar</a>` : ''}${own ? `<button type="button" data-inventory-edit="${property.id}">Editar</button>` : ''}</div></div></article>`;
+  }).join('') : '<div class="empty-state"><strong>No encontramos propiedades</strong><p>Ajusta los filtros para consultar el inventario compartido.</p></div>';
+  list.querySelectorAll('[data-inventory-edit]').forEach((button) => button.addEventListener('click', () => {
+    const property = state.agentInventory.find((item) => item.id === button.dataset.inventoryEdit);
+    if (property) { showDashboardView('subir-propiedad', { focus: true }); fillPropertyForm(property); }
+  }));
+}
+
+async function loadAgentInventory() {
+  const status = document.getElementById('agentInventoryStatus');
+  if (status) status.textContent = 'Cargando propiedades...';
+  try {
+    const snapshot = await getDocs(collection(db, 'properties'));
+    state.agentInventory = sortPropertiesForDashboard(snapshot.docs.map((entry) => ({ id: entry.id, ...entry.data() })).filter((property) => (property.visibility || 'public') !== 'private'));
+    renderAgentInventory();
+  } catch (error) {
+    console.error('[AgentDashboard] No se pudo cargar el inventario de agentes.', error);
+    if (status) status.textContent = 'No fue posible cargar las propiedades. Inténtalo nuevamente.';
+  }
+}
 
 function normalizePropertyForShare(data = {}, id = '') {
   const title = data.title || data.titulo || 'Propiedad';
@@ -2480,6 +2541,7 @@ function bindAuthControls() {
     authBox.innerHTML = authMarkup(user);
     fillAgentProfile(agentProfile, user);
     await loadAgentProperties(user, agentProfile);
+    await loadAgentInventory();
     await loadSharedLists(user, agentProfile);
     initPropertyMap();
     setMessage('Sesión activa. Solo puedes editar tus propios datos.', 'success');
@@ -2593,6 +2655,11 @@ function init() {
   bindImagePreviewActions();
   bindCalculatedFields();
   bindPropertyTagsLimit();
+  document.getElementById('ownVisibilityFilter')?.addEventListener('change', () => renderOwnProperties(state.ownProperties));
+  ['agentInventorySearch', 'agentInventoryType', 'agentInventoryOperation', 'agentInventoryVisibility'].forEach((id) => {
+    document.getElementById(id)?.addEventListener('input', renderAgentInventory);
+    document.getElementById(id)?.addEventListener('change', renderAgentInventory);
+  });
   renderDynamicPropertyFields();
   renderImagePreview();
   renderLegalDocumentState();

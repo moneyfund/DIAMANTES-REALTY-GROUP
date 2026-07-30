@@ -78,6 +78,7 @@
               <button type="button" class="dashboard-nav-link" data-dashboard-target="subir-propiedad"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z"></path></svg><span>Subir propiedad</span></button>
               <button type="button" class="dashboard-nav-link" data-dashboard-target="listas"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 4h14v3H5V4Zm0 6h14v3H5v-3Zm0 6h14v3H5v-3Z"></path></svg><span>Listas compartidas</span></button>
               <button type="button" class="dashboard-nav-link" data-dashboard-target="mis-propiedades"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 21V3h11v5h5v13h-2v-2h-3v2H4Zm3-14h2V5H7v2Zm4 0h2V5h-2v2Zm-4 4h2V9H7v2Zm4 0h2V9h-2v2Zm-4 4h2v-2H7v2Zm4 0h2v-2h-2v2Z"></path></svg><span>Mis propiedades</span></button>
+              <button type="button" class="dashboard-nav-link" data-dashboard-target="propiedades-agentes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V9l9-6 9 6v12h-7v-7h-4v7H3Zm2-2h3v-7h8v7h3v-9l-7-4.7L5 10v9Z"/></svg><span>Propiedades de agentes</span></button>
           </nav>
           <button type="button" class="dashboard-sidebar-logout" data-dashboard-logout><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 4H5v16h5v-2H7V6h3V4Zm5.6 3.6L14.2 9l2 2H9v2h7.2l-2 2 1.4 1.4L20 12l-4.4-4.4Z"></path></svg><span>Cerrar sesión</span></button>
         </aside>
@@ -221,15 +222,24 @@
               </div>
             </fieldset>
 
+            <fieldset class="dashboard-form-section visibility-section">
+              <legend><span>02</span> Visibilidad de la propiedad</legend>
+              <div class="visibility-options" role="radiogroup" aria-label="Visibilidad de la propiedad">
+                <label class="visibility-option"><input type="radio" name="propertyVisibility" value="public" checked><span class="visibility-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 2c.8 1 1.5 2.3 1.8 4h-3.6C10.5 6.3 11.2 5 12 4ZM4.3 14a8 8 0 0 1 0-4h3.4a17 17 0 0 0 0 4H4.3Zm5.5 0a15 15 0 0 1 0-4h4.4a15 15 0 0 1 0 4H9.8Zm2.2 6c-.8-1-1.5-2.3-1.8-4h3.6c-.3 1.7-1 3-1.8 4Zm4.3-6a17 17 0 0 0 0-4h3.4a8 8 0 0 1 0 4h-3.4Z"/></svg></span><span><strong>Público</strong><small>Visible en la página web, mapa público y panel de agentes.</small></span></label>
+                <label class="visibility-option"><input type="radio" name="propertyVisibility" value="agents"><span class="visibility-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm0 2c-2.3 0-7 1.2-7 3.5V19h14v-2.5C15 14.2 10.3 13 8 13Zm8 0c-.3 0-.7 0-1.1.1 1.2.9 2.1 2 2.1 3.4V19h6v-2.5c0-2.3-4.7-3.5-7-3.5Z"/></svg></span><span><strong>Solo agentes</strong><small>Visible únicamente para agentes registrados y administradores.</small></span></label>
+                <label class="visibility-option"><input type="radio" name="propertyVisibility" value="private"><span class="visibility-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M17 8h-1V6a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v10h14V10a2 2 0 0 0-2-2Zm-7-2a2 2 0 0 1 4 0v2h-4V6Zm7 12H7v-8h10v8Z"/></svg></span><span><strong>Solo yo</strong><small>Visible únicamente para ti y para los administradores.</small></span></label>
+              </div>
+            </fieldset>
+
             <fieldset class="dashboard-form-section">
-              <legend><span>02</span> Características de la propiedad</legend>
+              <legend><span>03</span> Características de la propiedad</legend>
               <p id="dynamicFieldsHint" class="dashboard-helper-text">Selecciona un tipo de propiedad para cargar sus características.</p>
               <div id="dynamic-property-fields" class="dashboard-form-grid dynamic-property-fields"></div>
               <p id="propertyPricePerAreaPreview" class="dashboard-helper-text">Precio por área no disponible</p>
             </fieldset>
 
             <fieldset class="dashboard-form-section">
-              <legend><span>03</span> Multimedia</legend>
+              <legend><span>04</span> Multimedia</legend>
               <fieldset class="property-video-fieldset">
                 <legend>Video de la propiedad</legend>
                 <div class="dashboard-form-grid">
@@ -276,7 +286,7 @@
             </fieldset>
 
             <fieldset class="dashboard-form-section">
-              <legend><span>04</span> Ubicación en mapa</legend>
+              <legend><span>05</span> Ubicación en mapa</legend>
               <input type="hidden" id="propertyLat" />
               <input type="hidden" id="propertyLng" />
               <p class="map-picker-hint">Busca una zona o haz clic en el mapa para seleccionar la ubicación exacta de la propiedad.</p>
@@ -295,7 +305,7 @@
             </fieldset>
 
             <fieldset class="dashboard-form-section contract-form-section">
-              <legend><span>05</span> Control del contrato <small>Información privada</small></legend>
+              <legend><span>06</span> Control del contrato <small>Información privada</small></legend>
               <p class="dashboard-helper-text">Estas fechas son internas y no se muestran en la web pública.</p>
               <div class="dashboard-form-grid contract-date-fields">
                 <label for="contractStartDate">Fecha de emisión del contrato<input type="date" id="contractStartDate" name="contractStartDate" /></label>
@@ -417,8 +427,15 @@
           <h2>Mis propiedades</h2>
           <p>Edita, marca estados o elimina únicamente las propiedades creadas por tu cuenta.</p>
         </div>
+        <label class="visibility-filter">Filtrar por visibilidad<select id="ownVisibilityFilter"><option value="">Todas</option><option value="public">Público</option><option value="agents">Solo agentes</option><option value="private">Solo yo</option></select></label>
         <div id="agentPropertiesList" class="properties-grid"></div>
       </article>
+          </section>
+          <section class="dashboard-view" data-dashboard-view="propiedades-agentes" aria-label="Propiedades de agentes" tabindex="-1">
+            <article class="dashboard-card"><div class="dashboard-card-header"><p class="dashboard-eyebrow">Inventario de la correduría</p><h2>Propiedades de agentes</h2><p>Consulta propiedades compartidas y contacta a su agente responsable.</p></div>
+              <form id="agentInventoryFilters" class="agent-inventory-filters" role="search"><input id="agentInventorySearch" type="search" placeholder="Título, ubicación o agente"><select id="agentInventoryType"><option value="">Todos los tipos</option><option value="house">Casa</option><option value="apartment">Apartamento</option><option value="land">Terreno</option><option value="farm">Finca</option><option value="commercial">Comercial</option></select><select id="agentInventoryOperation"><option value="">Venta y alquiler</option><option value="venta">Venta</option><option value="alquiler">Alquiler</option></select><select id="agentInventoryVisibility"><option value="">Público y agentes</option><option value="public">Público</option><option value="agents">Solo agentes</option></select></form>
+              <p id="agentInventoryStatus" class="dashboard-helper-text" role="status">Cargando propiedades...</p><div id="agentInventoryList" class="properties-grid"></div>
+            </article>
           </section>
         </main>
       </div>

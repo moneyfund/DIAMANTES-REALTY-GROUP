@@ -1,5 +1,6 @@
 (function () {
   function isPublicProperty(property = {}) {
+    const hasPublicVisibility = !property.visibility || property.visibility === 'public';
     const approved =
       property.publicationStatus === "approved" &&
       property.publicVisible === true;
@@ -8,10 +9,15 @@
       property.publicationStatus === undefined &&
       property.publicVisible === undefined;
 
-    return approved || legacy;
+    return hasPublicVisibility && (approved || legacy);
+  }
+
+  function getVisibility(property = {}) {
+    return ['public', 'agents', 'private'].includes(property.visibility) ? property.visibility : 'public';
   }
 
   window.inmoPublicPropertyFilter = {
-    isPublicProperty
+    isPublicProperty,
+    getVisibility
   };
 })();

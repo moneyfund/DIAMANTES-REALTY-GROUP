@@ -211,7 +211,11 @@ async function loadAgentProfile() {
       return;
     }
 
-    const propertiesSnapshot = await client.db.collection('properties').get();
+    const propertiesSnapshot = await client.db.collection('properties')
+      .where('visibility', '==', 'public')
+      .where('publicationStatus', '==', 'approved')
+      .where('publicVisible', '==', true)
+      .get();
     const properties = propertiesSnapshot.docs
       .map((doc) => ({ ...doc.data(), id: doc.id }))
       .filter((property) => isPublicProperty(property) && property.agentId === agentId);
