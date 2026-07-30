@@ -16,6 +16,10 @@ import {
   serverTimestamp,
   onAuthStateChanged,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  setPersistence,
+  browserLocalPersistence,
   signOut
 } from './firebase-services.js';
 import { uploadImage, uploadLegalDocument, validateLegalPdf, deleteStorageFile, uploadAgentProfilePhoto, validateAgentProfilePhoto, deleteStorageUrlIfOwned } from './storage-helpers.js';
@@ -126,6 +130,13 @@ const state = {
 };
 
 const fallbackPhoto = imageUtils?.PLACEHOLDER || 'assets/placeholder.svg';
+const dashboardUrlParams = new URLSearchParams(window.location.search);
+const isAppMode = dashboardUrlParams.get('app') === '1';
+const isAndroidWebView = /Android/i.test(navigator.userAgent)
+  && (/;\s*wv\)/i.test(navigator.userAgent) || /Version\/\d+(?:\.\d+)*\s+Chrome\//i.test(navigator.userAgent));
+const useRedirectLogin = isAppMode || isAndroidWebView;
+document.documentElement.classList.toggle('agent-app-mode', isAppMode);
+document.body?.classList.toggle('agent-app-mode', isAppMode);
 const getAgentPhoto = (agent = {}, authUser = null) => agent?.photo || agent?.photoURL || agent?.photoUrl || agent?.profileImage || agent?.profilePhoto || agent?.avatar || authUser?.photoURL || fallbackPhoto;
 const AGENT_DASHBOARD_DEBUG = new URLSearchParams(window.location.search).has('debugAgentDashboard')
   || window.localStorage?.getItem('debugAgentDashboard') === 'true';
@@ -221,7 +232,8 @@ function showDashboardView(view = 'inicio', options = {}) {
   });
 
   if (updateHash && window.location.hash !== `#${normalizedView}`) {
-    window.history.pushState(null, '', `#${normalizedView}`);
+    const method = isAppMode ? 'replaceState' : 'pushState';
+    window.history[method](null, '', `${window.location.pathname}${window.location.search}#${normalizedView}`);
   }
   closeDashboardMobileMenu();
 
@@ -269,7 +281,10 @@ function bindDashboardNavigation() {
   const toggle = document.getElementById('dashboardMobileToggle');
 
   document.querySelectorAll('[data-dashboard-target]').forEach((control) => {
-    control.addEventListener('click', () => showDashboardView(control.dataset.dashboardTarget, { focus: true }));
+    control.addEventListener('click', (event) => {
+      event.preventDefault();
+      showDashboardView(control.dataset.dashboardTarget, { focus: true });
+    });
   });
   toggle?.addEventListener('click', () => {
     const isOpen = app?.classList.toggle('is-menu-open');
@@ -409,6 +424,10 @@ function authMarkup(user) {
       </div>
     </div>
   `;
+}
+
+function authErrorMarkup(message) {
+  return `<div class="dashboard-login-card"><div><p class="dashboard-eyebrow">Acceso privado</p><h2>Error de autenticación</h2><p>${escapeHtml(message)}</p></div><button type="button" id="googleLoginBtn">Intentar de nuevo</button></div>`;
 }
 
 function getProfilePayload(user) {
@@ -2502,20 +2521,37 @@ function updateLayoutForAuth(isAuthorized) {
 }
 
 
-function bindAuthControls() {
+async function bindAuthControls() {
   const authBox = document.getElementById('agentAuthBox');
   if (!authBox) return;
+
+  let redirectError = null;
+  try {
+    await setPersistence(auth, browserLocalPersistence);
+    if (useRedirectLogin) await getRedirectResult(auth);
+  } catch (error) {
+    redirectError = error;
+    console.error('[AgentDashboard] Error al completar la autenticación:', error);
+  }
 
   console.log('[AgentDashboard] auth listener activo');
   onAuthStateChanged(auth, async (user) => {
     console.log('[AgentDashboard] usuario:', user?.email);
+    authBox.setAttribute('aria-busy', 'false');
     authBox.innerHTML = authMarkup(user);
 
     if (!user) {
       state.user = null;
       clearAgentPrivateState();
       updateLayoutForAuth(false);
-      setMessage('Inicia sesión para administrar tu perfil y propiedades.', 'info');
+      if (redirectError) {
+        const message = 'No pudimos completar el acceso con Google. Revisa tu conexión e inténtalo nuevamente.';
+        authBox.innerHTML = authErrorMarkup(message);
+        setMessage(message, 'error');
+        redirectError = null;
+      } else {
+        setMessage('Sesión no iniciada. Ingresa con tu cuenta autorizada de Google.', 'info');
+      }
       return;
     }
 
@@ -2537,14 +2573,21 @@ function bindAuthControls() {
     console.log('[AgentDashboard] Usuario autenticado:', Boolean(user));
     console.log('[AgentDashboard] Email del usuario:', user.email || '');
     debugAgentDashboard('Usuario autenticado.', { uid: user.uid, email: user.email, displayName: user.displayName });
-    const agentProfile = await loadAgentProfile(user);
-    authBox.innerHTML = authMarkup(user);
-    fillAgentProfile(agentProfile, user);
-    await loadAgentProperties(user, agentProfile);
-    await loadAgentInventory();
-    await loadSharedLists(user, agentProfile);
-    initPropertyMap();
-    setMessage('Sesión activa. Solo puedes editar tus propios datos.', 'success');
+    try {
+      const agentProfile = await loadAgentProfile(user);
+      authBox.innerHTML = authMarkup(user);
+      fillAgentProfile(agentProfile, user);
+      await loadAgentProperties(user, agentProfile);
+      await loadAgentInventory();
+      await loadSharedLists(user, agentProfile);
+      initPropertyMap();
+      setMessage('Sesión autorizada. Solo puedes editar tus propios datos.', 'success');
+    } catch (error) {
+      console.error('[AgentDashboard] No se pudo cargar el panel privado:', error);
+      updateLayoutForAuth(false);
+      authBox.innerHTML = authErrorMarkup('Tu sesión es válida, pero no fue posible cargar el panel. Inténtalo nuevamente.');
+      setMessage('Error al cargar los datos privados. No se mostró información incompleta.', 'error');
+    }
   });
 
   authBox.addEventListener('click', async (event) => {
@@ -2555,9 +2598,20 @@ function bindAuthControls() {
 
     if (event.target.id !== 'googleLoginBtn') return;
     try {
-      await signInWithPopup(auth, provider);
+      authBox.setAttribute('aria-busy', 'true');
+      authBox.innerHTML = '<div class="dashboard-login-card dashboard-auth-loading" role="status"><span class="dashboard-auth-spinner" aria-hidden="true"></span><div><p class="dashboard-eyebrow">Acceso privado</p><h2>Conectando con Google</h2><p>Continúa el acceso seguro para volver a tu panel…</p></div></div>';
+      setMessage('Autenticando con Google…', 'info');
+      if (useRedirectLogin) {
+        const target = `${window.location.pathname}${isAppMode ? '?app=1' : window.location.search}#inicio`;
+        window.history.replaceState(null, '', target);
+        await signInWithRedirect(auth, provider);
+      } else {
+        await signInWithPopup(auth, provider);
+      }
     } catch (error) {
       console.error(error);
+      authBox.setAttribute('aria-busy', 'false');
+      authBox.innerHTML = authErrorMarkup('No fue posible iniciar sesión con Google. Revisa tu conexión e inténtalo nuevamente.');
       setMessage('No fue posible iniciar sesión con Google.', 'error');
     }
   });
