@@ -184,6 +184,13 @@ const footerSocialLinks = [
 ];
 
 function renderSiteFooter() {
+  const isPrivateRoute = document.body.matches('.agent-dashboard-route')
+    || /^agent-dashboard\.html$/i.test(window.location.pathname.split('/').pop() || '');
+  if (isPrivateRoute) {
+    document.querySelector('.drg-site-footer')?.remove();
+    return;
+  }
+
   const footerMarkup = `
     <section class="drg-footer-corporate" aria-labelledby="drgFooterBrandTitle">
       <div class="drg-footer-container drg-footer-corporate-inner">

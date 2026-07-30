@@ -144,6 +144,11 @@ body.agent-dashboard-route :is(input, select, textarea, button, fieldset, label)
 body.agent-dashboard-route .agent-dashboard-shell { width: min(1480px, calc(100% - 32px)) !important; }
 body.agent-dashboard-route .agent-dashboard-hero__inner { width: min(1480px, calc(100% - 32px)) !important; }
 body.agent-dashboard-route .dashboard-auth-box.has-active-session { display: none; }
+
+.dashboard-auth-loading { align-items: center; }
+.dashboard-auth-spinner { width: 2.5rem; height: 2.5rem; flex: 0 0 auto; border: 3px solid rgba(176,0,8,.18); border-top-color: #b00008; border-radius: 50%; animation: dashboard-auth-spin .8s linear infinite; }
+@keyframes dashboard-auth-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .dashboard-auth-spinner { animation-duration: 1.8s; } }
 .dashboard-app { position: relative; display: grid; grid-template-columns: 260px minmax(0, 1fr); align-items: start; gap: 1.25rem; width: 100%; min-width: 0; }
 .dashboard-app.hidden { display: none !important; }
 .dashboard-sidebar { position: sticky; top: 88px; display: flex; flex-direction: column; min-width: 0; min-height: calc(100vh - 112px); padding: 1.15rem; overflow: hidden; border: 1px solid rgba(203,164,82,.28); border-radius: 22px; background: linear-gradient(165deg,#0c1f38 0%,#142e4e 100%); color: #fff; box-shadow: 0 18px 42px rgba(12,31,56,.16); }
