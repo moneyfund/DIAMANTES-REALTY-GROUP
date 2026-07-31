@@ -170,9 +170,9 @@ body.agent-dashboard-route .dashboard-auth-box.has-active-session { display: non
 .dashboard-view.is-active { display: block; animation: dashboardFade .22s ease both; }
 @keyframes dashboardFade { from { opacity:0; transform:translateY(5px) } to { opacity:1; transform:none } }
 .dashboard-view > .dashboard-card { width: 100%; margin: 0; }
-.dashboard-welcome-card { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.25rem; border: 1px solid rgba(203,164,82,.3); border-radius: 20px; background: linear-gradient(135deg,#fff 20%,#f8fafc 100%); box-shadow: 0 14px 34px rgba(12,31,56,.08); }
+.dashboard-welcome-card { display: flex; align-items: center; justify-content: space-between; gap: .85rem; padding: 1rem 1.15rem; border: 1px solid rgba(203,164,82,.3); border-radius: 20px; background: linear-gradient(135deg,#fff 20%,#f8fafc 100%); box-shadow: 0 14px 34px rgba(12,31,56,.08); }
 .dashboard-welcome-profile { display: flex; align-items: center; gap: 1rem; min-width: 0; }
-.dashboard-welcome-profile > img { flex: 0 0 76px; width: 76px; height: 76px; border: 3px solid #cba452; border-radius: 20px; object-fit: cover; }
+.dashboard-welcome-profile > img { flex: 0 0 70px; width: 70px; height: 70px; border: 3px solid #cba452; border-radius: 18px; object-fit: cover; }
 .dashboard-welcome-profile > div { min-width: 0; }.dashboard-welcome-profile h2 { margin: .12rem 0; color: #0c1f38; font: 800 clamp(1.45rem,3vw,2.1rem) Manrope,sans-serif; }.dashboard-welcome-profile p { margin: 0; overflow-wrap: anywhere; }
 .dashboard-session-pill { display: inline-flex; align-items: center; gap: .4rem; padding: .28rem .58rem; border-radius: 999px; background: #eaf8ef; color: #176b37; font-size: .72rem; font-weight: 800; }.dashboard-session-pill i { width: 7px; height: 7px; border-radius: 50%; background: #22a559; box-shadow: 0 0 0 3px rgba(34,165,89,.13); }
 .dashboard-home-logout { display: inline-flex; align-items: center; gap: .45rem; flex: 0 0 auto; }
