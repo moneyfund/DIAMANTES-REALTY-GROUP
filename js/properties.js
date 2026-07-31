@@ -554,18 +554,33 @@ function initializeHorizontalSlider(slider, options = {}) {
     return;
   }
 
-  const getStepSize = () => {
-    const cardWidth = cards[0]?.getBoundingClientRect().width || slider.clientWidth;
-    const styles = window.getComputedStyle(slider);
-    const gap = Number.parseFloat(styles.columnGap || styles.gap || '0') || 0;
-    return cardWidth + gap;
+  let activeIndex = 0;
+  let animationFrame = null;
+
+  const updateActiveCard = () => {
+    animationFrame = null;
+    const sliderBounds = slider.getBoundingClientRect();
+    const sliderCenter = sliderBounds.left + (sliderBounds.width / 2);
+    let closestDistance = Number.POSITIVE_INFINITY;
+
+    cards.forEach((card, index) => {
+      const bounds = card.getBoundingClientRect();
+      const distance = Math.abs((bounds.left + (bounds.width / 2)) - sliderCenter);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        activeIndex = index;
+      }
+    });
+
+    cards.forEach((card, index) => {
+      const isActive = index === activeIndex;
+      card.classList.toggle('is-active', isActive);
+      card.setAttribute('aria-current', isActive ? 'true' : 'false');
+    });
   };
 
-  const getVisibleCount = () => {
-    const rootStyles = window.getComputedStyle(slider);
-    return Number.parseInt(rootStyles.getPropertyValue('--featured-columns'), 10)
-      || Number.parseInt(rootStyles.getPropertyValue('--home-slider-columns'), 10)
-      || 1;
+  const scheduleActiveCardUpdate = () => {
+    if (animationFrame === null) animationFrame = window.requestAnimationFrame(updateActiveCard);
   };
 
   const updateButtons = () => {
@@ -577,8 +592,9 @@ function initializeHorizontalSlider(slider, options = {}) {
   };
 
   const slideBy = (direction = 1) => {
-    const step = getStepSize() * Math.max(1, getVisibleCount()) * direction;
-    slider.scrollBy({ left: step, behavior: 'smooth' });
+    updateActiveCard();
+    const nextIndex = Math.max(0, Math.min(cards.length - 1, activeIndex + direction));
+    cards[nextIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
   };
 
   if (prevButton) prevButton.onclick = () => slideBy(-1);
@@ -658,18 +674,36 @@ function initializeHorizontalSlider(slider, options = {}) {
   slider.addEventListener('pointerup', stopDragging);
   slider.addEventListener('pointercancel', stopDragging);
   slider.addEventListener('click', handleClickCapture, true);
-  slider.addEventListener('scroll', updateButtons, { passive: true });
-  window.addEventListener('resize', updateButtons);
+  const intersectionObserver = typeof IntersectionObserver === 'function'
+    ? new IntersectionObserver(scheduleActiveCardUpdate, { root: slider, threshold: [0.35, 0.6, 0.85, 1] })
+    : null;
+  cards.forEach((card) => intersectionObserver?.observe(card));
+
+  const handleScroll = () => {
+    updateButtons();
+    scheduleActiveCardUpdate();
+  };
+  const handleResize = () => {
+    updateButtons();
+    scheduleActiveCardUpdate();
+  };
+  slider.addEventListener('scroll', handleScroll, { passive: true });
+  window.addEventListener('resize', handleResize);
   slider._homeSliderCleanup = () => {
     slider.removeEventListener('pointerdown', handlePointerDown);
     slider.removeEventListener('pointermove', handlePointerMove);
     slider.removeEventListener('pointerup', stopDragging);
     slider.removeEventListener('pointercancel', stopDragging);
     slider.removeEventListener('click', handleClickCapture, true);
-    slider.removeEventListener('scroll', updateButtons);
-    window.removeEventListener('resize', updateButtons);
+    slider.removeEventListener('scroll', handleScroll);
+    window.removeEventListener('resize', handleResize);
+    intersectionObserver?.disconnect();
+    if (animationFrame !== null) window.cancelAnimationFrame(animationFrame);
   };
-  window.setTimeout(updateButtons, 0);
+  window.setTimeout(() => {
+    updateButtons();
+    updateActiveCard();
+  }, 0);
 }
 
 function initializeFeaturedSlider(slider) {
