@@ -2331,3 +2331,35 @@ body.dark-mode .property-card .property-meta span {
   color: #FFFFFF !important;
   border-color: #930006 !important;
 }
+
+/* Public navbar: premium glass surface without changing its content or layout. */
+body:not(.agent-dashboard-route):not(.admin-route):not(.property-sheet-body):not([data-private-route]) .site-header,
+body:not(.agent-dashboard-route):not(.admin-route):not(.property-sheet-body):not([data-private-route]) .site-header.scrolled,
+body:not(.agent-dashboard-route):not(.admin-route):not(.property-sheet-body):not([data-private-route]) .site-header.is-scrolled {
+  background: rgba(250, 249, 245, 0.8) !important;
+  border-bottom: 1px solid rgba(15, 31, 51, 0.1) !important;
+  box-shadow: 0 14px 38px rgba(11, 31, 58, 0.1) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(115%);
+  backdrop-filter: blur(20px) saturate(115%);
+}
+
+body.dark:not(.agent-dashboard-route):not(.admin-route):not(.property-sheet-body):not([data-private-route]) .site-header,
+body.dark-mode:not(.agent-dashboard-route):not(.admin-route):not(.property-sheet-body):not([data-private-route]) .site-header,
+[data-theme="dark"] body:not(.agent-dashboard-route):not(.admin-route):not(.property-sheet-body):not([data-private-route]) .site-header {
+  background: rgba(5, 5, 5, 0.8) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  body:not(.agent-dashboard-route):not(.admin-route):not(.property-sheet-body):not([data-private-route]) .site-header,
+  body:not(.agent-dashboard-route):not(.admin-route):not(.property-sheet-body):not([data-private-route]) .site-header.scrolled,
+  body:not(.agent-dashboard-route):not(.admin-route):not(.property-sheet-body):not([data-private-route]) .site-header.is-scrolled {
+    background: rgb(250, 249, 245) !important;
+  }
+
+  body.dark:not(.agent-dashboard-route):not(.admin-route):not(.property-sheet-body):not([data-private-route]) .site-header,
+  body.dark-mode:not(.agent-dashboard-route):not(.admin-route):not(.property-sheet-body):not([data-private-route]) .site-header,
+  [data-theme="dark"] body:not(.agent-dashboard-route):not(.admin-route):not(.property-sheet-body):not([data-private-route]) .site-header {
+    background: rgb(5, 5, 5) !important;
+  }
+}
