@@ -272,9 +272,13 @@
 }
 
 .drg-site-footer .drg-footer-copyright {
+  display: flex;
+  width: 100%;
   min-height: 42px;
+  align-items: center;
+  justify-content: center;
   margin: 0;
-  padding: 11px max(88px, env(safe-area-inset-right)) 11px 20px;
+  padding: 11px 0;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   background: var(--drg-footer-background-deep);
   color: var(--drg-footer-muted) !important;
@@ -355,7 +359,7 @@
 
   .drg-site-footer .drg-footer-copyright {
     min-height: 44px;
-    padding: 10px 76px 10px 16px;
+    padding: 10px 0;
     font-size: 11px !important;
   }
 
