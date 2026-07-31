@@ -252,7 +252,7 @@ function updateDashboardIdentity() {
     const node = document.getElementById(id);
     if (node) node.textContent = name;
   });
-  ['dashboardSidebarEmail', 'dashboardHomeEmail'].forEach((id) => {
+  ['dashboardSidebarEmail'].forEach((id) => {
     const node = document.getElementById(id);
     if (node) node.textContent = email;
   });
@@ -369,6 +369,7 @@ function setMessage(message, type = 'info') {
   if (!box) return;
   box.textContent = message;
   box.dataset.type = type;
+  box.classList.toggle('hidden', !message);
 }
 
 function getAuthorizedAgentEmail(user) {
@@ -2594,7 +2595,7 @@ async function bindAuthControls() {
       await loadAgentInventory();
       await loadSharedLists(user, agentProfile);
       initPropertyMap();
-      setMessage('Sesión autorizada. Solo puedes editar tus propios datos.', 'success');
+      setMessage('');
     } catch (error) {
       console.error('[AgentDashboard] No se pudo cargar el panel privado:', error);
       updateLayoutForAuth(false);
