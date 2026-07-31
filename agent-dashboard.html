@@ -16,25 +16,27 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=20260728-agent-dashboard-overflow-v2" />
+  <link rel="stylesheet" href="css/styles.css?v=20260731-agent-license" />
   <link rel="stylesheet" href="css/premium-home.css?v=20260613-public-fix" />
   <link rel="stylesheet" href="css/premium-theme.css?v=20260727-agent-dashboard-header" />
   <link rel="stylesheet" href="css/footer.css?v=20260725-whatsapp-movement" />
-  <link rel="stylesheet" href="css/agent-dashboard-emergency-fix.css?v=20260730-private-auth" />
+  <link rel="stylesheet" href="css/agent-dashboard-emergency-fix.css?v=20260731-premium-header" />
 </head>
 <body class="agent-dashboard-route">
   <main class="agent-dashboard-page">
-    <section class="agent-dashboard-hero">
+    <section class="agent-dashboard-hero" aria-labelledby="privateDashboardTitle">
       <div class="container agent-dashboard-hero__inner">
-        <div>
-          <p class="dashboard-eyebrow">Panel privado · Diamantes Realty Group</p>
-          <h1>Dashboard premium de agente</h1>
-          <p>Administra tu perfil, inventario, multimedia y listas compartidas desde un espacio profesional conectado a Firebase + Firestore.</p>
+        <div class="agent-dashboard-hero__brand">
+          <img src="assets/logo.png" alt="Diamantes Realty Group" />
+          <div>
+            <p class="dashboard-eyebrow">Panel privado</p>
+            <h1 id="privateDashboardTitle">Panel Profesional del Agente</h1>
+            <p>Administra tus propiedades, clientes, documentos y herramientas profesionales desde un único lugar.</p>
+          </div>
         </div>
-        <div class="dashboard-hero-stats" aria-label="Resumen del panel">
-          <span>Perfil</span>
-          <strong>Propiedades</strong>
-          <span>Listas privadas</span>
+        <div class="dashboard-hero-agent" aria-label="Sesión del agente">
+          <img id="dashboardHeroPhoto" src="assets/placeholder.svg" alt="Foto del agente" referrerpolicy="no-referrer" />
+          <div><span class="dashboard-session-pill"><i></i> Sesión activa</span><strong id="dashboardHeroName">Agente DRG</strong><small>Diamantes Realty Group</small></div>
         </div>
       </div>
     </section>
@@ -72,7 +74,7 @@
             <div class="dashboard-welcome-card">
               <div class="dashboard-welcome-profile">
                 <img id="dashboardHomePhoto" src="assets/placeholder.svg" alt="Foto del agente" referrerpolicy="no-referrer" />
-                <div><span class="dashboard-session-pill"><i></i> Sesión activa</span><p class="dashboard-eyebrow">Bienvenido a tu espacio privado</p><h2 id="dashboardWelcomeTitle">Hola, <span id="dashboardHomeName">Agente DRG</span></h2><p id="dashboardHomeEmail">Correo no disponible</p></div>
+                <div><span class="dashboard-session-pill"><i></i> Sesión activa</span><p class="dashboard-eyebrow">Bienvenido nuevamente</p><h2 id="dashboardWelcomeTitle">Hola, <span id="dashboardHomeName">Agente DRG</span></h2><p id="dashboardHomeEmail">Correo no disponible</p><div class="dashboard-welcome-clock"><span id="dashboardCurrentDate">—</span><strong id="dashboardCurrentTime">—</strong></div></div>
               </div>
             </div>
             <div class="dashboard-summary-grid" aria-label="Resumen de actividad">
@@ -124,6 +126,7 @@
             <label class="form-span-2">Descripción profesional<textarea id="agentDescription" rows="4" placeholder="Especialidad, zonas de cobertura y propuesta de valor"></textarea></label>
             <label>Email<input type="email" id="agentEmail" placeholder="correo@diamantesrealtygroup.com" /></label>
             <label>Teléfono<input type="tel" id="agentPhone" placeholder="+505 0000 0000" /></label>
+            <label>Número de carnet de agente<input type="text" id="agentLicenseNumber" placeholder="Ej: 0153-2026-A-8" autocomplete="off" /></label>
             <label>Instagram<input type="url" id="agentInstagram" placeholder="https://instagram.com/..." /></label>
             <label>Facebook<input type="url" id="agentFacebook" placeholder="https://facebook.com/..." /></label>
             <label>TikTok<input type="url" id="agentTiktok" placeholder="https://tiktok.com/@..." /></label>
@@ -439,6 +442,6 @@
   <script src="js/public-property-filter.js"></script>
   <script src="js/property-fields-config.js?v=20260618-admin-dynamic"></script>
   <script src="js/contract-utils.js?v=20260729-contracts"></script>
-  <script type="module" src="js/agent-dashboard.js?v=20260730-app-auth"></script>
+  <script type="module" src="js/agent-dashboard.js?v=20260731-premium-header"></script>
 </body>
 </html>
