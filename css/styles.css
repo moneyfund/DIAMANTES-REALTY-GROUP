@@ -5187,6 +5187,21 @@ body.dark-mode .site-footer,
   opacity: 0.84;
 }
 
+.agent-public-page .agent-public-license {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0.48rem 0.8rem;
+  border: 1px solid rgba(203, 164, 82, 0.45);
+  border-radius: 999px;
+  background: rgba(203, 164, 82, 0.1);
+  font-size: 0.82rem;
+}
+
+.agent-public-page .agent-public-license span { opacity: 0.72; }
+.agent-public-page .agent-public-license strong { letter-spacing: 0.04em; }
+
 .agent-public-page .agent-public-description {
   margin: 0;
   line-height: 1.7;

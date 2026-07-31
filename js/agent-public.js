@@ -156,6 +156,7 @@ function renderAgentProfile(agent, properties) {
       <div class="agent-public-summary">
         <img class="agent-public-photo" src="${photo}" alt="${agent.name || 'Agente'}">
         <h2>${agent.name || 'Agente Diamantes Realty Group'}</h2>
+        ${(agent.licenseNumber || agent.agentLicenseNumber || agent.carnet) ? `<p class="agent-public-license"><span>Carnet profesional</span><strong>${escapeHtml(agent.licenseNumber || agent.agentLicenseNumber || agent.carnet)}</strong></p>` : ''}
         ${basicInfo.length ? `<p class="agent-public-basic-info">${basicInfo.join(' · ')}</p>` : ''}
         <p class="agent-public-description preserve-description-format">${escapeHtml(agent.description || 'Este agente todavía no ha agregado una descripción en su perfil.')}</p>
         ${(agent.phone || agent.email) ? `

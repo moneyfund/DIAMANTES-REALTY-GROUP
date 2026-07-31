@@ -248,7 +248,7 @@ function updateDashboardIdentity() {
   const name = state.agentProfile?.name || state.user?.displayName || 'Agente DRG';
   const email = state.user?.email || state.agentProfile?.email || 'Correo no disponible';
   const photo = getAgentPhoto(state.agentProfile, state.user);
-  ['dashboardSidebarName', 'dashboardHomeName'].forEach((id) => {
+  ['dashboardSidebarName', 'dashboardHomeName', 'dashboardHeroName'].forEach((id) => {
     const node = document.getElementById(id);
     if (node) node.textContent = name;
   });
@@ -256,7 +256,7 @@ function updateDashboardIdentity() {
     const node = document.getElementById(id);
     if (node) node.textContent = email;
   });
-  ['dashboardSidebarPhoto', 'dashboardHomePhoto'].forEach((id) => {
+  ['dashboardSidebarPhoto', 'dashboardHomePhoto', 'dashboardHeroPhoto'].forEach((id) => {
     const image = document.getElementById(id);
     if (image) image.src = photo;
   });
@@ -274,6 +274,14 @@ function updateDashboardPropertyStats(properties = []) {
 function updateDashboardListStats(items = []) {
   const lists = document.getElementById('dashboardStatLists');
   if (lists) lists.textContent = String(items.length);
+}
+
+function updateDashboardClock() {
+  const now = new Date();
+  const dateNode = document.getElementById('dashboardCurrentDate');
+  const timeNode = document.getElementById('dashboardCurrentTime');
+  if (dateNode) dateNode.textContent = new Intl.DateTimeFormat('es-NI', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(now);
+  if (timeNode) timeNode.textContent = new Intl.DateTimeFormat('es-NI', { hour: 'numeric', minute: '2-digit', second: '2-digit' }).format(now);
 }
 
 function bindDashboardNavigation() {
@@ -438,6 +446,7 @@ function getProfilePayload(user) {
     uid: user.uid,
     agentId: user.uid,
     phone: document.getElementById('agentPhone').value.trim(),
+    licenseNumber: document.getElementById('agentLicenseNumber').value.trim(),
     instagram: document.getElementById('agentInstagram').value.trim(),
     facebook: document.getElementById('agentFacebook').value.trim(),
     tiktok: document.getElementById('agentTiktok').value.trim(),
@@ -1811,6 +1820,7 @@ async function loadAgentProfile(user) {
     description: profile.description || profile.descripcion || profile.bio || '',
     email: profile.email || profile.correo || user.email || '',
     phone: profile.phone || profile.telefono || profile.tel || '',
+    licenseNumber: profile.licenseNumber || profile.agentLicenseNumber || profile.carnet || '',
     instagram: profile.instagram || '',
     facebook: profile.facebook || '',
     tiktok: profile.tiktok || profile.tikTok || '',
@@ -1822,6 +1832,7 @@ async function loadAgentProfile(user) {
   document.getElementById('agentDescription').value = normalizedProfile.description;
   document.getElementById('agentEmail').value = normalizedProfile.email;
   document.getElementById('agentPhone').value = normalizedProfile.phone;
+  document.getElementById('agentLicenseNumber').value = normalizedProfile.licenseNumber;
   document.getElementById('agentInstagram').value = normalizedProfile.instagram;
   document.getElementById('agentFacebook').value = normalizedProfile.facebook;
   document.getElementById('agentTiktok').value = normalizedProfile.tiktok;
@@ -1841,6 +1852,7 @@ function fillAgentProfile(agentProfile = {}, user = state.user) {
     description: agentProfile.description || '',
     email: agentProfile.email || user?.email || '',
     phone: agentProfile.phone || '',
+    licenseNumber: agentProfile.licenseNumber || agentProfile.agentLicenseNumber || agentProfile.carnet || '',
     instagram: agentProfile.instagram || '',
     facebook: agentProfile.facebook || '',
     tiktok: agentProfile.tiktok || '',
@@ -1852,6 +1864,7 @@ function fillAgentProfile(agentProfile = {}, user = state.user) {
   document.getElementById('agentDescription').value = normalizedProfile.description;
   document.getElementById('agentEmail').value = normalizedProfile.email;
   document.getElementById('agentPhone').value = normalizedProfile.phone;
+  document.getElementById('agentLicenseNumber').value = normalizedProfile.licenseNumber;
   document.getElementById('agentInstagram').value = normalizedProfile.instagram;
   document.getElementById('agentFacebook').value = normalizedProfile.facebook;
   document.getElementById('agentTiktok').value = normalizedProfile.tiktok;
@@ -2709,6 +2722,8 @@ function init() {
   bindImagePreviewActions();
   bindCalculatedFields();
   bindPropertyTagsLimit();
+  updateDashboardClock();
+  window.setInterval(updateDashboardClock, 1000);
   document.getElementById('ownVisibilityFilter')?.addEventListener('change', () => renderOwnProperties(state.ownProperties));
   ['agentInventorySearch', 'agentInventoryType', 'agentInventoryOperation', 'agentInventoryVisibility'].forEach((id) => {
     document.getElementById(id)?.addEventListener('input', renderAgentInventory);
