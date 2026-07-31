@@ -35,6 +35,24 @@
         <button type="button" id="logoutBtn" class="ghost">Cerrar sesión</button>
       </header>
 
+      <nav class="admin-sections" aria-label="Secciones del administrador">
+        <button type="button" class="admin-section-tab is-active" data-admin-view="properties">Propiedades</button>
+        <button type="button" class="admin-section-tab" data-admin-view="forms">✉ Formularios <span id="newFormsBadge" class="forms-badge hidden">0</span></button>
+      </nav>
+      <section id="formsAdminView" class="forms-admin hidden" aria-labelledby="formsTitle">
+        <header><p class="badge">Bandeja de entrada</p><h2 id="formsTitle">Formularios</h2><p>Mensajes recibidos desde la web pública.</p></header>
+        <div class="forms-stats" id="formsStats"></div>
+        <div class="forms-filters">
+          <label>Buscar<input id="formsSearch" type="search" placeholder="Nombre, correo o teléfono" /></label>
+          <label>Tipo<select id="formsTypeFilter"><option value="">Todos</option><option value="contacto">Contacto</option><option value="quiero-vender">Quiero vender</option></select></label>
+          <label>Estado<select id="formsStatusFilter"><option value="">Todos</option><option value="nuevo">Nuevo</option><option value="leido">Leído</option><option value="respondido">Respondido</option><option value="archivado">Archivado</option></select></label>
+          <label>Fecha<input id="formsDateFilter" type="date" /></label>
+        </div>
+        <p id="formsAdminMessage" class="admin-inline-message" role="status"></p>
+        <div id="formsList" class="forms-list"></div>
+      </section>
+      <div id="propertiesAdminView">
+
       <section class="review-dashboard" aria-labelledby="reviewTitle">
         <div class="review-heading">
           <div>
@@ -222,6 +240,7 @@
           </div>
         </article>
       </section>
+      </div>
     </section>
   </main>
   <div id="agentNameModal" class="review-modal hidden" role="dialog" aria-modal="true" aria-labelledby="agentNameModalTitle">
@@ -261,5 +280,6 @@
     defer
   ></script>
   <script src="js/admin.js" defer></script>
+  <script src="js/admin-formularios.js?v=20260731" defer></script>
 </body>
 </html>

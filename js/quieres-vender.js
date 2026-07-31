@@ -188,7 +188,7 @@ if (sellerAgentSelect && sellerWhatsappBtn) {
   updateWhatsappButtonLink();
 }
 
-if (sellerForm) {
+if (sellerForm && !sellerForm.matches('[data-public-form]')) {
   sellerForm.addEventListener('submit', async (event) => {
     event.preventDefault();
 

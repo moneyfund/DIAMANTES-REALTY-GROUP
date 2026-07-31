@@ -11275,3 +11275,5 @@ body.dark-mode .map-property-card__meta span,
   .map-extra-filters-dialog { margin: auto auto 0; width: 100%; max-width: none; border-radius: 20px 20px 0 0; }
   .map-extra-filters-grid { grid-template-columns: 1fr; }
 }
+/* Antispam accesible: el campo señuelo no participa en el diseño. */
+.form-honeypot { position: absolute !important; left: -10000px !important; width: 1px !important; height: 1px !important; overflow: hidden !important; }

@@ -654,7 +654,7 @@ if (heroSearchForm) {
 }
 
 const contactForm = document.getElementById('contactForm');
-if (contactForm) {
+if (contactForm && !contactForm.matches('[data-public-form]')) {
   const contactParams = new URLSearchParams(window.location.search);
   const agentName = contactParams.get('agentName') || '';
   const propertyTitle = contactParams.get('propertyTitle') || '';
