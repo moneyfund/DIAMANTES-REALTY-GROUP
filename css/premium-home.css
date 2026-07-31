@@ -899,6 +899,30 @@ button,
   box-shadow: 0 20px 46px rgba(15, 23, 42, 0.13) !important;
 }
 
+/* Recent properties keeps its first item at the natural start edge. The other
+   home carousels retain their existing centred layout and interaction. */
+.home-page #recentPropertiesGrid.home-property-slider {
+  padding-inline: 16px !important;
+  scroll-padding-inline: 16px;
+  scroll-snap-type: x proximity;
+  touch-action: pan-y;
+}
+
+.home-page #recentPropertiesGrid.home-property-slider .property-card {
+  translate: var(--recent-drag-offset, 0px) 0;
+  will-change: transform, translate;
+  transition:
+    translate 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 320ms ease,
+    box-shadow 320ms ease,
+    border-color 320ms ease !important;
+}
+
+.home-page #recentPropertiesGrid.home-property-slider.is-dragging .property-card {
+  transition: none !important;
+}
+
 .home-page .home-slider-button:focus-visible {
   outline: 3px solid rgba(176, 0, 8, 0.35);
   outline-offset: 3px;
@@ -924,6 +948,11 @@ button,
   .home-page #featuredGrid.home-property-slider .property-card.is-active,
   .home-page .home-property-slider .property-card.is-active:hover {
     transform: scale(1.03) !important;
+  }
+
+  .home-page #recentPropertiesGrid.home-property-slider {
+    padding-inline: 7vw !important;
+    scroll-padding-inline: 7vw;
   }
 }
 

@@ -486,7 +486,7 @@ function isFarmOrLandProperty(property = {}) {
   return type === 'farm' || type === 'land';
 }
 
-function renderPropertySlider({ containerId, properties = [], prevSelector, nextSelector, sectionId, emptyStateId }) {
+function renderPropertySlider({ containerId, properties = [], prevSelector, nextSelector, sectionId, emptyStateId, recentSwipe = false }) {
   const slider = document.getElementById(containerId);
   const section = sectionId ? document.getElementById(sectionId) : null;
   const emptyState = emptyStateId ? document.getElementById(emptyStateId) : null;
@@ -500,7 +500,8 @@ function renderPropertySlider({ containerId, properties = [], prevSelector, next
   applyCardRevealAnimation(slider);
   initializeHorizontalSlider(slider, {
     prevButton: prevSelector ? document.querySelector(prevSelector) : null,
-    nextButton: nextSelector ? document.querySelector(nextSelector) : null
+    nextButton: nextSelector ? document.querySelector(nextSelector) : null,
+    recentSwipe
   });
 }
 
@@ -526,7 +527,8 @@ function renderRecentProperties(properties) {
     prevSelector: '[data-recent-prev]',
     nextSelector: '[data-recent-next]',
     sectionId: 'recentPropertiesSection',
-    emptyStateId: 'recentPropertiesEmpty'
+    emptyStateId: 'recentPropertiesEmpty',
+    recentSwipe: true
   });
 }
 
@@ -556,16 +558,16 @@ function initializeHorizontalSlider(slider, options = {}) {
 
   let activeIndex = 0;
   let animationFrame = null;
+  const usesRecentSwipe = options.recentSwipe === true;
 
   const updateActiveCard = () => {
     animationFrame = null;
-    const sliderBounds = slider.getBoundingClientRect();
-    const sliderCenter = sliderBounds.left + (sliderBounds.width / 2);
+    const sliderCenter = slider.scrollLeft + (slider.clientWidth / 2);
     let closestDistance = Number.POSITIVE_INFINITY;
 
     cards.forEach((card, index) => {
-      const bounds = card.getBoundingClientRect();
-      const distance = Math.abs((bounds.left + (bounds.width / 2)) - sliderCenter);
+      const cardCenter = card.offsetLeft + (card.offsetWidth / 2);
+      const distance = Math.abs(cardCenter - sliderCenter);
       if (distance < closestDistance) {
         closestDistance = distance;
         activeIndex = index;
@@ -605,18 +607,23 @@ function initializeHorizontalSlider(slider, options = {}) {
   let startX = 0;
   let startY = 0;
   let startScrollLeft = 0;
+  let startTime = 0;
+  let startActiveIndex = 0;
   let pointerId = null;
   let suppressSliderClick = false;
 
   const handlePointerDown = (event) => {
     if (event.button !== undefined && event.button !== 0) return;
     const detailLink = event.target.closest?.(PROPERTY_DETAIL_LINK_SELECTOR);
-    if (detailLink) return;
+    if (detailLink && !usesRecentSwipe) return;
     isPointerDown = true;
     isDragging = false;
     startX = event.clientX;
     startY = event.clientY;
     startScrollLeft = slider.scrollLeft;
+    startTime = performance.now();
+    updateActiveCard();
+    startActiveIndex = activeIndex;
     pointerId = event.pointerId;
     slider.setPointerCapture?.(event.pointerId);
   };
@@ -634,32 +641,63 @@ function initializeHorizontalSlider(slider, options = {}) {
 
     if (!isDragging) return;
     const link = getPropertyDetailLinkFromEvent(event);
-    if (link) return;
+    if (link && !usesRecentSwipe) return;
     event.preventDefault();
-    slider.scrollLeft = startScrollLeft - (event.clientX - startX);
+    const deltaX = event.clientX - startX;
+    slider.scrollLeft = startScrollLeft - deltaX;
+    if (usesRecentSwipe) {
+      const feedbackOffset = Math.max(-14, Math.min(14, deltaX * 0.08));
+      slider.style.setProperty('--recent-drag-offset', `${feedbackOffset}px`);
+    }
   };
 
-  const stopDragging = (event) => {
+  const stopDragging = (event, cancelled = false) => {
     if (!isPointerDown) return;
     isPointerDown = false;
     if (pointerId !== null) slider.releasePointerCapture?.(pointerId);
     pointerId = null;
 
-    if (isDragging && Math.abs(event.clientX - startX) > 12) {
+    if (isDragging && !cancelled && Math.abs(event.clientX - startX) > 12) {
+      if (usesRecentSwipe) {
+        const deltaX = event.clientX - startX;
+        const deltaY = event.clientY - startY;
+        const elapsedTime = Math.max(performance.now() - startTime, 1);
+        const velocity = Math.abs(deltaX) / elapsedTime;
+        const cardWidth = cards[activeIndex]?.offsetWidth || cards[0].offsetWidth;
+        const swipeThreshold = Math.min(cardWidth * 0.25, 90);
+        const isHorizontal = Math.abs(deltaX) > Math.abs(deltaY);
+        const isQuickSwipe = Math.abs(deltaX) >= 18 && velocity >= 0.45;
+
+        slider.style.setProperty('--recent-drag-offset', '0px');
+        slider.scrollLeft = startScrollLeft;
+        if (isHorizontal && (Math.abs(deltaX) >= swipeThreshold || isQuickSwipe)) {
+          const direction = deltaX < 0 ? 1 : -1;
+          const targetIndex = Math.max(0, Math.min(cards.length - 1, startActiveIndex + direction));
+          cards[targetIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        } else {
+          slider.scrollTo({ left: startScrollLeft, behavior: 'smooth' });
+        }
+      }
       window.setTimeout(updateButtons, 180);
+    }
+
+    if (usesRecentSwipe && cancelled) {
+      slider.style.setProperty('--recent-drag-offset', '0px');
+      slider.scrollTo({ left: startScrollLeft, behavior: 'smooth' });
     }
 
     window.setTimeout(() => {
       isDragging = false;
       slider.classList.remove('is-dragging');
     }, 0);
+    window.setTimeout(() => { suppressSliderClick = false; }, 400);
   };
 
   const handleClickCapture = (event) => {
     if (!suppressSliderClick) return;
 
     const link = getPropertyDetailLinkFromEvent(event);
-    if (link) {
+    if (link && !usesRecentSwipe) {
       suppressSliderClick = false;
       return;
     }
@@ -672,7 +710,8 @@ function initializeHorizontalSlider(slider, options = {}) {
   slider.addEventListener('pointerdown', handlePointerDown);
   slider.addEventListener('pointermove', handlePointerMove);
   slider.addEventListener('pointerup', stopDragging);
-  slider.addEventListener('pointercancel', stopDragging);
+  const handlePointerCancel = (event) => stopDragging(event, true);
+  slider.addEventListener('pointercancel', handlePointerCancel);
   slider.addEventListener('click', handleClickCapture, true);
   const intersectionObserver = typeof IntersectionObserver === 'function'
     ? new IntersectionObserver(scheduleActiveCardUpdate, { root: slider, threshold: [0.35, 0.6, 0.85, 1] })
@@ -693,7 +732,7 @@ function initializeHorizontalSlider(slider, options = {}) {
     slider.removeEventListener('pointerdown', handlePointerDown);
     slider.removeEventListener('pointermove', handlePointerMove);
     slider.removeEventListener('pointerup', stopDragging);
-    slider.removeEventListener('pointercancel', stopDragging);
+    slider.removeEventListener('pointercancel', handlePointerCancel);
     slider.removeEventListener('click', handleClickCapture, true);
     slider.removeEventListener('scroll', handleScroll);
     window.removeEventListener('resize', handleResize);
@@ -701,6 +740,7 @@ function initializeHorizontalSlider(slider, options = {}) {
     if (animationFrame !== null) window.cancelAnimationFrame(animationFrame);
   };
   window.setTimeout(() => {
+    if (usesRecentSwipe) slider.scrollLeft = 0;
     updateButtons();
     updateActiveCard();
   }, 0);
