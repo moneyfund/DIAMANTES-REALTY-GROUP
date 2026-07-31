@@ -23,6 +23,42 @@
   color-scheme: normal;
 }
 
+/* Public pages only: the solid page surface uncovers the footer at scroll end. */
+@supports (position: fixed) {
+  body.public-footer-reveal {
+    overflow-x: clip;
+  }
+
+  body.public-footer-reveal .public-page-surface {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    min-height: 100svh;
+    margin-bottom: var(--public-footer-height, 0px);
+    border-radius: 0 0 10px 10px;
+    background: var(--bg-main, #fff);
+    box-shadow: 0 12px 28px rgba(3, 20, 39, 0.14);
+  }
+
+  body.public-footer-reveal > .drg-site-footer {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 0;
+    width: 100%;
+    margin-top: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.public-footer-reveal .public-page-surface,
+  body.public-footer-reveal > .drg-site-footer {
+    scroll-behavior: auto;
+    transition: none !important;
+  }
+}
+
 .drg-site-footer .drg-footer-container {
   width: min(1120px, 92%);
   margin-inline: auto;
