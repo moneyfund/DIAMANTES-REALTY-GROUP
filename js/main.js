@@ -47,6 +47,24 @@ const mainNav = document.getElementById('mainNav');
 const APP_NAME = 'DIAMANTES REALTY GROUP';
 const TEMPORARILY_DISABLE_DARK_MODE = true;
 
+function isPublicSiteRoute() {
+  const privatePageNames = new Set([
+    'access-denied.html',
+    'admin.html',
+    'admin-login.html',
+    'agent-dashboard.html',
+    'property-sheet.html',
+    'avaluo.html',
+    'avaluos.html'
+  ]);
+  const currentPage = window.location.pathname.split('/').filter(Boolean).pop() || 'index.html';
+  const decodedPath = decodeURIComponent(window.location.pathname);
+
+  return !privatePageNames.has(currentPage.toLowerCase())
+    && !/^\/(?:admin|agent-dashboard|avalúos?|avaluos?|login|print|pdf)(?:\/|$)/i.test(decodedPath)
+    && !document.body.matches('[data-private-route], [data-print-route], .admin-route, .agent-dashboard-route, .property-sheet-body');
+}
+
 if (menuToggle && mainNav) {
   menuToggle.addEventListener('click', () => {
     const isOpen = mainNav.classList.toggle('open');
@@ -184,9 +202,7 @@ const footerSocialLinks = [
 ];
 
 function renderSiteFooter() {
-  const isPrivateRoute = document.body.matches('.agent-dashboard-route')
-    || /^agent-dashboard\.html$/i.test(window.location.pathname.split('/').pop() || '');
-  if (isPrivateRoute) {
+  if (!isPublicSiteRoute()) {
     document.querySelector('.drg-site-footer')?.remove();
     return;
   }
@@ -236,6 +252,50 @@ function renderSiteFooter() {
 }
 
 renderSiteFooter();
+
+function initializePublicFooterReveal() {
+  if (!isPublicSiteRoute() || !window.CSS?.supports?.('position', 'fixed')) return;
+
+  const footer = document.querySelector('.drg-site-footer');
+  if (!footer) return;
+
+  let surface = document.querySelector('.public-page-surface');
+  if (!surface) {
+    surface = document.createElement('div');
+    surface.className = 'public-page-surface';
+    document.body.insertBefore(surface, document.body.firstChild);
+
+    Array.from(document.body.children).forEach((element) => {
+      if (element === surface
+        || element === footer
+        || element.matches('script, .premium-preloader, #whatsapp-float, dialog, [role="dialog"]')) return;
+      surface.appendChild(element);
+    });
+  }
+
+  document.body.classList.add('public-footer-reveal');
+
+  let measurementFrame = 0;
+  const updateFooterHeight = () => {
+    window.cancelAnimationFrame(measurementFrame);
+    measurementFrame = window.requestAnimationFrame(() => {
+      const height = Math.ceil(footer.getBoundingClientRect().height);
+      if (height > 0) document.documentElement.style.setProperty('--public-footer-height', `${height}px`);
+    });
+  };
+
+  updateFooterHeight();
+  window.addEventListener('load', updateFooterHeight, { once: true });
+  window.addEventListener('resize', updateFooterHeight, { passive: true });
+  document.fonts?.ready.then(updateFooterHeight);
+
+  if ('ResizeObserver' in window) {
+    const footerObserver = new ResizeObserver(updateFooterHeight);
+    footerObserver.observe(footer);
+  }
+}
+
+initializePublicFooterReveal();
 
 const yearElement = document.getElementById('drgFooterCurrentYear');
 if (yearElement) {
