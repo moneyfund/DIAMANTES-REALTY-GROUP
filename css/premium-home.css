@@ -868,16 +868,16 @@ button,
 .home-page #featuredGrid.home-property-slider.properties-grid {
   gap: clamp(18px, 2.2vw, 28px) !important;
   padding-block: 28px 34px !important;
-  padding-inline: max(16px, calc((100% - 340px) / 2)) !important;
+  padding-inline: 0 !important;
   margin-inline: 0 !important;
-  scroll-padding-inline: max(16px, calc((100% - 340px) / 2));
+  scroll-padding-inline: 0;
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
 }
 
 .home-page .home-property-slider .property-card,
 .home-page #featuredGrid.home-property-slider .property-card {
-  scroll-snap-align: center;
+  scroll-snap-align: start;
   transform: scale(0.96) !important;
   transform-origin: center center;
   opacity: 0.9;
@@ -899,17 +899,14 @@ button,
   box-shadow: 0 20px 46px rgba(15, 23, 42, 0.13) !important;
 }
 
-/* Recent properties keeps its first item at the natural start edge. The other
-   home carousels retain their existing centred layout and interaction. */
-.home-page #recentPropertiesGrid.home-property-slider {
-  padding-inline: 16px !important;
-  scroll-padding-inline: 16px;
+/* Shared drag feedback and sensitive swipe behavior for every home carousel. */
+.home-page .home-property-slider {
   scroll-snap-type: x proximity;
   touch-action: pan-y;
 }
 
-.home-page #recentPropertiesGrid.home-property-slider .property-card {
-  translate: var(--recent-drag-offset, 0px) 0;
+.home-page .home-property-slider .property-card {
+  translate: var(--home-slider-drag-offset, 0px) 0;
   will-change: transform, translate;
   transition:
     translate 320ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -919,7 +916,7 @@ button,
     border-color 320ms ease !important;
 }
 
-.home-page #recentPropertiesGrid.home-property-slider.is-dragging .property-card {
+.home-page .home-property-slider.is-dragging .property-card {
   transition: none !important;
 }
 
@@ -931,8 +928,8 @@ button,
 @media (max-width: 720px) {
   .home-page .home-property-slider,
   .home-page #featuredGrid.home-property-slider.properties-grid {
-    padding-inline: 7vw !important;
-    scroll-padding-inline: 7vw;
+    padding-inline: 0 !important;
+    scroll-padding-inline: 0;
   }
 
   .home-page .home-property-slider .property-card,
@@ -948,11 +945,6 @@ button,
   .home-page #featuredGrid.home-property-slider .property-card.is-active,
   .home-page .home-property-slider .property-card.is-active:hover {
     transform: scale(1.03) !important;
-  }
-
-  .home-page #recentPropertiesGrid.home-property-slider {
-    padding-inline: 7vw !important;
-    scroll-padding-inline: 7vw;
   }
 }
 

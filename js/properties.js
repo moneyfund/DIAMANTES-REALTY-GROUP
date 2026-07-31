@@ -486,7 +486,7 @@ function isFarmOrLandProperty(property = {}) {
   return type === 'farm' || type === 'land';
 }
 
-function renderPropertySlider({ containerId, properties = [], prevSelector, nextSelector, sectionId, emptyStateId, recentSwipe = false }) {
+function renderPropertySlider({ containerId, properties = [], prevSelector, nextSelector, sectionId, emptyStateId }) {
   const slider = document.getElementById(containerId);
   const section = sectionId ? document.getElementById(sectionId) : null;
   const emptyState = emptyStateId ? document.getElementById(emptyStateId) : null;
@@ -500,8 +500,7 @@ function renderPropertySlider({ containerId, properties = [], prevSelector, next
   applyCardRevealAnimation(slider);
   initializeHorizontalSlider(slider, {
     prevButton: prevSelector ? document.querySelector(prevSelector) : null,
-    nextButton: nextSelector ? document.querySelector(nextSelector) : null,
-    recentSwipe
+    nextButton: nextSelector ? document.querySelector(nextSelector) : null
   });
 }
 
@@ -527,8 +526,7 @@ function renderRecentProperties(properties) {
     prevSelector: '[data-recent-prev]',
     nextSelector: '[data-recent-next]',
     sectionId: 'recentPropertiesSection',
-    emptyStateId: 'recentPropertiesEmpty',
-    recentSwipe: true
+    emptyStateId: 'recentPropertiesEmpty'
   });
 }
 
@@ -558,8 +556,6 @@ function initializeHorizontalSlider(slider, options = {}) {
 
   let activeIndex = 0;
   let animationFrame = null;
-  const usesRecentSwipe = options.recentSwipe === true;
-
   const updateActiveCard = () => {
     animationFrame = null;
     const sliderCenter = slider.scrollLeft + (slider.clientWidth / 2);
@@ -614,8 +610,6 @@ function initializeHorizontalSlider(slider, options = {}) {
 
   const handlePointerDown = (event) => {
     if (event.button !== undefined && event.button !== 0) return;
-    const detailLink = event.target.closest?.(PROPERTY_DETAIL_LINK_SELECTOR);
-    if (detailLink && !usesRecentSwipe) return;
     isPointerDown = true;
     isDragging = false;
     startX = event.clientX;
@@ -640,15 +634,11 @@ function initializeHorizontalSlider(slider, options = {}) {
     }
 
     if (!isDragging) return;
-    const link = getPropertyDetailLinkFromEvent(event);
-    if (link && !usesRecentSwipe) return;
     event.preventDefault();
     const deltaX = event.clientX - startX;
     slider.scrollLeft = startScrollLeft - deltaX;
-    if (usesRecentSwipe) {
-      const feedbackOffset = Math.max(-14, Math.min(14, deltaX * 0.08));
-      slider.style.setProperty('--recent-drag-offset', `${feedbackOffset}px`);
-    }
+    const feedbackOffset = Math.max(-14, Math.min(14, deltaX * 0.08));
+    slider.style.setProperty('--home-slider-drag-offset', `${feedbackOffset}px`);
   };
 
   const stopDragging = (event, cancelled = false) => {
@@ -658,31 +648,29 @@ function initializeHorizontalSlider(slider, options = {}) {
     pointerId = null;
 
     if (isDragging && !cancelled && Math.abs(event.clientX - startX) > 12) {
-      if (usesRecentSwipe) {
-        const deltaX = event.clientX - startX;
-        const deltaY = event.clientY - startY;
-        const elapsedTime = Math.max(performance.now() - startTime, 1);
-        const velocity = Math.abs(deltaX) / elapsedTime;
-        const cardWidth = cards[activeIndex]?.offsetWidth || cards[0].offsetWidth;
-        const swipeThreshold = Math.min(cardWidth * 0.25, 90);
-        const isHorizontal = Math.abs(deltaX) > Math.abs(deltaY);
-        const isQuickSwipe = Math.abs(deltaX) >= 18 && velocity >= 0.45;
+      const deltaX = event.clientX - startX;
+      const deltaY = event.clientY - startY;
+      const elapsedTime = Math.max(performance.now() - startTime, 1);
+      const velocity = Math.abs(deltaX) / elapsedTime;
+      const cardWidth = cards[activeIndex]?.offsetWidth || cards[0].offsetWidth;
+      const swipeThreshold = Math.min(cardWidth * 0.25, 90);
+      const isHorizontal = Math.abs(deltaX) > Math.abs(deltaY);
+      const isQuickSwipe = Math.abs(deltaX) >= 18 && velocity >= 0.45;
 
-        slider.style.setProperty('--recent-drag-offset', '0px');
-        slider.scrollLeft = startScrollLeft;
-        if (isHorizontal && (Math.abs(deltaX) >= swipeThreshold || isQuickSwipe)) {
-          const direction = deltaX < 0 ? 1 : -1;
-          const targetIndex = Math.max(0, Math.min(cards.length - 1, startActiveIndex + direction));
-          cards[targetIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-        } else {
-          slider.scrollTo({ left: startScrollLeft, behavior: 'smooth' });
-        }
+      slider.style.setProperty('--home-slider-drag-offset', '0px');
+      slider.scrollLeft = startScrollLeft;
+      if (isHorizontal && (Math.abs(deltaX) >= swipeThreshold || isQuickSwipe)) {
+        const direction = deltaX < 0 ? 1 : -1;
+        const targetIndex = Math.max(0, Math.min(cards.length - 1, startActiveIndex + direction));
+        cards[targetIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      } else {
+        slider.scrollTo({ left: startScrollLeft, behavior: 'smooth' });
       }
       window.setTimeout(updateButtons, 180);
     }
 
-    if (usesRecentSwipe && cancelled) {
-      slider.style.setProperty('--recent-drag-offset', '0px');
+    if (cancelled) {
+      slider.style.setProperty('--home-slider-drag-offset', '0px');
       slider.scrollTo({ left: startScrollLeft, behavior: 'smooth' });
     }
 
@@ -695,12 +683,6 @@ function initializeHorizontalSlider(slider, options = {}) {
 
   const handleClickCapture = (event) => {
     if (!suppressSliderClick) return;
-
-    const link = getPropertyDetailLinkFromEvent(event);
-    if (link && !usesRecentSwipe) {
-      suppressSliderClick = false;
-      return;
-    }
 
     event.preventDefault();
     event.stopPropagation();
@@ -740,7 +722,9 @@ function initializeHorizontalSlider(slider, options = {}) {
     if (animationFrame !== null) window.cancelAnimationFrame(animationFrame);
   };
   window.setTimeout(() => {
-    if (usesRecentSwipe) slider.scrollLeft = 0;
+    // Rendering or scroll-snap must never centre the first card automatically.
+    // The active card is still selected independently from the viewport centre.
+    slider.scrollLeft = 0;
     updateButtons();
     updateActiveCard();
   }, 0);
