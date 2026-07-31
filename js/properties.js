@@ -271,6 +271,38 @@ function isFacebookImageUrl(urlString) {
 }
 
 const isPublicProperty = window.inmoPublicPropertyFilter.isPublicProperty;
+const PUBLIC_PROPERTIES_COLLECTION = 'properties';
+
+function filterPublicPropertiesWithDiagnostics(entries, snapshotSize = entries.length) {
+  const docs = entries.map((entry) => ({ id: entry.id, ...entry.raw }));
+  console.log('Colección utilizada:', PUBLIC_PROPERTIES_COLLECTION);
+  console.log('Cantidad obtenida:', snapshotSize);
+  console.log('IDs:', docs.map((doc) => doc.id));
+  console.log('Estados:', docs.map((doc) => doc.estado));
+  console.log('Visible:', docs.map((doc) => doc.visible));
+  console.log('Publicada:', docs.map((doc) => doc.publicada));
+  console.log('Aprobada:', docs.map((doc) => doc.aprobada));
+
+  let filtered = entries;
+  console.log('Leídas:', filtered.length);
+
+  // El filtro público existente no descarta propiedades por estado ni ciudad.
+  console.log('Filtro estado:', filtered.length);
+
+  filtered = filtered.filter(({ raw }) =>
+    (raw.publicationStatus === 'approved' && raw.publicVisible === true)
+    || (raw.publicationStatus === undefined && raw.publicVisible === undefined));
+  console.log('Filtro aprobadas:', filtered.length);
+
+  filtered = filtered.filter(({ raw }) => !raw.visibility || raw.visibility === 'public');
+  console.log('Filtro publicación:', filtered.length);
+  console.log('Filtro ciudad:', filtered.length);
+
+  // Mantiene una sola fuente de verdad para decidir qué propiedades son públicas.
+  const result = entries.filter((entry) => isPublicProperty(entry.raw));
+  console.log('Resultado:', result.length);
+  return result;
+}
 
 function normalizePropertyImageUrl(urlString) {
   const normalized = String(urlString || '').trim();
@@ -296,20 +328,13 @@ function normalizePropertyImageUrl(urlString) {
 }
 
 async function loadPropertiesFromFirestore() {
-  const { db, collection, getDocs, query, where } = await getModularFirestore();
-  const snapshot = await getDocs(query(collection(db, 'properties'), where('visibility', '==', 'public'), where('publicationStatus', '==', 'approved'), where('publicVisible', '==', true)));
-  const loaded = [];
-  const properties = [];
+  const { db, collection, getDocs } = await getModularFirestore();
+  const snapshot = await getDocs(collection(db, PUBLIC_PROPERTIES_COLLECTION));
+  const loaded = snapshot.docs.map((doc) => ({ raw: doc.data(), id: doc.id }));
+  const properties = filterPublicPropertiesWithDiagnostics(loaded, snapshot.size)
+    .map((entry) => normalizeProperty(entry.raw, entry.id));
 
-  snapshot.forEach((doc) => {
-    const property = doc.data();
-    loaded.push(property);
-    if (!isPublicProperty(property)) return;
-    const propertyId = doc.id;
-    properties.push(normalizeProperty(property, propertyId));
-  });
-
-  console.log('[PublicProperties] Propiedades cargadas desde Firestore:', loaded.length);
+  console.log('[PublicProperties] Propiedades cargadas desde Firestore:', snapshot.size);
   console.log('[PublicProperties] Propiedades visibles después del filtro:', properties.length);
   return properties;
 }
@@ -323,14 +348,10 @@ function subscribeToProperties(onUpdate) {
   const db = getFirestoreDb();
   if (!db) return () => {};
 
-  return db.collection('properties')
-    .where('visibility', '==', 'public')
-    .where('publicationStatus', '==', 'approved')
-    .where('publicVisible', '==', true)
+  return db.collection(PUBLIC_PROPERTIES_COLLECTION)
     .onSnapshot((snapshot) => {
     const loaded = snapshot.docs.map((doc) => ({ raw: doc.data(), id: doc.id }));
-    const properties = loaded
-      .filter((entry) => isPublicProperty(entry.raw))
+    const properties = filterPublicPropertiesWithDiagnostics(loaded, snapshot.size)
       .map((entry) => normalizeProperty(entry.raw, entry.id));
     console.log('[PublicProperties] Propiedades cargadas desde Firestore:', loaded.length);
     console.log('[PublicProperties] Propiedades visibles después del filtro:', properties.length);
