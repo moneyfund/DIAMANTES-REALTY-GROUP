@@ -95,6 +95,9 @@ if (!window.inmoImageUtils) {
 }
 const state = {
   user: null,
+  authInitialized: false,
+  authUIState: 'auth-loading',
+  authResolutionVersion: 0,
   unsubscribeProperties: null,
   map: null,
   mapMarker: null,
@@ -435,7 +438,15 @@ function authMarkup(user) {
 }
 
 function authErrorMarkup(message) {
-  return `<div class="dashboard-login-card"><div><p class="dashboard-eyebrow">Acceso privado</p><h2>Error de autenticación</h2><p>${escapeHtml(message)}</p></div><button type="button" id="googleLoginBtn">Intentar de nuevo</button></div>`;
+  return `<div class="dashboard-login-card"><div><p class="dashboard-eyebrow">Acceso privado</p><h2>No pudimos cargar el panel</h2><p>${escapeHtml(message)}</p></div><button type="button" id="retryDashboardBtn">Reintentar</button></div>`;
+}
+
+function authLoadingMarkup(message = 'Estamos confirmando tu acceso seguro con Firebase…') {
+  return `<div class="dashboard-login-card dashboard-auth-loading" role="status"><span class="dashboard-auth-spinner" aria-hidden="true"></span><div><p class="dashboard-eyebrow">Acceso privado</p><h2>Verificando sesión</h2><p>${escapeHtml(message)}</p></div></div>`;
+}
+
+function unauthorizedMarkup() {
+  return `<div class="dashboard-login-card"><div><p class="dashboard-eyebrow">Acceso privado</p><h2>Agente no autorizado</h2><p>${escapeHtml(UNAUTHORIZED_AGENT_MESSAGE)}</p></div><button type="button" id="logoutBtn">Cerrar sesión</button></div>`;
 }
 
 function getProfilePayload(user) {
@@ -1612,7 +1623,7 @@ async function saveProfile(event) {
     clearProfilePhotoSelection(false);
     state.removeProfilePhoto = false;
     updateProfilePhotoPreview(getAgentPhoto(state.agentProfile, state.user));
-    document.getElementById('agentAuthBox') && (document.getElementById('agentAuthBox').innerHTML = authMarkup(state.user));
+    applyAuthUIState('authorized-agent');
     setPhotoStatus('Foto de perfil guardada correctamente.', 'success');
     setMessage('Perfil actualizado correctamente.', 'success');
 
@@ -2522,13 +2533,40 @@ function bindSharedListModule() {
   updateSharedCounter();
 }
 
-function updateLayoutForAuth(isAuthorized) {
-  const shouldShowPrivatePanel = Boolean(isAuthorized);
+function applyAuthUIState(requestedState, options = {}) {
+  const authBox = document.getElementById('agentAuthBox');
+  const authenticatedUser = auth.currentUser;
+  let nextState = requestedState;
+
+  console.log('[AuthUI] estado solicitado:', requestedState);
+  if (requestedState === 'unauthenticated') console.trace('[AuthUI] intentando mostrar login');
+
+  // A secondary operation (Firestore, navigation or a retry) may never turn a
+  // live Firebase session into a visual logout.
+  if (requestedState === 'unauthenticated' && authenticatedUser) {
+    nextState = isAllowedAgentUser(authenticatedUser) ? 'authorized-agent' : 'unauthorized-agent';
+  }
+  if (nextState === 'unauthenticated' && !state.authInitialized) nextState = 'auth-loading';
+
+  state.authUIState = nextState;
+  const shouldShowPrivatePanel = ['authenticated', 'loading-agent-profile', 'authorized-agent', 'error'].includes(nextState)
+    && Boolean(authenticatedUser);
   const dashboard = document.getElementById('agentDashboard');
   if (dashboard) dashboard.classList.toggle('hidden', !shouldShowPrivatePanel);
-  document.getElementById('agentAuthBox')?.classList.toggle('has-active-session', shouldShowPrivatePanel);
+  authBox?.classList.toggle('has-active-session', shouldShowPrivatePanel);
   document.getElementById('agentPropertiesCard')?.classList.toggle('hidden', !shouldShowPrivatePanel);
   document.getElementById('sharedListsCard')?.classList.toggle('hidden', !shouldShowPrivatePanel);
+
+  if (authBox) {
+    authBox.setAttribute('aria-busy', ['auth-loading', 'loading-agent-profile'].includes(nextState) ? 'true' : 'false');
+    if (nextState === 'auth-loading') authBox.innerHTML = authLoadingMarkup();
+    else if (nextState === 'loading-agent-profile') authBox.innerHTML = authLoadingMarkup('Tu sesión está activa. Estamos cargando tu perfil de agente…');
+    else if (nextState === 'unauthenticated') authBox.innerHTML = authMarkup(null);
+    else if (nextState === 'unauthorized-agent') authBox.innerHTML = unauthorizedMarkup();
+    else if (nextState === 'error') authBox.innerHTML = authErrorMarkup(options.message || 'Tu sesión sigue activa. Revisa tu conexión y vuelve a intentarlo.');
+    else if (authenticatedUser) authBox.innerHTML = authMarkup(authenticatedUser);
+  }
+
   if (shouldShowPrivatePanel) showDashboardView(getDashboardViewFromHash(), { updateHash: false });
   else closeDashboardMobileMenu();
 }
@@ -2537,6 +2575,7 @@ function updateLayoutForAuth(isAuthorized) {
 async function bindAuthControls() {
   const authBox = document.getElementById('agentAuthBox');
   if (!authBox) return;
+  applyAuthUIState('auth-loading');
 
   let redirectError = null;
   let hasObservedAuthenticatedUser = false;
@@ -2560,11 +2599,13 @@ async function bindAuthControls() {
 
   console.log('[AgentDashboard] auth listener activo');
   onAuthStateChanged(auth, async (user) => {
+    const authResolutionVersion = ++state.authResolutionVersion;
+    console.log('[AuthUI] onAuthStateChanged:', user?.uid || null);
+    console.log('[AuthUI] auth.currentUser:', auth.currentUser?.uid || null);
     console.log('[AgentDashboard][Auth] Estado confirmado:', user
       ? { uid: user.uid, email: user.email }
       : 'sin usuario');
-    authBox.setAttribute('aria-busy', 'false');
-    authBox.innerHTML = authMarkup(user);
+    state.authInitialized = true;
 
     if (!user) {
       console.info('[AgentDashboard][Auth] Sesión ausente.', {
@@ -2572,10 +2613,9 @@ async function bindAuthControls() {
       });
       state.user = null;
       clearAgentPrivateState();
-      updateLayoutForAuth(false);
+      applyAuthUIState('unauthenticated');
       if (redirectError) {
         const message = 'No pudimos completar el acceso con Google. Revisa tu conexión e inténtalo nuevamente.';
-        authBox.innerHTML = authErrorMarkup(message);
         setMessage(message, 'error');
         redirectError = null;
       } else {
@@ -2592,32 +2632,35 @@ async function bindAuthControls() {
     if (!isAuthorized) {
       state.user = null;
       clearAgentPrivateState();
-      updateLayoutForAuth(false);
+      applyAuthUIState('unauthorized-agent');
       console.warn('[AgentDashboard] Acceso no autorizado al panel de agentes:', email);
       setMessage(UNAUTHORIZED_AGENT_MESSAGE, 'error');
       return;
     }
 
     state.user = user;
-    updateLayoutForAuth(true);
+    applyAuthUIState('authenticated');
     updateDashboardIdentity();
     console.log('[AgentDashboard] Usuario autenticado:', Boolean(user));
     console.log('[AgentDashboard] Email del usuario:', user.email || '');
     debugAgentDashboard('Usuario autenticado.', { uid: user.uid, email: user.email, displayName: user.displayName });
     try {
+      applyAuthUIState('loading-agent-profile');
       const agentProfile = await loadAgentProfile(user);
-      authBox.innerHTML = authMarkup(user);
+      if (authResolutionVersion !== state.authResolutionVersion || auth.currentUser?.uid !== user.uid) return;
       fillAgentProfile(agentProfile, user);
       await loadAgentProperties(user, agentProfile);
       await loadAgentInventory();
       await loadSharedLists(user, agentProfile);
+      if (authResolutionVersion !== state.authResolutionVersion || auth.currentUser?.uid !== user.uid) return;
       initPropertyMap();
+      applyAuthUIState('authorized-agent');
       setMessage('');
     } catch (error) {
+      if (authResolutionVersion !== state.authResolutionVersion || auth.currentUser?.uid !== user.uid) return;
       console.error('[AgentDashboard] No se pudo cargar el panel privado:', error);
-      updateLayoutForAuth(false);
-      authBox.innerHTML = authErrorMarkup('Tu sesión es válida, pero no fue posible cargar el panel. Inténtalo nuevamente.');
-      setMessage('Error al cargar los datos privados. No se mostró información incompleta.', 'error');
+      applyAuthUIState('error', { message: 'Tu sesión es válida, pero no fue posible cargar los datos. Inténtalo nuevamente.' });
+      setMessage('Error temporal al cargar los datos privados. Tu sesión continúa activa.', 'error');
     }
   });
 
@@ -2628,14 +2671,22 @@ async function bindAuthControls() {
       return;
     }
 
+    if (event.target.id === 'retryDashboardBtn') {
+      if (!auth.currentUser) {
+        applyAuthUIState('unauthenticated');
+        return;
+      }
+      window.location.reload();
+      return;
+    }
+
     if (event.target.id !== 'googleLoginBtn') return;
     try {
       if (auth.currentUser) {
         console.info('[AgentDashboard][Auth] Login omitido: ya existe un usuario autenticado.', auth.currentUser.email || auth.currentUser.uid);
         return;
       }
-      authBox.setAttribute('aria-busy', 'true');
-      authBox.innerHTML = '<div class="dashboard-login-card dashboard-auth-loading" role="status"><span class="dashboard-auth-spinner" aria-hidden="true"></span><div><p class="dashboard-eyebrow">Acceso privado</p><h2>Conectando con Google</h2><p>Continúa el acceso seguro para volver a tu panel…</p></div></div>';
+      applyAuthUIState('auth-loading');
       setMessage('Autenticando con Google…', 'info');
       if (useRedirectLogin) {
         const target = `${window.location.pathname}${isAppMode ? '?app=1' : window.location.search}#inicio`;
@@ -2646,8 +2697,9 @@ async function bindAuthControls() {
       }
     } catch (error) {
       console.error(error);
-      authBox.setAttribute('aria-busy', 'false');
-      authBox.innerHTML = authErrorMarkup('No fue posible iniciar sesión con Google. Revisa tu conexión e inténtalo nuevamente.');
+      applyAuthUIState(auth.currentUser ? 'error' : 'unauthenticated', {
+        message: 'No fue posible iniciar sesión con Google. Revisa tu conexión e inténtalo nuevamente.'
+      });
       setMessage('No fue posible iniciar sesión con Google.', 'error');
     }
   });

@@ -40,3 +40,24 @@ test('no lifecycle event or timer signs the agent out', () => {
 
   assert.doesNotMatch(dashboard, lifecycleLogout);
 });
+
+test('agent dashboard has one Auth source and one centralized UI state renderer', () => {
+  const page = read('agent-dashboard.html');
+  const dashboard = read('js/agent-dashboard.js');
+  const listeners = dashboard.match(/onAuthStateChanged\(auth,/g) || [];
+
+  assert.equal(listeners.length, 1);
+  assert.doesNotMatch(page, /firebase-(?:app|auth|firestore)-compat\.js|js\/firebase-client\.js/);
+  assert.match(dashboard, /function applyAuthUIState\(requestedState/);
+  assert.match(dashboard, /if \(requestedState === 'unauthenticated' && authenticatedUser\)/);
+  assert.match(dashboard, /if \(nextState === 'unauthenticated' && !state\.authInitialized\)/);
+  assert.match(dashboard, /console\.trace\('\[AuthUI\] intentando mostrar login'\)/);
+});
+
+test('temporary profile failures preserve an authenticated dashboard', () => {
+  const dashboard = read('js/agent-dashboard.js');
+
+  assert.match(dashboard, /applyAuthUIState\('error'.*Tu sesión es válida/s);
+  assert.match(dashboard, /const shouldShowPrivatePanel = \['authenticated', 'loading-agent-profile', 'authorized-agent', 'error'\]/);
+  assert.doesNotMatch(dashboard, /catch \(error\) \{[\s\S]{0,300}applyAuthUIState\('unauthenticated'/);
+});
