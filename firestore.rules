@@ -20,21 +20,22 @@ service cloud.firestore {
 
     function validPublicForm() {
       let data = request.resource.data;
-      return data.keys().hasAll(['tipo', 'nombre', 'telefono', 'correo', 'mensaje', 'asunto', 'estado', 'origen', 'paginaOrigen', 'createdAt', 'updatedAt'])
+      return data.keys().hasAll(['tipo', 'nombre', 'telefono', 'correo', 'estado', 'createdAt'])
         && data.keys().hasOnly(['tipo', 'nombre', 'telefono', 'correo', 'mensaje', 'asunto', 'estado', 'origen', 'paginaOrigen', 'createdAt', 'updatedAt', 'tipoPropiedad', 'modalidad', 'ciudad'])
         && data.tipo in ['contacto', 'quiero-vender']
         && data.estado == 'nuevo'
-        && data.nombre is string && data.nombre.size() > 0 && data.nombre.size() <= 100
-        && data.telefono is string && data.telefono.size() > 0 && data.telefono.size() <= 30
-        && data.correo is string && data.correo.size() > 3 && data.correo.size() <= 160
-        && data.mensaje is string && data.mensaje.size() > 0 && data.mensaje.size() <= 3000
-        && data.asunto is string && data.asunto.size() > 0 && data.asunto.size() <= 120
-        && data.origen == 'web-publica'
-        && data.paginaOrigen is string && data.paginaOrigen.size() <= 300
-        && data.createdAt == request.time && data.updatedAt == request.time
-        && (data.tipo == 'contacto' || (data.tipoPropiedad is string && data.tipoPropiedad.size() > 0 && data.tipoPropiedad.size() <= 80
-          && data.modalidad is string && data.modalidad.size() > 0 && data.modalidad.size() <= 30
-          && data.ciudad is string && data.ciudad.size() > 0 && data.ciudad.size() <= 120));
+        && data.nombre is string && data.nombre.size() >= 2 && data.nombre.size() <= 120
+        && data.telefono is string && data.telefono.size() <= 40
+        && data.correo is string && data.correo.size() <= 160
+        && data.createdAt == request.time
+        && (!data.keys().hasAny(['updatedAt']) || data.updatedAt == request.time)
+        && (!data.keys().hasAny(['origen']) || data.origen == 'web-publica')
+        && (!data.keys().hasAny(['paginaOrigen']) || (data.paginaOrigen is string && data.paginaOrigen.size() <= 300))
+        && (!data.keys().hasAny(['asunto']) || (data.asunto is string && data.asunto.size() <= 120))
+        && (!data.keys().hasAny(['mensaje']) || (data.mensaje is string && data.mensaje.size() <= 3000))
+        && (!data.keys().hasAny(['tipoPropiedad']) || (data.tipoPropiedad is string && data.tipoPropiedad.size() <= 80))
+        && (!data.keys().hasAny(['modalidad']) || (data.modalidad is string && data.modalidad.size() <= 30))
+        && (!data.keys().hasAny(['ciudad']) || (data.ciudad is string && data.ciudad.size() <= 120));
     }
 
     function isAgent() {
@@ -175,12 +176,7 @@ service cloud.firestore {
 
     match /formularios/{formularioId} {
       allow create: if validPublicForm();
-      allow read, delete: if isAdmin();
-      allow update: if isAdmin()
-        && request.resource.data.tipo == resource.data.tipo
-        && request.resource.data.createdAt == resource.data.createdAt
-        && request.resource.data.estado in ['nuevo', 'leido', 'respondido', 'archivado']
-        && request.resource.data.updatedAt == request.time;
+      allow read, update, delete: if isAdmin();
     }
 
     match /agentes/{agentId} {
