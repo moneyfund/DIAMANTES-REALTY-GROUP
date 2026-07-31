@@ -48,11 +48,25 @@
   };
 
   if (window.inmoFirebase.auth) {
-    window.inmoFirebase.auth.onAuthStateChanged((user) => {
+    const observeAuthState = () => window.inmoFirebase.auth.onAuthStateChanged((user) => {
       window.inmoFirebase.currentUser = user;
-      console.log('[Firebase] user login state:', user ? { uid: user.uid, email: user.email } : null);
+      console.log('[Firebase Auth] Sesión restaurada/actualizada:', user ? { uid: user.uid, email: user.email } : 'sin sesión guardada');
       document.dispatchEvent(new CustomEvent('inmo:auth-changed', { detail: { user } }));
     });
+
+    console.info('[Firebase Auth] Configurando persistencia LOCAL (compat)…');
+    window.inmoFirebase.auth
+      .setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+      .then(() => {
+        console.info('[Firebase Auth] Persistencia LOCAL (compat) configurada; restaurando sesión…');
+        observeAuthState();
+      })
+      .catch((error) => {
+        console.error('[Firebase Auth] No se pudo configurar la persistencia LOCAL (compat).', error);
+        observeAuthState();
+      });
+    document.dispatchEvent(new CustomEvent('inmo:firebase-ready', { detail: window.inmoFirebase }));
+    return;
   }
 
   document.dispatchEvent(new CustomEvent('inmo:firebase-ready', { detail: window.inmoFirebase }));

@@ -51,6 +51,17 @@ const storageBucketUrl = `gs://${firebaseConfig.storageBucket}`;
 
 const app = getApps()[0] || initializeApp(firebaseConfig);
 const auth = getAuth(app);
+// Configure persistence as soon as Auth is created. Consumers await this promise
+// before observing auth state so a still-restoring session is never treated as
+// a logout.
+const authPersistenceReady = setPersistence(auth, browserLocalPersistence)
+  .then(() => {
+    console.info('[Firebase Auth] Persistencia LOCAL configurada.');
+  })
+  .catch((error) => {
+    console.error('[Firebase Auth] No se pudo configurar la persistencia LOCAL.', error);
+    throw error;
+  });
 const provider = new GoogleAuthProvider();
 const db = getFirestore(app);
 const storage = getStorage(app, storageBucketUrl);
@@ -58,6 +69,7 @@ const storage = getStorage(app, storageBucketUrl);
 export {
   app,
   auth,
+  authPersistenceReady,
   provider,
   db,
   storage,
