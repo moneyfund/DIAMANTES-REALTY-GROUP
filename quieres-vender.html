@@ -73,19 +73,20 @@
     </section>
 
     <section class="section container seller-layout">
-      <form class="seller-form" id="sellerForm">
+      <form class="seller-form" id="sellerForm" data-public-form="quiero-vender" novalidate>
+        <div class="form-honeypot" aria-hidden="true"><label>Sitio web<input type="text" name="website" tabindex="-1" autocomplete="off" /></label></div>
         <h2>Cuéntanos sobre tu propiedad</h2>
         <div class="form-row">
           <label>Nombre
-            <input type="text" name="name" autocomplete="name" required />
+            <input type="text" name="name" autocomplete="name" maxlength="100" required />
           </label>
           <label>Teléfono
-            <input type="tel" name="phone" autocomplete="tel" required />
+            <input type="tel" name="phone" autocomplete="tel" maxlength="30" required />
           </label>
         </div>
         <div class="form-row">
           <label>Email
-            <input type="email" name="email" autocomplete="email" required />
+            <input type="email" name="email" autocomplete="email" maxlength="160" required />
           </label>
           <label>Tipo de publicación
             <select name="listing-type" required>
@@ -109,11 +110,11 @@
         </div>
         <div class="form-row">
           <label>Ciudad
-            <input type="text" name="city" required />
+            <input type="text" name="city" maxlength="120" required />
           </label>
         </div>
         <label>Mensaje
-          <textarea name="message" rows="4" placeholder="Describe ubicación, estado de la propiedad y precio estimado." required></textarea>
+          <textarea name="message" rows="4" maxlength="3000" placeholder="Describe ubicación, estado de la propiedad y precio estimado." required></textarea>
         </label>
         <p class="seller-auth-message" id="sellerAuthMessage" aria-live="polite"></p>
         <button type="submit">Enviar información</button>
@@ -141,6 +142,7 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="js/firebase-client.js?v=20260613-01"></script>
   <script src="js/main.js?v=20260725-whatsapp-movement"></script>
+  <script src="js/public-forms.js?v=20260731"></script>
   <script src="js/quieres-vender.js?v=20260613-public-fix"></script>
 </body>
 </html>

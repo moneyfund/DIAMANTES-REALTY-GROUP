@@ -50,29 +50,34 @@
     </section>
 
     <section class="section container">
-      <form class="contact-form" id="contactForm">
+      <form class="contact-form" id="contactForm" data-public-form="contacto" novalidate>
+        <div class="form-honeypot" aria-hidden="true"><label for="contactWebsite">Sitio web</label><input id="contactWebsite" name="website" type="text" tabindex="-1" autocomplete="off" /></div>
         <div class="form-row">
           <label for="nombre">Nombre</label>
-          <input id="nombre" name="nombre" type="text" required />
+          <input id="nombre" name="nombre" type="text" maxlength="100" required />
         </div>
         <div class="form-row">
           <label for="email">Correo electrónico</label>
-          <input id="email" name="email" type="email" required />
+          <input id="email" name="email" type="email" maxlength="160" required />
         </div>
         <div class="form-row">
           <label for="telefono">Teléfono</label>
-          <input id="telefono" name="telefono" type="tel" required />
+          <input id="telefono" name="telefono" type="tel" maxlength="30" required />
         </div>
         <div class="form-row">
           <label for="mensaje">Mensaje</label>
-          <textarea id="mensaje" name="mensaje" rows="6" required></textarea>
+          <textarea id="mensaje" name="mensaje" rows="6" maxlength="3000" required></textarea>
         </div>
         <button type="submit">Enviar consulta</button>
-        <p id="formMessage" class="form-message"></p>
+        <p id="formMessage" class="form-message" role="status" aria-live="polite"></p>
       </form>
     </section>
   </main>
 
-  <script src="js/main.js?v=20260725-whatsapp-movement"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-client.js"></script>
+  <script src="js/public-forms.js"></script>
+  <script src="js/main.js?v=20260731-formularios"></script>
 </body>
 </html>
