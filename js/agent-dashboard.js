@@ -1,5 +1,6 @@
 import {
   auth,
+  authPersistenceReady,
   provider,
   db,
   collection,
@@ -18,8 +19,6 @@ import {
   signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
-  setPersistence,
-  browserLocalPersistence,
   signOut
 } from './firebase-services.js';
 import { uploadImage, uploadLegalDocument, validateLegalPdf, deleteStorageFile, uploadAgentProfilePhoto, validateAgentProfilePhoto, deleteStorageUrlIfOwned } from './storage-helpers.js';
@@ -2540,9 +2539,20 @@ async function bindAuthControls() {
   if (!authBox) return;
 
   let redirectError = null;
+  let hasObservedAuthenticatedUser = false;
   try {
-    await setPersistence(auth, browserLocalPersistence);
-    if (useRedirectLogin) await getRedirectResult(auth);
+    console.info('[AgentDashboard][Auth] Restaurando sesión con persistencia LOCAL…');
+    await authPersistenceReady;
+    if (useRedirectLogin) {
+      const redirectResult = await getRedirectResult(auth);
+      if (redirectResult?.user) {
+        console.info('[AgentDashboard][Auth] Sesión recuperada del redirect:', redirectResult.user.email || redirectResult.user.uid);
+      }
+    }
+    await auth.authStateReady();
+    console.info('[AgentDashboard][Auth] Restauración de sesión finalizada:', auth.currentUser
+      ? { uid: auth.currentUser.uid, email: auth.currentUser.email }
+      : 'sin sesión guardada');
   } catch (error) {
     redirectError = error;
     console.error('[AgentDashboard] Error al completar la autenticación:', error);
@@ -2550,11 +2560,16 @@ async function bindAuthControls() {
 
   console.log('[AgentDashboard] auth listener activo');
   onAuthStateChanged(auth, async (user) => {
-    console.log('[AgentDashboard] usuario:', user?.email);
+    console.log('[AgentDashboard][Auth] Estado confirmado:', user
+      ? { uid: user.uid, email: user.email }
+      : 'sin usuario');
     authBox.setAttribute('aria-busy', 'false');
     authBox.innerHTML = authMarkup(user);
 
     if (!user) {
+      console.info('[AgentDashboard][Auth] Sesión ausente.', {
+        reason: hasObservedAuthenticatedUser ? 'Firebase notificó pérdida de sesión' : 'No había una sesión local para restaurar'
+      });
       state.user = null;
       clearAgentPrivateState();
       updateLayoutForAuth(false);
@@ -2568,6 +2583,8 @@ async function bindAuthControls() {
       }
       return;
     }
+
+    hasObservedAuthenticatedUser = true;
 
     const email = String(user.email || "").toLowerCase().trim();
     const isAuthorized = ALLOWED_AGENT_EMAILS.includes(email);
@@ -2606,12 +2623,17 @@ async function bindAuthControls() {
 
   authBox.addEventListener('click', async (event) => {
     if (event.target.id === 'logoutBtn') {
+      console.info('[AgentDashboard][Auth] Cierre de sesión solicitado explícitamente por el usuario.');
       await signOut(auth);
       return;
     }
 
     if (event.target.id !== 'googleLoginBtn') return;
     try {
+      if (auth.currentUser) {
+        console.info('[AgentDashboard][Auth] Login omitido: ya existe un usuario autenticado.', auth.currentUser.email || auth.currentUser.uid);
+        return;
+      }
       authBox.setAttribute('aria-busy', 'true');
       authBox.innerHTML = '<div class="dashboard-login-card dashboard-auth-loading" role="status"><span class="dashboard-auth-spinner" aria-hidden="true"></span><div><p class="dashboard-eyebrow">Acceso privado</p><h2>Conectando con Google</h2><p>Continúa el acceso seguro para volver a tu panel…</p></div></div>';
       setMessage('Autenticando con Google…', 'info');
