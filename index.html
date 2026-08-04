@@ -6,13 +6,10 @@
   <meta name="title" content="Diamantes Realty Group" />
   <meta name="description" content="Plataforma inmobiliaria profesional en Nicaragua" />
   <title>Diamantes Realty Group</title>
-  <link rel="icon" type="image/png" href="assets/logo.png" />
-  <link rel="shortcut icon" type="image/png" href="assets/logo.png" />
-  <link rel="apple-touch-icon" href="assets/logo.png" />
   <meta name="theme-color" content="#B00008" />
   <meta property="og:site_name" content="Diamantes Realty Group" />
   <meta property="og:title" content="Diamantes Realty Group" />
-  <meta property="og:image" content="https://www.diamantesrealtygroup.com/assets/logo.png" />
+  <meta property="og:image" content="https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1200&q=85" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
@@ -50,16 +47,16 @@
     <section class="hero premium-hero">
       <div class="hero-slider" aria-hidden="true">
         <figure class="hero-slide is-active" data-location="Hero 1">
-          <img src="assets/imagenhero1.jpeg" alt="Imagen principal del hero 1" loading="eager" fetchpriority="high" />
+          <img data-site-image="heroPortrait" alt="Retrato profesional de asesora inmobiliaria" loading="eager" fetchpriority="high" />
         </figure>
         <figure class="hero-slide" data-location="Hero 2">
-          <img src="assets/imagenhero2.jpeg" alt="Imagen principal del hero 2" loading="lazy" />
+          <img data-site-image="investmentBackground" alt="Edificios modernos para inversión inmobiliaria" loading="lazy" />
         </figure>
         <figure class="hero-slide" data-location="Hero 3">
-          <img src="assets/imagenhero3.jpeg" alt="Imagen principal del hero 3" loading="lazy" />
+          <img data-site-image="propertyOne" alt="Vivienda moderna destacada" loading="lazy" />
         </figure>
         <figure class="hero-slide" data-location="Hero 4">
-          <img src="assets/imagenhero4.jpeg" alt="Imagen principal del hero 4" loading="lazy" />
+          <img data-site-image="propertyTwo" alt="Residencia contemporánea en venta" loading="lazy" />
         </figure>
       </div>
       <div class="hero-overlay"></div>
@@ -212,7 +209,7 @@
 
     <section class="section container premium-final-cta" aria-label="Contacto final">
       <a class="premium-final-cta-card" href="https://wa.me/50577265009?text=Hola,%20deseo%20recibir%20asesor%C3%ADa%20inmobiliaria%20profesional%20sobre%20una%20propiedad." target="_blank" rel="noopener noreferrer" aria-label="Contactar a Diamantes Realty Group por WhatsApp">
-        <img src="assets/llamadoaccion.png" alt="Contáctanos por WhatsApp para recibir asesoría inmobiliaria" class="premium-final-cta-image" />
+        <img data-site-image="footerAmy" data-safe-image alt="Asesoría inmobiliaria profesional por WhatsApp" class="premium-final-cta-image" />
       </a>
     </section>
   </main>
@@ -226,6 +223,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script type="module" src="src/components/common/SafeImage.js?v=20260804-clean-images"></script>
   <script src="js/firebase-client.js?v=20260613-01"></script>
   <script src="js/main.js?v=20260725-whatsapp-movement"></script>
   <script src="js/image-utils.js?v=20260613-public-fix"></script>

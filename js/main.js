@@ -9,7 +9,7 @@ function initializePremiumPreloader() {
   preloader.setAttribute('aria-live', 'polite');
   preloader.innerHTML = `
     <div class="premium-preloader-card">
-      <img class="premium-preloader-logo" src="assets/logo.png" alt="Diamantes Realty Group" />
+      <span class="premium-preloader-logo-text" aria-label="Diamantes Realty Group">AB</span>
       <p class="premium-preloader-text">¡VISITA, CONOCE E INVIERTE EN NICARAGUA!</p>
       <span class="premium-preloader-line" aria-hidden="true"></span>
     </div>
@@ -211,7 +211,7 @@ function renderSiteFooter() {
     <section class="drg-footer-corporate" aria-labelledby="drgFooterBrandTitle">
       <div class="drg-footer-container drg-footer-corporate-inner">
         <div class="drg-footer-brand">
-          <img class="drg-footer-logo" src="assets/logo.png" alt="Logo de Diamantes Realty Group" width="60" height="60" />
+          <span class="drg-footer-logo-text" aria-label="Amy Blandón">AB</span>
           <p class="drg-footer-license">Lic. INVUR-UCBR-PN-N°. 0153-2026</p>
         </div>
         <div class="drg-footer-company">

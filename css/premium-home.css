@@ -961,3 +961,37 @@ button,
     transition-duration: 1ms !important;
   }
 }
+
+.safe-image-error {
+  opacity: 0;
+}
+
+.hero-slide,
+.premium-final-cta-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.safe-image-fallback {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background:
+    radial-gradient(circle at 25% 20%, rgba(176, 0, 8, 0.18), transparent 30%),
+    linear-gradient(135deg, #f8fafc 0%, #e5e7eb 46%, #d1d5db 100%);
+}
+
+.premium-preloader-logo-text,
+.drg-footer-logo-text {
+  display: inline-grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 999px;
+  background: var(--premium-red);
+  color: #fff;
+  font-family: var(--premium-heading);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
