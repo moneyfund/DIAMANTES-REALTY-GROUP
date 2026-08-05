@@ -12,7 +12,7 @@ const imageUtils = window.inmoImageUtils || {
 };
 const videoUtils = window.inmoVideoUtils || {};
 
-const PROPERTY_DETAIL_LINK_SELECTOR = '.property-detail-button, a[href*="propiedad.html?id="]';
+const PROPERTY_DETAIL_LINK_SELECTOR = '.property-detail-button, a[href*="propiedad.html?id="], [data-property-link]';
 
 function getPropertyDetailLinkFromEvent(event) {
   return event.target?.closest?.(PROPERTY_DETAIL_LINK_SELECTOR) || null;
@@ -393,12 +393,12 @@ function propertyCardTemplate(property) {
   const displayDetails = getPropertyDisplayDetails(property).slice(0, 4);
   return `
     <div class="property-card${featuredClass}">
-      <section class="property-cover">
+      <a class="property-cover property-cover-link" href="${detailUrl}" data-property-link aria-label="Ver detalle de ${escapeHtml(imageAlt)}">
         <img class="property-cover-image" src="${imageSrc}" alt="${imageAlt}" loading="lazy" onerror="this.onerror=null;this.src='${PROPERTY_IMAGE_PLACEHOLDER}'">
-      </section>
+      </a>
       <div class="property-card-content">
         <p class="badge">${property.typeLabel || getPropertyTypeLabel(property.tipo) || 'Propiedad'} en ${(property.operationLabel || formatPropertyOperation(property.operacion) || 'Venta').toLowerCase()}</p>
-        <h3>${property.title || property.titulo}</h3>
+        <h3><a class="property-title-link" href="${detailUrl}" data-property-link>${property.title || property.titulo}</a></h3>
         <p class="property-location">${locationLabel}</p>
         <p class="price">${formatDualPriceMarkup(getPriceUsd(property))}</p>
         ${status === 'sold' ? '<p class="property-status-tag">VENDIDA</p>' : ''}
@@ -408,7 +408,7 @@ function propertyCardTemplate(property) {
           <span>${featureIcon('type')} ${property.typeLabel || getPropertyTypeLabel(property.tipo) || 'Propiedad'}</span>
         </div>
         <p class="property-price-area">${formatPricePerArea(getPricePerAreaUsd(property), property.areaUnit)}</p>
-        <div class="property-card-actions"><a class="property-detail-button btn-primary-property" href="${detailUrl}">VER DETALLE</a></div>
+        <div class="property-card-actions"><a class="property-detail-button btn-primary-property" href="${detailUrl}" data-property-link>VER DETALLE</a></div>
       </div>
     </div>
   `;
@@ -598,6 +598,7 @@ function initializeHorizontalSlider(slider, options = {}) {
   if (prevButton) prevButton.onclick = () => slideBy(-1);
   if (nextButton) nextButton.onclick = () => slideBy(1);
 
+  const CLICK_TOLERANCE = 8;
   let isPointerDown = false;
   let isDragging = false;
   let startX = 0;
@@ -607,6 +608,10 @@ function initializeHorizontalSlider(slider, options = {}) {
   let startActiveIndex = 0;
   let pointerId = null;
   let suppressSliderClick = false;
+
+  const isConfirmedHorizontalDrag = (deltaX, deltaY) => (
+    Math.abs(deltaX) > CLICK_TOLERANCE && Math.abs(deltaX) > Math.abs(deltaY)
+  );
 
   const handlePointerDown = (event) => {
     if (event.button !== undefined && event.button !== 0) return;
@@ -625,17 +630,15 @@ function initializeHorizontalSlider(slider, options = {}) {
   const handlePointerMove = (event) => {
     if (!isPointerDown) return;
 
-    const dx = Math.abs(event.clientX - startX);
-    const dy = Math.abs(event.clientY - startY);
-    if (dx > 12 && dx > dy) {
+    const deltaX = event.clientX - startX;
+    const deltaY = event.clientY - startY;
+    if (!isDragging && isConfirmedHorizontalDrag(deltaX, deltaY)) {
       isDragging = true;
-      suppressSliderClick = true;
       slider.classList.add('is-dragging');
     }
 
     if (!isDragging) return;
     event.preventDefault();
-    const deltaX = event.clientX - startX;
     slider.scrollLeft = startScrollLeft - deltaX;
     const feedbackOffset = Math.max(-14, Math.min(14, deltaX * 0.08));
     slider.style.setProperty('--home-slider-drag-offset', `${feedbackOffset}px`);
@@ -647,19 +650,21 @@ function initializeHorizontalSlider(slider, options = {}) {
     if (pointerId !== null) slider.releasePointerCapture?.(pointerId);
     pointerId = null;
 
-    if (isDragging && !cancelled && Math.abs(event.clientX - startX) > 12) {
-      const deltaX = event.clientX - startX;
-      const deltaY = event.clientY - startY;
+    const deltaX = event.clientX - startX;
+    const deltaY = event.clientY - startY;
+    const didDrag = isConfirmedHorizontalDrag(deltaX, deltaY);
+    suppressSliderClick = didDrag;
+
+    if (isDragging && !cancelled && didDrag) {
       const elapsedTime = Math.max(performance.now() - startTime, 1);
       const velocity = Math.abs(deltaX) / elapsedTime;
       const cardWidth = cards[activeIndex]?.offsetWidth || cards[0].offsetWidth;
       const swipeThreshold = Math.min(cardWidth * 0.25, 90);
-      const isHorizontal = Math.abs(deltaX) > Math.abs(deltaY);
       const isQuickSwipe = Math.abs(deltaX) >= 18 && velocity >= 0.45;
 
       slider.style.setProperty('--home-slider-drag-offset', '0px');
       slider.scrollLeft = startScrollLeft;
-      if (isHorizontal && (Math.abs(deltaX) >= swipeThreshold || isQuickSwipe)) {
+      if (Math.abs(deltaX) >= swipeThreshold || isQuickSwipe) {
         const direction = deltaX < 0 ? 1 : -1;
         const targetIndex = Math.max(0, Math.min(cards.length - 1, startActiveIndex + direction));
         cards[targetIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
@@ -670,6 +675,7 @@ function initializeHorizontalSlider(slider, options = {}) {
     }
 
     if (cancelled) {
+      suppressSliderClick = false;
       slider.style.setProperty('--home-slider-drag-offset', '0px');
       slider.scrollTo({ left: startScrollLeft, behavior: 'smooth' });
     }
@@ -678,7 +684,7 @@ function initializeHorizontalSlider(slider, options = {}) {
       isDragging = false;
       slider.classList.remove('is-dragging');
     }, 0);
-    window.setTimeout(() => { suppressSliderClick = false; }, 400);
+    if (suppressSliderClick) window.setTimeout(() => { suppressSliderClick = false; }, 400);
   };
 
   const handleClickCapture = (event) => {
@@ -689,12 +695,21 @@ function initializeHorizontalSlider(slider, options = {}) {
     suppressSliderClick = false;
   };
 
+  const handleCardClick = (event) => {
+    if (suppressSliderClick || getPropertyDetailLinkFromEvent(event)) return;
+    const card = event.target.closest('.property-card');
+    const detailLink = card?.querySelector('[data-property-link]');
+    if (!detailLink?.href) return;
+    window.location.href = detailLink.href;
+  };
+
   slider.addEventListener('pointerdown', handlePointerDown);
   slider.addEventListener('pointermove', handlePointerMove);
   slider.addEventListener('pointerup', stopDragging);
   const handlePointerCancel = (event) => stopDragging(event, true);
   slider.addEventListener('pointercancel', handlePointerCancel);
   slider.addEventListener('click', handleClickCapture, true);
+  slider.addEventListener('click', handleCardClick);
   const intersectionObserver = typeof IntersectionObserver === 'function'
     ? new IntersectionObserver(scheduleActiveCardUpdate, { root: slider, threshold: [0.35, 0.6, 0.85, 1] })
     : null;
@@ -716,6 +731,7 @@ function initializeHorizontalSlider(slider, options = {}) {
     slider.removeEventListener('pointerup', stopDragging);
     slider.removeEventListener('pointercancel', handlePointerCancel);
     slider.removeEventListener('click', handleClickCapture, true);
+    slider.removeEventListener('click', handleCardClick);
     slider.removeEventListener('scroll', handleScroll);
     window.removeEventListener('resize', handleResize);
     intersectionObserver?.disconnect();
