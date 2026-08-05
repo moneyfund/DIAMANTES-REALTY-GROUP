@@ -31,3 +31,15 @@ test('the common interaction retains active scaling, arrows, smooth motion and 2
   assert.match(styles, /\.home-page \.home-property-slider \.property-card\.is-active[\s\S]*?transform: scale\(1\.05\) !important;/);
   assert.match(styles, /scroll-behavior: smooth;/);
 });
+
+
+test('home carousel links only suppress clicks after a confirmed horizontal drag', () => {
+  assert.match(script, /const CLICK_TOLERANCE = 8;/);
+  assert.match(script, /Math\.abs\(deltaX\) > CLICK_TOLERANCE && Math\.abs\(deltaX\) > Math\.abs\(deltaY\)/);
+  assert.match(script, /suppressSliderClick = didDrag;/);
+  assert.match(script, /slider\.addEventListener\('click', handleClickCapture, true\);/);
+  assert.match(script, /slider\.addEventListener\('click', handleCardClick\);/);
+  assert.match(script, /data-property-link/);
+  assert.match(script, /getPropertyDetailLinkFromEvent\(event\)/);
+  assert.match(styles, /\.home-page \.property-cover-link,[\s\S]*?display: block;/);
+});

@@ -359,6 +359,22 @@ button,
 
 .home-page .property-card-content { padding: 1.1rem !important; }
 
+.home-page .property-cover-link,
+.home-page .property-title-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.home-page .property-cover-link {
+  display: block;
+}
+
+.home-page .property-title-link:hover,
+.home-page .property-title-link:focus-visible {
+  color: inherit;
+  text-decoration: none;
+}
+
 .home-page .property-card .badge {
   display: block;
   color: var(--premium-muted) !important;
