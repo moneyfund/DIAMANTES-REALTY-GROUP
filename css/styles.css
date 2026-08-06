@@ -10440,7 +10440,7 @@ body.dark-mode .shared-property-card :not(.property-detail-button):not(.btn-prim
 .btn-detail,
 .btn-outline,
 .btn-primary-property,
-.property-card a[href*="propiedad.html"] {
+.property-card-actions a[href*="propiedad.html"] {
   pointer-events: auto !important;
   position: relative;
   z-index: 20;
@@ -10460,8 +10460,8 @@ body.dark-mode .shared-property-card :not(.property-detail-button):not(.btn-prim
 .btn-outline:focus-visible,
 .btn-primary-property:hover,
 .btn-primary-property:focus-visible,
-.property-card a[href*="propiedad.html"]:hover,
-.property-card a[href*="propiedad.html"]:focus-visible {
+.property-card-actions a[href*="propiedad.html"]:hover,
+.property-card-actions a[href*="propiedad.html"]:focus-visible {
   background: #930006 !important;
   border-color: #930006 !important;
   color: #FFFFFF !important;

@@ -2314,7 +2314,7 @@ body.dark-mode .property-card .property-meta span {
 .property-detail-button,
 .property-card .btn-detail,
 .property-card .btn-outline,
-.property-card a[href*="propiedad.html"] {
+.property-card-actions a[href*="propiedad.html"] {
   background: #B00008 !important;
   color: #FFFFFF !important;
   border: 1px solid #B00008 !important;
@@ -2326,10 +2326,26 @@ body.dark-mode .property-card .property-meta span {
 .property-detail-button:hover,
 .property-card .btn-detail:hover,
 .property-card .btn-outline:hover,
-.property-card a[href*="propiedad.html"]:hover {
+.property-card-actions a[href*="propiedad.html"]:hover {
   background: #930006 !important;
   color: #FFFFFF !important;
   border-color: #930006 !important;
+}
+
+/* Property names are text links, not call-to-action buttons. */
+.property-card .property-title-link,
+.property-card .property-title-link:hover,
+.property-card .property-title-link:focus-visible {
+  display: inline !important;
+  width: auto !important;
+  padding: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: inherit !important;
+  text-align: inherit;
+  text-decoration: none;
 }
 
 /* Public navbar: premium glass surface without changing its content or layout. */

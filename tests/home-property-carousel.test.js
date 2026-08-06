@@ -6,6 +6,8 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const script = fs.readFileSync(path.join(root, 'js/properties.js'), 'utf8');
 const styles = fs.readFileSync(path.join(root, 'css/premium-home.css'), 'utf8');
+const sharedStyles = fs.readFileSync(path.join(root, 'css/styles.css'), 'utf8');
+const themeStyles = fs.readFileSync(path.join(root, 'css/premium-theme.css'), 'utf8');
 
 test('all three home inventories use the shared slider renderer', () => {
   for (const containerId of ['featuredGrid', 'recentPropertiesGrid', 'farmsLandGrid']) {
@@ -51,4 +53,15 @@ test('home title links keep the previous transparent card styling', () => {
   assert.match(styles, /\.home-page \.property-card \.property-cover-link,[\s\S]*?background: transparent !important;/);
   assert.match(styles, /\.home-page \.property-card \.property-title-link \{[\s\S]*?display: inline !important;/);
   assert.match(styles, /\.home-page \.property-card-actions \{[\s\S]*?z-index: 3;/);
+});
+
+test('shared call-to-action rules do not turn property title links into red buttons', () => {
+  assert.doesNotMatch(sharedStyles, /\.property-card a\[href\*="propiedad\.html"\]/);
+  assert.doesNotMatch(themeStyles, /\.property-card a\[href\*="propiedad\.html"\]/);
+  assert.match(themeStyles, /\.property-card \.property-title-link,[\s\S]*?background: transparent !important;/);
+});
+
+test('property cards resolve and render the real property title fields', () => {
+  assert.match(script, /return property\.title \|\| property\.titulo \|\| property\.propertyTitle \|\| property\.nombre \|\| property\.headline \|\| '';/);
+  assert.match(script, /<h3><a class="property-title-link"[\s\S]*?\$\{escapeHtml\(propertyTitle\)\}<\/a><\/h3>/);
 });
