@@ -676,6 +676,63 @@ if (heroSearchForm) {
 
   setHeroOperation(operationInput?.value || '');
 
+  const mobileSearchTrigger = document.getElementById('mobileSearchTrigger');
+  const mobileSearchClose = document.getElementById('mobileSearchClose');
+  const mobileSearchOverlay = document.getElementById('mobileSearchOverlay');
+  const mobileSearchQuery = window.matchMedia('(max-width: 768px)');
+  const focusableSelector = 'button:not([disabled]), select:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])';
+
+  const closeMobileSearch = ({ restoreFocus = true } = {}) => {
+    heroSearchForm.classList.remove('is-open');
+    mobileSearchOverlay?.classList.remove('is-open');
+    mobileSearchOverlay?.setAttribute('aria-hidden', 'true');
+    mobileSearchTrigger?.setAttribute('aria-expanded', 'false');
+    heroSearchForm.removeAttribute('role');
+    heroSearchForm.removeAttribute('aria-modal');
+    heroSearchForm.removeAttribute('aria-labelledby');
+    document.body.classList.remove('mobile-search-open');
+    if (restoreFocus && mobileSearchQuery.matches) mobileSearchTrigger?.focus();
+  };
+
+  const openMobileSearch = () => {
+    if (!mobileSearchQuery.matches) return;
+    heroSearchForm.classList.add('is-open');
+    mobileSearchOverlay?.classList.add('is-open');
+    mobileSearchOverlay?.setAttribute('aria-hidden', 'false');
+    mobileSearchTrigger?.setAttribute('aria-expanded', 'true');
+    heroSearchForm.setAttribute('role', 'dialog');
+    heroSearchForm.setAttribute('aria-modal', 'true');
+    heroSearchForm.setAttribute('aria-labelledby', 'mobileSearchTitle');
+    document.body.classList.add('mobile-search-open');
+    mobileSearchClose?.focus();
+  };
+
+  mobileSearchTrigger?.addEventListener('click', openMobileSearch);
+  mobileSearchClose?.addEventListener('click', () => closeMobileSearch());
+  mobileSearchOverlay?.addEventListener('click', () => closeMobileSearch());
+  heroSearchForm.addEventListener('keydown', (event) => {
+    if (!heroSearchForm.classList.contains('is-open')) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeMobileSearch();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const focusable = Array.from(heroSearchForm.querySelectorAll(focusableSelector));
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last?.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first?.focus();
+    }
+  });
+  mobileSearchQuery.addEventListener('change', (event) => {
+    if (!event.matches) closeMobileSearch({ restoreFocus: false });
+  });
+
   heroSearchForm.addEventListener('submit', (event) => {
     event.preventDefault();
     const location = document.getElementById('searchInput').value.trim();
@@ -687,6 +744,7 @@ if (heroSearchForm) {
     if (type) params.set('tipo', type);
     if (operation) params.set('operacion', operation);
 
+    closeMobileSearch({ restoreFocus: false });
     window.location.href = `propiedades.html?${params.toString()}`;
   });
 }
