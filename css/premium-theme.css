@@ -2581,10 +2581,58 @@ body.home-page .site-header.public-navbar:not(.is-scrolled) .container.nav-wrapp
 }
 
 body.home-page .site-header.public-navbar:not(.is-scrolled)::before,
-body.home-page .site-header.public-navbar:not(.is-scrolled)::after {
+body.home-page .site-header.public-navbar:not(.is-scrolled)::after,
+body.home-page .site-header.public-navbar:not(.is-scrolled) .nav-wrapper::before,
+body.home-page .site-header.public-navbar:not(.is-scrolled) .nav-wrapper::after,
+body.home-page .site-header.public-navbar:not(.is-scrolled) .container.nav-wrapper::before,
+body.home-page .site-header.public-navbar:not(.is-scrolled) .container.nav-wrapper::after {
   content: none !important;
   display: none !important;
   background: none !important;
+}
+
+/*
+ * Home hero search: controls float independently over the photograph. The
+ * form used to paint the large white glass card; both outer wrappers and
+ * their generated layers are deliberately paint-free on Home only.
+ */
+body.home-page .hero-search-content,
+body.home-page .search-form.premium-search {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+body.home-page .hero-search-content::before,
+body.home-page .hero-search-content::after,
+body.home-page .search-form.premium-search::before,
+body.home-page .search-form.premium-search::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+}
+
+body.home-page .search-form.premium-search {
+  gap: 0.75rem;
+  padding: 0 !important;
+}
+
+@media (max-width: 900px) {
+  body.home-page .hero-search-content {
+    width: 100%;
+    min-width: 0;
+  }
+
+  body.home-page .search-form.premium-search {
+    width: 100%;
+    max-width: 100%;
+    gap: 0.65rem;
+  }
 }
 
 body.home-page .site-header.public-navbar:not(.is-scrolled) .site-nav a,
