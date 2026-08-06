@@ -1,0 +1,38 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const test = require('node:test');
+
+const root = path.join(__dirname, '..');
+const home = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+const theme = fs.readFileSync(path.join(root, 'css', 'premium-theme.css'), 'utf8');
+const main = fs.readFileSync(path.join(root, 'js', 'main.js'), 'utf8');
+
+test('home navbar is transparent from the first paint', () => {
+  assert.match(home, /<body class="home-page navbar-over-hero">/);
+  assert.match(home, /<header class="site-header public-navbar">/);
+
+  const unscrolledRule = theme.match(
+    /body\.home-page \.site-header\.public-navbar:not\(\.is-scrolled\)[\s\S]*?\n}/,
+  )?.[0];
+
+  assert.ok(unscrolledRule, 'missing the explicit home-only unscrolled state');
+  assert.match(unscrolledRule, /background-image: none !important/);
+  assert.match(unscrolledRule, /border-color: transparent !important/);
+  assert.match(unscrolledRule, /box-shadow: none !important/);
+  assert.match(unscrolledRule, /backdrop-filter: none !important/);
+});
+
+test('home navbar gains one surface only beyond the scroll threshold', () => {
+  assert.match(main, /const NAVBAR_SCROLL_THRESHOLD = 32;/);
+  assert.match(main, /window\.scrollY > NAVBAR_SCROLL_THRESHOLD/);
+  assert.match(main, /classList\.toggle\('is-scrolled', isScrolled\)/);
+  assert.match(main, /addEventListener\('DOMContentLoaded', updateHeaderOnScroll\)/);
+  assert.match(main, /addEventListener\('pageshow', updateHeaderOnScroll\)/);
+
+  assert.match(
+    theme,
+    /body\.home-page \.site-header\.public-navbar\.is-scrolled \{[\s\S]*?background: rgba\(255, 255, 255, 0\.84\) !important;[\s\S]*?backdrop-filter: blur\(16px\)/,
+  );
+});
+

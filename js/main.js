@@ -92,7 +92,7 @@ function usesLightNavbarStart() {
 }
 
 if (siteHeader) {
-  siteHeader.classList.remove('scrolled', 'is-scrolled');
+  siteHeader.classList.remove('scrolled', 'is-scrolled', 'navbar-scrolled');
   if (isPublicSiteRoute()) {
     const startsWithHero = !usesLightNavbarStart();
     siteHeader.classList.add('public-navbar');
@@ -648,6 +648,8 @@ function requestHeaderUpdate() {
 }
 
 window.addEventListener('scroll', requestHeaderUpdate, { passive: true });
+window.addEventListener('DOMContentLoaded', updateHeaderOnScroll);
+window.addEventListener('pageshow', updateHeaderOnScroll);
 updateHeaderOnScroll();
 
 const heroSearchForm = document.getElementById('heroSearchForm');
