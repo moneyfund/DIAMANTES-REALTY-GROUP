@@ -598,7 +598,7 @@ function initializeHorizontalSlider(slider, options = {}) {
   if (prevButton) prevButton.onclick = () => slideBy(-1);
   if (nextButton) nextButton.onclick = () => slideBy(1);
 
-  const CLICK_TOLERANCE = 8;
+  const DRAG_THRESHOLD = 8;
   let isPointerDown = false;
   let isDragging = false;
   let startX = 0;
@@ -610,7 +610,7 @@ function initializeHorizontalSlider(slider, options = {}) {
   let suppressSliderClick = false;
 
   const isConfirmedHorizontalDrag = (deltaX, deltaY) => (
-    Math.abs(deltaX) > CLICK_TOLERANCE && Math.abs(deltaX) > Math.abs(deltaY)
+    Math.abs(deltaX) > DRAG_THRESHOLD && Math.abs(deltaX) > Math.abs(deltaY)
   );
 
   const handlePointerDown = (event) => {
@@ -624,7 +624,6 @@ function initializeHorizontalSlider(slider, options = {}) {
     updateActiveCard();
     startActiveIndex = activeIndex;
     pointerId = event.pointerId;
-    slider.setPointerCapture?.(event.pointerId);
   };
 
   const handlePointerMove = (event) => {
@@ -635,6 +634,9 @@ function initializeHorizontalSlider(slider, options = {}) {
     if (!isDragging && isConfirmedHorizontalDrag(deltaX, deltaY)) {
       isDragging = true;
       slider.classList.add('is-dragging');
+      // Capturing on pointerdown retargets an ordinary desktop click to the
+      // slider. Capture only after the gesture is unquestionably a drag.
+      slider.setPointerCapture?.(event.pointerId);
     }
 
     if (!isDragging) return;
@@ -647,7 +649,9 @@ function initializeHorizontalSlider(slider, options = {}) {
   const stopDragging = (event, cancelled = false) => {
     if (!isPointerDown) return;
     isPointerDown = false;
-    if (pointerId !== null) slider.releasePointerCapture?.(pointerId);
+    if (pointerId !== null && slider.hasPointerCapture?.(pointerId)) {
+      slider.releasePointerCapture?.(pointerId);
+    }
     pointerId = null;
 
     const deltaX = event.clientX - startX;
@@ -707,7 +711,14 @@ function initializeHorizontalSlider(slider, options = {}) {
   slider.addEventListener('pointermove', handlePointerMove);
   slider.addEventListener('pointerup', stopDragging);
   const handlePointerCancel = (event) => stopDragging(event, true);
+  const handlePointerLeave = (event) => {
+    // A captured drag continues to receive pointer events outside the slider.
+    // An uncaptured pointer leaving the slider must not leave stale click state.
+    if (isPointerDown && !isDragging) stopDragging(event, true);
+    if (!isPointerDown) suppressSliderClick = false;
+  };
   slider.addEventListener('pointercancel', handlePointerCancel);
+  slider.addEventListener('pointerleave', handlePointerLeave);
   slider.addEventListener('click', handleClickCapture, true);
   slider.addEventListener('click', handleCardClick);
   const intersectionObserver = typeof IntersectionObserver === 'function'
@@ -730,6 +741,7 @@ function initializeHorizontalSlider(slider, options = {}) {
     slider.removeEventListener('pointermove', handlePointerMove);
     slider.removeEventListener('pointerup', stopDragging);
     slider.removeEventListener('pointercancel', handlePointerCancel);
+    slider.removeEventListener('pointerleave', handlePointerLeave);
     slider.removeEventListener('click', handleClickCapture, true);
     slider.removeEventListener('click', handleCardClick);
     slider.removeEventListener('scroll', handleScroll);
