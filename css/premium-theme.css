@@ -2481,3 +2481,79 @@ body.dark-mode:not(.agent-dashboard-route):not(.admin-route):not(.property-sheet
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Public header integration: the fixed header never participates in document flow. */
+body.navbar-over-hero,
+body.navbar-start-light {
+  padding-top: 0 !important;
+}
+
+body.navbar-start-light main {
+  padding-top: var(--header-offset, 84px) !important;
+}
+
+body.navbar-over-hero main {
+  padding-top: 0 !important;
+}
+
+.site-header.public-navbar,
+.site-header.public-navbar .nav-wrapper,
+.site-header.public-navbar .container.nav-wrapper,
+.site-header.public-navbar::before,
+.site-header.public-navbar::after {
+  background: transparent !important;
+  background-color: transparent !important;
+  border-bottom-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Light-first public routes remain readable before the first scroll. */
+.site-header.public-navbar.navbar-light-start:not(.navbar-scrolled) {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-bottom-color: rgba(15, 31, 51, 0.09) !important;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  backdrop-filter: blur(14px) !important;
+}
+
+.site-header.public-navbar.navbar-scrolled {
+  position: fixed;
+  background: rgba(255, 255, 255, 0.82) !important;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.09) !important;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(115%) !important;
+  backdrop-filter: blur(16px) saturate(115%) !important;
+}
+
+/* Only hero copy is offset; its image/painted surface still begins at viewport y=0. */
+body.navbar-over-hero .hero-content {
+  padding-top: calc(var(--header-offset, 84px) + 40px) !important;
+}
+
+body.navbar-over-hero .page-banner,
+body.navbar-over-hero .edu-hero {
+  padding-top: calc(var(--header-offset, 84px) + clamp(2.5rem, 6vw, 5rem)) !important;
+}
+
+body.navbar-over-hero .page-banner .container {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 900px) {
+  body.navbar-start-light main {
+    padding-top: var(--header-offset, 74px) !important;
+  }
+
+  body.navbar-over-hero .hero-content {
+    padding-top: calc(var(--header-offset, 74px) + 24px) !important;
+  }
+
+  body.navbar-over-hero .page-banner,
+  body.navbar-over-hero .edu-hero {
+    padding-top: calc(var(--header-offset, 74px) + 32px) !important;
+  }
+}

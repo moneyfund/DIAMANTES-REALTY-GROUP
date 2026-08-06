@@ -79,7 +79,14 @@ const siteHeader = document.querySelector('.site-header');
 const NAVBAR_SCROLL_THRESHOLD = 32;
 
 function usesLightNavbarStart() {
-  const darkHeroPages = new Set(['index.html', 'educacion.html']);
+  const darkHeroPages = new Set([
+    'index.html',
+    'nosotros.html',
+    'agentes.html',
+    'educacion.html',
+    'quieres-vender.html',
+    'contacto.html'
+  ]);
   const currentPage = window.location.pathname.split('/').filter(Boolean).pop()?.toLowerCase() || 'index.html';
   return !darkHeroPages.has(currentPage);
 }
@@ -87,8 +94,11 @@ function usesLightNavbarStart() {
 if (siteHeader) {
   siteHeader.classList.remove('scrolled', 'is-scrolled');
   if (isPublicSiteRoute()) {
+    const startsWithHero = !usesLightNavbarStart();
     siteHeader.classList.add('public-navbar');
-    siteHeader.classList.toggle('navbar-light-start', usesLightNavbarStart());
+    siteHeader.classList.toggle('navbar-light-start', !startsWithHero);
+    document.body.classList.toggle('navbar-over-hero', startsWithHero);
+    document.body.classList.toggle('navbar-start-light', !startsWithHero);
   }
 }
 
