@@ -389,33 +389,53 @@ function buildGalleryWatermarkMarkup() {
 
 function propertyCardTemplate(property) {
   const featuredClass = property.featured ? ' is-featured' : '';
-  const status = (property.status || 'disponible').toLowerCase();
+  const status = String(property.status || 'disponible').toLowerCase();
   const imageSrc = getPrimaryPropertyImage(property);
   const propertyTitle = getPropertyTitle(property);
   const imageAlt = propertyTitle || 'Imagen de la propiedad';
   const detailUrl = getPropertyDetailUrl(property);
   const locationLabel = property.city || property.ubicacion || 'Ubicación no disponible';
-  const displayDetails = getPropertyDisplayDetails(property).slice(0, 4);
+  const typeLabel = property.typeLabel || getPropertyTypeLabel(property.tipo) || 'Propiedad';
+  const operationLabel = property.operationLabel || formatPropertyOperation(property.operacion) || 'Venta';
+  const displayDetails = getPropertyDisplayDetails(property).slice(0, 3);
+  const pricePerArea = getPricePerAreaUsd(property);
+  const areaUnit = property.areaUnit || property.propertyDetails?.areaUnit || '';
+  const pricePerAreaMarkup = Number.isFinite(pricePerArea) && pricePerArea > 0 && areaUnit
+    ? `<p class="property-price-area">${escapeHtml(formatPricePerArea(pricePerArea, areaUnit))}</p>`
+    : '';
+  const isSold = ['sold', 'vendida', 'vendido'].includes(status);
+  const isExclusive = Boolean(property.exclusive || property.exclusiva || status === 'exclusive' || status === 'exclusiva');
+  const specialBadges = [
+    property.featured ? '<span class="property-media-badge property-media-badge--special">Destacada</span>' : '',
+    isSold ? '<span class="property-media-badge property-media-badge--sold">Vendida</span>' : '',
+    isExclusive ? '<span class="property-media-badge property-media-badge--special">Exclusiva</span>' : ''
+  ].filter(Boolean).join('');
   return `
-    <div class="property-card${featuredClass}">
-      <a class="property-cover property-cover-link" href="${detailUrl}" data-property-link aria-label="Ver detalle de ${escapeHtml(imageAlt)}">
-        <img class="property-cover-image" src="${imageSrc}" alt="${imageAlt}" loading="lazy" onerror="this.onerror=null;this.src='${PROPERTY_IMAGE_PLACEHOLDER}'">
-      </a>
-      <div class="property-card-content">
-        <p class="badge">${property.typeLabel || getPropertyTypeLabel(property.tipo) || 'Propiedad'} en ${(property.operationLabel || formatPropertyOperation(property.operacion) || 'Venta').toLowerCase()}</p>
-        <h3><a class="property-title-link" href="${detailUrl}" data-property-link>${escapeHtml(propertyTitle)}</a></h3>
-        <p class="property-location">${locationLabel}</p>
-        <p class="price">${formatDualPriceMarkup(getPriceUsd(property))}</p>
-        ${status === 'sold' ? '<p class="property-status-tag">VENDIDA</p>' : ''}
-        <div class="property-meta property-meta-icons">
-          ${displayDetails.map((detail) => `<span>${featureIcon(detail.icon)} ${escapeHtml(detail.value)} ${escapeHtml(detail.label).toLowerCase()}</span>`).join('')}
-          <span>${featureIcon('location')} ${locationLabel}</span>
-          <span>${featureIcon('type')} ${property.typeLabel || getPropertyTypeLabel(property.tipo) || 'Propiedad'}</span>
+    <article class="property-card public-property-card${featuredClass}">
+      <div class="property-card-shell">
+        <a class="property-card-media property-cover property-cover-link" href="${detailUrl}" data-property-link aria-label="Ver detalle de ${escapeHtml(imageAlt)}">
+          <img class="property-cover-image" src="${imageSrc}" alt="${escapeHtml(imageAlt)}" loading="lazy" onerror="this.onerror=null;this.src='${PROPERTY_IMAGE_PLACEHOLDER}'">
+          <span class="property-media-gradient" aria-hidden="true"></span>
+          <span class="property-media-badges property-media-badges--primary">
+            <span class="property-media-badge">${escapeHtml(operationLabel)}</span>
+            <span class="property-media-badge property-media-badge--type">${escapeHtml(typeLabel)}</span>
+          </span>
+          ${specialBadges ? `<span class="property-media-badges property-media-badges--special">${specialBadges}</span>` : ''}
+        </a>
+        <div class="property-card-body property-card-content">
+          <p class="property-location">${featureIcon('location')}<span>${escapeHtml(locationLabel)}</span></p>
+          <h3><a class="property-title-link" href="${detailUrl}" data-property-link>${escapeHtml(propertyTitle)}</a></h3>
+          <p class="price">${formatDualPriceMarkup(getPriceUsd(property))}</p>
+          <div class="property-features property-meta property-meta-icons">
+            ${displayDetails.map((detail) => `<span>${featureIcon(detail.icon)}<span>${escapeHtml(detail.value)} ${escapeHtml(detail.label).toLowerCase()}</span></span>`).join('')}
+          </div>
+          ${pricePerAreaMarkup}
         </div>
-        <p class="property-price-area">${formatPricePerArea(getPricePerAreaUsd(property), property.areaUnit)}</p>
-        <div class="property-card-actions"><a class="property-detail-button btn-primary-property" href="${detailUrl}" data-property-link>VER DETALLE</a></div>
+        <div class="property-card-footer property-card-actions">
+          <a class="property-detail-button btn-primary-property" href="${detailUrl}" data-property-link>Ver propiedad</a>
+        </div>
       </div>
-    </div>
+    </article>
   `;
 }
 
