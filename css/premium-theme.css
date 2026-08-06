@@ -2559,10 +2559,38 @@ body.navbar-over-hero .page-banner .container {
 }
 
 /*
- * Home-only navbar audit: `.home-page .site-header` in styles.css and the
- * generic public-header rule above both paint a translucent surface before
- * JavaScript runs. The home markup therefore carries `public-navbar` from the
- * first paint, and this explicit unscrolled state removes every paint layer.
+ * Home header structure: styles.css reserves --header-offset on <body>. Home
+ * must cancel that spacer and take the real header out of flow so the hero's
+ * painted box starts at viewport y=0. Other public routes keep their offset.
+ */
+body.home-page.navbar-over-hero {
+  padding-top: 0 !important;
+}
+
+body.home-page.navbar-over-hero main {
+  padding-top: 0 !important;
+}
+
+body.home-page.navbar-over-hero .hero.premium-hero {
+  margin-top: 0 !important;
+}
+
+body.home-page .site-header.public-navbar {
+  position: absolute;
+  inset: 0 0 auto;
+  width: 100%;
+  z-index: 1000;
+}
+
+/* The scrolled state stays viewport-pinned without reserving layout space. */
+body.home-page .site-header.public-navbar.is-scrolled {
+  position: fixed;
+}
+
+/*
+ * Home-only paint audit: the loaded markup carries `public-navbar` before
+ * JavaScript runs, so the unscrolled header and its real inner wrapper paint
+ * no surface. Only the scrolled rule below creates the glass surface.
  */
 body.home-page .site-header.public-navbar:not(.is-scrolled),
 body.home-page .site-header.public-navbar:not(.is-scrolled) .nav-wrapper,
