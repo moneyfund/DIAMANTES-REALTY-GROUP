@@ -1045,7 +1045,7 @@ body.dark-mode .home-page .hero-search-content .premium-search .hero-search-subm
 .home-page #featuredGrid .price,
 .home-page .home-matched-properties-grid .price {
   color: #B00008 !important;
-  font-family: "Inter", "Montserrat", "Manrope", "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-family: var(--font-ui) !important;
   font-size: 2rem !important;
   font-weight: 700 !important;
   letter-spacing: -0.5px !important;
@@ -1904,7 +1904,7 @@ body.dark-mode .site-footer,
   background: var(--footer-premium-bg) !important;
   color: #FFFFFF !important;
   border-top: 1px solid rgba(255, 255, 255, 0.14) !important;
-  font-family: Inter, system-ui, sans-serif !important;
+  font-family: var(--font-ui) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 -18px 48px rgba(3, 9, 20, 0.2) !important;
 }
 
@@ -1912,13 +1912,13 @@ body.dark-mode .site-footer,
 .site-footer .footer-brand-row,
 .site-footer .footer-columns,
 .site-footer .footer-columns > div {
-  font-family: Inter, system-ui, sans-serif !important;
+  font-family: var(--font-ui) !important;
 }
 
 .site-footer .footer-brand-row h3,
 .site-footer .footer-columns h4 {
   color: #FFFFFF !important;
-  font-family: Inter, system-ui, sans-serif !important;
+  font-family: var(--font-ui) !important;
   font-weight: 700 !important;
   letter-spacing: 0.04em !important;
 }
@@ -1931,7 +1931,7 @@ body.dark-mode .site-footer,
 .site-footer .footer-brand-row p,
 .site-footer .footer-text {
   color: rgba(255, 255, 255, 0.78) !important;
-  font-family: Inter, system-ui, sans-serif !important;
+  font-family: var(--font-ui) !important;
   font-weight: 400 !important;
   line-height: 1.6 !important;
 }
@@ -1947,7 +1947,7 @@ body.dark-mode .site-footer,
 .site-footer .footer-legal-link,
 .site-footer .footer-columns a {
   color: #FFFFFF !important;
-  font-family: Inter, system-ui, sans-serif !important;
+  font-family: var(--font-ui) !important;
   font-weight: 400 !important;
   line-height: 1.6 !important;
   text-decoration-color: transparent !important;
@@ -2716,6 +2716,51 @@ body:not(.agent-dashboard-route):not(.property-sheet-body) :is(
   .hero-title,
   .premium-title,
   .premium-heading
+) {
+  font-family: var(--font-display) !important;
+}
+
+/* Effective public typography -------------------------------------------------
+   Kept at the end of the last shared public theme in the load order so page
+   styles cannot restore legacy typefaces. Private dashboards and print sheets
+   are deliberately outside this selector. */
+body:not(.agent-dashboard-route):not(.admin-page):not(.property-sheet-body):not(.property-sheet-page) {
+  font-family: var(--font-body) !important;
+}
+
+body:not(.agent-dashboard-route):not(.admin-page):not(.property-sheet-body):not(.property-sheet-page) :where(
+  p, span, li, a, label, small, strong, b, button, input, select, textarea,
+  option, table, th, td
+) {
+  font-family: var(--font-ui) !important;
+}
+
+body:not(.agent-dashboard-route):not(.admin-page):not(.property-sheet-body):not(.property-sheet-page) :is(
+  .site-nav, .site-nav a, .menu-toggle, .user-session, .user-session *,
+  .nav-auth-session, .nav-auth-session *, .logout-button
+) {
+  font-family: var(--font-navigation) !important;
+}
+
+body:not(.agent-dashboard-route):not(.admin-page):not(.property-sheet-body):not(.property-sheet-page) :is(
+  button, .btn, .button, .primary-btn, .secondary-btn, .search-button,
+  .property-card__button, .logout-button
+) {
+  font-family: var(--font-buttons) !important;
+}
+
+body:not(.agent-dashboard-route):not(.admin-page):not(.property-sheet-body):not(.property-sheet-page) :is(
+  .property-card, .property-card *, .property-card-title, .property-title,
+  .card-title, .property-price, .property-location, .property-features,
+  .map-property-card, .map-property-card *, #agentsGrid .agent-card,
+  #agentsGrid .agent-card *
+) {
+  font-family: var(--font-ui) !important;
+}
+
+body:not(.agent-dashboard-route):not(.admin-page):not(.property-sheet-body):not(.property-sheet-page) :is(
+  .hero h1, .page-hero h1, .section-heading h2, .section-header h2,
+  .premium-title, .premium-heading, .premium-section-title
 ) {
   font-family: var(--font-display) !important;
 }

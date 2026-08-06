@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 :root {
   --deploy-test-public: "2026-06-13";
   --primary-red: #d32f2f;
@@ -133,7 +133,7 @@ body.dark-mode,
 * { box-sizing: border-box; }
 body {
   margin: 0;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
   color: var(--text-main);
   background: var(--bg-main) !important;
   line-height: 1.6;
@@ -154,7 +154,7 @@ section,
   background: transparent !important;
 }
 
-h1, h2, h3 { font-family: 'Playfair Display', serif; margin-top: 0; color: var(--text-main); }
+h1, h2, h3 { font-family: var(--font-display); margin-top: 0; color: var(--text-main); }
 a { text-decoration: none; }
 .container { width: min(1120px, 92%); margin: 0 auto; }
 .section { padding: 4rem 0; background: transparent; color: var(--text-main); }
@@ -2685,7 +2685,7 @@ body.dark-mode {
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
-  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-family: var(--font-navigation);
   font-weight: 800;
   font-size: clamp(1rem, 1.6vw, 1.28rem);
   letter-spacing: 0.08em;
@@ -4241,7 +4241,7 @@ p, li, label, input, textarea, select, button, a {
 }
 .premium-hero .hero-static-content .hero-license {
   margin: 0.12rem 0 0.65rem;
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-ui);
   font-size: clamp(0.72rem, 1.35vw, 0.86rem);
   font-weight: 500;
   letter-spacing: 0.08em;
@@ -4805,7 +4805,7 @@ body.dark-mode .map-preview-summary {
 
 /* Final visual identity overrides */
 .site-header .brand {
-  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-family: var(--font-navigation);
   font-weight: 800;
   font-size: clamp(1rem, 1.6vw, 1.28rem);
   letter-spacing: 0.08em;
@@ -6800,7 +6800,7 @@ body:not(.dark):not(.dark-mode) .home-page .premium-search .hero-search-submit {
   justify-items: center;
   text-align: center;
 }
-.site-footer .footer-columns h4 { margin: 0 0 .5rem; color: var(--footer-premium-text); font-family: Inter, sans-serif; }
+.site-footer .footer-columns h4 { margin: 0 0 .5rem; color: var(--footer-premium-text); font-family: var(--font-ui); }
 .site-footer .footer-columns a { color: var(--footer-premium-text); display:block; margin:.25rem 0; }
 .site-footer :is(h1, h2, h3, h4, h5, h6, p, span, small, strong, em, li, a, label) {
   color: var(--footer-premium-text);
@@ -8023,9 +8023,9 @@ body.dark-mode .education-card {
 
 /* Premium global typography and loader v2 */
 :root {
-  --premium-global-heading: 'Cormorant Garamond', Georgia, serif;
-  --premium-global-body: 'Inter', system-ui, sans-serif;
-  --premium-global-ui: 'Manrope', system-ui, sans-serif;
+  --premium-global-heading: var(--font-display);
+  --premium-global-body: var(--font-body);
+  --premium-global-ui: var(--font-ui);
 }
 
 body { font-family: var(--premium-global-body); }
@@ -9301,7 +9301,7 @@ body.dark-mode .home-page .hero-search-content .premium-search .hero-search-subm
 .home-page .home-matched-properties-grid .price {
   display: block;
   color: #B00008 !important;
-  font-family: "Inter", "Montserrat", "Manrope", "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-family: var(--font-ui) !important;
   font-size: 2rem !important;
   font-weight: 700 !important;
   letter-spacing: -0.5px !important;
@@ -9429,7 +9429,7 @@ body.dark-mode .home-page .hero-search-content .premium-search .hero-search-subm
   margin: 0 0 0.45rem;
   overflow-wrap: anywhere;
   color: #14323b !important;
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-ui);
   font-size: clamp(1.75rem, 2.25vw, 2.15rem);
   font-weight: 700;
   line-height: 1.08;
@@ -9446,7 +9446,7 @@ body.dark-mode .home-page .hero-search-content .premium-search .hero-search-subm
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
   color: #5f6b74 !important;
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: clamp(0.9rem, 1.35vw, 0.96rem);
   line-height: 1.45;
   white-space: normal !important;
@@ -9468,7 +9468,7 @@ body.dark-mode .home-page .hero-search-content .premium-search .hero-search-subm
   min-width: 0;
   margin: 0;
   color: #334155 !important;
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 0.9rem;
   line-height: 1.35;
   white-space: normal !important;
@@ -9551,7 +9551,7 @@ body.dark-mode .home-page .hero-search-content .premium-search .hero-search-subm
   padding: 0.65rem 0.9rem;
   border: 1.5px solid #B00008;
   border-radius: 999px;
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 0.92rem;
   font-weight: 800;
   line-height: 1.15;

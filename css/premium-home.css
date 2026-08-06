@@ -7,9 +7,9 @@
   --premium-text: #111827;
   --premium-muted: #6B7280;
   --premium-border: #E5E7EB;
-  --premium-heading: 'Cormorant Garamond', Georgia, serif;
-  --premium-body: 'Inter', system-ui, sans-serif;
-  --premium-ui: 'Manrope', system-ui, sans-serif;
+  --premium-heading: var(--font-display);
+  --premium-body: var(--font-body);
+  --premium-ui: var(--font-ui);
 }
 
 html,

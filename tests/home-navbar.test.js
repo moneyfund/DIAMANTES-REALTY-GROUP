@@ -83,10 +83,10 @@ test('all public navbars inherit the compact Inicio dimensions without changing 
   ];
   for (const page of publicPages) {
     const html = fs.readFileSync(path.join(root, page), 'utf8');
-    assert.match(html, /premium-theme\.css\?v=20260806-public-navbar-density/, `${page} must load the shared navbar dimensions`);
+    assert.match(html, /premium-theme\.css\?v=20260806-typography-fix/, `${page} must load the shared navbar dimensions`);
   }
 
-  assert.doesNotMatch(fs.readFileSync(path.join(root, 'agent-dashboard.html'), 'utf8'), /public-navbar-density/);
+  assert.doesNotMatch(fs.readFileSync(path.join(root, 'agent-dashboard.html'), 'utf8'), /20260806-typography-fix/);
   assert.doesNotMatch(fs.readFileSync(path.join(root, 'property-sheet.html'), 'utf8'), /premium-theme\.css/);
   assert.match(main, /const HOME_NAVBAR_SCROLL_THRESHOLD = 35;/);
 });
