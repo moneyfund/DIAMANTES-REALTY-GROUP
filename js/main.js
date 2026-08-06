@@ -76,9 +76,20 @@ const themeToggle = document.getElementById('themeToggle');
 const savedTheme = TEMPORARILY_DISABLE_DARK_MODE ? 'light' : localStorage.getItem('themeMode');
 
 const siteHeader = document.querySelector('.site-header');
+const NAVBAR_SCROLL_THRESHOLD = 32;
+
+function usesLightNavbarStart() {
+  const darkHeroPages = new Set(['index.html', 'educacion.html']);
+  const currentPage = window.location.pathname.split('/').filter(Boolean).pop()?.toLowerCase() || 'index.html';
+  return !darkHeroPages.has(currentPage);
+}
 
 if (siteHeader) {
   siteHeader.classList.remove('scrolled', 'is-scrolled');
+  if (isPublicSiteRoute()) {
+    siteHeader.classList.add('public-navbar');
+    siteHeader.classList.toggle('navbar-light-start', usesLightNavbarStart());
+  }
 }
 
 function applyTheme(theme) {
@@ -609,13 +620,24 @@ function initializeCategoryCoverflow() {
 initializeCategoryCoverflow();
 
 function updateHeaderOnScroll() {
-  if (!siteHeader) return;
-  const isScrolled = window.scrollY > 24;
+  if (!siteHeader || !isPublicSiteRoute()) return;
+  const isScrolled = window.scrollY > NAVBAR_SCROLL_THRESHOLD;
   siteHeader.classList.toggle('scrolled', isScrolled);
   siteHeader.classList.toggle('is-scrolled', isScrolled);
+  siteHeader.classList.toggle('navbar-scrolled', isScrolled);
 }
 
-window.addEventListener('scroll', updateHeaderOnScroll, { passive: true });
+let navbarFramePending = false;
+function requestHeaderUpdate() {
+  if (navbarFramePending) return;
+  navbarFramePending = true;
+  window.requestAnimationFrame(() => {
+    updateHeaderOnScroll();
+    navbarFramePending = false;
+  });
+}
+
+window.addEventListener('scroll', requestHeaderUpdate, { passive: true });
 updateHeaderOnScroll();
 
 const heroSearchForm = document.getElementById('heroSearchForm');
