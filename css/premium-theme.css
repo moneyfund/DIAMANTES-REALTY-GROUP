@@ -78,6 +78,29 @@
   --font-buttons: var(--font-primary);
   --font-ui: var(--font-primary);
   --font-display: 'Cormorant Garamond', Georgia, serif;
+
+  /* Inicio is the source of truth for every public navbar dimension. */
+  --public-navbar-height: 76px;
+  --public-navbar-max-width: 1440px;
+  --public-navbar-padding-block: 0px;
+  --public-navbar-padding-inline: clamp(1rem, 2.4vw, 2.2rem);
+  --public-navbar-layout-gap: clamp(0.55rem, 1vw, 1rem);
+  --public-navbar-logo-height: clamp(48px, 3.8vw, 56px);
+  --public-navbar-logo-max-height: 56px;
+  --public-navbar-link-size: clamp(0.8rem, 0.72vw, 0.88rem);
+  --public-navbar-link-weight: 600;
+  --public-navbar-link-padding-block: 0.36rem;
+  --public-navbar-link-padding-inline: clamp(0.34rem, 0.42vw, 0.55rem);
+  --public-navbar-link-gap: clamp(0.1rem, 0.42vw, 0.4rem);
+  --public-navbar-link-radius: 8px;
+  --public-navbar-avatar-size: 36px;
+  --public-navbar-session-gap: 0.4rem;
+  --public-navbar-session-padding: 0.2rem 0.28rem 0.2rem 0.2rem;
+  --public-navbar-session-radius: 14px;
+  --public-navbar-action-height: 32px;
+  --public-navbar-action-padding: 0.3rem 0.55rem;
+  --public-navbar-action-radius: 10px;
+  --public-navbar-control-size: 38px;
 }
 
 body.dark,
@@ -2537,151 +2560,133 @@ body.home-page .search-form.premium-search {
   }
 }
 
-/* Home-only navbar density. Visual sizing is intentionally isolated from the
-   state rules above so the established transparency/scroll behavior stays intact. */
-body.home-page .site-header .container.nav-wrapper {
-  width: min(100%, 1440px);
-  min-height: 76px;
-  padding-block: 0;
-  padding-inline: clamp(1rem, 2.4vw, 2.2rem);
+/* Shared public-navbar density. These are the exact dimensions established on
+   Inicio; color, transparency and scroll-state rules remain page-specific above. */
+body:not(.agent-dashboard-route):not(.property-sheet-body) .site-header .container.nav-wrapper {
+  width: min(100%, var(--public-navbar-max-width));
+  min-height: var(--public-navbar-height);
+  padding-block: var(--public-navbar-padding-block);
+  padding-inline: var(--public-navbar-padding-inline);
   grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: clamp(0.55rem, 1vw, 1rem);
+  gap: var(--public-navbar-layout-gap);
+  align-items: center;
 }
 
-body.home-page .site-header .brand-logo {
+body:not(.agent-dashboard-route):not(.property-sheet-body) .site-header .brand-logo {
   width: auto !important;
-  height: clamp(48px, 3.8vw, 56px) !important;
-  max-height: 56px;
+  height: var(--public-navbar-logo-height) !important;
+  max-height: var(--public-navbar-logo-max-height);
 }
 
-body.home-page .site-header .site-nav {
+body:not(.agent-dashboard-route):not(.property-sheet-body) .site-header .site-nav {
   min-width: 0;
-  gap: clamp(0.1rem, 0.42vw, 0.4rem);
+  gap: var(--public-navbar-link-gap);
   justify-content: flex-end;
+  align-items: center;
 }
 
-body.home-page .site-header .site-nav > a {
+body:not(.agent-dashboard-route):not(.property-sheet-body) .site-header .site-nav > a {
   flex: 0 0 auto;
-  padding: 0.36rem clamp(0.34rem, 0.42vw, 0.55rem);
-  border-radius: 8px;
-  font-size: clamp(0.8rem, 0.72vw, 0.88rem);
-  font-weight: 600;
+  padding: var(--public-navbar-link-padding-block) var(--public-navbar-link-padding-inline);
+  border-radius: var(--public-navbar-link-radius);
+  font-family: var(--font-navigation) !important;
+  font-size: var(--public-navbar-link-size);
+  font-weight: var(--public-navbar-link-weight);
   letter-spacing: 0.01em;
   line-height: 1.2;
   white-space: nowrap;
 }
 
-body.home-page .site-header .site-nav > a::after {
+body:not(.agent-dashboard-route):not(.property-sheet-body) .site-header .site-nav > a::after {
   left: 0.45rem;
   right: 0.45rem;
   bottom: 0.18rem;
 }
 
-body.home-page .site-header .nav-auth-container {
+body:not(.agent-dashboard-route):not(.property-sheet-body) .site-header .nav-auth-container {
   flex: 0 1 auto;
   min-width: 0;
   margin-left: clamp(0.1rem, 0.35vw, 0.35rem);
 }
 
-body.home-page .site-header .nav-auth-session {
-  gap: 0.4rem;
+body:not(.agent-dashboard-route):not(.property-sheet-body) .site-header .nav-auth-session {
+  gap: var(--public-navbar-session-gap);
   max-width: 300px;
-  padding: 0.2rem 0.28rem 0.2rem 0.2rem;
-  border-radius: 14px;
+  padding: var(--public-navbar-session-padding);
+  border-radius: var(--public-navbar-session-radius);
   box-shadow: 0 6px 16px rgba(7, 17, 31, 0.07);
+  align-items: center;
 }
 
-body.home-page .site-header .nav-auth-session img {
-  width: 36px;
-  height: 36px;
+body:not(.agent-dashboard-route):not(.property-sheet-body) .site-header .nav-auth-session img {
+  width: var(--public-navbar-avatar-size);
+  height: var(--public-navbar-avatar-size);
 }
 
-body.home-page .site-header .nav-auth-session__text strong {
+body:not(.agent-dashboard-route):not(.property-sheet-body) .site-header .nav-auth-session__text strong {
   max-width: 112px;
   font-size: 0.8rem;
   font-weight: 700;
 }
 
-body.home-page .site-header .nav-auth-session__text small {
+body:not(.agent-dashboard-route):not(.property-sheet-body) .site-header .nav-auth-session__text small {
   display: none;
 }
 
-body.home-page .site-header .nav-auth-action {
-  min-height: 32px;
-  padding: 0.3rem 0.55rem !important;
-  border-radius: 10px;
+body:not(.agent-dashboard-route):not(.property-sheet-body) .site-header .nav-auth-action {
+  min-height: var(--public-navbar-action-height);
+  padding: var(--public-navbar-action-padding) !important;
+  border-radius: var(--public-navbar-action-radius);
   font-size: 0.72rem;
   line-height: 1.1;
   white-space: nowrap;
 }
 
-body.home-page .site-header .theme-toggle,
-body.home-page .site-header .menu-toggle {
-  width: 38px;
-  height: 38px;
-  min-height: 38px;
+body:not(.agent-dashboard-route):not(.property-sheet-body) .site-header :is(.theme-toggle, .menu-toggle) {
+  width: var(--public-navbar-control-size);
+  height: var(--public-navbar-control-size);
+  min-height: var(--public-navbar-control-size);
 }
 
 @media (min-width: 901px) and (max-width: 1180px) {
-  body.home-page .site-header .container.nav-wrapper {
-    min-height: 72px;
-    padding-inline: clamp(0.75rem, 1.5vw, 1.1rem);
-    gap: 0.45rem;
+  :root {
+    --public-navbar-height: 72px;
+    --public-navbar-padding-inline: clamp(0.75rem, 1.5vw, 1.1rem);
+    --public-navbar-layout-gap: 0.45rem;
+    --public-navbar-logo-height: 50px;
+    --public-navbar-link-gap: 0.08rem;
+    --public-navbar-link-padding-inline: 0.32rem;
+    --public-navbar-link-size: 0.78rem;
   }
 
-  body.home-page .site-header .brand-logo {
-    height: 50px !important;
-  }
-
-  body.home-page .site-header .site-nav {
-    gap: 0.08rem;
-  }
-
-  body.home-page .site-header .site-nav > a {
-    padding-inline: 0.32rem;
-    font-size: 0.78rem;
-  }
-
-  body.home-page .site-header .nav-auth-session__text {
+  body:not(.agent-dashboard-route):not(.property-sheet-body) .site-header .nav-auth-session__text {
     display: none;
   }
 }
 
 @media (max-width: 900px) {
-  body.home-page .site-header .container.nav-wrapper {
-    min-height: 68px;
+  :root {
+    --public-navbar-height: 68px;
+    --public-navbar-padding-inline: clamp(0.8rem, 3vw, 1.25rem);
+    --public-navbar-logo-height: clamp(46px, 7vw, 52px);
+    --public-navbar-logo-max-height: 52px;
+    --public-navbar-link-size: 0.82rem;
+    --public-navbar-link-padding-block: 0.5rem;
+    --public-navbar-link-padding-inline: 0.65rem;
+  }
+
+  body:not(.agent-dashboard-route):not(.property-sheet-body) .site-header .container.nav-wrapper {
     grid-template-columns: auto 1fr auto auto;
-    padding-inline: clamp(0.8rem, 3vw, 1.25rem);
-  }
-
-  body.home-page .site-header .brand-logo {
-    height: clamp(46px, 7vw, 52px) !important;
-    max-height: 52px;
-  }
-
-  /* The existing dropdown layout is preserved; only its link density changes. */
-  body.home-page .site-header .site-nav > a {
-    padding: 0.5rem 0.65rem;
-    font-size: 0.82rem;
   }
 }
 
 @media (max-width: 520px) {
-  body.home-page .site-header .container.nav-wrapper {
-    min-height: 64px;
-    padding-inline: 0.75rem;
-    gap: 0.45rem;
-  }
-
-  body.home-page .site-header .brand-logo {
-    height: 46px !important;
-  }
-
-  body.home-page .site-header .theme-toggle,
-  body.home-page .site-header .menu-toggle {
-    width: 36px;
-    height: 36px;
-    min-height: 36px;
+  :root {
+    --public-navbar-height: 64px;
+    --public-navbar-padding-inline: 0.75rem;
+    --public-navbar-layout-gap: 0.45rem;
+    --public-navbar-logo-height: 46px;
+    --public-navbar-control-size: 36px;
   }
 }
 

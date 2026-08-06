@@ -64,12 +64,29 @@ test('home search removes only the outer glass surface', () => {
   assert.doesNotMatch(theme, /body\.home-page \.premium-search select[\s\S]*?background: transparent/);
 });
 
-test('home navbar uses compact home-only dimensions without changing its state logic', () => {
-  assert.match(theme, /body\.home-page \.site-header \.container\.nav-wrapper \{[\s\S]*?min-height: 76px;[\s\S]*?padding-block: 0;/);
-  assert.match(theme, /body\.home-page \.site-header \.brand-logo \{[\s\S]*?height: clamp\(48px, 3\.8vw, 56px\) !important;/);
-  assert.match(theme, /body\.home-page \.site-header \.site-nav \{[\s\S]*?gap: clamp\(0\.1rem, 0\.42vw, 0\.4rem\);/);
-  assert.match(theme, /body\.home-page \.site-header \.site-nav > a \{[\s\S]*?font-size: clamp\(0\.8rem, 0\.72vw, 0\.88rem\);[\s\S]*?white-space: nowrap;/);
-  assert.match(theme, /@media \(max-width: 520px\) \{[\s\S]*?min-height: 64px;/);
-  assert.match(home, /premium-theme\.css\?v=20260806-home-navbar-density/);
+test('all public navbars inherit the compact Inicio dimensions without changing its state logic', () => {
+  assert.match(theme, /--public-navbar-height: 76px;/);
+  assert.match(theme, /--public-navbar-max-width: 1440px;/);
+  assert.match(theme, /--public-navbar-logo-height: clamp\(48px, 3\.8vw, 56px\);/);
+  assert.match(theme, /--public-navbar-link-size: clamp\(0\.8rem, 0\.72vw, 0\.88rem\);/);
+  assert.match(theme, /--public-navbar-avatar-size: 36px;/);
+  assert.match(theme, /--public-navbar-action-height: 32px;/);
+  assert.match(theme, /body:not\(\.agent-dashboard-route\):not\(\.property-sheet-body\) \.site-header \.container\.nav-wrapper \{[\s\S]*?min-height: var\(--public-navbar-height\);/);
+  assert.match(theme, /body:not\(\.agent-dashboard-route\):not\(\.property-sheet-body\) \.site-header \.site-nav > a \{[\s\S]*?font-family: var\(--font-navigation\) !important;[\s\S]*?white-space: nowrap;/);
+  assert.match(theme, /@media \(max-width: 520px\) \{[\s\S]*?--public-navbar-height: 64px;/);
+
+  const publicPages = [
+    'index.html', 'propiedades.html', 'propiedad.html', 'mapa.html', 'nosotros.html',
+    'agentes.html', 'agent.html', 'educacion.html', 'quieres-vender.html', 'contacto.html',
+    'condiciones-de-uso.html', 'politicas-de-privacidad.html', 'licencia-de-operacion.html',
+    'share.html', 'share-property.html',
+  ];
+  for (const page of publicPages) {
+    const html = fs.readFileSync(path.join(root, page), 'utf8');
+    assert.match(html, /premium-theme\.css\?v=20260806-public-navbar-density/, `${page} must load the shared navbar dimensions`);
+  }
+
+  assert.doesNotMatch(fs.readFileSync(path.join(root, 'agent-dashboard.html'), 'utf8'), /public-navbar-density/);
+  assert.doesNotMatch(fs.readFileSync(path.join(root, 'property-sheet.html'), 'utf8'), /premium-theme\.css/);
   assert.match(main, /const HOME_NAVBAR_SCROLL_THRESHOLD = 35;/);
 });
