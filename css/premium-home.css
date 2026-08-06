@@ -30,7 +30,8 @@ h6 {
   letter-spacing: -0.015em;
 }
 
-.site-header {
+/* Interior pages keep the premium header surface; Home owns its two states in premium-theme.css. */
+body:not(.home-page) .site-header {
   background: rgba(250, 249, 247, 0.9) !important;
   border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
   box-shadow: 0 14px 36px rgba(15, 23, 42, 0.06) !important;
