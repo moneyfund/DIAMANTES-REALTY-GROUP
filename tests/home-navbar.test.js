@@ -23,6 +23,29 @@ test('home navbar is transparent from the first paint', () => {
   assert.match(unscrolledRule, /backdrop-filter: none !important/);
 });
 
+test('home removes the real body header offset and overlays the hero structurally', () => {
+  assert.match(
+    theme,
+    /body\.home-page\.navbar-over-hero \{[\s\S]*?padding-top: 0 !important;[\s\S]*?\n}/,
+  );
+  assert.match(
+    theme,
+    /body\.home-page\.navbar-over-hero main \{[\s\S]*?padding-top: 0 !important;[\s\S]*?\n}/,
+  );
+  assert.match(
+    theme,
+    /body\.home-page \.site-header\.public-navbar \{[\s\S]*?position: absolute;[\s\S]*?inset: 0 0 auto;[\s\S]*?z-index: 1000;[\s\S]*?\n}/,
+  );
+  assert.match(
+    theme,
+    /body\.home-page \.site-header\.public-navbar\.is-scrolled \{[\s\S]*?position: fixed;[\s\S]*?\n}/,
+  );
+  assert.match(
+    theme,
+    /body\.home-page\.navbar-over-hero \.hero\.premium-hero \{[\s\S]*?margin-top: 0 !important;[\s\S]*?\n}/,
+  );
+});
+
 test('home navbar gains one surface only beyond the scroll threshold', () => {
   assert.match(main, /const HOME_NAVBAR_SCROLL_THRESHOLD = 35;/);
   assert.match(main, /classList\.contains\('home-page'\)[\s\S]*?HOME_NAVBAR_SCROLL_THRESHOLD[\s\S]*?: NAVBAR_SCROLL_THRESHOLD/);
