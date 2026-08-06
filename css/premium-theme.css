@@ -2528,3 +2528,151 @@ body.home-page .search-form.premium-search {
     gap: 0.65rem;
   }
 }
+
+/* Home-only navbar density. Visual sizing is intentionally isolated from the
+   state rules above so the established transparency/scroll behavior stays intact. */
+body.home-page .site-header .container.nav-wrapper {
+  width: min(100%, 1440px);
+  min-height: 76px;
+  padding-block: 0;
+  padding-inline: clamp(1rem, 2.4vw, 2.2rem);
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: clamp(0.55rem, 1vw, 1rem);
+}
+
+body.home-page .site-header .brand-logo {
+  width: auto !important;
+  height: clamp(48px, 3.8vw, 56px) !important;
+  max-height: 56px;
+}
+
+body.home-page .site-header .site-nav {
+  min-width: 0;
+  gap: clamp(0.1rem, 0.42vw, 0.4rem);
+  justify-content: flex-end;
+}
+
+body.home-page .site-header .site-nav > a {
+  flex: 0 0 auto;
+  padding: 0.36rem clamp(0.34rem, 0.42vw, 0.55rem);
+  border-radius: 8px;
+  font-size: clamp(0.8rem, 0.72vw, 0.88rem);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+body.home-page .site-header .site-nav > a::after {
+  left: 0.45rem;
+  right: 0.45rem;
+  bottom: 0.18rem;
+}
+
+body.home-page .site-header .nav-auth-container {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-left: clamp(0.1rem, 0.35vw, 0.35rem);
+}
+
+body.home-page .site-header .nav-auth-session {
+  gap: 0.4rem;
+  max-width: 300px;
+  padding: 0.2rem 0.28rem 0.2rem 0.2rem;
+  border-radius: 14px;
+  box-shadow: 0 6px 16px rgba(7, 17, 31, 0.07);
+}
+
+body.home-page .site-header .nav-auth-session img {
+  width: 36px;
+  height: 36px;
+}
+
+body.home-page .site-header .nav-auth-session__text strong {
+  max-width: 112px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+body.home-page .site-header .nav-auth-session__text small {
+  display: none;
+}
+
+body.home-page .site-header .nav-auth-action {
+  min-height: 32px;
+  padding: 0.3rem 0.55rem !important;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+body.home-page .site-header .theme-toggle,
+body.home-page .site-header .menu-toggle {
+  width: 38px;
+  height: 38px;
+  min-height: 38px;
+}
+
+@media (min-width: 901px) and (max-width: 1180px) {
+  body.home-page .site-header .container.nav-wrapper {
+    min-height: 72px;
+    padding-inline: clamp(0.75rem, 1.5vw, 1.1rem);
+    gap: 0.45rem;
+  }
+
+  body.home-page .site-header .brand-logo {
+    height: 50px !important;
+  }
+
+  body.home-page .site-header .site-nav {
+    gap: 0.08rem;
+  }
+
+  body.home-page .site-header .site-nav > a {
+    padding-inline: 0.32rem;
+    font-size: 0.78rem;
+  }
+
+  body.home-page .site-header .nav-auth-session__text {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  body.home-page .site-header .container.nav-wrapper {
+    min-height: 68px;
+    grid-template-columns: auto 1fr auto auto;
+    padding-inline: clamp(0.8rem, 3vw, 1.25rem);
+  }
+
+  body.home-page .site-header .brand-logo {
+    height: clamp(46px, 7vw, 52px) !important;
+    max-height: 52px;
+  }
+
+  /* The existing dropdown layout is preserved; only its link density changes. */
+  body.home-page .site-header .site-nav > a {
+    padding: 0.5rem 0.65rem;
+    font-size: 0.82rem;
+  }
+}
+
+@media (max-width: 520px) {
+  body.home-page .site-header .container.nav-wrapper {
+    min-height: 64px;
+    padding-inline: 0.75rem;
+    gap: 0.45rem;
+  }
+
+  body.home-page .site-header .brand-logo {
+    height: 46px !important;
+  }
+
+  body.home-page .site-header .theme-toggle,
+  body.home-page .site-header .menu-toggle {
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+  }
+}
