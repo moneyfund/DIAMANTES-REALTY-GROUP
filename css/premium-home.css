@@ -8,8 +8,8 @@
   --premium-muted: #6B7280;
   --premium-border: #E5E7EB;
   --premium-heading: 'Cormorant Garamond', Georgia, serif;
-  --premium-body: 'Inter', system-ui, sans-serif;
-  --premium-ui: 'Manrope', system-ui, sans-serif;
+  --premium-body: var(--font-body, 'Plus Jakarta Sans', Arial, sans-serif);
+  --premium-ui: var(--font-ui, 'Plus Jakarta Sans', Arial, sans-serif);
 }
 
 html,
@@ -25,7 +25,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--premium-heading) !important;
+  font-family: var(--font-primary, 'Plus Jakarta Sans', Arial, sans-serif) !important;
   font-weight: 600;
   letter-spacing: -0.015em;
 }

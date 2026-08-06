@@ -1014,7 +1014,7 @@ body.dark-mode .home-page .hero-search-content .premium-search .hero-search-subm
 .home-page #featuredGrid .price,
 .home-page .home-matched-properties-grid .price {
   color: #B00008 !important;
-  font-family: "Inter", "Montserrat", "Manrope", "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-family: var(--font-primary) !important;
   font-size: 2rem !important;
   font-weight: 700 !important;
   letter-spacing: -0.5px !important;
@@ -1873,7 +1873,7 @@ body.dark-mode .site-footer,
   background: var(--footer-premium-bg) !important;
   color: #FFFFFF !important;
   border-top: 1px solid rgba(255, 255, 255, 0.14) !important;
-  font-family: Inter, system-ui, sans-serif !important;
+  font-family: var(--font-body) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 -18px 48px rgba(3, 9, 20, 0.2) !important;
 }
 
@@ -1881,13 +1881,13 @@ body.dark-mode .site-footer,
 .site-footer .footer-brand-row,
 .site-footer .footer-columns,
 .site-footer .footer-columns > div {
-  font-family: Inter, system-ui, sans-serif !important;
+  font-family: var(--font-body) !important;
 }
 
 .site-footer .footer-brand-row h3,
 .site-footer .footer-columns h4 {
   color: #FFFFFF !important;
-  font-family: Inter, system-ui, sans-serif !important;
+  font-family: var(--font-body) !important;
   font-weight: 700 !important;
   letter-spacing: 0.04em !important;
 }
@@ -1900,7 +1900,7 @@ body.dark-mode .site-footer,
 .site-footer .footer-brand-row p,
 .site-footer .footer-text {
   color: rgba(255, 255, 255, 0.78) !important;
-  font-family: Inter, system-ui, sans-serif !important;
+  font-family: var(--font-body) !important;
   font-weight: 400 !important;
   line-height: 1.6 !important;
 }
@@ -1916,7 +1916,7 @@ body.dark-mode .site-footer,
 .site-footer .footer-legal-link,
 .site-footer .footer-columns a {
   color: #FFFFFF !important;
-  font-family: Inter, system-ui, sans-serif !important;
+  font-family: var(--font-body) !important;
   font-weight: 400 !important;
   line-height: 1.6 !important;
   text-decoration-color: transparent !important;
@@ -2527,4 +2527,82 @@ body.home-page .search-form.premium-search {
   body.home-page .search-form.premium-search {
     gap: 0.65rem;
   }
+}
+
+/* Public typography system: one source of truth, inspired by Amy Blandon. */
+:root {
+  --font-primary: 'Plus Jakarta Sans', Arial, sans-serif;
+  --font-body: var(--font-primary);
+  --font-navigation: var(--font-primary);
+  --font-buttons: var(--font-primary);
+  --font-ui: var(--font-primary);
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+}
+
+/* The dashboard imports this shared theme but deliberately retains its own type system. */
+.agent-dashboard-route {
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-ui: 'Manrope', system-ui, sans-serif;
+  --font-display: 'Playfair Display', Georgia, serif;
+}
+
+body:not(.agent-dashboard-route) {
+  font-family: var(--font-body);
+  line-height: 1.6;
+}
+
+body:not(.agent-dashboard-route) :where(p, li, label, input, select, textarea, table, small),
+body:not(.agent-dashboard-route) :where(.property-card, .agent-card, .price, .property-price, .location, .message),
+body:not(.agent-dashboard-route) :where(h2, h3, h4, h5, h6) {
+  font-family: var(--font-body) !important;
+}
+
+body:not(.agent-dashboard-route) :where(.site-nav, .site-nav a, .menu-toggle, .mobile-menu, .user-menu) {
+  font-family: var(--font-navigation) !important;
+  letter-spacing: normal;
+}
+
+body:not(.agent-dashboard-route) .site-nav a {
+  font-size: clamp(0.875rem, 0.78rem + 0.12vw, 0.9375rem);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+body:not(.agent-dashboard-route) :where(button, .btn, .button, [type='button'], [type='submit'], .premium-btn, .edu-btn, .text-link) {
+  font-family: var(--font-buttons) !important;
+  font-weight: 600;
+}
+
+body:not(.agent-dashboard-route) :where(input, select, textarea) {
+  font-family: var(--font-ui) !important;
+}
+
+body:not(.agent-dashboard-route) :where(.property-card h2, .property-card h3, .property-title, .property-title-link, .agent-name) {
+  font-family: var(--font-primary) !important;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+body:not(.agent-dashboard-route) :where(.price, .property-price, .detail-summary-price, .map-preview-price) {
+  font-family: var(--font-primary) !important;
+  font-weight: 700 !important;
+}
+
+/* Serif is reserved for the largest, identity-defining public headings. */
+body:not(.agent-dashboard-route) :where(.hero-title, .page-hero h1, .premium-hero h1, .education-hero h1, .premium-section-heading h2, .legal-page h1) {
+  font-family: var(--font-display) !important;
+  font-weight: 500;
+  line-height: 1.02;
+}
+
+.drg-site-footer,
+.drg-site-footer :where(h2, h3, h4, p, a, span, small, button, input, label) {
+  font-family: var(--font-body) !important;
+}
+
+.drg-site-footer :where(h2, h3, h4) { font-weight: 700; }
+.drg-site-footer :where(a) { font-weight: 500; }
+
+@media (max-width: 767px) {
+  body:not(.agent-dashboard-route) :where(input, select, textarea) { font-size: max(16px, 1em); }
 }
