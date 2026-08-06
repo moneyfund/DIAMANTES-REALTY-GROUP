@@ -215,8 +215,12 @@ function featureIcon(iconName = '') {
   return icons[iconName] || '';
 }
 
+function getPropertyTitle(property = {}) {
+  return property.title || property.titulo || property.propertyTitle || property.nombre || property.headline || '';
+}
+
 function normalizeProperty(property = {}, id = '') {
-  const title = property.title || property.titulo || '';
+  const title = getPropertyTitle(property);
   const price = getPriceUsd(property);
   const city = property.city || property.location || property.ubicacion || '';
   const image = imageUtils.getCoverImage(property);
@@ -387,7 +391,8 @@ function propertyCardTemplate(property) {
   const featuredClass = property.featured ? ' is-featured' : '';
   const status = (property.status || 'disponible').toLowerCase();
   const imageSrc = getPrimaryPropertyImage(property);
-  const imageAlt = property.title || property.titulo || 'Imagen de la propiedad';
+  const propertyTitle = getPropertyTitle(property);
+  const imageAlt = propertyTitle || 'Imagen de la propiedad';
   const detailUrl = getPropertyDetailUrl(property);
   const locationLabel = property.city || property.ubicacion || 'Ubicación no disponible';
   const displayDetails = getPropertyDisplayDetails(property).slice(0, 4);
@@ -398,7 +403,7 @@ function propertyCardTemplate(property) {
       </a>
       <div class="property-card-content">
         <p class="badge">${property.typeLabel || getPropertyTypeLabel(property.tipo) || 'Propiedad'} en ${(property.operationLabel || formatPropertyOperation(property.operacion) || 'Venta').toLowerCase()}</p>
-        <h3><a class="property-title-link" href="${detailUrl}" data-property-link>${property.title || property.titulo}</a></h3>
+        <h3><a class="property-title-link" href="${detailUrl}" data-property-link>${escapeHtml(propertyTitle)}</a></h3>
         <p class="property-location">${locationLabel}</p>
         <p class="price">${formatDualPriceMarkup(getPriceUsd(property))}</p>
         ${status === 'sold' ? '<p class="property-status-tag">VENDIDA</p>' : ''}
