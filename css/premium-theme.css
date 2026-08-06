@@ -197,23 +197,18 @@ body.dark-mode .section-properties {
     linear-gradient(145deg, rgba(5, 5, 5, 0.96), rgba(26, 26, 26, 0.86)) !important;
 }
 
-.site-header,
-.home-page .site-header,
-body:not(.dark):not(.dark-mode) .site-header,
-body:not(.dark):not(.dark-mode) .site-header.scrolled,
-body:not(.dark):not(.dark-mode) .site-header.is-scrolled {
+/* Default header surface. Home is excluded because it has explicit initial/scrolled states. */
+body:not(.home-page) .site-header {
   background: rgba(250, 249, 245, 0.9) !important;
   border-bottom: 1px solid var(--color-border) !important;
   box-shadow: 0 16px 38px rgba(11, 31, 58, 0.08) !important;
+  -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
 }
-body.dark .site-header,
-body.dark-mode .site-header,
-[data-theme="dark"] .site-header,
-body.dark .site-header.scrolled,
-body.dark-mode .site-header.scrolled,
-body.dark .site-header.is-scrolled,
-body.dark-mode .site-header.is-scrolled {
+body.dark:not(.home-page) .site-header,
+body.dark-mode:not(.home-page) .site-header,
+body:not(.home-page)[data-theme="dark"] .site-header,
+[data-theme="dark"] body:not(.home-page) .site-header {
   background: rgba(5, 5, 5, 0.86) !important;
   border-bottom: 1px solid var(--color-border-dark) !important;
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.46) !important;
@@ -2348,282 +2343,153 @@ body.dark-mode .property-card .property-meta span {
   text-decoration: none;
 }
 
-/* Public navbar: premium glass surface without changing its content or layout. */
-body:not(.agent-dashboard-route):not(.admin-route):not(.property-sheet-body):not([data-private-route]) .site-header,
-body:not(.agent-dashboard-route):not(.admin-route):not(.property-sheet-body):not([data-private-route]) .site-header.scrolled,
-body:not(.agent-dashboard-route):not(.admin-route):not(.property-sheet-body):not([data-private-route]) .site-header.is-scrolled {
-  background: rgba(250, 249, 245, 0.8) !important;
-  border-bottom: 1px solid rgba(15, 31, 51, 0.1) !important;
-  box-shadow: 0 14px 38px rgba(11, 31, 58, 0.1) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(115%);
-  backdrop-filter: blur(20px) saturate(115%);
-}
-
-body.dark:not(.agent-dashboard-route):not(.admin-route):not(.property-sheet-body):not([data-private-route]) .site-header,
-body.dark-mode:not(.agent-dashboard-route):not(.admin-route):not(.property-sheet-body):not([data-private-route]) .site-header,
-[data-theme="dark"] body:not(.agent-dashboard-route):not(.admin-route):not(.property-sheet-body):not([data-private-route]) .site-header {
-  background: rgba(5, 5, 5, 0.8) !important;
-  border-bottom-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  body:not(.agent-dashboard-route):not(.admin-route):not(.property-sheet-body):not([data-private-route]) .site-header,
-  body:not(.agent-dashboard-route):not(.admin-route):not(.property-sheet-body):not([data-private-route]) .site-header.scrolled,
-  body:not(.agent-dashboard-route):not(.admin-route):not(.property-sheet-body):not([data-private-route]) .site-header.is-scrolled {
-    background: rgb(250, 249, 245) !important;
-  }
-
-  body.dark:not(.agent-dashboard-route):not(.admin-route):not(.property-sheet-body):not([data-private-route]) .site-header,
-  body.dark-mode:not(.agent-dashboard-route):not(.admin-route):not(.property-sheet-body):not([data-private-route]) .site-header,
-  [data-theme="dark"] body:not(.agent-dashboard-route):not(.admin-route):not(.property-sheet-body):not([data-private-route]) .site-header {
-    background: rgb(5, 5, 5) !important;
-  }
-}
-
-/* Dynamic navbar states for public pages only. Layout and dimensions stay unchanged. */
-.site-header.public-navbar {
-  background: transparent !important;
-  border-bottom-color: transparent !important;
-  box-shadow: none !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-  transition:
-    background-color 320ms cubic-bezier(0.22, 1, 0.36, 1),
-    -webkit-backdrop-filter 320ms cubic-bezier(0.22, 1, 0.36, 1),
-    backdrop-filter 320ms cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 320ms cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 320ms cubic-bezier(0.22, 1, 0.36, 1) !important;
-}
-
-.site-header.public-navbar .site-nav a,
-.site-header.public-navbar .nav-auth-session__text strong,
-.site-header.public-navbar .nav-auth-session__text small {
-  color: #ffffff !important;
-  transition: color 320ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.site-header.public-navbar .menu-toggle {
-  color: #ffffff !important;
-  background: rgba(8, 25, 47, 0.18) !important;
-  border-color: rgba(255, 255, 255, 0.34) !important;
-  transition: color 320ms ease, background-color 320ms ease, border-color 320ms ease;
-}
-
-.site-header.public-navbar .brand-logo {
-  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.42));
-}
-
-/* Pages whose first surface is light retain a transparent navbar with dark controls. */
-.site-header.public-navbar.navbar-light-start:not(.navbar-scrolled) .site-nav a,
-.site-header.public-navbar.navbar-light-start:not(.navbar-scrolled) .nav-auth-session__text strong,
-.site-header.public-navbar.navbar-light-start:not(.navbar-scrolled) .nav-auth-session__text small {
-  color: #0f1f33 !important;
-}
-
-.site-header.public-navbar.navbar-light-start:not(.navbar-scrolled) .menu-toggle {
-  color: #0f1f33 !important;
-  background: rgba(255, 255, 255, 0.32) !important;
-  border-color: rgba(15, 31, 51, 0.2) !important;
-}
-
-.site-header.public-navbar.navbar-scrolled {
-  background: rgba(255, 255, 255, 0.8) !important;
-  border-bottom-color: rgba(15, 31, 51, 0.1) !important;
-  box-shadow: 0 10px 28px rgba(11, 31, 58, 0.1) !important;
-  -webkit-backdrop-filter: blur(14px) saturate(115%) !important;
-  backdrop-filter: blur(14px) saturate(115%) !important;
-}
-
-.site-header.public-navbar.navbar-scrolled .site-nav a,
-.site-header.public-navbar.navbar-scrolled .nav-auth-session__text strong,
-.site-header.public-navbar.navbar-scrolled .nav-auth-session__text small {
-  color: #0f1f33 !important;
-}
-
-.site-header.public-navbar .site-nav a:hover,
-.site-header.public-navbar .site-nav a.active,
-.site-header.public-navbar.navbar-scrolled .site-nav a:hover,
-.site-header.public-navbar.navbar-scrolled .site-nav a.active {
-  color: #b00008 !important;
-}
-
-.site-header.public-navbar.navbar-scrolled .menu-toggle {
-  color: #0f1f33 !important;
-  background: rgba(255, 255, 255, 0.72) !important;
-  border-color: rgba(15, 31, 51, 0.16) !important;
-}
-
-@media (max-width: 900px) {
-  .site-header.public-navbar .site-nav.open {
-    background: rgba(255, 255, 255, 0.96) !important;
-    border-color: rgba(15, 31, 51, 0.12) !important;
-    -webkit-backdrop-filter: blur(14px);
-    backdrop-filter: blur(14px);
-  }
-
-  .site-header.public-navbar .site-nav.open a,
-  .site-header.public-navbar .site-nav.open .nav-auth-session__text strong,
-  .site-header.public-navbar .site-nav.open .nav-auth-session__text small {
-    color: #0f1f33 !important;
-  }
-}
-
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .site-header.public-navbar.navbar-scrolled {
-    background: rgba(255, 255, 255, 0.96) !important;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .site-header.public-navbar,
-  .site-header.public-navbar .site-nav a,
-  .site-header.public-navbar .menu-toggle {
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* Public header integration: the fixed header never participates in document flow. */
-body.navbar-over-hero,
-body.navbar-start-light {
+/* Home integrates the hero at viewport top; no spacer or negative compensation is used. */
+body.home-page,
+body.home-page main {
   padding-top: 0 !important;
 }
 
-body.navbar-start-light main {
-  padding-top: var(--header-offset, 84px) !important;
-}
 
-body.navbar-over-hero main {
-  padding-top: 0 !important;
-}
-
-.site-header.public-navbar,
-.site-header.public-navbar .nav-wrapper,
-.site-header.public-navbar .container.nav-wrapper,
-.site-header.public-navbar::before,
-.site-header.public-navbar::after {
-  background: transparent !important;
-  background-color: transparent !important;
-  border-bottom-color: transparent !important;
-  box-shadow: none !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-}
-
-/* Light-first public routes remain readable before the first scroll. */
-.site-header.public-navbar.navbar-light-start:not(.navbar-scrolled) {
-  background: rgba(255, 255, 255, 0.9) !important;
-  border-bottom-color: rgba(15, 31, 51, 0.09) !important;
-  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05) !important;
-  -webkit-backdrop-filter: blur(14px) !important;
-  backdrop-filter: blur(14px) !important;
-}
-
-.site-header.public-navbar.navbar-scrolled {
-  position: fixed;
-  background: rgba(255, 255, 255, 0.82) !important;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.09) !important;
-  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(115%) !important;
-  backdrop-filter: blur(16px) saturate(115%) !important;
-}
-
-/* Only hero copy is offset; its image/painted surface still begins at viewport y=0. */
-body.navbar-over-hero .hero-content {
-  padding-top: calc(var(--header-offset, 84px) + 40px) !important;
-}
-
-body.navbar-over-hero .page-banner,
-body.navbar-over-hero .edu-hero {
-  padding-top: calc(var(--header-offset, 84px) + clamp(2.5rem, 6vw, 5rem)) !important;
-}
-
-body.navbar-over-hero .page-banner .container {
-  background: transparent !important;
-  border-color: transparent !important;
-  box-shadow: none !important;
-}
-
-@media (max-width: 900px) {
-  body.navbar-start-light main {
-    padding-top: var(--header-offset, 74px) !important;
-  }
-
-  body.navbar-over-hero .hero-content {
-    padding-top: calc(var(--header-offset, 74px) + 24px) !important;
-  }
-
-  body.navbar-over-hero .page-banner,
-  body.navbar-over-hero .edu-hero {
-    padding-top: calc(var(--header-offset, 74px) + 32px) !important;
-  }
-}
-
-/*
- * Home header structure: styles.css reserves --header-offset on <body>. Home
- * must cancel that spacer and take the real header out of flow so the hero's
- * painted box starts at viewport y=0. Other public routes keep their offset.
- */
-body.home-page.navbar-over-hero {
-  padding-top: 0 !important;
-}
-
-body.home-page.navbar-over-hero main {
-  padding-top: 0 !important;
-}
-
-body.home-page.navbar-over-hero .hero.premium-hero {
-  margin-top: 0 !important;
-}
-
-body.home-page .site-header.public-navbar {
+/* Home at scrollY <= 35: one deliberately paint-free navbar state. */
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) {
   position: absolute;
-  inset: 0 0 auto;
+  top: 0;
+  left: 0;
+  right: 0;
   width: 100%;
   z-index: 1000;
-}
-
-/* The scrolled state stays viewport-pinned without reserving layout space. */
-body.home-page .site-header.public-navbar.is-scrolled {
-  position: fixed;
-}
-
-/*
- * Home-only paint audit: the loaded markup carries `public-navbar` before
- * JavaScript runs, so the unscrolled header and its real inner wrapper paint
- * no surface. Only the scrolled rule below creates the glass surface.
- */
-body.home-page .site-header.public-navbar:not(.is-scrolled),
-body.home-page .site-header.public-navbar:not(.is-scrolled) .nav-wrapper,
-body.home-page .site-header.public-navbar:not(.is-scrolled) .container.nav-wrapper {
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
-  border: 0 !important;
-  border-color: transparent !important;
-  outline: 0 !important;
-  box-shadow: none !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
-  filter: none !important;
-  opacity: 1 !important;
+  border: 0 !important;
+  border-bottom-color: transparent !important;
+  box-shadow: none !important;
 }
 
-body.home-page .site-header.public-navbar:not(.is-scrolled)::before,
-body.home-page .site-header.public-navbar:not(.is-scrolled)::after,
-body.home-page .site-header.public-navbar:not(.is-scrolled) .nav-wrapper::before,
-body.home-page .site-header.public-navbar:not(.is-scrolled) .nav-wrapper::after,
-body.home-page .site-header.public-navbar:not(.is-scrolled) .container.nav-wrapper::before,
-body.home-page .site-header.public-navbar:not(.is-scrolled) .container.nav-wrapper::after {
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .public-navbar,
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .nav-wrapper,
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .navbar,
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .navbar-light,
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .site-nav,
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .nav-auth-session {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled)::before,
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled)::after,
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .public-navbar::before,
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .public-navbar::after,
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .nav-wrapper::before,
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .nav-wrapper::after,
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .navbar::before,
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .navbar::after,
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .navbar-light::before,
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .navbar-light::after,
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .site-nav::before,
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .site-nav::after {
   content: none !important;
   display: none !important;
   background: none !important;
 }
 
-/*
- * Home hero search: controls float independently over the photograph. The
- * form used to paint the large white glass card; both outer wrappers and
- * their generated layers are deliberately paint-free on Home only.
- */
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .site-nav a,
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .nav-auth-session__text strong,
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .nav-auth-session__text small,
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .menu-toggle,
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .theme-toggle {
+  color: #ffffff !important;
+}
+
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .site-nav a,
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .menu-toggle,
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .theme-toggle {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .site-nav a::after {
+  background: none !important;
+  opacity: 0 !important;
+}
+
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .site-nav a:hover,
+body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .site-nav a.active {
+  color: #c8a45d !important;
+  background: transparent !important;
+}
+
+/* Home at scrollY > 35: the only rule that paints its glass navbar. */
+body.home-page .site-header.scrolled,
+body.home-page .site-header.is-scrolled,
+body.home-page .site-header.navbar-scrolled {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.84) !important;
+  background-image: none !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  backdrop-filter: blur(16px) !important;
+  border-bottom: 1px solid rgba(11, 31, 58, 0.08) !important;
+  box-shadow: 0 10px 30px rgba(11, 31, 58, 0.1) !important;
+}
+
+body.home-page .site-header.scrolled .site-nav a,
+body.home-page .site-header.is-scrolled .site-nav a,
+body.home-page .site-header.navbar-scrolled .site-nav a,
+body.home-page .site-header.scrolled .nav-auth-session__text strong,
+body.home-page .site-header.scrolled .nav-auth-session__text small,
+body.home-page .site-header.is-scrolled .nav-auth-session__text strong,
+body.home-page .site-header.is-scrolled .nav-auth-session__text small,
+body.home-page .site-header.navbar-scrolled .nav-auth-session__text strong,
+body.home-page .site-header.navbar-scrolled .nav-auth-session__text small,
+body.home-page .site-header.scrolled .menu-toggle,
+body.home-page .site-header.scrolled .theme-toggle,
+body.home-page .site-header.is-scrolled .menu-toggle,
+body.home-page .site-header.is-scrolled .theme-toggle,
+body.home-page .site-header.navbar-scrolled .menu-toggle,
+body.home-page .site-header.navbar-scrolled .theme-toggle {
+  color: #0b1f3a !important;
+}
+
+body.home-page .site-header.scrolled .site-nav a:hover,
+body.home-page .site-header.scrolled .site-nav a.active,
+body.home-page .site-header.is-scrolled .site-nav a:hover,
+body.home-page .site-header.is-scrolled .site-nav a.active,
+body.home-page .site-header.navbar-scrolled .site-nav a:hover,
+body.home-page .site-header.navbar-scrolled .site-nav a.active {
+  color: #b00008 !important;
+}
+
+/* The mobile menu needs its own readable surface only while it is open. */
+@media (max-width: 900px) {
+  body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .site-nav.open {
+    background: rgba(255, 255, 255, 0.96) !important;
+    border: 1px solid rgba(15, 31, 51, 0.12) !important;
+    box-shadow: 0 14px 38px rgba(11, 31, 58, 0.12) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .site-nav.open a,
+  body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .site-nav.open .nav-auth-session__text strong,
+  body.home-page .site-header:not(.scrolled):not(.is-scrolled):not(.navbar-scrolled) .site-nav.open .nav-auth-session__text small {
+    color: #0b1f3a !important;
+  }
+}
+
+/* Home search controls remain independent; neither outer wrapper paints a card. */
 body.home-page .hero-search-content,
 body.home-page .search-form.premium-search {
   background: transparent !important;
@@ -2651,53 +2517,14 @@ body.home-page .search-form.premium-search {
 }
 
 @media (max-width: 900px) {
-  body.home-page .hero-search-content {
+  body.home-page .hero-search-content,
+  body.home-page .search-form.premium-search {
     width: 100%;
     min-width: 0;
+    max-width: 100%;
   }
 
   body.home-page .search-form.premium-search {
-    width: 100%;
-    max-width: 100%;
     gap: 0.65rem;
-  }
-}
-
-body.home-page .site-header.public-navbar:not(.is-scrolled) .site-nav a,
-body.home-page .site-header.public-navbar:not(.is-scrolled) .nav-auth-session__text strong,
-body.home-page .site-header.public-navbar:not(.is-scrolled) .nav-auth-session__text small {
-  color: #ffffff !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-body.home-page .site-header.public-navbar:not(.is-scrolled) .menu-toggle {
-  color: #ffffff !important;
-  background: transparent !important;
-  border-color: transparent !important;
-  box-shadow: none !important;
-}
-
-body.home-page .site-header.public-navbar.is-scrolled {
-  background: rgba(255, 255, 255, 0.84) !important;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.09) !important;
-  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(115%) !important;
-  backdrop-filter: blur(16px) saturate(115%) !important;
-}
-
-@media (max-width: 900px) {
-  body.home-page .site-header.public-navbar:not(.is-scrolled) .site-nav.open {
-    background: rgba(255, 255, 255, 0.96) !important;
-    border: 1px solid rgba(15, 31, 51, 0.12) !important;
-    box-shadow: 0 14px 38px rgba(11, 31, 58, 0.12) !important;
-    -webkit-backdrop-filter: blur(14px) !important;
-    backdrop-filter: blur(14px) !important;
-  }
-
-  body.home-page .site-header.public-navbar:not(.is-scrolled) .site-nav.open a,
-  body.home-page .site-header.public-navbar:not(.is-scrolled) .site-nav.open .nav-auth-session__text strong,
-  body.home-page .site-header.public-navbar:not(.is-scrolled) .site-nav.open .nav-auth-session__text small {
-    color: #0f1f33 !important;
   }
 }
