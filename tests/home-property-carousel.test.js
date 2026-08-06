@@ -34,12 +34,21 @@ test('the common interaction retains active scaling, arrows, smooth motion and 2
 
 
 test('home carousel links only suppress clicks after a confirmed horizontal drag', () => {
-  assert.match(script, /const CLICK_TOLERANCE = 8;/);
-  assert.match(script, /Math\.abs\(deltaX\) > CLICK_TOLERANCE && Math\.abs\(deltaX\) > Math\.abs\(deltaY\)/);
+  assert.match(script, /const DRAG_THRESHOLD = 8;/);
+  assert.match(script, /Math\.abs\(deltaX\) > DRAG_THRESHOLD && Math\.abs\(deltaX\) > Math\.abs\(deltaY\)/);
   assert.match(script, /suppressSliderClick = didDrag;/);
+  assert.match(script, /pointerId = event\.pointerId;\n  };/);
+  assert.match(script, /if \(!isDragging && isConfirmedHorizontalDrag[\s\S]*?slider\.setPointerCapture/);
+  assert.match(script, /slider\.addEventListener\('pointerleave', handlePointerLeave\);/);
   assert.match(script, /slider\.addEventListener\('click', handleClickCapture, true\);/);
   assert.match(script, /slider\.addEventListener\('click', handleCardClick\);/);
   assert.match(script, /data-property-link/);
   assert.match(script, /getPropertyDetailLinkFromEvent\(event\)/);
-  assert.match(styles, /\.home-page \.property-cover-link,[\s\S]*?display: block;/);
+  assert.match(styles, /\.home-page \.property-card \.property-cover-link,[\s\S]*?display: block;/);
+});
+
+test('home title links keep the previous transparent card styling', () => {
+  assert.match(styles, /\.home-page \.property-card \.property-cover-link,[\s\S]*?background: transparent !important;/);
+  assert.match(styles, /\.home-page \.property-card \.property-title-link \{[\s\S]*?display: inline !important;/);
+  assert.match(styles, /\.home-page \.property-card-actions \{[\s\S]*?z-index: 3;/);
 });
