@@ -77,6 +77,7 @@ const savedTheme = TEMPORARILY_DISABLE_DARK_MODE ? 'light' : localStorage.getIte
 
 const siteHeader = document.querySelector('.site-header');
 const NAVBAR_SCROLL_THRESHOLD = 32;
+const HOME_NAVBAR_SCROLL_THRESHOLD = 35;
 
 function usesLightNavbarStart() {
   const darkHeroPages = new Set([
@@ -631,7 +632,10 @@ initializeCategoryCoverflow();
 
 function updateHeaderOnScroll() {
   if (!siteHeader || !isPublicSiteRoute()) return;
-  const isScrolled = window.scrollY > NAVBAR_SCROLL_THRESHOLD;
+  const scrollThreshold = document.body.classList.contains('home-page')
+    ? HOME_NAVBAR_SCROLL_THRESHOLD
+    : NAVBAR_SCROLL_THRESHOLD;
+  const isScrolled = window.scrollY > scrollThreshold;
   siteHeader.classList.toggle('scrolled', isScrolled);
   siteHeader.classList.toggle('is-scrolled', isScrolled);
   siteHeader.classList.toggle('navbar-scrolled', isScrolled);

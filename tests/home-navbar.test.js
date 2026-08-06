@@ -24,8 +24,9 @@ test('home navbar is transparent from the first paint', () => {
 });
 
 test('home navbar gains one surface only beyond the scroll threshold', () => {
-  assert.match(main, /const NAVBAR_SCROLL_THRESHOLD = 32;/);
-  assert.match(main, /window\.scrollY > NAVBAR_SCROLL_THRESHOLD/);
+  assert.match(main, /const HOME_NAVBAR_SCROLL_THRESHOLD = 35;/);
+  assert.match(main, /classList\.contains\('home-page'\)[\s\S]*?HOME_NAVBAR_SCROLL_THRESHOLD[\s\S]*?: NAVBAR_SCROLL_THRESHOLD/);
+  assert.match(main, /window\.scrollY > scrollThreshold/);
   assert.match(main, /classList\.toggle\('is-scrolled', isScrolled\)/);
   assert.match(main, /addEventListener\('DOMContentLoaded', updateHeaderOnScroll\)/);
   assert.match(main, /addEventListener\('pageshow', updateHeaderOnScroll\)/);
@@ -36,3 +37,14 @@ test('home navbar gains one surface only beyond the scroll threshold', () => {
   );
 });
 
+test('home search removes only the outer glass surface', () => {
+  assert.match(
+    theme,
+    /body\.home-page \.hero-search-content,[\s\S]*?body\.home-page \.search-form\.premium-search \{[\s\S]*?background: transparent !important;[\s\S]*?border: 0 !important;[\s\S]*?box-shadow: none !important;[\s\S]*?backdrop-filter: none !important;/,
+  );
+  assert.match(
+    theme,
+    /body\.home-page \.search-form\.premium-search::after \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;/,
+  );
+  assert.doesNotMatch(theme, /body\.home-page \.premium-search select[\s\S]*?background: transparent/);
+});
