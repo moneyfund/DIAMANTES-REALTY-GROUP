@@ -2558,38 +2558,51 @@ body.navbar-over-hero .page-banner .container {
   }
 }
 
-/* Home-only navbar: the hero is the complete header surface until scrolling. */
-body.home-page .site-header.public-navbar:not(.navbar-scrolled),
-body.home-page .site-header.public-navbar:not(.navbar-scrolled) .nav-wrapper,
-body.home-page .site-header.public-navbar:not(.navbar-scrolled) .container.nav-wrapper,
-body.home-page .site-header.public-navbar:not(.navbar-scrolled)::before,
-body.home-page .site-header.public-navbar:not(.navbar-scrolled)::after {
+/*
+ * Home-only navbar audit: `.home-page .site-header` in styles.css and the
+ * generic public-header rule above both paint a translucent surface before
+ * JavaScript runs. The home markup therefore carries `public-navbar` from the
+ * first paint, and this explicit unscrolled state removes every paint layer.
+ */
+body.home-page .site-header.public-navbar:not(.is-scrolled),
+body.home-page .site-header.public-navbar:not(.is-scrolled) .nav-wrapper,
+body.home-page .site-header.public-navbar:not(.is-scrolled) .container.nav-wrapper {
   background: transparent !important;
   background-color: transparent !important;
+  background-image: none !important;
   border: 0 !important;
+  border-color: transparent !important;
   outline: 0 !important;
   box-shadow: none !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
+  filter: none !important;
   opacity: 1 !important;
 }
 
-body.home-page .site-header.public-navbar:not(.navbar-scrolled) .site-nav a,
-body.home-page .site-header.public-navbar:not(.navbar-scrolled) .nav-auth-session__text strong,
-body.home-page .site-header.public-navbar:not(.navbar-scrolled) .nav-auth-session__text small {
+body.home-page .site-header.public-navbar:not(.is-scrolled)::before,
+body.home-page .site-header.public-navbar:not(.is-scrolled)::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+}
+
+body.home-page .site-header.public-navbar:not(.is-scrolled) .site-nav a,
+body.home-page .site-header.public-navbar:not(.is-scrolled) .nav-auth-session__text strong,
+body.home-page .site-header.public-navbar:not(.is-scrolled) .nav-auth-session__text small {
   color: #ffffff !important;
   background: transparent !important;
   box-shadow: none !important;
 }
 
-body.home-page .site-header.public-navbar:not(.navbar-scrolled) .menu-toggle {
+body.home-page .site-header.public-navbar:not(.is-scrolled) .menu-toggle {
   color: #ffffff !important;
   background: transparent !important;
   border-color: transparent !important;
   box-shadow: none !important;
 }
 
-body.home-page .site-header.public-navbar.navbar-scrolled {
+body.home-page .site-header.public-navbar.is-scrolled {
   background: rgba(255, 255, 255, 0.84) !important;
   border-bottom: 1px solid rgba(15, 23, 42, 0.09) !important;
   box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08) !important;
@@ -2598,7 +2611,7 @@ body.home-page .site-header.public-navbar.navbar-scrolled {
 }
 
 @media (max-width: 900px) {
-  body.home-page .site-header.public-navbar:not(.navbar-scrolled) .site-nav.open {
+  body.home-page .site-header.public-navbar:not(.is-scrolled) .site-nav.open {
     background: rgba(255, 255, 255, 0.96) !important;
     border: 1px solid rgba(15, 31, 51, 0.12) !important;
     box-shadow: 0 14px 38px rgba(11, 31, 58, 0.12) !important;
@@ -2606,9 +2619,9 @@ body.home-page .site-header.public-navbar.navbar-scrolled {
     backdrop-filter: blur(14px) !important;
   }
 
-  body.home-page .site-header.public-navbar:not(.navbar-scrolled) .site-nav.open a,
-  body.home-page .site-header.public-navbar:not(.navbar-scrolled) .site-nav.open .nav-auth-session__text strong,
-  body.home-page .site-header.public-navbar:not(.navbar-scrolled) .site-nav.open .nav-auth-session__text small {
+  body.home-page .site-header.public-navbar:not(.is-scrolled) .site-nav.open a,
+  body.home-page .site-header.public-navbar:not(.is-scrolled) .site-nav.open .nav-auth-session__text strong,
+  body.home-page .site-header.public-navbar:not(.is-scrolled) .site-nav.open .nav-auth-session__text small {
     color: #0f1f33 !important;
   }
 }
