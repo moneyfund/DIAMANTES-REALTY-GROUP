@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
 /* Premium visual identity v3: ivory, navy and restrained gold UI overrides. */
 :root {
   color-scheme: light;
@@ -70,6 +72,12 @@
   --action-primary: var(--color-primary);
   --premium-accent: var(--color-accent);
   --luxury-gold: var(--color-accent);
+  --font-primary: 'Plus Jakarta Sans', Arial, sans-serif;
+  --font-body: var(--font-primary);
+  --font-navigation: var(--font-primary);
+  --font-buttons: var(--font-primary);
+  --font-ui: var(--font-primary);
+  --font-display: 'Cormorant Garamond', Georgia, serif;
 }
 
 body.dark,
@@ -2675,4 +2683,34 @@ body.home-page .site-header .menu-toggle {
     height: 36px;
     min-height: 36px;
   }
+}
+
+/* Public typography. Private dashboards, printable sheets and document views are
+   deliberately excluded so this theme cannot alter their established metrics. */
+body:not(.agent-dashboard-route):not(.property-sheet-body) {
+  font-family: var(--font-body);
+}
+
+body:not(.agent-dashboard-route):not(.property-sheet-body) :is(
+  .site-header,
+  .site-nav,
+  button,
+  input,
+  select,
+  textarea,
+  .property-card,
+  .site-footer,
+  .site-footer *
+) {
+  font-family: var(--font-ui) !important;
+}
+
+body:not(.agent-dashboard-route):not(.property-sheet-body) :is(
+  main h1,
+  main h2,
+  .hero-title,
+  .premium-title,
+  .premium-heading
+) {
+  font-family: var(--font-display) !important;
 }
