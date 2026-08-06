@@ -63,3 +63,13 @@ test('home search removes only the outer glass surface', () => {
   assert.match(theme, /body\.home-page \.hero-search-content,[\s\S]*?body\.home-page \.search-form\.premium-search \{[\s\S]*?background: transparent !important;[\s\S]*?border: 0 !important;[\s\S]*?box-shadow: none !important;[\s\S]*?backdrop-filter: none !important;/);
   assert.doesNotMatch(theme, /body\.home-page \.premium-search select[\s\S]*?background: transparent/);
 });
+
+test('home navbar uses compact home-only dimensions without changing its state logic', () => {
+  assert.match(theme, /body\.home-page \.site-header \.container\.nav-wrapper \{[\s\S]*?min-height: 76px;[\s\S]*?padding-block: 0;/);
+  assert.match(theme, /body\.home-page \.site-header \.brand-logo \{[\s\S]*?height: clamp\(48px, 3\.8vw, 56px\) !important;/);
+  assert.match(theme, /body\.home-page \.site-header \.site-nav \{[\s\S]*?gap: clamp\(0\.1rem, 0\.42vw, 0\.4rem\);/);
+  assert.match(theme, /body\.home-page \.site-header \.site-nav > a \{[\s\S]*?font-size: clamp\(0\.8rem, 0\.72vw, 0\.88rem\);[\s\S]*?white-space: nowrap;/);
+  assert.match(theme, /@media \(max-width: 520px\) \{[\s\S]*?min-height: 64px;/);
+  assert.match(home, /premium-theme\.css\?v=20260806-home-navbar-density/);
+  assert.match(main, /const HOME_NAVBAR_SCROLL_THRESHOLD = 35;/);
+});
