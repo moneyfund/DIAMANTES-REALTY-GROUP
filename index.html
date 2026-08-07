@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css?v=20260806-typography-fix" />
-  <link rel="stylesheet" href="css/premium-home.css?v=20260806-mobile-search-stack" />
+  <link rel="stylesheet" href="css/premium-home.css?v=20260807-mobile-search-portal" />
   <link rel="stylesheet" href="css/premium-theme.css?v=20260807-navbar-more" />
   <link rel="stylesheet" href="css/footer.css?v=20260806-typography-fix" />
 </head>
@@ -242,6 +242,10 @@
     </section>
   </main>
 
+  <!-- Global host for the existing mobile search nodes. JavaScript moves the
+       nodes themselves here on small viewports; it never clones the form. -->
+  <div id="mobileSearchPortal" aria-live="off"></div>
+
   <div id="whatsapp-float" role="complementary" aria-label="Contacto por WhatsApp">
     <a href="https://wa.me/50577265009" target="_blank" rel="noopener noreferrer" aria-label="Abrir chat de WhatsApp" title="Contactar por WhatsApp">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.04 2a9.93 9.93 0 0 0-8.6 14.9L2 22l5.27-1.38A9.97 9.97 0 0 0 12.04 22C17.53 22 22 17.54 22 12.05 22 6.47 17.54 2 12.04 2Zm0 18.26c-1.47 0-2.9-.4-4.15-1.15l-.3-.17-3.12.82.84-3.03-.2-.31a8.2 8.2 0 1 1 6.93 3.84Zm4.5-6.18c-.25-.12-1.47-.72-1.69-.8-.23-.08-.4-.12-.56.12-.16.24-.64.8-.79.96-.14.16-.3.18-.56.06-.25-.12-1.08-.4-2.06-1.27-.76-.67-1.28-1.5-1.43-1.75-.15-.24-.02-.37.11-.49.12-.12.26-.3.39-.45.13-.16.18-.27.27-.45.09-.18.05-.33-.02-.46-.07-.12-.56-1.35-.77-1.85-.2-.47-.4-.4-.56-.4h-.48c-.16 0-.42.06-.64.3-.22.24-.84.82-.84 2s.86 2.31.98 2.47c.12.16 1.68 2.56 4.07 3.59.57.25 1.02.4 1.37.52.58.19 1.11.16 1.53.1.46-.07 1.47-.6 1.68-1.17.21-.56.21-1.04.14-1.16-.07-.11-.23-.18-.48-.3Z"/></svg>
@@ -252,7 +256,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="js/firebase-client.js?v=20260613-01"></script>
-  <script src="js/main.js?v=20260807-navbar-more"></script>
+  <script src="js/main.js?v=20260807-mobile-search-portal"></script>
   <script src="js/image-utils.js?v=20260613-public-fix"></script>
   <script src="js/property-utils.js?v=20260613-01"></script>
   <script src="js/public-property-filter.js?v=20260613-01"></script>
