@@ -34,6 +34,15 @@ test('sheet interaction manages modal focus, Escape, body scroll and WhatsApp', 
   assert.match(styles, /body\.mobile-search-open #whatsapp-float \{[\s\S]*?visibility: hidden;/);
 });
 
+test('mobile modal is portaled out of the isolated hero stacking context', () => {
+  assert.match(main, /const mobileSearchHost = heroSearchForm\.parentElement/);
+  assert.match(main, /document\.body\.appendChild\(mobileSearchOverlay\)/);
+  assert.match(main, /document\.body\.appendChild\(heroSearchForm\)/);
+  assert.match(main, /portalMobileSearch\(\);\s*heroSearchForm\.classList\.add\('is-open'\)/);
+  assert.match(styles, /\.mobile-search-overlay \{[\s\S]*?position: fixed;[\s\S]*?z-index: 9998;/);
+  assert.match(styles, /body\.home-page \.premium-search \{[\s\S]*?position: fixed !important;[\s\S]*?z-index: 9999;/);
+});
+
 test('submitting keeps the existing query mapping and closes the sheet', () => {
   assert.match(main, /if \(location\) params\.set\('ubicacion', location\)/);
   assert.match(main, /if \(type\) params\.set\('tipo', type\)/);
