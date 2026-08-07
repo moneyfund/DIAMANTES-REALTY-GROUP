@@ -759,66 +759,57 @@ if (heroSearchForm) {
 
   const mobileSearchTrigger = document.getElementById('mobileSearchTrigger');
   const mobileSearchClose = document.getElementById('mobileSearchClose');
-  const mobileSearchOverlay = document.getElementById('mobileSearchOverlay');
-  const mobileSearchPortal = document.getElementById('mobileSearchPortal');
+  const mobileSearchLayer = document.getElementById('mobileSearchLayer');
+  const mobileSearchBackdrop = document.getElementById('mobileSearchBackdrop');
+  const mobileSearchFormHost = document.getElementById('mobileSearchFormHost');
   const mobileSearchQuery = window.matchMedia('(max-width: 768px)');
   const mobileSearchHost = heroSearchForm.parentElement;
   const focusableSelector = 'button:not([disabled]), select:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])';
 
-  // .hero creates a stacking context with isolation:isolate (and its children
-  // use positioned z-index layers). Move these same nodes into the global host
-  // on mobile so the modal participates in body's stacking context. appendChild
-  // preserves the fields, their values, and every listener attached below.
-  const portalMobileSearch = () => {
-    if (!mobileSearchPortal) return;
-    if (mobileSearchOverlay) mobileSearchPortal.appendChild(mobileSearchOverlay);
-    mobileSearchPortal.appendChild(heroSearchForm);
+  // Move the single existing form only when the responsive mode changes. The
+  // layer, backdrop, header and sheet are permanent siblings directly under
+  // body, so opening and closing never changes the modal's hierarchy.
+  const mountMobileSearch = () => {
+    if (mobileSearchFormHost && heroSearchForm.parentElement !== mobileSearchFormHost) {
+      mobileSearchFormHost.appendChild(heroSearchForm);
+    }
   };
 
   const restoreMobileSearch = () => {
     if (!mobileSearchHost) return;
-    if (mobileSearchOverlay) mobileSearchHost.appendChild(mobileSearchOverlay);
     mobileSearchHost.appendChild(heroSearchForm);
   };
 
   const closeMobileSearch = ({ restoreFocus = true } = {}) => {
-    heroSearchForm.classList.remove('is-open');
-    mobileSearchOverlay?.classList.remove('is-open');
-    mobileSearchOverlay?.setAttribute('aria-hidden', 'true');
+    mobileSearchLayer?.classList.remove('is-open');
+    mobileSearchLayer?.setAttribute('aria-hidden', 'true');
     mobileSearchTrigger?.setAttribute('aria-expanded', 'false');
-    heroSearchForm.removeAttribute('role');
-    heroSearchForm.removeAttribute('aria-modal');
-    heroSearchForm.removeAttribute('aria-labelledby');
     document.body.classList.remove('mobile-search-open');
     if (restoreFocus && mobileSearchQuery.matches) mobileSearchTrigger?.focus();
   };
 
   const openMobileSearch = () => {
     if (!mobileSearchQuery.matches) return;
-    portalMobileSearch();
-    heroSearchForm.classList.add('is-open');
-    mobileSearchOverlay?.classList.add('is-open');
-    mobileSearchOverlay?.setAttribute('aria-hidden', 'false');
+    mountMobileSearch();
+    mobileSearchLayer?.classList.add('is-open');
+    mobileSearchLayer?.setAttribute('aria-hidden', 'false');
     mobileSearchTrigger?.setAttribute('aria-expanded', 'true');
-    heroSearchForm.setAttribute('role', 'dialog');
-    heroSearchForm.setAttribute('aria-modal', 'true');
-    heroSearchForm.setAttribute('aria-labelledby', 'mobileSearchTitle');
     document.body.classList.add('mobile-search-open');
     mobileSearchClose?.focus();
   };
 
   mobileSearchTrigger?.addEventListener('click', openMobileSearch);
   mobileSearchClose?.addEventListener('click', () => closeMobileSearch());
-  mobileSearchOverlay?.addEventListener('click', () => closeMobileSearch());
-  heroSearchForm.addEventListener('keydown', (event) => {
-    if (!heroSearchForm.classList.contains('is-open')) return;
+  mobileSearchBackdrop?.addEventListener('click', () => closeMobileSearch());
+  mobileSearchLayer?.addEventListener('keydown', (event) => {
+    if (!mobileSearchLayer.classList.contains('is-open')) return;
     if (event.key === 'Escape') {
       event.preventDefault();
       closeMobileSearch();
       return;
     }
     if (event.key !== 'Tab') return;
-    const focusable = Array.from(heroSearchForm.querySelectorAll(focusableSelector));
+    const focusable = Array.from(mobileSearchLayer.querySelectorAll(focusableSelector));
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
     if (event.shiftKey && document.activeElement === first) {
@@ -831,7 +822,7 @@ if (heroSearchForm) {
   });
   mobileSearchQuery.addEventListener('change', (event) => {
     if (event.matches) {
-      portalMobileSearch();
+      mountMobileSearch();
     } else {
       closeMobileSearch({ restoreFocus: false });
       restoreMobileSearch();
@@ -840,7 +831,7 @@ if (heroSearchForm) {
 
   // Start in the correct host before the first interaction. This also covers a
   // page loaded directly at a mobile width without reinitializing the form.
-  if (mobileSearchQuery.matches) portalMobileSearch();
+  if (mobileSearchQuery.matches) mountMobileSearch();
 
   heroSearchForm.addEventListener('submit', (event) => {
     event.preventDefault();
