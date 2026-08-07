@@ -83,10 +83,21 @@ test('all public navbars inherit the compact Inicio dimensions without changing 
   ];
   for (const page of publicPages) {
     const html = fs.readFileSync(path.join(root, page), 'utf8');
-    assert.match(html, /premium-theme\.css\?v=20260806-typography-fix/, `${page} must load the shared navbar dimensions`);
+    assert.match(html, /premium-theme\.css\?v=20260807-navbar-more/, `${page} must load the shared navbar dimensions`);
   }
 
-  assert.doesNotMatch(fs.readFileSync(path.join(root, 'agent-dashboard.html'), 'utf8'), /20260806-typography-fix/);
+  assert.doesNotMatch(fs.readFileSync(path.join(root, 'agent-dashboard.html'), 'utf8'), /20260807-navbar-more/);
   assert.doesNotMatch(fs.readFileSync(path.join(root, 'property-sheet.html'), 'utf8'), /premium-theme\.css/);
   assert.match(main, /const HOME_NAVBAR_SCROLL_THRESHOLD = 35;/);
+});
+
+test('desktop public navigation builds a compact accessible Más menu without changing mobile links', () => {
+  assert.match(main, /const primaryFiles = \['index\.html', 'propiedades\.html', 'mapa\.html', 'quieres-vender\.html'\];/);
+  assert.match(main, /const moreFiles = \['nosotros\.html', 'agentes\.html', 'educacion\.html', 'contacto\.html'\];/);
+  assert.match(main, /trigger\.setAttribute\('aria-expanded', 'false'\)/);
+  assert.match(main, /event\.key === 'Escape'/);
+  assert.match(main, /event\.key === 'ArrowDown'/);
+  assert.match(main, /window\.setTimeout\(\(\) => setOpen\(false\), 180\)/);
+  assert.match(theme, /@media \(min-width: 901px\) \{[\s\S]*?\.nav-more__menu \{[\s\S]*?position: absolute;[\s\S]*?z-index: 1200;/);
+  assert.match(theme, /@media \(max-width: 900px\) \{[\s\S]*?\.nav-more__[\s\S]*?display: contents;/);
 });
