@@ -695,7 +695,7 @@ button,
     display: block;
     position: fixed;
     inset: 0;
-    z-index: 1990;
+    z-index: 9998;
     background: rgba(15, 23, 42, 0.58);
     opacity: 0;
     visibility: hidden;
@@ -704,13 +704,13 @@ button,
 
   .mobile-search-overlay.is-open { opacity: 1; visibility: visible; }
 
-  body.home-page .hero-search-content .premium-search {
+  body.home-page .premium-search {
     display: flex !important;
     position: fixed !important;
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 2000;
+    z-index: 9999;
     max-height: 85vh;
     overflow-y: auto;
     flex-direction: column;
@@ -729,9 +729,9 @@ button,
     transition: transform 300ms ease, visibility 300ms ease;
   }
 
-  body.home-page .hero-search-content .premium-search.is-open { transform: translateY(0); visibility: visible; }
+  body.home-page .premium-search.is-open { transform: translateY(0); visibility: visible; }
 
-  body.home-page.mobile-search-open .hero-search-content .premium-search {
+  body.home-page.mobile-search-open .premium-search {
     background: #fff !important;
     color: var(--premium-text) !important;
   }
@@ -784,7 +784,7 @@ button,
     font-weight: 700;
   }
 
-  body.home-page.mobile-search-open .hero-search-content .premium-search select {
+  body.home-page.mobile-search-open .premium-search select {
     width: 100%;
     min-height: 52px !important;
     height: 52px !important;

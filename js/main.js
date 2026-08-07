@@ -680,7 +680,22 @@ if (heroSearchForm) {
   const mobileSearchClose = document.getElementById('mobileSearchClose');
   const mobileSearchOverlay = document.getElementById('mobileSearchOverlay');
   const mobileSearchQuery = window.matchMedia('(max-width: 768px)');
+  const mobileSearchHost = heroSearchForm.parentElement;
   const focusableSelector = 'button:not([disabled]), select:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])';
+
+  // The hero intentionally creates an isolated stacking context and clips its
+  // artwork. Portal the mobile modal to <body> so its fixed layers participate
+  // in the root stacking context rather than competing from inside the hero.
+  const portalMobileSearch = () => {
+    if (mobileSearchOverlay) document.body.appendChild(mobileSearchOverlay);
+    document.body.appendChild(heroSearchForm);
+  };
+
+  const restoreMobileSearch = () => {
+    if (!mobileSearchHost) return;
+    if (mobileSearchOverlay) mobileSearchHost.appendChild(mobileSearchOverlay);
+    mobileSearchHost.appendChild(heroSearchForm);
+  };
 
   const closeMobileSearch = ({ restoreFocus = true } = {}) => {
     heroSearchForm.classList.remove('is-open');
@@ -696,6 +711,7 @@ if (heroSearchForm) {
 
   const openMobileSearch = () => {
     if (!mobileSearchQuery.matches) return;
+    portalMobileSearch();
     heroSearchForm.classList.add('is-open');
     mobileSearchOverlay?.classList.add('is-open');
     mobileSearchOverlay?.setAttribute('aria-hidden', 'false');
@@ -730,7 +746,10 @@ if (heroSearchForm) {
     }
   });
   mobileSearchQuery.addEventListener('change', (event) => {
-    if (!event.matches) closeMobileSearch({ restoreFocus: false });
+    if (!event.matches) {
+      closeMobileSearch({ restoreFocus: false });
+      restoreMobileSearch();
+    }
   });
 
   heroSearchForm.addEventListener('submit', (event) => {
