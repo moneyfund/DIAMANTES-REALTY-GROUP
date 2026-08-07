@@ -47,6 +47,87 @@ const mainNav = document.getElementById('mainNav');
 const APP_NAME = 'DIAMANTES REALTY GROUP';
 const TEMPORARILY_DISABLE_DARK_MODE = true;
 
+function initializePublicMoreMenu() {
+  if (!mainNav || mainNav.querySelector('.nav-more')) return;
+
+  const links = Array.from(mainNav.querySelectorAll(':scope > a'));
+  const findLink = (fileName) => links.find((link) => link.getAttribute('href')?.split(/[?#]/)[0].endsWith(fileName));
+  const primaryFiles = ['index.html', 'propiedades.html', 'mapa.html', 'quieres-vender.html'];
+  const moreFiles = ['nosotros.html', 'agentes.html', 'educacion.html', 'contacto.html'];
+  const primaryLinks = primaryFiles.map(findLink).filter(Boolean);
+  const moreLinks = moreFiles.map(findLink).filter(Boolean);
+
+  // Only enhance the complete public navigation; private and special-purpose
+  // headers are intentionally left untouched.
+  if (primaryLinks.length !== primaryFiles.length || moreLinks.length !== moreFiles.length) return;
+
+  const more = document.createElement('div');
+  more.className = 'nav-more';
+  const trigger = document.createElement('button');
+  trigger.className = 'nav-more__trigger';
+  trigger.type = 'button';
+  trigger.setAttribute('aria-expanded', 'false');
+  trigger.setAttribute('aria-haspopup', 'true');
+  trigger.innerHTML = 'Más <svg viewBox="0 0 12 8" aria-hidden="true"><path d="m1 1.5 5 5 5-5"/></svg>';
+
+  const menu = document.createElement('div');
+  menu.className = 'nav-more__menu';
+  menu.setAttribute('aria-label', 'Más páginas');
+  moreLinks.forEach((link) => menu.appendChild(link));
+  more.append(trigger, menu);
+  mainNav.replaceChildren(...primaryLinks, more);
+
+  const hasActiveChild = moreLinks.some((link) => link.classList.contains('active'));
+  trigger.classList.toggle('active', hasActiveChild);
+  if (hasActiveChild) trigger.setAttribute('aria-current', 'page');
+
+  let closeTimer;
+  const setOpen = (open, focusFirst = false) => {
+    window.clearTimeout(closeTimer);
+    more.classList.toggle('is-open', open);
+    trigger.setAttribute('aria-expanded', String(open));
+    if (open && focusFirst) menu.querySelector('a')?.focus();
+  };
+  const delayedClose = () => {
+    window.clearTimeout(closeTimer);
+    closeTimer = window.setTimeout(() => setOpen(false), 180);
+  };
+
+  trigger.addEventListener('click', () => setOpen(!more.classList.contains('is-open')));
+  trigger.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setOpen(true, true);
+    }
+  });
+  more.addEventListener('mouseenter', () => setOpen(true));
+  more.addEventListener('mouseleave', delayedClose);
+  more.addEventListener('focusin', () => setOpen(true));
+  more.addEventListener('focusout', (event) => {
+    if (!more.contains(event.relatedTarget)) delayedClose();
+  });
+  more.addEventListener('keydown', (event) => {
+    const menuLinks = Array.from(menu.querySelectorAll('a'));
+    const currentIndex = menuLinks.indexOf(document.activeElement);
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      setOpen(false);
+      trigger.focus();
+    } else if (event.key === 'ArrowDown' && currentIndex >= 0) {
+      event.preventDefault();
+      menuLinks[(currentIndex + 1) % menuLinks.length].focus();
+    } else if (event.key === 'ArrowUp' && currentIndex >= 0) {
+      event.preventDefault();
+      menuLinks[(currentIndex - 1 + menuLinks.length) % menuLinks.length].focus();
+    }
+  });
+  document.addEventListener('click', (event) => {
+    if (!more.contains(event.target)) setOpen(false);
+  });
+}
+
+initializePublicMoreMenu();
+
 function isPublicSiteRoute() {
   const privatePageNames = new Set([
     'access-denied.html',
