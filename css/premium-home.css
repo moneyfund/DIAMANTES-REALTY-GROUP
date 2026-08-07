@@ -254,6 +254,7 @@ button,
 .premium-stats-section {
   background: var(--premium-bg) !important;
   padding: 2rem 0 1rem;
+  z-index: auto;
 }
 
 .premium-stats-grid {
@@ -262,12 +263,14 @@ button,
   border: 1px solid var(--premium-border);
   background: #fff;
   box-shadow: 0 18px 55px rgba(15, 23, 42, 0.07);
+  z-index: auto;
 }
 
 .premium-stats-grid article {
   padding: clamp(1.2rem, 2.4vw, 2rem);
   text-align: center;
   border-right: 1px solid var(--premium-border);
+  z-index: auto;
 }
 
 .premium-stats-grid article:last-child { border-right: 0; }
@@ -624,6 +627,12 @@ button,
 }
 
 @media (max-width: 768px) {
+  #mobileSearchPortal {
+    position: relative;
+    z-index: 2147483000;
+    pointer-events: none;
+  }
+
   .nav-wrapper,
   .site-header .container.nav-wrapper {
     min-height: 70px;
@@ -691,15 +700,17 @@ button,
 
   .mobile-search-filter-icon { color: var(--premium-red); }
 
-  .mobile-search-overlay {
+  #mobileSearchOverlay {
     display: block;
     position: fixed;
     inset: 0;
-    z-index: 9998;
+    z-index: 2147483001;
     background: rgba(15, 23, 42, 0.58);
     opacity: 0;
     visibility: hidden;
     transition: opacity 300ms ease, visibility 300ms ease;
+    pointer-events: auto;
+    touch-action: none;
   }
 
   .mobile-search-overlay.is-open { opacity: 1; visibility: visible; }
@@ -710,7 +721,7 @@ button,
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 9999;
+    z-index: 2147483002;
     max-height: 85vh;
     overflow-y: auto;
     flex-direction: column;
@@ -727,6 +738,8 @@ button,
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
     transition: transform 300ms ease, visibility 300ms ease;
+    pointer-events: auto;
+    overscroll-behavior: contain;
   }
 
   body.home-page .premium-search.is-open { transform: translateY(0); visibility: visible; }

@@ -760,16 +760,19 @@ if (heroSearchForm) {
   const mobileSearchTrigger = document.getElementById('mobileSearchTrigger');
   const mobileSearchClose = document.getElementById('mobileSearchClose');
   const mobileSearchOverlay = document.getElementById('mobileSearchOverlay');
+  const mobileSearchPortal = document.getElementById('mobileSearchPortal');
   const mobileSearchQuery = window.matchMedia('(max-width: 768px)');
   const mobileSearchHost = heroSearchForm.parentElement;
   const focusableSelector = 'button:not([disabled]), select:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])';
 
-  // The hero intentionally creates an isolated stacking context and clips its
-  // artwork. Portal the mobile modal to <body> so its fixed layers participate
-  // in the root stacking context rather than competing from inside the hero.
+  // .hero creates a stacking context with isolation:isolate (and its children
+  // use positioned z-index layers). Move these same nodes into the global host
+  // on mobile so the modal participates in body's stacking context. appendChild
+  // preserves the fields, their values, and every listener attached below.
   const portalMobileSearch = () => {
-    if (mobileSearchOverlay) document.body.appendChild(mobileSearchOverlay);
-    document.body.appendChild(heroSearchForm);
+    if (!mobileSearchPortal) return;
+    if (mobileSearchOverlay) mobileSearchPortal.appendChild(mobileSearchOverlay);
+    mobileSearchPortal.appendChild(heroSearchForm);
   };
 
   const restoreMobileSearch = () => {
@@ -827,11 +830,17 @@ if (heroSearchForm) {
     }
   });
   mobileSearchQuery.addEventListener('change', (event) => {
-    if (!event.matches) {
+    if (event.matches) {
+      portalMobileSearch();
+    } else {
       closeMobileSearch({ restoreFocus: false });
       restoreMobileSearch();
     }
   });
+
+  // Start in the correct host before the first interaction. This also covers a
+  // page loaded directly at a mobile width without reinitializing the form.
+  if (mobileSearchQuery.matches) portalMobileSearch();
 
   heroSearchForm.addEventListener('submit', (event) => {
     event.preventDefault();
