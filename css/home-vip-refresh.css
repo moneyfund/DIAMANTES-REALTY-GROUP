@@ -349,3 +349,69 @@
   }
   .home-property-slider { scroll-behavior: auto !important; }
 }
+
+/* Mobile gesture + viewport containment fix (2026-08-17) -------------------- */
+.home-page .premium-hero .hero-title,
+.home-page .hero .hero-title {
+  font-weight: 600 !important;
+  letter-spacing: -0.035em !important;
+}
+
+@media (max-width: 768px) {
+  html,
+  body.home-page {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden !important;
+    overflow-x: clip !important;
+  }
+
+  body.home-page .public-page-surface,
+  body.home-page main,
+  body.home-page .home-vip-intro,
+  body.home-page .home-property-section,
+  body.home-page .premium-services {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: clip !important;
+  }
+
+  body.home-page .premium-services {
+    overflow-y: visible !important;
+  }
+
+  .home-signature-inner,
+  .home-signature-copy,
+  .home-signature-links {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .home-signature-links {
+    width: 100%;
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(128px, 42vw);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    overscroll-behavior-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y !important;
+  }
+
+  .home-property-slider,
+  .home-property-slider .property-card,
+  .home-property-slider .property-card-shell,
+  .premium-services-grid,
+  .premium-services-grid article,
+  .premium-services-grid article * {
+    touch-action: pan-x pan-y !important;
+  }
+
+  .home-property-slider,
+  .premium-services-grid {
+    overscroll-behavior-x: contain;
+    overscroll-behavior-y: auto;
+  }
+}
