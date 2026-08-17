@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="css/premium-home.css?v=20260807-mobile-search-sheet" />
   <link rel="stylesheet" href="css/premium-theme.css?v=20260807-navbar-more" />
   <link rel="stylesheet" href="css/footer.css?v=20260806-typography-fix" />
+  <link rel="stylesheet" href="css/home-vip-refresh.css?v=20260816-vip-refresh" />
 </head>
 <body class="home-page navbar-over-hero">
   <!-- PUBLIC FIX VERIFIED 2026-06-13 -->
@@ -139,12 +140,33 @@
       </div>
     </section>
 
-    <section class="premium-stats-section" aria-label="Indicadores corporativos">
-      <div class="container premium-stats-grid">
-        <article><strong>+500</strong><span>Propiedades gestionadas</span></article>
-        <article><strong>+100</strong><span>Clientes asesorados</span></article>
-        <article><strong>+10</strong><span>Departamentos cubiertos</span></article>
-        <article><strong>+5</strong><span>Años de experiencia</span></article>
+    <section class="home-vip-intro" aria-labelledby="homeVipTitle">
+      <div class="container home-vip-shell">
+        <div class="home-vip-copy" data-vip-reveal>
+          <p class="home-vip-eyebrow">Experiencia Diamantes</p>
+          <h2 class="home-vip-title" id="homeVipTitle">Tu próxima propiedad empieza con una decisión <em>bien acompañada.</em></h2>
+          <p class="home-vip-lead">Creamos una experiencia inmobiliaria clara, estratégica y cercana: desde descubrir oportunidades hasta avanzar con un asesor que entiende lo que estás buscando.</p>
+          <div class="home-vip-actions">
+            <a class="home-vip-primary" href="propiedades.html">Explorar propiedades</a>
+            <a class="home-vip-secondary" href="nosotros.html">Conocer nuestro enfoque</a>
+          </div>
+        </div>
+
+        <aside class="home-vip-path" aria-label="Experiencia de acompañamiento Diamantes" data-vip-reveal style="--vip-delay: 120ms;">
+          <p class="home-vip-path-label">Una ruta simple. Una decisión importante.</p>
+          <div class="home-vip-step">
+            <span class="home-vip-step-number">01</span>
+            <div><h3>Descubre</h3><p>Explora oportunidades por ubicación, tipo de propiedad y objetivo de inversión.</p></div>
+          </div>
+          <div class="home-vip-step">
+            <span class="home-vip-step-number">02</span>
+            <div><h3>Selecciona</h3><p>Compara opciones con información ordenada y una visión más clara de cada propiedad.</p></div>
+          </div>
+          <div class="home-vip-step">
+            <span class="home-vip-step-number">03</span>
+            <div><h3>Avanza</h3><p>Conecta con asesoría profesional para coordinar visitas y definir los siguientes pasos.</p></div>
+          </div>
+        </aside>
       </div>
     </section>
 
@@ -264,5 +286,6 @@
   <script src="js/property-utils.js?v=20260613-01"></script>
   <script src="js/public-property-filter.js?v=20260613-01"></script>
   <script src="js/properties.js?v=20260806-desktop-carousel-clicks"></script>
+  <script src="js/home-vip-refresh.js?v=20260816-vip-refresh"></script>
 </body>
 </html>
