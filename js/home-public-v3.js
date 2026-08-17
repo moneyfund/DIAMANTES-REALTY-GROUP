@@ -1,11 +1,14 @@
 (() => {
   'use strict';
 
-  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-
   let initialized = false;
   let attempts = 0;
   let retryTimer = null;
+
+  if ('scrollRestoration' in history && !window.location.hash) {
+    history.scrollRestoration = 'manual';
+    if (window.scrollY > 0) window.scrollTo(0, 0);
+  }
 
   const compactSignature = (intro) => {
     intro.id = 'homeExperience';
@@ -100,8 +103,8 @@
 
     initialized = true;
     window.clearTimeout(retryTimer);
-    document.documentElement.dataset.homePublicRuntime = 'ready';
-    body.dataset.homePublicController = 'v3-20260817-0240-runtime-retry';
+    document.documentElement.dataset.homePublicRuntime = 'ready-static-background';
+    body.dataset.homePublicController = 'v3-20260817-static-background';
 
     compactSignature(intro);
     upgradeServiceIcons();
@@ -114,16 +117,10 @@
 
     const curtain = document.createElement('div');
     curtain.className = 'home-public-curtain';
-    curtain.dataset.controller = 'home-public-v3-runtime-retry';
+    curtain.dataset.controller = 'home-public-v3-static-background';
     body.appendChild(curtain);
     curtain.appendChild(header);
     curtain.appendChild(hero);
-
-    main.style.setProperty('position', 'relative', 'important');
-    main.style.setProperty('z-index', '1', 'important');
-    main.style.setProperty('width', '100%', 'important');
-    main.style.setProperty('margin', '0', 'important');
-    main.style.setProperty('transform', 'translate3d(0, var(--home-background-counter, 0px), 0)', 'important');
 
     hero.querySelectorAll('.home-public-scroll-cue, .hero-scroll-cue, .home-final-scroll-cue').forEach((node) => node.remove());
 
@@ -152,11 +149,15 @@
       const travelled = Math.min(Math.max(window.scrollY, 0), curtainHeight);
       const progress = travelled / curtainHeight;
 
+      /*
+       * The public website is already rendered behind the hero. During the
+       * first viewport of scroll we counter the document scroll exactly so
+       * the background does not move at all. Only the front curtain moves.
+       */
       curtain.style.setProperty('--home-curtain-y', `${-travelled}px`);
       main.style.setProperty('--home-background-counter', `${travelled}px`);
       curtain.classList.toggle('is-open', progress >= .995);
       cue.classList.toggle('is-hidden', travelled > 42);
-      intro.classList.toggle('is-revealed', progress > .42);
     };
 
     const schedule = () => {
@@ -176,7 +177,6 @@
     window.addEventListener('resize', remeasure, { passive: true });
     window.addEventListener('orientationchange', remeasure, { passive: true });
 
-    if (!window.location.hash) window.scrollTo(0, 0);
     measure();
     render();
   }
