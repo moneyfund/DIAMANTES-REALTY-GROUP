@@ -1,0 +1,46 @@
+/* Final navigation override for the private agent panel */
+body.agent-dashboard-route #dashboardSidebar.dashboard-sidebar {
+  background: #0c1f38 !important;
+  color: #fff !important;
+}
+
+body.agent-dashboard-route #dashboardSidebar .dashboard-sidebar-nav .dashboard-nav-link,
+body.agent-dashboard-route #dashboardSidebar .dashboard-sidebar-logout {
+  background: transparent !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+body.agent-dashboard-route #dashboardSidebar .dashboard-sidebar-nav .dashboard-nav-link span,
+body.agent-dashboard-route #dashboardSidebar .dashboard-sidebar-logout span,
+body.agent-dashboard-route #dashboardSidebar .dashboard-sidebar-brand,
+body.agent-dashboard-route #dashboardSidebar .dashboard-sidebar-brand span,
+body.agent-dashboard-route #dashboardSidebar .dashboard-sidebar-agent strong {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
+
+body.agent-dashboard-route #dashboardSidebar .dashboard-sidebar-nav .dashboard-nav-link svg,
+body.agent-dashboard-route #dashboardSidebar .dashboard-sidebar-logout svg {
+  color: #fff !important;
+  fill: #fff !important;
+}
+
+body.agent-dashboard-route #dashboardSidebar .dashboard-sidebar-agent span {
+  color: rgba(255,255,255,.78) !important;
+  -webkit-text-fill-color: rgba(255,255,255,.78) !important;
+}
+
+body.agent-dashboard-route #dashboardSidebar .dashboard-sidebar-nav .dashboard-nav-link:hover,
+body.agent-dashboard-route #dashboardSidebar .dashboard-sidebar-nav .dashboard-nav-link:focus-visible,
+body.agent-dashboard-route #dashboardSidebar .dashboard-sidebar-nav .dashboard-nav-link.is-active {
+  background: rgba(255,255,255,.09) !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
+
+body.agent-dashboard-route #dashboardSidebar .dashboard-sidebar-nav .dashboard-nav-link.is-active {
+  box-shadow: inset 2px 0 #b00008 !important;
+}
