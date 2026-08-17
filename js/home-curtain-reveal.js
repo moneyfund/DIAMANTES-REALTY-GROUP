@@ -8,42 +8,42 @@
   const intro = document.querySelector('.home-vip-intro');
   if (!body || !main || !header || !hero || !intro) return;
 
-  // Retira por completo las implementaciones anteriores. Sus listeners pueden
-  // seguir existiendo en memoria, pero quedan apuntando a nodos ya desconectados
-  // y no pueden volver a modificar la cortina final.
-  ['homeFrontCurtainStyles', 'homeStableCurtainCss', 'homeRealCurtainStyles', 'homeHeroCurtainStyles', 'homeCurtainFinalInline', 'homeCurtainIsolatedStyles']
+  // home-vip-refresh.js se carga antes y todavía crea su wrapper histórico.
+  // En lugar de reconstruir otra vez el DOM, esta implementación toma control
+  // de ese mismo wrapper y deja sus listeners antiguos sin propiedades útiles.
+  ['homeFrontCurtainStyles', 'homeStableCurtainCss', 'homeRealCurtainStyles', 'homeHeroCurtainStyles', 'homeCurtainFinalInline', 'homeCurtainIsolatedStyles', 'homeCurtainTakeoverStyles']
     .forEach((id) => document.getElementById(id)?.remove());
 
-  document.querySelectorAll('.hero-scroll-cue, .home-stable-scroll-cue, .home-final-scroll-cue')
-    .forEach((node) => node.remove());
+  let curtain = document.querySelector('.home-front-curtain');
+  if (!curtain) {
+    curtain = document.createElement('div');
+    curtain.className = 'home-front-curtain';
+    body.insertBefore(curtain, main);
+    curtain.appendChild(header);
+    curtain.appendChild(hero);
+  } else {
+    if (!curtain.contains(header)) curtain.prepend(header);
+    if (!curtain.contains(hero)) curtain.appendChild(hero);
+  }
 
-  const legacyWrappers = Array.from(document.querySelectorAll('.home-front-curtain, .home-stable-cover, .home-real-curtain, .home-curtain-stage'));
+  curtain.classList.add('home-final-curtain');
+  curtain.dataset.version = '20260817-0218-takeover';
 
-  const curtain = document.createElement('div');
-  curtain.className = 'home-final-curtain';
-  curtain.dataset.version = '20260817-0205-isolated';
-  body.insertBefore(curtain, main);
-  curtain.appendChild(header);
-  curtain.appendChild(hero);
+  // Limpia cualquier cue anterior. El listener viejo puede seguir existiendo,
+  // pero queda apuntando a un nodo desconectado y ya no puede afectar al nuevo.
+  hero.querySelectorAll('.hero-scroll-cue, .home-stable-scroll-cue, .home-final-scroll-cue').forEach((node) => node.remove());
 
-  legacyWrappers.forEach((wrapper) => {
-    if (wrapper === curtain) return;
-    if (!wrapper.contains(header) && !wrapper.contains(hero)) wrapper.remove();
-  });
-
-  // Si una versión anterior envolvió la primera sección, restáurala como hija
-  // directa de main para que sea el fondo real detrás de la cortina.
-  const revealStage = intro.closest('.home-stable-reveal-stage, .home-real-reveal-stage');
-  if (revealStage) {
+  const oldRevealStage = intro.closest('.home-stable-reveal-stage, .home-real-reveal-stage');
+  if (oldRevealStage) {
     main.insertBefore(intro, main.firstChild);
-    revealStage.remove();
+    oldRevealStage.remove();
   }
 
   if (!intro.id) intro.id = 'homeExperience';
 
-  const cue = document.createElement('a');
+  const cue = document.createElement('button');
+  cue.type = 'button';
   cue.className = 'home-final-scroll-cue';
-  cue.href = `#${intro.id}`;
   cue.setAttribute('aria-label', 'Desliza hacia arriba para revelar la web');
   cue.innerHTML = `
     <span class="home-final-scroll-cue__label">Desliza</span>
@@ -55,7 +55,7 @@
   hero.appendChild(cue);
 
   const style = document.createElement('style');
-  style.id = 'homeCurtainIsolatedStyles';
+  style.id = 'homeCurtainTakeoverStyles';
   style.textContent = `
     html,
     body.home-page {
@@ -69,26 +69,14 @@
       z-index: 1 !important;
       width: 100% !important;
       margin: 0 !important;
-      transform: translate3d(0, var(--drg-isolated-bg-y, 0px), 0) !important;
+      transform: translate3d(0, var(--drg-takeover-bg-y, 0px), 0) !important;
       will-change: transform !important;
     }
 
-    body.home-page > main > .home-vip-intro {
-      position: relative !important;
-      z-index: 1 !important;
-      margin-top: 0 !important;
-    }
-
-    body.home-page > main > .home-vip-intro [data-vip-reveal] {
-      opacity: 1 !important;
-      transform: none !important;
-      clip-path: none !important;
-    }
-
-    body.home-page > .home-final-curtain {
+    body.home-page > .home-front-curtain.home-final-curtain {
       position: fixed !important;
       inset: 0 0 auto 0 !important;
-      z-index: 1900 !important;
+      z-index: 2100 !important;
       display: flex !important;
       flex-direction: column !important;
       width: 100% !important;
@@ -98,30 +86,31 @@
       margin: 0 !important;
       overflow: hidden !important;
       background: #071a30 !important;
-      transform: translate3d(0, var(--drg-isolated-curtain-y, 0px), 0) !important;
+      transform: translate3d(0, var(--drg-takeover-y, 0px), 0) !important;
       will-change: transform !important;
-      box-shadow: 0 18px 36px rgba(5, 18, 34, .16) !important;
+      filter: none !important;
+      box-shadow: 0 20px 45px rgba(4, 18, 35, .18) !important;
       pointer-events: auto !important;
     }
 
-    body.home-page > .home-final-curtain.is-open {
+    body.home-page > .home-front-curtain.home-final-curtain.is-curtain-open {
       pointer-events: none !important;
     }
 
-    body.home-page > .home-final-curtain > .site-header.public-navbar {
+    body.home-page > .home-front-curtain.home-final-curtain > .site-header.public-navbar {
       position: relative !important;
       inset: auto !important;
       top: auto !important;
       left: auto !important;
       right: auto !important;
-      z-index: 5 !important;
+      z-index: 10 !important;
       flex: 0 0 auto !important;
       width: 100% !important;
       margin: 0 !important;
       transform: none !important;
     }
 
-    body.home-page > .home-final-curtain > .hero.premium-hero {
+    body.home-page > .home-front-curtain.home-final-curtain > .hero.premium-hero {
       position: relative !important;
       inset: auto !important;
       top: auto !important;
@@ -129,188 +118,264 @@
       z-index: 2 !important;
       flex: 1 1 0 !important;
       display: flex !important;
+      align-items: stretch !important;
       width: 100% !important;
       min-height: 0 !important;
       height: auto !important;
       max-height: none !important;
       margin: 0 !important;
-      padding: clamp(3.2rem, 5.5vh, 4.8rem) 0 4.6rem !important;
+      padding: 0 !important;
       overflow: hidden !important;
-      border-radius: 0 0 22px 22px !important;
+      border-radius: 0 0 20px 20px !important;
       transform: none !important;
       opacity: 1 !important;
     }
 
-    body.home-page > .home-final-curtain > .hero.premium-hero .hero-content {
+    body.home-page > .home-front-curtain.home-final-curtain > .hero.premium-hero .hero-content {
+      position: relative !important;
+      z-index: 5 !important;
       display: grid !important;
+      grid-template-columns: minmax(0, 1.02fr) minmax(500px, .98fr) !important;
       align-items: end !important;
       align-content: end !important;
-      width: min(1180px, 92%) !important;
+      column-gap: clamp(42px, 5vw, 84px) !important;
+      width: min(1420px, 90%) !important;
       height: 100% !important;
       min-height: 0 !important;
-      margin-top: auto !important;
-      margin-bottom: 0 !important;
-      padding: 0 !important;
+      margin: 0 auto !important;
+      padding: clamp(26px, 4vh, 48px) 0 58px !important;
       transform: none !important;
     }
 
-    body.home-page > .home-final-curtain > .hero.premium-hero .hero-static-content,
-    body.home-page > .home-final-curtain > .hero.premium-hero .hero-search-content {
+    body.home-page > .home-front-curtain.home-final-curtain .hero-static-content,
+    body.home-page > .home-front-curtain.home-final-curtain .hero-search-content {
       align-self: end !important;
-      margin-bottom: 0 !important;
+      margin: 0 !important;
       transform: none !important;
     }
 
-    body.home-page > .home-final-curtain > .hero.premium-hero .premium-search,
-    body.home-page > .home-final-curtain > .hero.premium-hero .premium-hero-actions {
-      margin-bottom: 0 !important;
+    body.home-page > .home-front-curtain.home-final-curtain .hero-static-content {
+      max-width: 670px !important;
     }
 
-    body.home-page > .home-final-curtain > .hero.premium-hero .hero-static-content .eyebrow {
+    body.home-page > .home-front-curtain.home-final-curtain .hero-static-content .eyebrow {
       margin: 0 0 .08rem !important;
     }
 
-    body.home-page > .home-final-curtain > .hero.premium-hero .hero-static-content .hero-license {
-      margin: .02rem 0 .68rem !important;
-      color: rgba(255,255,255,.84) !important;
-      font-size: .6rem !important;
+    body.home-page > .home-front-curtain.home-final-curtain .hero-static-content .hero-license {
+      margin: .02rem 0 .6rem !important;
+      color: rgba(255,255,255,.82) !important;
+      font-size: .56rem !important;
       font-weight: 600 !important;
-      line-height: 1.2 !important;
-      letter-spacing: .11em !important;
+      line-height: 1.15 !important;
+      letter-spacing: .105em !important;
     }
 
-    body.home-page > .home-final-curtain > .hero.premium-hero .hero-static-content h1,
-    body.home-page > .home-final-curtain > .hero.premium-hero .hero-title {
-      max-width: 700px !important;
-      margin-top: 0 !important;
-      margin-bottom: .72rem !important;
-      font-size: clamp(2.75rem, 4.65vw, 4.35rem) !important;
+    body.home-page > .home-front-curtain.home-final-curtain .hero-title {
+      max-width: 650px !important;
+      margin: 0 0 .8rem !important;
+      font-size: clamp(3rem, 5vw, 4.7rem) !important;
       font-weight: 600 !important;
-      line-height: .98 !important;
-      letter-spacing: -.04em !important;
+      line-height: .96 !important;
+      letter-spacing: -.045em !important;
     }
 
-    body.home-page > .home-final-curtain .home-final-scroll-cue {
+    body.home-page > .home-front-curtain.home-final-curtain .premium-hero-actions,
+    body.home-page > .home-front-curtain.home-final-curtain .premium-search {
+      margin-bottom: 0 !important;
+    }
+
+    body.home-page > .home-front-curtain.home-final-curtain .hero-search-content {
+      padding-bottom: 0 !important;
+    }
+
+    body.home-page > .home-front-curtain.home-final-curtain .premium-search {
+      transform: none !important;
+    }
+
+    body.home-page > .home-front-curtain.home-final-curtain .home-final-scroll-cue {
       position: absolute !important;
       left: 50% !important;
-      bottom: 10px !important;
-      z-index: 40 !important;
+      bottom: 8px !important;
+      z-index: 50 !important;
       display: inline-flex !important;
       flex-direction: column !important;
       align-items: center !important;
       justify-content: center !important;
-      gap: 2px !important;
+      gap: 1px !important;
       min-width: 92px !important;
-      padding: 4px 8px !important;
+      min-height: 42px !important;
+      margin: 0 !important;
+      padding: 2px 10px !important;
+      border: 0 !important;
+      background: transparent !important;
       color: #fff !important;
       -webkit-text-fill-color: #fff !important;
       text-decoration: none !important;
       opacity: 1 !important;
       transform: translateX(-50%) !important;
-      transition: opacity 160ms ease !important;
+      transition: opacity 160ms ease, transform 160ms ease !important;
+      cursor: pointer !important;
       pointer-events: auto !important;
     }
 
-    body.home-page > .home-final-curtain .home-final-scroll-cue.is-hidden {
+    body.home-page > .home-front-curtain.home-final-curtain .home-final-scroll-cue.is-hidden {
       opacity: 0 !important;
+      transform: translate(-50%, 6px) !important;
       pointer-events: none !important;
     }
 
-    body.home-page > .home-final-curtain .home-final-scroll-cue__label {
+    body.home-page > .home-front-curtain.home-final-curtain .home-final-scroll-cue__label {
       color: #fff !important;
       -webkit-text-fill-color: #fff !important;
       font-family: "Plus Jakarta Sans", sans-serif !important;
       font-size: .62rem !important;
-      font-weight: 700 !important;
+      font-weight: 800 !important;
       line-height: 1 !important;
       letter-spacing: .16em !important;
       text-transform: uppercase !important;
-      text-shadow: 0 2px 10px rgba(0,0,0,.7) !important;
+      text-shadow: 0 2px 10px rgba(0,0,0,.72) !important;
     }
 
-    body.home-page > .home-final-curtain .home-final-scroll-cue__arrows {
+    body.home-page > .home-front-curtain.home-final-curtain .home-final-scroll-cue__arrows {
       position: relative !important;
       display: grid !important;
       place-items: center !important;
-      width: 28px !important;
-      height: 28px !important;
+      width: 27px !important;
+      height: 25px !important;
     }
 
-    body.home-page > .home-final-curtain .home-final-scroll-cue svg {
+    body.home-page > .home-front-curtain.home-final-curtain .home-final-scroll-cue svg {
       position: absolute !important;
-      width: 21px !important;
-      height: 21px !important;
+      width: 20px !important;
+      height: 20px !important;
       fill: none !important;
       stroke: #fff !important;
-      stroke-width: 1.9 !important;
+      stroke-width: 2 !important;
       stroke-linecap: round !important;
       stroke-linejoin: round !important;
-      animation: drgIsolatedCurtainCue 1.2s cubic-bezier(.22,1,.36,1) infinite !important;
+      animation: drgTakeoverCue 1.05s cubic-bezier(.22,1,.36,1) infinite !important;
     }
 
-    body.home-page > .home-final-curtain .home-final-scroll-cue svg:last-child {
-      animation-delay: .16s !important;
+    body.home-page > .home-front-curtain.home-final-curtain .home-final-scroll-cue svg:last-child {
+      animation-delay: .14s !important;
     }
 
-    @keyframes drgIsolatedCurtainCue {
-      0% { opacity: 0; transform: translateY(9px); }
-      34% { opacity: 1; }
-      72% { opacity: .78; }
+    body.home-page > main > .home-vip-intro {
+      position: relative !important;
+      z-index: 1 !important;
+      margin-top: 0 !important;
+    }
+
+    body.home-page > main > .home-vip-intro .home-signature-inner {
+      opacity: .34 !important;
+      transform: translateY(26px) !important;
+      transition: opacity .42s ease, transform .52s cubic-bezier(.22,1,.36,1) !important;
+    }
+
+    body.home-page > main > .home-vip-intro.home-reveal-active .home-signature-inner {
+      opacity: 1 !important;
+      transform: translateY(0) !important;
+    }
+
+    @keyframes drgTakeoverCue {
+      0% { opacity: 0; transform: translateY(8px); }
+      35% { opacity: 1; }
+      72% { opacity: .8; }
       100% { opacity: 0; transform: translateY(-7px); }
     }
 
+    @media (max-width: 1100px) and (min-width: 769px) {
+      body.home-page > .home-front-curtain.home-final-curtain > .hero.premium-hero .hero-content {
+        grid-template-columns: minmax(0, .95fr) minmax(430px, 1.05fr) !important;
+        column-gap: 32px !important;
+        width: min(1180px, 92%) !important;
+      }
+
+      body.home-page > .home-front-curtain.home-final-curtain .hero-title {
+        font-size: clamp(2.7rem, 4.7vw, 4rem) !important;
+      }
+    }
+
     @media (max-width: 768px) {
-      body.home-page > .home-final-curtain > .hero.premium-hero {
-        padding: 2.35rem 0 4.1rem !important;
-        border-radius: 0 0 16px 16px !important;
+      body.home-page > .home-front-curtain.home-final-curtain > .site-header.public-navbar {
+        flex: 0 0 auto !important;
       }
 
-      body.home-page > .home-final-curtain > .hero.premium-hero .hero-content {
-        align-items: center !important;
-        align-content: center !important;
+      body.home-page > .home-front-curtain.home-final-curtain > .hero.premium-hero {
+        border-radius: 0 0 14px 14px !important;
+      }
+
+      body.home-page > .home-front-curtain.home-final-curtain > .hero.premium-hero .hero-content {
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-end !important;
+        align-items: stretch !important;
+        width: min(100% - 34px, 680px) !important;
         height: 100% !important;
+        margin: 0 auto !important;
+        padding: 24px 0 56px !important;
       }
 
-      body.home-page > .home-final-curtain > .hero.premium-hero .hero-static-content,
-      body.home-page > .home-final-curtain > .hero.premium-hero .hero-search-content {
-        align-self: center !important;
+      body.home-page > .home-front-curtain.home-final-curtain .hero-static-content {
+        width: 100% !important;
+        max-width: none !important;
+        margin-top: auto !important;
       }
 
-      body.home-page > .home-final-curtain .home-final-scroll-cue {
-        bottom: 7px !important;
+      body.home-page > .home-front-curtain.home-final-curtain .hero-title {
+        max-width: 100% !important;
+        margin-bottom: .72rem !important;
+        font-size: clamp(2.25rem, 11vw, 3.4rem) !important;
+        line-height: .97 !important;
+      }
+
+      body.home-page > .home-front-curtain.home-final-curtain .hero-static-content .hero-license {
+        margin-bottom: .48rem !important;
+        font-size: .52rem !important;
+      }
+
+      body.home-page > .home-front-curtain.home-final-curtain .hero-search-content {
+        width: 100% !important;
+      }
+
+      body.home-page > .home-front-curtain.home-final-curtain .home-final-scroll-cue {
+        bottom: 5px !important;
         min-width: 78px !important;
+        min-height: 38px !important;
       }
 
-      body.home-page > .home-final-curtain .home-final-scroll-cue__label {
-        font-size: .55rem !important;
+      body.home-page > .home-front-curtain.home-final-curtain .home-final-scroll-cue__label {
+        font-size: .54rem !important;
         letter-spacing: .13em !important;
       }
     }
   `;
   document.head.appendChild(style);
 
-  let revealDistance = 1;
   let curtainHeight = 1;
+  let revealDistance = 1;
   let raf = null;
 
   const measure = () => {
     curtainHeight = Math.max(1, window.innerHeight, curtain.getBoundingClientRect().height);
-    const viewport = Math.max(1, window.innerHeight);
-    revealDistance = window.matchMedia('(max-width: 768px)').matches
-      ? Math.max(360, Math.min(560, viewport * .74))
-      : Math.max(480, Math.min(720, viewport * .76));
+    const mobile = window.matchMedia('(max-width: 768px)').matches;
+    revealDistance = curtainHeight * (mobile ? .68 : .74);
   };
 
   const render = () => {
     raf = null;
-    const travelled = Math.max(0, Math.min(revealDistance, window.scrollY));
-    const progress = travelled / revealDistance;
-    const curtainY = -curtainHeight * progress;
+    const raw = Math.max(0, window.scrollY);
+    const travelled = Math.min(revealDistance, raw);
+    const progress = Math.min(1, travelled / revealDistance);
+    const eased = 1 - Math.pow(1 - progress, 2.15);
+    const curtainY = -curtainHeight * eased;
 
-    curtain.style.setProperty('--drg-isolated-curtain-y', `${curtainY.toFixed(1)}px`);
-    main.style.setProperty('--drg-isolated-bg-y', `${travelled.toFixed(1)}px`);
-    curtain.classList.toggle('is-open', progress > .985);
-    cue.classList.toggle('is-hidden', progress > .08);
+    curtain.style.setProperty('--drg-takeover-y', `${curtainY.toFixed(1)}px`);
+    main.style.setProperty('--drg-takeover-bg-y', `${travelled.toFixed(1)}px`);
+    curtain.classList.toggle('is-curtain-open', progress > .985);
+    cue.classList.toggle('is-hidden', progress > .075);
+    intro.classList.toggle('home-reveal-active', progress > .48);
   };
 
   const schedule = () => {
@@ -322,8 +387,7 @@
     render();
   };
 
-  cue.addEventListener('click', (event) => {
-    event.preventDefault();
+  cue.addEventListener('click', () => {
     window.scrollTo({ top: revealDistance, behavior: 'smooth' });
   });
 
@@ -333,5 +397,5 @@
 
   measure();
   render();
-  body.dataset.curtainVersion = '20260817-0205-isolated';
+  body.dataset.curtainVersion = '20260817-0218-takeover';
 })();
