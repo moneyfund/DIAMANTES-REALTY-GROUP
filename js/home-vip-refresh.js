@@ -50,8 +50,213 @@
     });
   };
 
+  const installPropertySectionStyles = () => {
+    if (document.getElementById('homePropertyCleanStyles')) return;
+    const style = document.createElement('style');
+    style.id = 'homePropertyCleanStyles';
+    style.textContent = `
+      .home-page .home-property-section {
+        padding-top: clamp(24px, 3vw, 38px) !important;
+        padding-bottom: clamp(24px, 3vw, 38px) !important;
+        background: transparent !important;
+        overflow: clip;
+      }
+
+      .home-page .home-property-heading {
+        display: flex !important;
+        grid-template-columns: none !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 14px !important;
+        margin-bottom: 10px !important;
+      }
+
+      .home-page .home-property-heading > div:first-child {
+        min-width: 0;
+      }
+
+      .home-page .home-property-heading h2 {
+        margin: 0 !important;
+        color: #101828 !important;
+        font-size: clamp(1.65rem, 2.7vw, 2.55rem) !important;
+        font-weight: 700 !important;
+        line-height: 1.05 !important;
+        letter-spacing: -.035em !important;
+      }
+
+      .home-page .home-property-heading p,
+      .home-page .home-property-heading .premium-text-link,
+      .home-page .home-slider-controls {
+        display: none !important;
+      }
+
+      .home-page .home-property-actions {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        flex: 0 0 auto;
+        margin: 0 0 0 auto !important;
+      }
+
+      .home-page .home-property-more-button {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-height: 36px !important;
+        padding: .52rem .82rem !important;
+        border: 1px solid rgba(12, 31, 56, .34) !important;
+        border-radius: 6px !important;
+        background: transparent !important;
+        color: #0c1f38 !important;
+        box-shadow: none !important;
+        font-size: .74rem !important;
+        font-weight: 700 !important;
+        line-height: 1.1 !important;
+        letter-spacing: -.01em !important;
+        text-decoration: none !important;
+        white-space: nowrap;
+        transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+      }
+
+      .home-page .home-property-more-button:hover,
+      .home-page .home-property-more-button:focus-visible {
+        background: #0c1f38 !important;
+        border-color: #0c1f38 !important;
+        color: #fff !important;
+      }
+
+      .home-page .home-property-slider {
+        padding-top: 4px !important;
+        padding-bottom: 10px !important;
+      }
+
+      .home-page .home-property-slider .property-card,
+      .home-page .home-property-slider .property-card.is-active,
+      .home-page .home-property-slider .property-card[aria-current="true"] {
+        padding: 0 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        transform: none !important;
+        filter: none !important;
+        opacity: 1 !important;
+      }
+
+      .home-page .home-property-slider .property-card-shell {
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        border: .5px solid rgba(0, 0, 0, .20) !important;
+        border-radius: 0 !important;
+        background: #fff !important;
+        box-shadow: none !important;
+        transform: none !important;
+        transition: box-shadow 180ms ease, border-color 180ms ease !important;
+      }
+
+      .home-page .home-property-slider .property-card-media,
+      .home-page .home-property-slider .property-cover,
+      .home-page .home-property-slider .property-cover-link,
+      .home-page .home-property-slider .property-cover-image,
+      .home-page .home-property-slider .property-card-body,
+      .home-page .home-property-slider .property-card-content,
+      .home-page .home-property-slider .property-card-footer,
+      .home-page .home-property-slider .property-card-actions {
+        border-radius: 0 !important;
+      }
+
+      .home-page .home-property-slider .property-card-body,
+      .home-page .home-property-slider .property-card-content,
+      .home-page .home-property-slider .property-card-footer,
+      .home-page .home-property-slider .property-card-actions {
+        background: #fff !important;
+      }
+
+      @media (hover: hover) and (pointer: fine) {
+        .home-page .home-property-slider .property-card:hover .property-card-shell {
+          border-color: rgba(0, 0, 0, .26) !important;
+          box-shadow: 0 12px 28px rgba(15, 23, 42, .13) !important;
+          transform: none !important;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .home-page .home-property-section {
+          padding-top: 22px !important;
+          padding-bottom: 24px !important;
+        }
+
+        .home-page .home-property-heading {
+          flex-direction: column !important;
+          align-items: flex-start !important;
+          justify-content: flex-start !important;
+          gap: 8px !important;
+          margin-bottom: 8px !important;
+        }
+
+        .home-page .home-property-heading h2 {
+          font-size: clamp(1.55rem, 7vw, 2rem) !important;
+        }
+
+        .home-page .home-property-actions {
+          margin-left: 0 !important;
+          justify-content: flex-start !important;
+        }
+
+        .home-page .home-property-more-button {
+          min-height: 34px !important;
+          padding: .46rem .72rem !important;
+          font-size: .71rem !important;
+        }
+
+        .home-page .home-property-slider {
+          padding-top: 3px !important;
+          padding-bottom: 8px !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  };
+
+  const refinePropertySections = () => {
+    const sections = [
+      { titleId: 'featuredPropertiesTitle', href: 'propiedades.html' },
+      { titleId: 'recentPropertiesTitle', href: 'propiedades.html' },
+      { titleId: 'farmsLandTitle', href: 'propiedades.html?tipo=land' }
+    ];
+
+    sections.forEach(({ titleId, href }) => {
+      const title = document.getElementById(titleId);
+      const section = title?.closest('.home-property-section');
+      const heading = section?.querySelector('.home-property-heading');
+      if (!title || !section || !heading) return;
+
+      heading.querySelectorAll('p').forEach((paragraph) => paragraph.remove());
+      heading.querySelector('.premium-text-link')?.remove();
+      heading.querySelector('.home-slider-controls')?.remove();
+
+      let actions = heading.querySelector('.home-property-actions');
+      if (!actions) {
+        actions = document.createElement('div');
+        actions.className = 'home-property-actions';
+        heading.appendChild(actions);
+      }
+
+      actions.innerHTML = `
+        <a class="home-property-more-button" href="${href}" aria-label="Explora más propiedades desde ${title.textContent.trim()}">
+          Explora más propiedades
+        </a>
+      `;
+    });
+  };
+
   compactSignature();
   upgradeServiceIcons();
+  installPropertySectionStyles();
+  refinePropertySections();
 
   const revealItems = Array.from(document.querySelectorAll('[data-vip-reveal]'));
   if (reduceMotion || !('IntersectionObserver' in window)) {
