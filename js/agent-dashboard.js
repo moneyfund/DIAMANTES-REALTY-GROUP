@@ -1,3 +1,5 @@
+import './agent-dashboard-core.js?v=20260817-0205-auth-restore';
+
 const applyDashboardNavWhite = () => {
   const sidebar = document.getElementById('dashboardSidebar');
   if (!sidebar) return;
@@ -64,29 +66,23 @@ const installDashboardNavOverride = () => {
   document.head.appendChild(style);
 };
 
-installDashboardNavOverride();
-applyDashboardNavWhite();
-
-import('./agent-dashboard-core.js?v=20260817-0155-runtime-final')
-  .then(() => {
-    installDashboardNavOverride();
-    applyDashboardNavWhite();
-
-    [0, 80, 250, 700, 1500, 3000].forEach((delay) => {
-      window.setTimeout(applyDashboardNavWhite, delay);
-    });
-
-    const sidebar = document.getElementById('dashboardSidebar');
-    if (sidebar) {
-      const observer = new MutationObserver(() => applyDashboardNavWhite());
-      observer.observe(sidebar, { childList: true, subtree: true });
-    }
-
-    document.addEventListener('click', (event) => {
-      if (event.target.closest('#dashboardSidebar')) window.requestAnimationFrame(applyDashboardNavWhite);
-    });
-  })
-  .catch((error) => {
-    console.error('No se pudo cargar el panel del agente:', error);
-    applyDashboardNavWhite();
+const keepDashboardNavWhite = () => {
+  installDashboardNavOverride();
+  applyDashboardNavWhite();
+  [0, 80, 250, 700, 1500, 3000].forEach((delay) => {
+    window.setTimeout(applyDashboardNavWhite, delay);
   });
+};
+
+keepDashboardNavWhite();
+
+const sidebar = document.getElementById('dashboardSidebar');
+if (sidebar) {
+  const observer = new MutationObserver(() => applyDashboardNavWhite());
+  observer.observe(sidebar, { childList: true, subtree: true });
+}
+
+document.addEventListener('DOMContentLoaded', keepDashboardNavWhite, { once: true });
+document.addEventListener('click', (event) => {
+  if (event.target.closest('#dashboardSidebar')) window.requestAnimationFrame(applyDashboardNavWhite);
+});
