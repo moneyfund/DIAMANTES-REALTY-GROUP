@@ -7,7 +7,12 @@ const formatDualPriceMarkup = (usd) => propertyUtils.formatDualPriceMarkup ? pro
 const formatPricePerArea = (value, unit) => propertyUtils.formatPricePerArea ? propertyUtils.formatPricePerArea(value, unit) : '';
 const calculatePricePerArea = (price, area) => propertyUtils.calculatePricePerArea ? propertyUtils.calculatePricePerArea(price, area) : NaN;
 const getAreaDisplay = (property = {}) => propertyUtils.getAreaDisplay ? propertyUtils.getAreaDisplay(property) : `${property.area || 0} m²`;
+const isPublicProperty = window.inmoPublicPropertyFilter.isPublicProperty;
 
+const DEPARTMENTS = [
+  'Boaco', 'Carazo', 'Chinandega', 'Chontales', 'Estelí', 'Granada', 'Jinotega',
+  'León', 'Madriz', 'Managua', 'Masaya', 'Matagalpa', 'Nueva Segovia', 'Rivas', 'Río San Juan'
+];
 
 function escapeHtml(value = '') {
   return String(value)
@@ -18,7 +23,18 @@ function escapeHtml(value = '') {
     .replace(/'/g, '&#039;');
 }
 
-const isPublicProperty = window.inmoPublicPropertyFilter.isPublicProperty;
+function normalizeText(value = '') {
+  return String(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+function getInitials(name = '') {
+  const parts = String(name).trim().split(/\s+/).filter(Boolean);
+  return parts.length ? parts.slice(0, 2).map((part) => part.charAt(0).toUpperCase()).join('') : 'DR';
+}
+
 const socialIcons = {
   instagram: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2Zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.5a4.25 4.25 0 0 0 4.25 4.25h8.5a4.25 4.25 0 0 0 4.25-4.25v-8.5a4.25 4.25 0 0 0-4.25-4.25h-8.5Zm8.9 2.35a1.15 1.15 0 1 1 0 2.3 1.15 1.15 0 0 1 0-2.3ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 1.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/></svg>',
   facebook: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.7 22v-8.2h2.76l.41-3.2H13.7V8.56c0-.93.26-1.56 1.6-1.56h1.7V4.14A22.8 22.8 0 0 0 14.52 4c-2.45 0-4.14 1.5-4.14 4.24v2.36H7.6v3.2h2.78V22h3.32Z"/></svg>',
@@ -31,11 +47,10 @@ function normalizeSocialUrl(url, network) {
   if (!trimmed) return '';
 
   if (network === 'whatsapp') {
-    const clean = trimmed.replace(/[\s()+-]/g, '');
-    if (/^https?:\/\//i.test(trimmed) || /^wa\.me\//i.test(trimmed)) {
-      return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-    }
-    return `https://wa.me/${clean.replace(/^\+/, '')}`;
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    if (/^wa\.me\//i.test(trimmed)) return `https://${trimmed}`;
+    const clean = trimmed.replace(/[^\d]/g, '');
+    return clean ? `https://wa.me/${clean}` : '';
   }
 
   return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
@@ -46,24 +61,26 @@ function socialLinkTemplate(url, label, network) {
   if (!normalizedUrl) return '';
 
   return `
-    <a class="agent-public-social-link" href="${normalizedUrl}" target="_blank" rel="noopener noreferrer" aria-label="${label}">
+    <a class="agent-public-social-link" href="${escapeHtml(normalizedUrl)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(label)}">
       ${socialIcons[network] || ''}
-      <span>${label}</span>
+      <span>${escapeHtml(label)}</span>
     </a>
   `;
 }
 
 function propertyCard(property) {
   const status = String(property.status || 'available').toLowerCase();
+  const title = property.title || property.titulo || 'Propiedad';
+  const location = property.location || property.ubicacion || '';
   return `
     <article class="property-card">
-      <img src="${imageUtils.getCoverImage(property)}" alt="${property.title || property.titulo || 'Propiedad'}">
+      <img src="${escapeHtml(imageUtils.getCoverImage(property))}" alt="${escapeHtml(title)}" loading="lazy">
       <div class="property-card-content">
-        <p class="badge">${getPropertyTypeLabel(property.type || property.tipo) || 'Propiedad'}</p>
-        <h3>${property.title || property.titulo || 'Propiedad'}</h3>
-        <p>${property.location || property.ubicacion || ''}</p>
+        <p class="badge">${escapeHtml(getPropertyTypeLabel(property.type || property.tipo) || 'Propiedad')}</p>
+        <h3>${escapeHtml(title)}</h3>
+        <p>${escapeHtml(location)}</p>
         <p class="price">${formatDualPriceMarkup(property.priceUsd ?? property.price ?? property.precio)}</p>
-        <p>Área: ${getAreaDisplay(property)}</p>
+        <p>Área: ${escapeHtml(getAreaDisplay(property))}</p>
         <p>${formatPricePerArea(property.pricePerAreaUsd ?? calculatePricePerArea(property.priceUsd ?? property.price ?? property.precio, property.areaValue ?? property.area), property.areaUnit)}</p>
         ${status === 'sold' ? '<p class="property-status-tag">VENDIDA</p>' : ''}
         <a class="btn-primary-property" href="propiedad.html?id=${encodeURIComponent(property.id)}">Ver detalle</a>
@@ -75,18 +92,14 @@ function propertyCard(property) {
 function renderFriendlyMessage(message) {
   const status = document.getElementById('agentPublicStatus');
   const container = document.getElementById('agentPublicContent');
-
-  status.textContent = message;
-  container.innerHTML = `<p class="empty-state">${message}</p>`;
+  if (status) status.textContent = message;
+  if (container) container.innerHTML = `<div class="agent-profile-error"><p>${escapeHtml(message)}</p></div>`;
 }
 
 function getPropertyCoordinates(property) {
   const latitude = Number(property.latitude ?? property.lat);
   const longitude = Number(property.longitude ?? property.lng);
-
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
-
-  return [latitude, longitude];
+  return Number.isFinite(latitude) && Number.isFinite(longitude) ? [latitude, longitude] : null;
 }
 
 function renderAgentPropertiesMap(properties) {
@@ -98,7 +111,7 @@ function renderAgentPropertiesMap(properties) {
     .filter((item) => item.coordinates);
 
   if (!geolocated.length) {
-    mapElement.innerHTML = '<p class="empty-state">Este agente aún no tiene propiedades con ubicación en el mapa.</p>';
+    mapElement.innerHTML = '<p class="empty-state">Este agente aún no tiene propiedades con ubicación disponible en el mapa.</p>';
     return;
   }
 
@@ -111,78 +124,153 @@ function renderAgentPropertiesMap(properties) {
   const bounds = [];
   geolocated.forEach(({ property, coordinates }) => {
     bounds.push(coordinates);
-
-    L.marker(coordinates).addTo(map)
-      .bindPopup(`
-        <strong>${property.title || property.titulo || 'Propiedad'}</strong><br>
-        <a href="propiedad.html?id=${encodeURIComponent(String(property.id || ''))}">Ver propiedad</a>
-      `);
+    const title = property.title || property.titulo || 'Propiedad';
+    L.marker(coordinates).addTo(map).bindPopup(`
+      <strong>${escapeHtml(title)}</strong><br>
+      <a href="propiedad.html?id=${encodeURIComponent(String(property.id || ''))}">Ver propiedad</a>
+    `);
   });
 
   map.fitBounds(bounds, { padding: [35, 35] });
 }
 
-
 function getAgentRole(agent = {}) {
-  return agent.role || agent.cargo || agent.position || '';
+  return agent.role || agent.cargo || agent.position || 'Asesor inmobiliario';
 }
 
 function getAgentLocation(agent = {}) {
-  return agent.location || agent.ubicacion || agent.city || '';
+  return agent.location || agent.ubicacion || agent.city || agent.department || agent.departamento || 'Nicaragua';
 }
 
-function getAgentBasicInfo(agent = {}) {
-  return [
-    getAgentRole(agent),
-    getAgentLocation(agent)
-  ].filter(Boolean);
+function collectDepartmentsFromValue(value, output) {
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectDepartmentsFromValue(item, output));
+    return;
+  }
+  if (value && typeof value === 'object') {
+    Object.values(value).forEach((item) => collectDepartmentsFromValue(item, output));
+    return;
+  }
+  const normalized = normalizeText(value);
+  if (!normalized) return;
+  DEPARTMENTS.forEach((department) => {
+    if (normalized.includes(normalizeText(department))) output.add(department);
+  });
+}
+
+function getCoveredDepartments(agent, properties) {
+  const output = new Set();
+  ['location', 'ubicacion', 'city', 'department', 'departamento', 'coverage', 'cobertura', 'departments', 'coverageDepartments']
+    .forEach((field) => collectDepartmentsFromValue(agent[field], output));
+  properties.forEach((property) => {
+    ['location', 'ubicacion', 'city', 'department', 'departamento', 'municipality', 'municipio']
+      .forEach((field) => collectDepartmentsFromValue(property[field], output));
+  });
+  return output;
+}
+
+function getAgentContactAction(agent) {
+  const whatsapp = normalizeSocialUrl(agent.whatsapp || agent.phone, 'whatsapp');
+  if (whatsapp) {
+    return `<a class="agent-profile-action primary" href="${escapeHtml(whatsapp)}" target="_blank" rel="noopener noreferrer">Hablar por WhatsApp</a>`;
+  }
+  if (agent.email) {
+    return `<a class="agent-profile-action primary" href="mailto:${escapeHtml(agent.email)}">Contactar por correo</a>`;
+  }
+  return '';
 }
 
 function renderAgentProfile(agent, properties) {
   const container = document.getElementById('agentPublicContent');
-  const photo = agent.photo || agent.photoURL || agent.photoUrl || agent.profileImage || agent.profilePhoto || agent.avatar || fallbackPhoto;
-  const basicInfo = getAgentBasicInfo(agent);
+  const status = document.getElementById('agentPublicStatus');
+  const name = agent.name || 'Agente Diamantes Realty Group';
+  const role = getAgentRole(agent);
+  const location = getAgentLocation(agent);
+  const photo = agent.photo || agent.photoURL || agent.photoUrl || agent.profileImage || agent.profilePhoto || agent.avatar || '';
   const totalProperties = properties.length;
+  const coveredDepartments = getCoveredDepartments(agent, properties);
+  const license = agent.licenseNumber || agent.agentLicenseNumber || agent.carnet || '';
+  const description = agent.description || 'Este agente forma parte del equipo profesional de Diamantes Realty Group y está disponible para asesorarte en oportunidades inmobiliarias con un acompañamiento claro y cercano.';
 
   const socialLinks = [
     socialLinkTemplate(agent.facebook, 'Facebook', 'facebook'),
     socialLinkTemplate(agent.instagram, 'Instagram', 'instagram'),
     socialLinkTemplate(agent.tiktok, 'TikTok', 'tiktok'),
-    socialLinkTemplate(agent.whatsapp, 'WhatsApp', 'whatsapp')
+    socialLinkTemplate(agent.whatsapp || agent.phone, 'WhatsApp', 'whatsapp')
   ].filter(Boolean);
 
+  document.title = `${name} | Diamantes Realty Group`;
+  if (status) status.textContent = `Perfil profesional de ${name} cargado correctamente.`;
+
   container.innerHTML = `
-    <article class="agent-public-profile">
-      <div class="agent-public-summary">
-        <img class="agent-public-photo" src="${photo}" alt="${agent.name || 'Agente'}">
-        <h2>${agent.name || 'Agente Diamantes Realty Group'}</h2>
-        ${(agent.licenseNumber || agent.agentLicenseNumber || agent.carnet) ? `<p class="agent-public-license"><span>Carnet profesional</span><strong>${escapeHtml(agent.licenseNumber || agent.agentLicenseNumber || agent.carnet)}</strong></p>` : ''}
-        ${basicInfo.length ? `<p class="agent-public-basic-info">${basicInfo.join(' · ')}</p>` : ''}
-        <p class="agent-public-description preserve-description-format">${escapeHtml(agent.description || 'Este agente todavía no ha agregado una descripción en su perfil.')}</p>
+    <article class="agent-premium-profile">
+      <div class="agent-profile-portrait">
+        ${photo
+          ? `<img class="agent-profile-photo" src="${escapeHtml(photo || fallbackPhoto)}" alt="${escapeHtml(name)}">`
+          : `<div class="agent-profile-initials" aria-label="Iniciales de ${escapeHtml(name)}">${escapeHtml(getInitials(name))}</div>`}
+        <span class="agent-profile-portrait-badge">Diamantes Realty Group</span>
+      </div>
+
+      <div class="agent-profile-main">
+        <p class="agent-profile-kicker">Perfil profesional</p>
+        <h1 class="agent-profile-name">${escapeHtml(name)}</h1>
+        <p class="agent-profile-role">${escapeHtml(role)} · ${escapeHtml(location)}</p>
+        ${license ? `<p class="agent-profile-license"><span>Carnet profesional</span><strong>${escapeHtml(license)}</strong></p>` : ''}
+        <p class="agent-profile-description preserve-description-format">${escapeHtml(description)}</p>
+
         ${(agent.phone || agent.email) ? `
-          <div class="agent-public-contact">
-            ${agent.phone ? `<p><strong>Tel:</strong> <a class="text-link" href="tel:${String(agent.phone).replace(/\s+/g, '')}">${agent.phone}</a></p>` : ''}
-            ${agent.email ? `<p><strong>Email:</strong> <a class="text-link" href="mailto:${agent.email}">${agent.email}</a></p>` : ''}
+          <div class="agent-profile-contact">
+            ${agent.phone ? `<a href="tel:${String(agent.phone).replace(/\s+/g, '')}"><span>Teléfono</span><strong>${escapeHtml(agent.phone)}</strong></a>` : ''}
+            ${agent.email ? `<a href="mailto:${escapeHtml(agent.email)}"><span>Correo</span><strong>${escapeHtml(agent.email)}</strong></a>` : ''}
           </div>
         ` : ''}
-        ${socialLinks.length ? `<div class="agent-public-social" aria-label="Redes sociales de ${agent.name || 'agente'}">${socialLinks.join('')}</div>` : ''}
+
+        ${socialLinks.length ? `<div class="agent-profile-social" aria-label="Redes sociales de ${escapeHtml(name)}">${socialLinks.join('')}</div>` : ''}
+        <div class="agent-profile-actions">
+          ${getAgentContactAction(agent)}
+          <a class="agent-profile-action secondary" href="#agentProperties">Ver propiedades</a>
+        </div>
       </div>
-      <aside class="agent-public-stats">
-        <h3>Resumen</h3>
-        <p><strong>${totalProperties}</strong> propiedades publicadas.</p>
-        <p>Explora ubicaciones y detalles en el listado inferior.</p>
+
+      <aside class="agent-profile-insights" aria-label="Resumen profesional de ${escapeHtml(name)}">
+        <p class="agent-profile-insights-label">Resumen profesional</p>
+        <div class="agent-profile-insight">
+          <strong>${totalProperties}</strong>
+          <span>Propiedades publicadas</span>
+        </div>
+        <div class="agent-profile-insight">
+          <strong>${coveredDepartments.size}</strong>
+          <span>Departamentos en su inventario o cobertura</span>
+        </div>
+        <div class="agent-profile-insight location">
+          <strong>${escapeHtml(location)}</strong>
+          <span>Base / zona de atención</span>
+        </div>
+        <p class="agent-profile-insights-note">Solicita información, coordina una visita o conversa directamente con este agente para recibir acompañamiento sobre las propiedades de su inventario.</p>
       </aside>
     </article>
 
-    <section>
-      <h2>Propiedades del agente</h2>
+    <section class="agent-profile-properties" id="agentProperties">
+      <header class="agent-profile-section-heading">
+        <div>
+          <p class="agent-profile-kicker">Inventario</p>
+          <h2>Propiedades de ${escapeHtml(name)}</h2>
+        </div>
+        <p>Explora las oportunidades publicadas por este agente y abre cada ficha para consultar información completa.</p>
+      </header>
       <div class="properties-grid">
         ${totalProperties ? properties.map(propertyCard).join('') : '<p class="empty-state">Este agente aún no tiene propiedades publicadas.</p>'}
       </div>
     </section>
 
     <section class="agent-public-map-section">
-      <h2>Mapa de propiedades del agente</h2>
+      <header class="agent-profile-section-heading">
+        <div>
+          <p class="agent-profile-kicker">Ubicación</p>
+          <h2>Mapa de propiedades</h2>
+        </div>
+        <p>Visualiza las propiedades de este agente que cuentan con coordenadas disponibles.</p>
+      </header>
       <div id="agentPropertiesMap" class="properties-map-full" aria-label="Mapa de propiedades del agente"></div>
     </section>
   `;
@@ -191,7 +279,6 @@ function renderAgentProfile(agent, properties) {
 }
 
 async function loadAgentProfile() {
-  const status = document.getElementById('agentPublicStatus');
   const agentId = new URLSearchParams(window.location.search).get('id');
 
   if (!agentId) {
@@ -217,11 +304,11 @@ async function loadAgentProfile() {
       .where('publicationStatus', '==', 'approved')
       .where('publicVisible', '==', true)
       .get();
+
     const properties = propertiesSnapshot.docs
       .map((doc) => ({ ...doc.data(), id: doc.id }))
       .filter((property) => isPublicProperty(property) && property.agentId === agentId);
 
-    status.textContent = 'Perfil cargado correctamente.';
     renderAgentProfile(agentDoc.data(), properties);
   } catch (error) {
     console.error('Error loading agent profile:', error);

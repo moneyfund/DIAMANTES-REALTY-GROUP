@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="title" content="Diamantes Realty Group" />
-  <meta name="description" content="Plataforma inmobiliaria profesional en Nicaragua" />
-  <title>Diamantes Realty Group</title>
+  <meta name="title" content="Perfil de agente | Diamantes Realty Group" />
+  <meta name="description" content="Perfil profesional de agente inmobiliario de Diamantes Realty Group." />
+  <title>Perfil de agente | Diamantes Realty Group</title>
   <link rel="icon" type="image/png" href="assets/logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="css/styles.css?v=20260806-typography-fix" />
   <link rel="stylesheet" href="css/premium-theme.css?v=20260807-navbar-more" />
   <link rel="stylesheet" href="css/footer.css?v=20260806-typography-fix" />
+  <link rel="stylesheet" href="css/team-premium.css?v=20260816-team-redesign" />
 </head>
 <body class="agent-public-page">
   <header class="site-header">
@@ -34,14 +35,10 @@
   </header>
 
   <main>
-    <section class="page-banner">
-      <div class="container">
-        <h1>Perfil público del agente</h1>
-        <p id="agentPublicStatus">Cargando datos del agente...</p>
-      </div>
+    <p id="agentPublicStatus" class="agent-public-status sr-only" role="status" aria-live="polite">Cargando datos del agente...</p>
+    <section class="section container agent-public-content" id="agentPublicContent">
+      <div class="agent-profile-loading">Preparando el perfil profesional del agente…</div>
     </section>
-
-    <section class="section container" id="agentPublicContent"></section>
   </main>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -53,6 +50,6 @@
   <script src="js/image-utils.js"></script>
   <script src="js/property-utils.js"></script>
   <script src="js/public-property-filter.js"></script>
-  <script src="js/agent-public.js?v=20260731-agent-license"></script>
+  <script src="js/agent-public.js?v=20260816-team-redesign"></script>
 </body>
 </html>
