@@ -11,7 +11,7 @@ const properties = fs.readFileSync(path.join(root, 'js', 'properties.js'), 'utf8
 test('map exposes one primary search bar with filters collapsed behind one control', () => {
   assert.match(mapPage, /class="map-page-toolbar map-unified-toolbar"/);
   assert.match(mapPage, /class="map-unified-searchbar"/);
-  assert.match(mapPage, /<details class="map-filter-popover" id="mapFilterPopover">/);
+  assert.match(mapPage, /<details class="map-unified-filter-popover" id="mapFilterPopover">/);
   assert.match(mapPage, /<strong>Filtros<\/strong>/);
   assert.equal((mapPage.match(/id="publicMapFilters"/g) || []).length, 1);
 });
@@ -24,8 +24,13 @@ test('existing map filtering engine still mounts into publicMapFilters', () => {
   assert.match(properties, /data-map-extra-open/);
 });
 
+test('outer filter trigger is isolated from internal filter details', () => {
+  assert.match(mapStyles, /\.map-unified-filter-popover > summary/);
+  assert.doesNotMatch(mapStyles, /\n\.map-filter-popover > summary \{/);
+});
+
 test('unified map stylesheet owns compact desktop and mobile filter presentation', () => {
-  assert.match(mapPage, /css\/map-unified-search\.css\?v=20260816-unified-search/);
+  assert.match(mapPage, /css\/map-unified-search\.css\?v=20260816-unified-search-2/);
   assert.match(mapStyles, /\.map-unified-searchbar \{[\s\S]*?grid-template-columns: minmax\(0,1fr\) auto;/);
   assert.match(mapStyles, /\.map-filter-panel \{[\s\S]*?position: absolute;/);
   assert.match(mapStyles, /@media \(max-width: 900px\)[\s\S]*?\.map-filter-panel \{[\s\S]*?position: fixed;/);
