@@ -1,15 +1,11 @@
 (() => {
   'use strict';
 
-  const body = document.querySelector('body.home-page');
-  const header = document.querySelector('body.home-page > .site-header.public-navbar');
-  const main = document.querySelector('body.home-page > main');
-  const hero = main?.querySelector(':scope > .hero.premium-hero');
-  const intro = main?.querySelector(':scope > .home-vip-intro');
+  let initialized = false;
+  let attempts = 0;
+  let retryTimer = null;
 
-  if (!body || !header || !main || !hero || !intro) return;
-
-  const compactSignature = () => {
+  const compactSignature = (intro) => {
     intro.id = 'homeExperience';
     intro.setAttribute('aria-labelledby', 'homeSignatureTitle');
     intro.innerHTML = `
@@ -77,67 +73,113 @@
     });
   };
 
-  compactSignature();
-  upgradeServiceIcons();
-  refinePropertySections();
-
-  const curtain = document.createElement('div');
-  curtain.className = 'home-public-curtain';
-  curtain.dataset.controller = 'home-public-v3';
-  body.insertBefore(curtain, main);
-  curtain.appendChild(header);
-  curtain.appendChild(hero);
-
-  const cue = document.createElement('button');
-  cue.type = 'button';
-  cue.className = 'home-public-scroll-cue';
-  cue.setAttribute('aria-label', 'Desliza hacia arriba para revelar la web');
-  cue.innerHTML = `
-    <span>Desliza</span>
-    <span class="home-public-scroll-cue-arrows" aria-hidden="true">
-      <svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg>
-      <svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg>
-    </span>`;
-  hero.appendChild(cue);
-
-  let curtainHeight = Math.max(1, window.innerHeight);
-  let raf = 0;
-
-  const measure = () => {
-    curtainHeight = Math.max(1, window.innerHeight, curtain.getBoundingClientRect().height);
-    body.style.setProperty('--home-curtain-height', `${curtainHeight}px`);
+  const scheduleRetry = () => {
+    if (initialized || attempts >= 120) return;
+    attempts += 1;
+    window.clearTimeout(retryTimer);
+    retryTimer = window.setTimeout(init, attempts < 15 ? 40 : 120);
   };
 
-  const render = () => {
-    raf = 0;
-    const travelled = Math.min(Math.max(window.scrollY, 0), curtainHeight);
-    const progress = travelled / curtainHeight;
+  function init() {
+    if (initialized) return;
 
-    curtain.style.setProperty('--home-curtain-y', `${-travelled}px`);
-    main.style.setProperty('--home-background-counter', `${travelled}px`);
-    curtain.classList.toggle('is-open', progress >= .995);
-    cue.classList.toggle('is-hidden', travelled > 42);
-    intro.classList.toggle('is-revealed', progress > .42);
-  };
+    const body = document.body;
+    if (!body || !body.classList.contains('home-page')) return;
 
-  const schedule = () => {
-    if (!raf) raf = window.requestAnimationFrame(render);
-  };
+    const header = document.querySelector('.site-header.public-navbar, .site-header');
+    const main = document.querySelector('main');
+    const hero = document.querySelector('.hero.premium-hero');
+    const intro = document.querySelector('.home-vip-intro');
 
-  const remeasure = () => {
+    if (!header || !main || !hero || !intro) {
+      scheduleRetry();
+      return;
+    }
+
+    initialized = true;
+    window.clearTimeout(retryTimer);
+    document.documentElement.dataset.homePublicRuntime = 'ready';
+    body.dataset.homePublicController = 'v3-20260817-0235-runtime-retry';
+
+    compactSignature(intro);
+    upgradeServiceIcons();
+    refinePropertySections();
+
+    document.querySelectorAll('.home-public-curtain').forEach((node) => {
+      if (node.contains(header)) node.replaceWith(header);
+      else node.remove();
+    });
+
+    const curtain = document.createElement('div');
+    curtain.className = 'home-public-curtain';
+    curtain.dataset.controller = 'home-public-v3-runtime-retry';
+    body.appendChild(curtain);
+    curtain.appendChild(header);
+    curtain.appendChild(hero);
+
+    hero.querySelectorAll('.home-public-scroll-cue, .hero-scroll-cue, .home-final-scroll-cue').forEach((node) => node.remove());
+
+    const cue = document.createElement('button');
+    cue.type = 'button';
+    cue.className = 'home-public-scroll-cue';
+    cue.setAttribute('aria-label', 'Desliza hacia arriba para revelar la web');
+    cue.innerHTML = `
+      <span>Desliza</span>
+      <span class="home-public-scroll-cue-arrows" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg>
+        <svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg>
+      </span>`;
+    hero.appendChild(cue);
+
+    let curtainHeight = Math.max(1, window.innerHeight);
+    let raf = 0;
+
+    const measure = () => {
+      curtainHeight = Math.max(1, window.innerHeight, curtain.getBoundingClientRect().height);
+      body.style.setProperty('--home-curtain-height', `${curtainHeight}px`);
+    };
+
+    const render = () => {
+      raf = 0;
+      const travelled = Math.min(Math.max(window.scrollY, 0), curtainHeight);
+      const progress = travelled / curtainHeight;
+
+      curtain.style.setProperty('--home-curtain-y', `${-travelled}px`);
+      main.style.setProperty('--home-background-counter', `${travelled}px`);
+      curtain.classList.toggle('is-open', progress >= .995);
+      cue.classList.toggle('is-hidden', travelled > 42);
+      intro.classList.toggle('is-revealed', progress > .42);
+    };
+
+    const schedule = () => {
+      if (!raf) raf = window.requestAnimationFrame(render);
+    };
+
+    const remeasure = () => {
+      measure();
+      render();
+    };
+
+    cue.addEventListener('click', () => {
+      window.scrollTo({ top: curtainHeight, behavior: 'smooth' });
+    });
+
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', remeasure, { passive: true });
+    window.addEventListener('orientationchange', remeasure, { passive: true });
+
     measure();
     render();
-  };
+  }
 
-  cue.addEventListener('click', () => {
-    window.scrollTo({ top: curtainHeight, behavior: 'smooth' });
-  });
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
 
-  window.addEventListener('scroll', schedule, { passive: true });
-  window.addEventListener('resize', remeasure, { passive: true });
-  window.addEventListener('orientationchange', remeasure, { passive: true });
-
-  measure();
-  render();
-  body.dataset.homePublicController = 'v3-20260817-0225';
+  window.addEventListener('load', init, { once: true });
+  window.setTimeout(init, 80);
+  window.setTimeout(init, 350);
+  window.setTimeout(init, 1200);
 })();
