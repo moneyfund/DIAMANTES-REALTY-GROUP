@@ -8,61 +8,54 @@
   const intro = document.querySelector('.home-vip-intro');
   if (!body || !main || !header || !hero || !intro) return;
 
-  // Remove the experimental layer system completely. The final implementation
-  // uses one fixed front curtain (navbar + hero) and keeps the real page behind it.
-  body.classList.remove('home-stable-curtain', 'home-real-reveal-ready');
-  document.getElementById('homeStableCurtainCss')?.remove();
-  document.getElementById('homeRealCurtainStyles')?.remove();
-  document.getElementById('homeHeroCurtainStyles')?.remove();
-  document.getElementById('homeCurtainFinalInline')?.remove();
+  // Retira por completo las implementaciones anteriores. Sus listeners pueden
+  // seguir existiendo en memoria, pero quedan apuntando a nodos ya desconectados
+  // y no pueden volver a modificar la cortina final.
+  ['homeFrontCurtainStyles', 'homeStableCurtainCss', 'homeRealCurtainStyles', 'homeHeroCurtainStyles', 'homeCurtainFinalInline', 'homeCurtainIsolatedStyles']
+    .forEach((id) => document.getElementById(id)?.remove());
 
-  const stableStage = main.querySelector(':scope > .home-stable-reveal-stage');
-  if (stableStage) {
-    while (stableStage.firstChild) main.insertBefore(stableStage.firstChild, stableStage);
-    stableStage.remove();
-  }
+  document.querySelectorAll('.hero-scroll-cue, .home-stable-scroll-cue, .home-final-scroll-cue')
+    .forEach((node) => node.remove());
 
-  let curtain = document.querySelector('.home-front-curtain');
-  const stableCover = document.querySelector('.home-stable-cover');
+  const legacyWrappers = Array.from(document.querySelectorAll('.home-front-curtain, .home-stable-cover, .home-real-curtain, .home-curtain-stage'));
 
-  if (!curtain && stableCover) {
-    stableCover.classList.remove('home-stable-cover');
-    stableCover.classList.add('home-front-curtain');
-    curtain = stableCover;
-  }
+  const curtain = document.createElement('div');
+  curtain.className = 'home-final-curtain';
+  curtain.dataset.version = '20260817-0205-isolated';
+  body.insertBefore(curtain, main);
+  curtain.appendChild(header);
+  curtain.appendChild(hero);
 
-  if (!curtain) {
-    curtain = document.createElement('div');
-    curtain.className = 'home-front-curtain';
-    body.insertBefore(curtain, main);
-    curtain.appendChild(header);
-    curtain.appendChild(hero);
-  } else {
-    if (!curtain.contains(header)) curtain.prepend(header);
-    if (!curtain.contains(hero)) curtain.appendChild(hero);
-  }
+  legacyWrappers.forEach((wrapper) => {
+    if (wrapper === curtain) return;
+    if (!wrapper.contains(header) && !wrapper.contains(hero)) wrapper.remove();
+  });
 
-  document.querySelectorAll('.home-stable-scroll-cue').forEach((node) => node.remove());
-  let cue = hero.querySelector('.hero-scroll-cue');
-  if (!cue) {
-    cue = document.createElement('a');
-    cue.className = 'hero-scroll-cue';
-    hero.appendChild(cue);
+  // Si una versión anterior envolvió la primera sección, restáurala como hija
+  // directa de main para que sea el fondo real detrás de la cortina.
+  const revealStage = intro.closest('.home-stable-reveal-stage, .home-real-reveal-stage');
+  if (revealStage) {
+    main.insertBefore(intro, main.firstChild);
+    revealStage.remove();
   }
 
   if (!intro.id) intro.id = 'homeExperience';
+
+  const cue = document.createElement('a');
+  cue.className = 'home-final-scroll-cue';
   cue.href = `#${intro.id}`;
   cue.setAttribute('aria-label', 'Desliza hacia arriba para revelar la web');
   cue.innerHTML = `
-    <span class="hero-scroll-cue-label">Desliza</span>
-    <span class="hero-scroll-cue-arrows" aria-hidden="true">
+    <span class="home-final-scroll-cue__label">Desliza</span>
+    <span class="home-final-scroll-cue__arrows" aria-hidden="true">
       <svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg>
       <svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg>
     </span>
   `;
+  hero.appendChild(cue);
 
   const style = document.createElement('style');
-  style.id = 'homeCurtainFinalInline';
+  style.id = 'homeCurtainIsolatedStyles';
   style.textContent = `
     html,
     body.home-page {
@@ -76,7 +69,7 @@
       z-index: 1 !important;
       width: 100% !important;
       margin: 0 !important;
-      transform: translate3d(0, var(--drg-final-bg-y, 0px), 0) !important;
+      transform: translate3d(0, var(--drg-isolated-bg-y, 0px), 0) !important;
       will-change: transform !important;
     }
 
@@ -92,10 +85,10 @@
       clip-path: none !important;
     }
 
-    body.home-page > .home-front-curtain {
+    body.home-page > .home-final-curtain {
       position: fixed !important;
       inset: 0 0 auto 0 !important;
-      z-index: 1800 !important;
+      z-index: 1900 !important;
       display: flex !important;
       flex-direction: column !important;
       width: 100% !important;
@@ -105,17 +98,17 @@
       margin: 0 !important;
       overflow: hidden !important;
       background: #071a30 !important;
-      transform: translate3d(0, var(--drg-final-cover-y, 0px), 0) !important;
+      transform: translate3d(0, var(--drg-isolated-curtain-y, 0px), 0) !important;
       will-change: transform !important;
-      filter: drop-shadow(0 18px 30px rgba(5, 18, 34, .18)) !important;
+      box-shadow: 0 18px 36px rgba(5, 18, 34, .16) !important;
       pointer-events: auto !important;
     }
 
-    body.home-page > .home-front-curtain.is-open {
+    body.home-page > .home-final-curtain.is-open {
       pointer-events: none !important;
     }
 
-    body.home-page > .home-front-curtain > .site-header.public-navbar {
+    body.home-page > .home-final-curtain > .site-header.public-navbar {
       position: relative !important;
       inset: auto !important;
       top: auto !important;
@@ -128,7 +121,7 @@
       transform: none !important;
     }
 
-    body.home-page > .home-front-curtain > .hero.premium-hero {
+    body.home-page > .home-final-curtain > .hero.premium-hero {
       position: relative !important;
       inset: auto !important;
       top: auto !important;
@@ -141,14 +134,14 @@
       height: auto !important;
       max-height: none !important;
       margin: 0 !important;
-      padding: clamp(3.6rem, 6vh, 5.2rem) 0 4.25rem !important;
+      padding: clamp(3.2rem, 5.5vh, 4.8rem) 0 4.6rem !important;
       overflow: hidden !important;
       border-radius: 0 0 22px 22px !important;
       transform: none !important;
       opacity: 1 !important;
     }
 
-    body.home-page > .home-front-curtain > .hero.premium-hero .hero-content {
+    body.home-page > .home-final-curtain > .hero.premium-hero .hero-content {
       display: grid !important;
       align-items: end !important;
       align-content: end !important;
@@ -161,33 +154,33 @@
       transform: none !important;
     }
 
-    body.home-page > .home-front-curtain > .hero.premium-hero .hero-static-content,
-    body.home-page > .home-front-curtain > .hero.premium-hero .hero-search-content {
+    body.home-page > .home-final-curtain > .hero.premium-hero .hero-static-content,
+    body.home-page > .home-final-curtain > .hero.premium-hero .hero-search-content {
       align-self: end !important;
       margin-bottom: 0 !important;
       transform: none !important;
     }
 
-    body.home-page > .home-front-curtain > .hero.premium-hero .premium-search,
-    body.home-page > .home-front-curtain > .hero.premium-hero .premium-hero-actions {
+    body.home-page > .home-final-curtain > .hero.premium-hero .premium-search,
+    body.home-page > .home-final-curtain > .hero.premium-hero .premium-hero-actions {
       margin-bottom: 0 !important;
     }
 
-    body.home-page > .home-front-curtain > .hero.premium-hero .hero-static-content .eyebrow {
+    body.home-page > .home-final-curtain > .hero.premium-hero .hero-static-content .eyebrow {
       margin: 0 0 .08rem !important;
     }
 
-    body.home-page > .home-front-curtain > .hero.premium-hero .hero-static-content .hero-license {
-      margin: .02rem 0 .72rem !important;
-      color: rgba(255,255,255,.82) !important;
+    body.home-page > .home-final-curtain > .hero.premium-hero .hero-static-content .hero-license {
+      margin: .02rem 0 .68rem !important;
+      color: rgba(255,255,255,.84) !important;
       font-size: .6rem !important;
       font-weight: 600 !important;
       line-height: 1.2 !important;
       letter-spacing: .11em !important;
     }
 
-    body.home-page > .home-front-curtain > .hero.premium-hero .hero-static-content h1,
-    body.home-page > .home-front-curtain > .hero.premium-hero .hero-title {
+    body.home-page > .home-final-curtain > .hero.premium-hero .hero-static-content h1,
+    body.home-page > .home-final-curtain > .hero.premium-hero .hero-title {
       max-width: 700px !important;
       margin-top: 0 !important;
       margin-bottom: .72rem !important;
@@ -197,10 +190,10 @@
       letter-spacing: -.04em !important;
     }
 
-    body.home-page > .home-front-curtain .hero-scroll-cue {
+    body.home-page > .home-final-curtain .home-final-scroll-cue {
       position: absolute !important;
       left: 50% !important;
-      bottom: 9px !important;
+      bottom: 10px !important;
       z-index: 40 !important;
       display: inline-flex !important;
       flex-direction: column !important;
@@ -212,18 +205,18 @@
       color: #fff !important;
       -webkit-text-fill-color: #fff !important;
       text-decoration: none !important;
-      opacity: 1;
+      opacity: 1 !important;
       transform: translateX(-50%) !important;
-      transition: opacity 150ms ease !important;
+      transition: opacity 160ms ease !important;
       pointer-events: auto !important;
     }
 
-    body.home-page > .home-front-curtain .hero-scroll-cue.is-hidden {
+    body.home-page > .home-final-curtain .home-final-scroll-cue.is-hidden {
       opacity: 0 !important;
       pointer-events: none !important;
     }
 
-    body.home-page > .home-front-curtain .hero-scroll-cue-label {
+    body.home-page > .home-final-curtain .home-final-scroll-cue__label {
       color: #fff !important;
       -webkit-text-fill-color: #fff !important;
       font-family: "Plus Jakarta Sans", sans-serif !important;
@@ -232,10 +225,10 @@
       line-height: 1 !important;
       letter-spacing: .16em !important;
       text-transform: uppercase !important;
-      text-shadow: 0 2px 10px rgba(0,0,0,.65) !important;
+      text-shadow: 0 2px 10px rgba(0,0,0,.7) !important;
     }
 
-    body.home-page > .home-front-curtain .hero-scroll-cue-arrows {
+    body.home-page > .home-final-curtain .home-final-scroll-cue__arrows {
       position: relative !important;
       display: grid !important;
       place-items: center !important;
@@ -243,7 +236,7 @@
       height: 28px !important;
     }
 
-    body.home-page > .home-front-curtain .hero-scroll-cue svg {
+    body.home-page > .home-final-curtain .home-final-scroll-cue svg {
       position: absolute !important;
       width: 21px !important;
       height: 21px !important;
@@ -252,14 +245,14 @@
       stroke-width: 1.9 !important;
       stroke-linecap: round !important;
       stroke-linejoin: round !important;
-      animation: drgFinalCurtainCue 1.2s cubic-bezier(.22,1,.36,1) infinite !important;
+      animation: drgIsolatedCurtainCue 1.2s cubic-bezier(.22,1,.36,1) infinite !important;
     }
 
-    body.home-page > .home-front-curtain .hero-scroll-cue svg:last-child {
+    body.home-page > .home-final-curtain .home-final-scroll-cue svg:last-child {
       animation-delay: .16s !important;
     }
 
-    @keyframes drgFinalCurtainCue {
+    @keyframes drgIsolatedCurtainCue {
       0% { opacity: 0; transform: translateY(9px); }
       34% { opacity: 1; }
       72% { opacity: .78; }
@@ -267,38 +260,30 @@
     }
 
     @media (max-width: 768px) {
-      body.home-page > .home-front-curtain > .hero.premium-hero {
-        padding: 2.5rem 0 4rem !important;
+      body.home-page > .home-final-curtain > .hero.premium-hero {
+        padding: 2.35rem 0 4.1rem !important;
         border-radius: 0 0 16px 16px !important;
       }
 
-      body.home-page > .home-front-curtain > .hero.premium-hero .hero-content {
+      body.home-page > .home-final-curtain > .hero.premium-hero .hero-content {
         align-items: center !important;
         align-content: center !important;
         height: 100% !important;
-        transform: none !important;
       }
 
-      body.home-page > .home-front-curtain > .hero.premium-hero .hero-static-content,
-      body.home-page > .home-front-curtain > .hero.premium-hero .hero-search-content {
+      body.home-page > .home-final-curtain > .hero.premium-hero .hero-static-content,
+      body.home-page > .home-final-curtain > .hero.premium-hero .hero-search-content {
         align-self: center !important;
-        transform: none !important;
       }
 
-      body.home-page > .home-front-curtain .hero-scroll-cue {
+      body.home-page > .home-final-curtain .home-final-scroll-cue {
         bottom: 7px !important;
         min-width: 78px !important;
       }
 
-      body.home-page > .home-front-curtain .hero-scroll-cue-label {
+      body.home-page > .home-final-curtain .home-final-scroll-cue__label {
         font-size: .55rem !important;
         letter-spacing: .13em !important;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      body.home-page > .home-front-curtain .hero-scroll-cue svg {
-        animation-duration: 2.4s !important;
       }
     }
   `;
@@ -312,18 +297,18 @@
     curtainHeight = Math.max(1, window.innerHeight, curtain.getBoundingClientRect().height);
     const viewport = Math.max(1, window.innerHeight);
     revealDistance = window.matchMedia('(max-width: 768px)').matches
-      ? Math.max(340, Math.min(520, viewport * .68))
-      : Math.max(420, Math.min(620, viewport * .64));
+      ? Math.max(360, Math.min(560, viewport * .74))
+      : Math.max(480, Math.min(720, viewport * .76));
   };
 
   const render = () => {
     raf = null;
     const travelled = Math.max(0, Math.min(revealDistance, window.scrollY));
     const progress = travelled / revealDistance;
-    const coverY = -curtainHeight * progress;
+    const curtainY = -curtainHeight * progress;
 
-    curtain.style.setProperty('--drg-final-cover-y', `${coverY.toFixed(1)}px`);
-    main.style.setProperty('--drg-final-bg-y', `${travelled.toFixed(1)}px`);
+    curtain.style.setProperty('--drg-isolated-curtain-y', `${curtainY.toFixed(1)}px`);
+    main.style.setProperty('--drg-isolated-bg-y', `${travelled.toFixed(1)}px`);
     curtain.classList.toggle('is-open', progress > .985);
     cue.classList.toggle('is-hidden', progress > .08);
   };
@@ -339,10 +324,7 @@
 
   cue.addEventListener('click', (event) => {
     event.preventDefault();
-    window.scrollTo({
-      top: revealDistance,
-      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
-    });
+    window.scrollTo({ top: revealDistance, behavior: 'smooth' });
   });
 
   window.addEventListener('scroll', schedule, { passive: true });
@@ -351,5 +333,5 @@
 
   measure();
   render();
-  body.dataset.curtainVersion = '20260817-0155-runtime-final';
+  body.dataset.curtainVersion = '20260817-0205-isolated';
 })();
