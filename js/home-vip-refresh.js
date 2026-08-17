@@ -66,7 +66,7 @@
 
   /* Capture arrow clicks before the legacy carousel listener. This keeps the
      existing data renderer but replaces scrollIntoView/active-card choreography
-     with a single lightweight horizontal scroll. */
+     with one lightweight horizontal scroll. */
   document.addEventListener('click', (event) => {
     const match = sliderButtonMap.find(([selector]) => event.target.closest(selector));
     if (!match) return;
@@ -80,6 +80,16 @@
     moveSlider(slider, direction);
   }, true);
 
+  /* The previous carousel recalculated a visually active/scaled card on every
+     scroll frame. Stop that home-only scroll handler before it reaches the
+     slider; the browser can then paint native horizontal movement directly. */
+  document.addEventListener('scroll', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (!target.matches('.home-property-slider')) return;
+    event.stopPropagation();
+  }, true);
+
   /* On touch devices, leave horizontal motion to the browser's native scroll
      engine. The legacy pointer-drag logic remains available for mouse/pen. */
   ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach((type) => {
@@ -88,24 +98,5 @@
       if (!event.target.closest('.home-property-slider')) return;
       event.stopPropagation();
     }, true);
-  });
-
-  const normalizeHomeCards = (slider) => {
-    slider.querySelectorAll('.property-card').forEach((card) => {
-      card.classList.remove('is-active');
-      card.removeAttribute('aria-current');
-    });
-  };
-
-  const sliders = Array.from(document.querySelectorAll('.home-property-slider'));
-  sliders.forEach((slider) => {
-    normalizeHomeCards(slider);
-    const observer = new MutationObserver(() => normalizeHomeCards(slider));
-    observer.observe(slider, {
-      childList: true,
-      subtree: false,
-      attributes: true,
-      attributeFilter: ['class', 'aria-current']
-    });
   });
 })();
