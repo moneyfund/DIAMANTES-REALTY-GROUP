@@ -10,7 +10,16 @@ body.home-page > main {
   z-index: 1 !important;
   width: 100% !important;
   margin: 0 !important;
-  transform: translate3d(0, var(--home-background-counter, 0px), 0) !important;
+  transform: none !important;
+}
+
+html[data-home-public-runtime="ready"] body.home-page > main {
+  margin: var(--home-curtain-height, 100svh) 0 0 !important;
+  transform: translate3d(
+    0,
+    calc(var(--home-background-counter, 0px) - var(--home-curtain-height, 100svh)),
+    0
+  ) !important;
   will-change: transform;
 }
 
