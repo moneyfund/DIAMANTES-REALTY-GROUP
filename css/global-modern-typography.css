@@ -1,0 +1,286 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+/* Diamantes Realty Group — modern typography system (2026-08-17)
+   One contemporary sans-serif family across the public experience. */
+:root {
+  --font-primary: 'Plus Jakarta Sans', Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  --font-body: var(--font-primary) !important;
+  --font-navigation: var(--font-primary) !important;
+  --font-buttons: var(--font-primary) !important;
+  --font-ui: var(--font-primary) !important;
+  --font-display: var(--font-primary) !important;
+  --type-body-size: 1rem;
+  --type-body-leading: 1.66;
+  --type-title-leading: 1.06;
+  --type-tight-tracking: -0.035em;
+  --type-ui-tracking: -0.012em;
+}
+
+html {
+  font-family: var(--font-primary) !important;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  font-family: var(--font-primary) !important;
+}
+
+body {
+  font-size: var(--type-body-size);
+  font-weight: 400;
+  line-height: var(--type-body-leading);
+  letter-spacing: -0.008em;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.page-title,
+.section-title,
+.hero-title,
+.agent-profile-name,
+.agent-name,
+.property-title,
+.map-results-header h2,
+.team-directory-header h1,
+.team-directory-header h2,
+.about-brand-word {
+  font-family: var(--font-primary) !important;
+  font-style: normal !important;
+  text-wrap: balance;
+  letter-spacing: var(--type-tight-tracking) !important;
+}
+
+h1 {
+  font-size: clamp(2.35rem, 4.6vw, 4.8rem);
+  font-weight: 700 !important;
+  line-height: 1.02 !important;
+}
+
+h2 {
+  font-size: clamp(1.9rem, 3.3vw, 3.35rem);
+  font-weight: 700 !important;
+  line-height: 1.08 !important;
+}
+
+h3 {
+  font-size: clamp(1.18rem, 2vw, 1.65rem);
+  font-weight: 700 !important;
+  line-height: 1.16 !important;
+}
+
+h4,
+h5,
+h6 {
+  font-weight: 600 !important;
+  line-height: 1.22 !important;
+}
+
+h1 em,
+h2 em,
+h3 em,
+.page-title em,
+.section-title em,
+.hero-title em {
+  font-family: inherit !important;
+  font-style: normal !important;
+}
+
+p,
+li,
+dd,
+dt,
+blockquote {
+  font-family: var(--font-primary) !important;
+  font-weight: 400;
+  line-height: var(--type-body-leading);
+}
+
+strong,
+b {
+  font-family: inherit !important;
+  font-weight: 700 !important;
+}
+
+small,
+.eyebrow,
+.kicker,
+[class*='kicker'],
+[class*='eyebrow'] {
+  font-family: var(--font-primary) !important;
+  font-weight: 700 !important;
+}
+
+.site-nav a,
+.nav-more__trigger,
+.nav-more__menu a,
+nav a {
+  font-family: var(--font-navigation) !important;
+  font-weight: 600 !important;
+  letter-spacing: var(--type-ui-tracking) !important;
+}
+
+button,
+.btn,
+.btn-primary,
+.btn-secondary,
+.button,
+.button-primary,
+.button-secondary,
+[class*='button'],
+[class*='-action'],
+[class*='-cta'] {
+  font-family: var(--font-buttons) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.012em;
+}
+
+input,
+select,
+textarea {
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+label,
+legend,
+th {
+  font-family: var(--font-ui) !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.01em;
+}
+
+.property-card h2,
+.property-card h3,
+.map-property-card h2,
+.map-property-card h3,
+.agent-card h2,
+.agent-card h3,
+.service-card h2,
+.service-card h3,
+.education-card h2,
+.education-card h3,
+.trust-card h2,
+.trust-card h3 {
+  font-family: var(--font-primary) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.028em !important;
+  line-height: 1.16 !important;
+}
+
+.property-card p,
+.map-property-card p,
+.agent-card p,
+.service-card p,
+.education-card p,
+.trust-card p {
+  line-height: 1.55;
+}
+
+.price,
+[class*='price'] {
+  font-family: var(--font-primary) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.03em !important;
+}
+
+/* Keep editorial headings modern and proportionate instead of oversized serif display text. */
+.home-signature-copy h2,
+.premium-services-section h2,
+.premium-trust-section h2,
+.home-matched-properties h2,
+.about-premium-hero h1,
+.team-directory-header h1,
+.agent-profile-name {
+  font-family: var(--font-primary) !important;
+  font-style: normal !important;
+}
+
+.about-premium-hero h1 {
+  font-size: clamp(2.7rem, 5.2vw, 5rem) !important;
+  line-height: 1.01 !important;
+}
+
+.agent-profile-name {
+  font-size: clamp(2rem, 3.4vw, 3.5rem) !important;
+  line-height: 1.03 !important;
+}
+
+.team-directory-header h1 {
+  font-size: clamp(2rem, 3.6vw, 3.55rem) !important;
+  line-height: 1.04 !important;
+}
+
+::placeholder {
+  font-family: var(--font-primary) !important;
+  font-weight: 400;
+}
+
+@media (max-width: 900px) {
+  body { font-size: 0.97rem; }
+  h1 { font-size: clamp(2.1rem, 7.5vw, 3.55rem); }
+  h2 { font-size: clamp(1.75rem, 6vw, 2.75rem); }
+  h3 { font-size: clamp(1.12rem, 4vw, 1.48rem); }
+  .about-premium-hero h1 { font-size: clamp(2.2rem, 8vw, 3.7rem) !important; }
+  .agent-profile-name { font-size: clamp(1.95rem, 7vw, 3rem) !important; }
+}
+
+@media (max-width: 600px) {
+  :root {
+    --type-body-size: 0.94rem;
+    --type-body-leading: 1.58;
+  }
+
+  h1 {
+    font-size: clamp(1.9rem, 9.2vw, 2.85rem) !important;
+    line-height: 1.06 !important;
+    letter-spacing: -0.04em !important;
+  }
+
+  h2 {
+    font-size: clamp(1.6rem, 7.4vw, 2.3rem) !important;
+    line-height: 1.1 !important;
+  }
+
+  h3 {
+    font-size: clamp(1.08rem, 5vw, 1.4rem) !important;
+  }
+
+  .about-premium-hero h1,
+  .team-directory-header h1,
+  .agent-profile-name {
+    font-size: clamp(1.95rem, 9vw, 2.75rem) !important;
+    line-height: 1.05 !important;
+  }
+
+  .site-nav a,
+  .nav-more__trigger,
+  .nav-more__menu a {
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+  }
+
+  button,
+  .btn,
+  [class*='button'],
+  [class*='-action'] {
+    font-size: 0.88rem;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
