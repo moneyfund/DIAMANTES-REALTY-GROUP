@@ -1,6 +1,8 @@
 (() => {
   'use strict';
 
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
   let initialized = false;
   let attempts = 0;
   let retryTimer = null;
@@ -99,7 +101,7 @@
     initialized = true;
     window.clearTimeout(retryTimer);
     document.documentElement.dataset.homePublicRuntime = 'ready';
-    body.dataset.homePublicController = 'v3-20260817-0235-runtime-retry';
+    body.dataset.homePublicController = 'v3-20260817-0240-runtime-retry';
 
     compactSignature(intro);
     upgradeServiceIcons();
@@ -116,6 +118,12 @@
     body.appendChild(curtain);
     curtain.appendChild(header);
     curtain.appendChild(hero);
+
+    main.style.setProperty('position', 'relative', 'important');
+    main.style.setProperty('z-index', '1', 'important');
+    main.style.setProperty('width', '100%', 'important');
+    main.style.setProperty('margin', '0', 'important');
+    main.style.setProperty('transform', 'translate3d(0, var(--home-background-counter, 0px), 0)', 'important');
 
     hero.querySelectorAll('.home-public-scroll-cue, .hero-scroll-cue, .home-final-scroll-cue').forEach((node) => node.remove());
 
@@ -168,6 +176,7 @@
     window.addEventListener('resize', remeasure, { passive: true });
     window.addEventListener('orientationchange', remeasure, { passive: true });
 
+    if (!window.location.hash) window.scrollTo(0, 0);
     measure();
     render();
   }
