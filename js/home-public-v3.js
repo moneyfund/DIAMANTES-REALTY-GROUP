@@ -103,8 +103,8 @@
 
     initialized = true;
     window.clearTimeout(retryTimer);
-    document.documentElement.dataset.homePublicRuntime = 'ready-independent-curtain-v5';
-    body.dataset.homePublicController = 'v5-20260817-hard-lock';
+    document.documentElement.dataset.homePublicRuntime = 'ready-gesture-curtain';
+    body.dataset.homePublicController = 'v6-20260817-gesture-curtain';
 
     compactSignature(intro);
     upgradeServiceIcons();
@@ -118,15 +118,10 @@
 
     const curtain = document.createElement('div');
     curtain.className = 'home-public-curtain';
-    curtain.dataset.controller = 'home-public-v5-hard-lock';
+    curtain.dataset.controller = 'home-public-v6-gesture-curtain';
     body.appendChild(curtain);
     curtain.appendChild(header);
     curtain.appendChild(hero);
-
-    const spacer = document.createElement('div');
-    spacer.className = 'home-curtain-scroll-spacer';
-    spacer.setAttribute('aria-hidden', 'true');
-    body.insertBefore(spacer, main);
 
     hero.querySelectorAll('.home-public-scroll-cue, .hero-scroll-cue, .home-final-scroll-cue').forEach((node) => node.remove());
 
@@ -143,97 +138,120 @@
     hero.appendChild(cue);
 
     let curtainHeight = Math.max(1, window.innerHeight);
-    let mainFlowHeight = Math.max(1, main.scrollHeight);
-    let backgroundLocked = null;
-    let raf = 0;
+    let coverOffset = 0;
+    let lastTouchY = null;
+    let animationFrame = 0;
 
-    const setImportant = (property, value) => main.style.setProperty(property, value, 'important');
+    const clampOffset = (value) => Math.max(0, Math.min(curtainHeight, value));
 
-    const syncSpacer = () => {
-      const reservedMainHeight = backgroundLocked ? mainFlowHeight : 0;
-      spacer.style.height = `${curtainHeight + reservedMainHeight}px`;
+    const drawCover = () => {
+      curtain.style.setProperty('transform', `translate3d(0, ${-coverOffset}px, 0)`, 'important');
+      const open = coverOffset >= curtainHeight - 0.5;
+      curtain.classList.toggle('is-open', open);
+      cue.classList.toggle('is-hidden', coverOffset > 42);
+      body.classList.toggle('home-cover-open', open);
     };
 
-    const setBackgroundLocked = (locked) => {
-      if (backgroundLocked === locked) {
-        syncSpacer();
-        return;
-      }
-
-      backgroundLocked = locked;
-
-      if (locked) {
-        mainFlowHeight = Math.max(1, main.scrollHeight, main.getBoundingClientRect().height);
-        setImportant('position', 'fixed');
-        setImportant('top', '0');
-        setImportant('left', '0');
-        setImportant('right', '0');
-        setImportant('width', '100%');
-        setImportant('margin', '0');
-        setImportant('transform', 'none');
-        setImportant('z-index', '1');
-      } else {
-        ['position', 'top', 'left', 'right', 'width', 'margin', 'transform', 'z-index']
-          .forEach((property) => main.style.removeProperty(property));
-      }
-
-      main.classList.toggle('home-background-locked', locked);
-      syncSpacer();
+    const setCoverOffset = (value) => {
+      coverOffset = clampOffset(value);
+      drawCover();
     };
 
     const measure = () => {
-      curtainHeight = Math.max(1, window.innerHeight, curtain.getBoundingClientRect().height);
-      mainFlowHeight = Math.max(1, main.scrollHeight, main.getBoundingClientRect().height);
+      curtainHeight = Math.max(1, window.innerHeight);
       body.style.setProperty('--home-curtain-height', `${curtainHeight}px`);
-      syncSpacer();
+      coverOffset = clampOffset(coverOffset);
+      drawCover();
     };
 
-    const render = () => {
-      raf = 0;
-      const scrollY = Math.max(window.scrollY, 0);
-      const travelled = Math.min(scrollY, curtainHeight);
-      const curtainOpen = scrollY >= curtainHeight;
+    const animateCoverTo = (target) => {
+      window.cancelAnimationFrame(animationFrame);
+      const start = coverOffset;
+      const distance = target - start;
+      const duration = 420;
+      const startedAt = performance.now();
 
-      /*
-       * HARD LOCK:
-       * Until the front cover is completely outside the viewport, MAIN is
-       * position:fixed at top:0. It cannot move with document scroll. The
-       * invisible spacer preserves both the hero distance and MAIN's flow
-       * height, so the handoff to normal scrolling is seamless.
-       */
-      setBackgroundLocked(!curtainOpen);
-      curtain.style.setProperty('--home-curtain-y', `${-travelled}px`);
-      curtain.classList.toggle('is-open', curtainOpen);
-      cue.classList.toggle('is-hidden', travelled > 42);
+      const step = (now) => {
+        const progress = Math.min(1, (now - startedAt) / duration);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setCoverOffset(start + distance * eased);
+        if (progress < 1) animationFrame = window.requestAnimationFrame(step);
+      };
+
+      animationFrame = window.requestAnimationFrame(step);
     };
 
-    const schedule = () => {
-      if (!raf) raf = window.requestAnimationFrame(render);
+    const handleWheel = (event) => {
+      const delta = event.deltaY;
+      const pageAtTop = window.scrollY <= 0.5;
+
+      if (coverOffset < curtainHeight && delta > 0) {
+        event.preventDefault();
+        setCoverOffset(coverOffset + delta);
+        return;
+      }
+
+      if (pageAtTop && coverOffset > 0 && delta < 0) {
+        event.preventDefault();
+        setCoverOffset(coverOffset + delta);
+      }
     };
 
-    const remeasure = () => {
-      measure();
-      render();
+    const handleTouchStart = (event) => {
+      lastTouchY = event.touches[0]?.clientY ?? null;
     };
 
-    cue.addEventListener('click', () => {
-      window.scrollTo({ top: curtainHeight, behavior: 'smooth' });
-    });
+    const handleTouchMove = (event) => {
+      const currentY = event.touches[0]?.clientY;
+      if (currentY == null || lastTouchY == null) return;
 
-    window.addEventListener('scroll', schedule, { passive: true });
-    window.addEventListener('resize', remeasure, { passive: true });
-    window.addEventListener('orientationchange', remeasure, { passive: true });
+      const delta = lastTouchY - currentY;
+      lastTouchY = currentY;
+      const pageAtTop = window.scrollY <= 0.5;
 
-    if ('ResizeObserver' in window) {
-      const mainObserver = new ResizeObserver(() => {
-        mainFlowHeight = Math.max(1, main.scrollHeight, main.getBoundingClientRect().height);
-        if (backgroundLocked) syncSpacer();
-      });
-      mainObserver.observe(main);
-    }
+      if (coverOffset < curtainHeight && delta > 0) {
+        event.preventDefault();
+        setCoverOffset(coverOffset + delta);
+        return;
+      }
+
+      if (pageAtTop && coverOffset > 0 && delta < 0) {
+        event.preventDefault();
+        setCoverOffset(coverOffset + delta);
+      }
+    };
+
+    const handleTouchEnd = () => {
+      lastTouchY = null;
+      if (coverOffset > 0 && coverOffset < curtainHeight) {
+        const target = coverOffset >= curtainHeight * 0.5 ? curtainHeight : 0;
+        animateCoverTo(target);
+      }
+    };
+
+    const handleScroll = () => {
+      if (window.scrollY > 1 && coverOffset < curtainHeight) {
+        setCoverOffset(curtainHeight);
+      }
+    };
+
+    cue.addEventListener('click', () => animateCoverTo(curtainHeight));
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+    window.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', measure, { passive: true });
+    window.addEventListener('orientationchange', measure, { passive: true });
+
+    main.style.setProperty('position', 'relative', 'important');
+    main.style.setProperty('top', '0', 'important');
+    main.style.setProperty('transform', 'none', 'important');
+    main.style.setProperty('margin', '0', 'important');
 
     measure();
-    render();
+    setCoverOffset(0);
   }
 
   if (document.readyState === 'loading') {
