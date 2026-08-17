@@ -26,7 +26,7 @@ test('property cards keep the sharp rectangular presentation on home and catalog
 });
 
 test('home property shelves explicitly support native horizontal swipe on mobile', () => {
-  assert.match(styles, /\.home-property-slider \{[\s\S]*?display: flex !important;[\s\S]*?overflow-x: auto !important;[\s\S]*?-webkit-overflow-scrolling: touch;[\s\S]*?touch-action: pan-x;/);
+  assert.match(styles, /\.home-property-slider \{[\s\S]*?display: flex !important;[\s\S]*?overflow-x: auto !important;[\s\S]*?-webkit-overflow-scrolling: touch;/);
   assert.match(styles, /@media \(max-width: 768px\)[\s\S]*?\.home-property-slider[\s\S]*?scroll-snap-type: x mandatory !important;/);
   assert.match(styles, /flex: 0 0 min\(84vw,330px\) !important;/);
   assert.match(styles, /\.home-property-slider \.property-card\.is-active,[\s\S]*?transform: none !important;[\s\S]*?scale: 1 !important;/);
@@ -46,4 +46,12 @@ test('refresh script keeps lightweight carousel arrows and native touch behavior
   assert.match(motion, /event\.pointerType !== 'touch'/);
   assert.match(motion, /behavior: reduceMotion \? 'auto' : 'smooth'/);
   assert.match(motion, /prefers-reduced-motion: reduce/);
+});
+
+test('mobile cards allow vertical page scrolling and the home surface cannot leak horizontally', () => {
+  assert.match(styles, /Mobile gesture \+ viewport containment fix/);
+  assert.match(styles, /\.home-page \.premium-hero \.hero-title,[\s\S]*?font-weight: 600 !important;/);
+  assert.match(styles, /body\.home-page \{[\s\S]*?overflow-x: clip !important;/);
+  assert.match(styles, /\.home-property-slider,[\s\S]*?\.premium-services-grid article \*[\s\S]*?touch-action: pan-x pan-y !important;/);
+  assert.match(styles, /body\.home-page \.premium-services \{[\s\S]*?overflow-y: visible !important;/);
 });
