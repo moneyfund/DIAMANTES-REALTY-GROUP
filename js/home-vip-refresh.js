@@ -50,225 +50,246 @@
     });
   };
 
-  const installHeroCurtainStyles = () => {
-    document.getElementById('homeHeroCurtainStyles')?.remove();
+  const installFrontCurtainStyles = () => {
+    document.getElementById('homeFrontCurtainStyles')?.remove();
     const style = document.createElement('style');
-    style.id = 'homeHeroCurtainStyles';
+    style.id = 'homeFrontCurtainStyles';
     style.textContent = `
-      .home-page .home-curtain-stage {
+      body.home-page {
+        overflow-x: clip !important;
+      }
+
+      body.home-page > main {
         position: relative;
-        isolation: isolate;
-        background: var(--premium-bg, #faf9f7);
+        z-index: 1;
+        margin: 0 !important;
+        will-change: transform;
+        transform: translate3d(0, var(--drg-background-counter, 0px), 0);
       }
 
-      .home-page .home-curtain-stage > .hero.premium-hero {
-        --drg-curtain-y: 0px;
-        position: sticky !important;
-        top: 0 !important;
-        z-index: 6 !important;
-        overflow: clip !important;
-        transform: translate3d(0, var(--drg-curtain-y), 0) !important;
-        transform-origin: center top !important;
-        will-change: transform, box-shadow;
-        transition: box-shadow 180ms ease, border-radius 180ms ease;
+      .home-page .home-front-curtain {
+        --drg-front-y: 0px;
+        position: fixed;
+        inset: 0 0 auto 0;
+        z-index: 1200;
+        width: 100%;
+        transform: translate3d(0, var(--drg-front-y), 0);
+        will-change: transform;
+        pointer-events: auto;
+        filter: drop-shadow(0 18px 28px rgba(5, 18, 34, .12));
       }
 
-      .home-page .home-curtain-stage > .hero.premium-hero.is-curtain-lifting {
-        border-radius: 0 0 24px 24px !important;
-        box-shadow: 0 26px 56px rgba(5, 18, 34, .24) !important;
+      .home-page .home-front-curtain.is-open {
+        pointer-events: none;
       }
 
-      .home-page .home-curtain-stage > .home-vip-intro {
+      .home-page .home-front-curtain > .site-header.public-navbar {
         position: relative !important;
+        inset: auto !important;
+        top: auto !important;
+        left: auto !important;
+        width: 100% !important;
+        transform: none !important;
+        margin: 0 !important;
+        z-index: 4 !important;
+      }
+
+      .home-page .home-front-curtain > .hero.premium-hero {
+        position: relative !important;
+        inset: auto !important;
+        top: auto !important;
         z-index: 2 !important;
-        margin-top: 0 !important;
-      }
-
-      .home-page .home-curtain-stage > .home-vip-intro .home-signature-copy,
-      .home-page .home-curtain-stage > .home-vip-intro .home-signature-links {
-        opacity: 0;
-        transform: translateY(24px);
-        transition: opacity 520ms cubic-bezier(.22,1,.36,1), transform 620ms cubic-bezier(.22,1,.36,1);
-      }
-
-      .home-page .home-curtain-stage > .home-vip-intro.is-curtain-revealing .home-signature-copy,
-      .home-page .home-curtain-stage > .home-vip-intro.is-curtain-revealing .home-signature-links {
-        opacity: 1;
-        transform: translateY(0);
-      }
-
-      .home-page .home-curtain-stage > .home-vip-intro.is-curtain-revealing .home-signature-links {
-        transition-delay: 100ms;
+        width: 100% !important;
+        margin: 0 !important;
+        transform: none !important;
+        overflow: clip !important;
+        border-radius: 0 0 24px 24px !important;
       }
 
       .home-page .hero-scroll-cue {
         position: absolute;
         left: 50%;
-        bottom: 14px;
-        z-index: 9;
+        bottom: 11px;
+        z-index: 12;
         display: inline-flex !important;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 3px;
-        min-width: 112px;
+        gap: 2px;
+        min-width: 88px;
+        padding: 3px 8px;
         transform: translateX(-50%);
-        color: rgba(255,255,255,.94) !important;
+        color: #fff !important;
+        -webkit-text-fill-color: #fff !important;
         text-decoration: none !important;
-        opacity: .96;
-        pointer-events: auto;
-        transition: opacity 180ms ease, transform 180ms ease;
+        opacity: 1;
+        transition: opacity 150ms ease, transform 150ms ease;
       }
 
       .home-page .hero-scroll-cue.is-hidden {
         opacity: 0;
-        pointer-events: none;
         transform: translate(-50%, 8px);
+        pointer-events: none;
       }
 
       .home-page .hero-scroll-cue-label {
+        color: #fff !important;
+        -webkit-text-fill-color: #fff !important;
         font-family: var(--font-ui, 'Plus Jakarta Sans', sans-serif) !important;
-        font-size: .58rem;
+        font-size: .6rem;
         font-weight: 700;
         line-height: 1;
         letter-spacing: .16em;
         text-transform: uppercase;
-        text-shadow: 0 2px 12px rgba(0,0,0,.32);
+        text-shadow: 0 2px 10px rgba(0,0,0,.55);
       }
 
       .home-page .hero-scroll-cue-arrows {
         position: relative;
         display: grid;
         place-items: center;
-        width: 28px;
-        height: 26px;
+        width: 25px;
+        height: 25px;
+        color: #fff !important;
       }
 
       .home-page .hero-scroll-cue svg {
         position: absolute;
-        width: 21px;
-        height: 21px;
+        width: 20px;
+        height: 20px;
         fill: none;
-        stroke: currentColor;
-        stroke-width: 1.8;
+        stroke: #fff !important;
+        stroke-width: 1.9;
         stroke-linecap: round;
         stroke-linejoin: round;
-        animation: drgCurtainCue 1.35s cubic-bezier(.22,1,.36,1) infinite;
+        animation: drgFrontCue 1.25s cubic-bezier(.22,1,.36,1) infinite;
       }
 
       .home-page .hero-scroll-cue svg:last-child {
-        animation-delay: .17s;
+        animation-delay: .16s;
+      }
+
+      body.home-page > main .home-vip-intro {
+        position: relative !important;
+        z-index: 1 !important;
+        margin-top: 0 !important;
+      }
+
+      body.home-page > main .home-vip-intro [data-vip-reveal] {
+        opacity: 1 !important;
+        transform: none !important;
       }
 
       @media (min-width: 769px) {
-        .home-page .home-curtain-stage > .hero.premium-hero {
-          min-height: 600px !important;
-          height: clamp(600px, 76svh, 700px) !important;
-          max-height: 700px !important;
-          padding: 6.8rem 0 4.55rem !important;
+        .home-page .home-front-curtain > .hero.premium-hero {
+          min-height: 590px !important;
+          height: calc(100svh - 88px) !important;
+          max-height: 760px !important;
+          padding: clamp(5.4rem, 8vh, 6.7rem) 0 4.35rem !important;
           align-items: center !important;
         }
 
-        .home-page .home-curtain-stage > .hero.premium-hero .hero-content {
+        .home-page .home-front-curtain > .hero.premium-hero .hero-content {
           align-items: end !important;
           transform: none !important;
         }
 
-        .home-page .home-curtain-stage > .hero.premium-hero .hero-static-content .eyebrow {
-          margin: 0 0 .12rem !important;
+        .home-page .home-front-curtain > .hero.premium-hero .hero-static-content .eyebrow {
+          margin: 0 0 .08rem !important;
         }
 
-        .home-page .home-curtain-stage > .hero.premium-hero .hero-static-content .hero-license {
-          margin: .02rem 0 .78rem !important;
-          font-size: .61rem !important;
+        .home-page .home-front-curtain > .hero.premium-hero .hero-static-content .hero-license {
+          margin: .02rem 0 .72rem !important;
+          font-size: .6rem !important;
           font-weight: 600 !important;
           line-height: 1.2 !important;
-          letter-spacing: .12em !important;
-          opacity: .84 !important;
+          letter-spacing: .11em !important;
+          opacity: .86 !important;
         }
 
-        .home-page .home-curtain-stage > .hero.premium-hero .hero-static-content h1,
-        .home-page .home-curtain-stage > .hero.premium-hero .hero-title {
+        .home-page .home-front-curtain > .hero.premium-hero .hero-static-content h1,
+        .home-page .home-front-curtain > .hero.premium-hero .hero-title {
           margin-top: 0 !important;
           margin-bottom: .68rem !important;
         }
 
-        .home-page .home-curtain-stage > .hero.premium-hero .hero-search-content {
+        .home-page .home-front-curtain > .hero.premium-hero .hero-search-content {
           align-self: end !important;
           margin: 0 !important;
           transform: none !important;
         }
 
-        .home-page .home-curtain-stage > .hero.premium-hero .premium-search {
+        .home-page .home-front-curtain > .hero.premium-hero .premium-search {
           margin: 0 !important;
         }
       }
 
       @media (max-width: 768px) {
-        .home-page .home-curtain-stage > .hero.premium-hero {
-          min-height: 560px !important;
-          height: clamp(560px, 78svh, 650px) !important;
+        .home-page .home-front-curtain > .hero.premium-hero {
+          min-height: 520px !important;
+          height: calc(100svh - 68px) !important;
           max-height: 650px !important;
-          padding-bottom: 3.9rem !important;
+          padding-bottom: 3.55rem !important;
+          border-radius: 0 0 18px 18px !important;
         }
 
         .home-page .hero-scroll-cue {
-          bottom: 10px;
-          min-width: 92px;
+          bottom: 7px;
+          min-width: 74px;
         }
 
         .home-page .hero-scroll-cue-label {
-          font-size: .53rem;
+          font-size: .54rem;
           letter-spacing: .13em;
+        }
+
+        .home-page .hero-scroll-cue svg {
+          width: 18px;
+          height: 18px;
         }
       }
 
-      @keyframes drgCurtainCue {
-        0% { opacity: 0; transform: translateY(10px); }
+      @keyframes drgFrontCue {
+        0% { opacity: 0; transform: translateY(8px); }
         34% { opacity: 1; }
-        68% { opacity: .72; }
-        100% { opacity: 0; transform: translateY(-7px); }
+        70% { opacity: .78; }
+        100% { opacity: 0; transform: translateY(-6px); }
       }
 
       @media (prefers-reduced-motion: reduce) {
-        .home-page .home-curtain-stage > .hero.premium-hero {
+        .home-page .home-front-curtain {
           position: relative !important;
-          top: auto !important;
           transform: none !important;
-          box-shadow: none !important;
+          filter: none !important;
         }
-        .home-page .hero-scroll-cue svg { animation: none !important; }
-        .home-page .home-curtain-stage > .home-vip-intro .home-signature-copy,
-        .home-page .home-curtain-stage > .home-vip-intro .home-signature-links {
-          opacity: 1 !important;
+        body.home-page > main {
           transform: none !important;
-          transition: none !important;
+        }
+        .home-page .hero-scroll-cue svg {
+          animation: none !important;
         }
       }
     `;
     document.head.appendChild(style);
   };
 
-  const setupHeroCurtain = () => {
-    const hero = document.querySelector('.home-page .hero.premium-hero');
-    const intro = document.querySelector('.home-page .home-vip-intro');
-    if (!hero || !intro || hero.closest('.home-curtain-stage')) return;
+  const setupFrontCurtain = () => {
+    const header = document.querySelector('body.home-page > .site-header.public-navbar');
+    const main = document.querySelector('body.home-page > main');
+    const hero = main?.querySelector(':scope > .hero.premium-hero');
+    if (!header || !main || !hero || document.querySelector('.home-front-curtain')) return;
 
-    const oldCue = hero.querySelector('.hero-scroll-cue');
-    oldCue?.remove();
+    const curtain = document.createElement('div');
+    curtain.className = 'home-front-curtain';
+    document.body.insertBefore(curtain, main);
+    curtain.appendChild(header);
+    curtain.appendChild(hero);
 
-    const stage = document.createElement('div');
-    stage.className = 'home-curtain-stage';
-    hero.parentNode.insertBefore(stage, hero);
-    stage.appendChild(hero);
-    stage.appendChild(intro);
-
-    if (!intro.id) intro.id = 'homeExperience';
-
+    hero.querySelector('.hero-scroll-cue')?.remove();
     const cue = document.createElement('a');
     cue.className = 'hero-scroll-cue';
-    cue.href = `#${intro.id}`;
-    cue.setAttribute('aria-label', 'Desliza hacia arriba para descubrir la siguiente sección');
+    cue.href = '#homeExperience';
+    cue.setAttribute('aria-label', 'Desliza hacia arriba para descubrir la web');
     cue.innerHTML = `
       <span class="hero-scroll-cue-label">Desliza</span>
       <span class="hero-scroll-cue-arrows" aria-hidden="true">
@@ -278,40 +299,54 @@
     `;
     hero.appendChild(cue);
 
+    const intro = main.querySelector('.home-vip-intro');
+    if (intro && !intro.id) intro.id = 'homeExperience';
+
     let raf = null;
+    let revealDistance = 1;
+    let curtainHeight = 1;
+
+    const measure = () => {
+      curtainHeight = Math.max(1, curtain.offsetHeight);
+      const viewport = Math.max(1, window.innerHeight);
+      revealDistance = window.matchMedia('(max-width: 768px)').matches
+        ? Math.max(260, Math.min(420, viewport * .56))
+        : Math.max(320, Math.min(520, viewport * .58));
+    };
+
     const render = () => {
       raf = null;
-      if (reduceMotion) {
-        hero.style.setProperty('--drg-curtain-y', '0px');
-        hero.classList.remove('is-curtain-lifting');
-        intro.classList.add('is-curtain-revealing');
-        return;
-      }
+      if (reduceMotion) return;
 
-      const stageTop = stage.getBoundingClientRect().top + window.scrollY;
-      const heroHeight = hero.offsetHeight || 1;
-      const scrolled = Math.max(0, Math.min(heroHeight, window.scrollY - stageTop));
-      const progress = scrolled / heroHeight;
+      const travelled = Math.max(0, Math.min(revealDistance, window.scrollY));
+      const progress = travelled / revealDistance;
+      const curtainY = -curtainHeight * progress;
 
-      hero.style.setProperty('--drg-curtain-y', `${(-scrolled).toFixed(1)}px`);
-      hero.classList.toggle('is-curtain-lifting', progress > .015 && progress < .995);
-      intro.classList.toggle('is-curtain-revealing', progress > .07);
-      cue.classList.toggle('is-hidden', progress > .055);
+      curtain.style.setProperty('--drg-front-y', `${curtainY.toFixed(1)}px`);
+      main.style.setProperty('--drg-background-counter', `${travelled.toFixed(1)}px`);
+      curtain.classList.toggle('is-open', progress > .985);
+      cue.classList.toggle('is-hidden', progress > .07);
     };
 
     const schedule = () => {
       if (raf === null) raf = window.requestAnimationFrame(render);
     };
 
+    const remeasure = () => {
+      measure();
+      schedule();
+    };
+
     cue.addEventListener('click', (event) => {
       event.preventDefault();
-      const stageTop = stage.getBoundingClientRect().top + window.scrollY;
-      const target = stageTop + Math.min(hero.offsetHeight * .58, 420);
-      window.scrollTo({ top: target, behavior: reduceMotion ? 'auto' : 'smooth' });
+      window.scrollTo({ top: revealDistance, behavior: reduceMotion ? 'auto' : 'smooth' });
     });
 
     window.addEventListener('scroll', schedule, { passive: true });
-    window.addEventListener('resize', schedule, { passive: true });
+    window.addEventListener('resize', remeasure, { passive: true });
+    window.addEventListener('orientationchange', remeasure, { passive: true });
+
+    measure();
     render();
   };
 
@@ -522,10 +557,10 @@
 
   compactSignature();
   upgradeServiceIcons();
-  installHeroCurtainStyles();
+  installFrontCurtainStyles();
   installPropertySectionStyles();
   refinePropertySections();
-  setupHeroCurtain();
+  setupFrontCurtain();
   setupReveals();
   protectMobileGestures();
 })();
