@@ -50,6 +50,271 @@
     });
   };
 
+  const installHeroCurtainStyles = () => {
+    if (document.getElementById('homeHeroCurtainStyles')) return;
+    const style = document.createElement('style');
+    style.id = 'homeHeroCurtainStyles';
+    style.textContent = `
+      .home-page .hero-scroll-cue { display: none; }
+
+      @media (min-width: 769px) {
+        .home-page .hero.premium-hero {
+          --hero-curtain-y: 0px;
+          --hero-curtain-scale: 1;
+          --hero-curtain-opacity: 1;
+          min-height: 720px !important;
+          height: clamp(720px, 92svh, 900px) !important;
+          max-height: 900px !important;
+          padding: 7.1rem 0 3.45rem !important;
+          align-items: center !important;
+          overflow: clip !important;
+          z-index: 4;
+          transform: translate3d(0, var(--hero-curtain-y), 0) scale(var(--hero-curtain-scale));
+          transform-origin: center top;
+          opacity: var(--hero-curtain-opacity);
+          will-change: transform, opacity, box-shadow;
+          transition: box-shadow 240ms ease, border-radius 240ms ease;
+        }
+
+        .home-page .hero.premium-hero.is-curtain-lifting {
+          border-radius: 0 0 28px 28px !important;
+          box-shadow: 0 30px 70px rgba(5, 18, 34, .24) !important;
+        }
+
+        .home-page .hero.premium-hero .hero-content {
+          align-items: end !important;
+          transform: translateY(-8px) !important;
+        }
+
+        .home-page .hero.premium-hero .hero-static-content .eyebrow {
+          margin: 0 0 .15rem !important;
+        }
+
+        .home-page .hero.premium-hero .hero-static-content .hero-license {
+          margin: .05rem 0 1rem !important;
+          font-size: .64rem !important;
+          font-weight: 600 !important;
+          line-height: 1.25 !important;
+          letter-spacing: .13em !important;
+          opacity: .86;
+        }
+
+        .home-page .hero.premium-hero .hero-static-content h1,
+        .home-page .hero.premium-hero .hero-title {
+          margin-top: 0 !important;
+          margin-bottom: .72rem !important;
+        }
+
+        .home-page .hero.premium-hero .hero-search-content {
+          align-self: end !important;
+          margin: 0 !important;
+          transform: none !important;
+        }
+
+        .home-page .hero.premium-hero .premium-search {
+          margin: 0 !important;
+        }
+
+        .home-page .hero-scroll-cue {
+          position: absolute;
+          left: 50%;
+          bottom: 18px;
+          z-index: 7;
+          display: inline-flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 5px;
+          transform: translateX(-50%);
+          color: rgba(255,255,255,.88) !important;
+          text-decoration: none !important;
+          opacity: .92;
+          transition: opacity 220ms ease, transform 220ms ease;
+        }
+
+        .home-page .hero-scroll-cue.is-hidden {
+          opacity: 0;
+          pointer-events: none;
+          transform: translate(-50%, 10px);
+        }
+
+        .home-page .hero-scroll-cue-label {
+          font-family: var(--font-ui, 'Plus Jakarta Sans', sans-serif) !important;
+          font-size: .61rem;
+          font-weight: 700;
+          line-height: 1;
+          letter-spacing: .15em;
+          text-transform: uppercase;
+          text-shadow: 0 2px 12px rgba(0,0,0,.28);
+        }
+
+        .home-page .hero-scroll-cue-arrows {
+          display: grid;
+          place-items: center;
+          height: 28px;
+        }
+
+        .home-page .hero-scroll-cue svg {
+          grid-area: 1 / 1;
+          width: 21px;
+          height: 21px;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 1.7;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+          animation: heroCueRise 1.55s cubic-bezier(.22,1,.36,1) infinite;
+        }
+
+        .home-page .hero-scroll-cue svg:last-child {
+          animation-delay: .18s;
+          opacity: .62;
+          transform: translateY(7px);
+        }
+
+        .js-hero-curtain .home-page .home-vip-intro,
+        .js-hero-curtain body.home-page .home-vip-intro {
+          position: relative;
+          z-index: 3;
+          opacity: 0;
+          transform: translateY(52px) scale(.992);
+          clip-path: inset(0 0 16% 0);
+          transition:
+            opacity 680ms cubic-bezier(.22,1,.36,1),
+            transform 760ms cubic-bezier(.22,1,.36,1),
+            clip-path 760ms cubic-bezier(.22,1,.36,1);
+        }
+
+        .js-hero-curtain .home-page .home-vip-intro.is-curtain-revealed,
+        .js-hero-curtain body.home-page .home-vip-intro.is-curtain-revealed {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+          clip-path: inset(0 0 0 0);
+        }
+
+        .js-hero-curtain body.home-page .home-vip-intro .home-signature-copy,
+        .js-hero-curtain body.home-page .home-vip-intro .home-signature-links {
+          opacity: 0;
+          transform: translateY(24px);
+          transition: opacity 620ms cubic-bezier(.22,1,.36,1), transform 620ms cubic-bezier(.22,1,.36,1);
+        }
+
+        .js-hero-curtain body.home-page .home-vip-intro.is-curtain-revealed .home-signature-copy,
+        .js-hero-curtain body.home-page .home-vip-intro.is-curtain-revealed .home-signature-links {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        .js-hero-curtain body.home-page .home-vip-intro.is-curtain-revealed .home-signature-links {
+          transition-delay: 110ms;
+        }
+      }
+
+      @keyframes heroCueRise {
+        0% { opacity: 0; transform: translateY(10px); }
+        38% { opacity: .95; }
+        72% { opacity: .72; }
+        100% { opacity: 0; transform: translateY(-6px); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .home-page .hero.premium-hero {
+          transform: none !important;
+          opacity: 1 !important;
+        }
+
+        .home-page .hero-scroll-cue svg { animation: none !important; }
+
+        .js-hero-curtain body.home-page .home-vip-intro,
+        .js-hero-curtain body.home-page .home-vip-intro .home-signature-copy,
+        .js-hero-curtain body.home-page .home-vip-intro .home-signature-links {
+          opacity: 1 !important;
+          transform: none !important;
+          clip-path: none !important;
+          transition: none !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  };
+
+  const setupHeroCurtain = () => {
+    const hero = document.querySelector('.home-page .hero.premium-hero');
+    const intro = document.querySelector('.home-page .home-vip-intro');
+    if (!hero || !intro) return;
+
+    document.documentElement.classList.add('js-hero-curtain');
+    if (!intro.id) intro.id = 'homeExperience';
+
+    const desktopQuery = window.matchMedia('(min-width: 769px)');
+    const cue = document.createElement('a');
+    cue.className = 'hero-scroll-cue';
+    cue.href = `#${intro.id}`;
+    cue.setAttribute('aria-label', 'Desliza hacia arriba para explorar la siguiente sección');
+    cue.innerHTML = `
+      <span class="hero-scroll-cue-label">Desliza para explorar</span>
+      <span class="hero-scroll-cue-arrows" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg>
+        <svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg>
+      </span>
+    `;
+    hero.appendChild(cue);
+
+    let animationFrame = null;
+    const resetHeroTransform = () => {
+      hero.style.removeProperty('--hero-curtain-y');
+      hero.style.removeProperty('--hero-curtain-scale');
+      hero.style.removeProperty('--hero-curtain-opacity');
+      hero.classList.remove('is-curtain-lifting');
+    };
+
+    const renderCurtain = () => {
+      animationFrame = null;
+      if (!desktopQuery.matches || reduceMotion) {
+        resetHeroTransform();
+        cue.classList.toggle('is-hidden', !desktopQuery.matches);
+        intro.classList.add('is-curtain-revealed');
+        return;
+      }
+
+      const maxScroll = Math.max(280, Math.min(hero.offsetHeight * .48, 500));
+      const progress = Math.max(0, Math.min(1, window.scrollY / maxScroll));
+      hero.style.setProperty('--hero-curtain-y', `${(-78 * progress).toFixed(1)}px`);
+      hero.style.setProperty('--hero-curtain-scale', `${(1 - (.012 * progress)).toFixed(4)}`);
+      hero.style.setProperty('--hero-curtain-opacity', `${(1 - (.10 * progress)).toFixed(3)}`);
+      hero.classList.toggle('is-curtain-lifting', progress > .025);
+      cue.classList.toggle('is-hidden', progress > .09);
+    };
+
+    const scheduleCurtain = () => {
+      if (animationFrame === null) animationFrame = window.requestAnimationFrame(renderCurtain);
+    };
+
+    const introObserver = !reduceMotion && 'IntersectionObserver' in window
+      ? new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting || !desktopQuery.matches) return;
+            intro.classList.add('is-curtain-revealed');
+          });
+        }, { threshold: 0.08, rootMargin: '0px 0px -5% 0px' })
+      : null;
+
+    if (introObserver) introObserver.observe(intro);
+    else intro.classList.add('is-curtain-revealed');
+
+    cue.addEventListener('click', (event) => {
+      event.preventDefault();
+      intro.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+    });
+
+    window.addEventListener('scroll', scheduleCurtain, { passive: true });
+    window.addEventListener('resize', scheduleCurtain, { passive: true });
+    desktopQuery.addEventListener?.('change', () => {
+      if (!desktopQuery.matches) intro.classList.add('is-curtain-revealed');
+      scheduleCurtain();
+    });
+    renderCurtain();
+  };
+
   const installPropertySectionStyles = () => {
     if (document.getElementById('homePropertyCleanStyles')) return;
     const style = document.createElement('style');
@@ -255,6 +520,8 @@
 
   compactSignature();
   upgradeServiceIcons();
+  installHeroCurtainStyles();
+  setupHeroCurtain();
   installPropertySectionStyles();
   refinePropertySections();
 
