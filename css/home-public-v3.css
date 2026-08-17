@@ -184,21 +184,17 @@ body.home-page > .home-public-curtain .home-public-scroll-cue.is-hidden {
   100% { opacity: 0; transform: translateY(-7px); }
 }
 
-body.home-page > main > .home-vip-intro {
+/* The website behind the hero is fully rendered from the first frame. */
+body.home-page > main > .home-vip-intro,
+body.home-page > main > .home-vip-intro .home-signature-inner,
+body.home-page > main > .home-vip-intro.is-revealed .home-signature-inner {
   position: relative !important;
   z-index: 1 !important;
   margin-top: 0 !important;
-}
-
-body.home-page > main > .home-vip-intro .home-signature-inner {
-  opacity: .34 !important;
-  transform: translateY(24px) !important;
-  transition: opacity .38s ease, transform .5s cubic-bezier(.22,1,.36,1) !important;
-}
-
-body.home-page > main > .home-vip-intro.is-revealed .home-signature-inner {
   opacity: 1 !important;
-  transform: translateY(0) !important;
+  transform: none !important;
+  transition: none !important;
+  animation: none !important;
 }
 
 .home-page .home-property-section {
@@ -377,8 +373,4 @@ body.home-page > main > .home-vip-intro.is-revealed .home-signature-inner {
 
 @media (prefers-reduced-motion: reduce) {
   .home-public-scroll-cue-arrows svg { animation: none !important; }
-  body.home-page > main > .home-vip-intro .home-signature-inner {
-    opacity: 1 !important;
-    transform: none !important;
-  }
 }
