@@ -110,27 +110,29 @@
   pointer-events: none;
 }
 
-/* Keeps the former section visually restrained during the instant before JS
-   swaps it for the compact signature markup. */
 .home-vip-intro .home-vip-shell {
   display: grid !important;
   grid-template-columns: minmax(0,1fr) auto !important;
   align-items: center !important;
   gap: 28px !important;
 }
+
 .home-vip-intro .home-vip-path { display: none !important; }
+
 .home-vip-intro .home-vip-title {
   max-width: 760px !important;
   margin: 0 !important;
   font-size: clamp(1.9rem,3vw,3.25rem) !important;
   line-height: 1 !important;
 }
+
 .home-vip-intro .home-vip-lead {
   max-width: 720px !important;
   margin: 13px 0 0 !important;
   font-size: .96rem !important;
   line-height: 1.6 !important;
 }
+
 .home-vip-intro .home-vip-actions { margin-top: 18px !important; }
 .home-vip-intro .home-vip-primary { min-height: 42px !important; }
 
@@ -142,9 +144,7 @@
   align-items: center;
 }
 
-.home-signature-copy {
-  min-width: 0;
-}
+.home-signature-copy { min-width: 0; }
 
 .home-signature-kicker {
   display: inline-flex;
@@ -158,12 +158,14 @@
   letter-spacing: .16em;
   text-transform: uppercase;
 }
+
 .home-signature-kicker::before {
   content: '';
   width: 32px;
   height: 2px;
   background: linear-gradient(90deg,var(--drg-vip-red),var(--drg-vip-gold));
 }
+
 .home-signature-copy h2 {
   max-width: 760px;
   margin: 0;
@@ -174,10 +176,12 @@
   line-height: .96;
   letter-spacing: -.035em;
 }
+
 .home-signature-copy h2 em {
   color: var(--drg-vip-red);
   font-style: normal;
 }
+
 .home-signature-copy p:last-child {
   max-width: 700px;
   margin: 13px 0 0;
@@ -193,6 +197,7 @@
   background: rgba(255,255,255,.72);
   box-shadow: 0 15px 38px rgba(11,31,58,.07);
 }
+
 .home-signature-link {
   min-width: 0;
   min-height: 108px;
@@ -206,7 +211,9 @@
   text-decoration: none;
   transition: background-color .2s ease, transform .2s ease;
 }
+
 .home-signature-link:last-child { border-right: 0; }
+
 .home-signature-link svg {
   width: 22px;
   height: 22px;
@@ -214,12 +221,14 @@
   stroke: var(--drg-vip-red);
   stroke-width: 1.7;
 }
+
 .home-signature-link strong {
   display: block;
   color: var(--drg-vip-ink) !important;
   font-size: .82rem;
   font-weight: 800;
 }
+
 .home-signature-link small {
   display: block;
   margin-top: 3px;
@@ -227,6 +236,7 @@
   font-size: .68rem;
   line-height: 1.4;
 }
+
 @media (hover:hover) and (pointer:fine) {
   .home-signature-link:hover {
     background: #fff;
@@ -246,6 +256,7 @@
   color: var(--drg-vip-red) !important;
   box-shadow: 0 10px 26px rgba(11,31,58,.07);
 }
+
 .premium-services-grid article > span.premium-service-icon svg {
   width: 23px;
   height: 23px;
@@ -262,6 +273,7 @@
   transform: translateY(16px);
   transition: opacity 620ms cubic-bezier(.22,1,.36,1), transform 620ms cubic-bezier(.22,1,.36,1);
 }
+
 .js-vip-motion [data-vip-reveal].is-visible {
   opacity: 1;
   transform: translateY(0);
@@ -279,8 +291,6 @@
   .home-signature-links { grid-template-columns: repeat(3,minmax(128px,1fr)); overflow-x: auto; scrollbar-width: none; }
   .home-signature-link { min-width: 128px; }
 
-  /* Explicit horizontal swipe for every home property shelf. A portion of the
-     next card remains visible so the interaction is obvious on touch screens. */
   .home-property-slider {
     width: auto !important;
     margin-inline: -18px !important;
@@ -290,6 +300,7 @@
     scroll-snap-type: x mandatory !important;
     touch-action: pan-x !important;
   }
+
   .home-property-slider .property-card,
   .home-property-slider .property-card.is-active,
   .home-property-slider .property-card[aria-current="true"] {
@@ -298,10 +309,8 @@
     scroll-snap-align: start !important;
   }
 
-  /* Services become a sideways shelf instead of a vertical stack. */
-  .premium-services {
-    overflow: visible !important;
-  }
+  .premium-services { overflow: visible !important; }
+
   .premium-services-grid {
     display: flex !important;
     grid-template-columns: none !important;
@@ -318,6 +327,7 @@
     touch-action: pan-x;
     scrollbar-width: none;
   }
+
   .premium-services-grid article {
     flex: 0 0 min(80vw,310px) !important;
     width: min(80vw,310px) !important;
@@ -334,6 +344,7 @@
     flex-basis: 86vw !important;
     width: 86vw !important;
   }
+
   .premium-services-grid article {
     flex-basis: 82vw !important;
     width: 82vw !important;
@@ -377,9 +388,7 @@
     overflow-x: clip !important;
   }
 
-  body.home-page .premium-services {
-    overflow-y: visible !important;
-  }
+  body.home-page .premium-services { overflow-y: visible !important; }
 
   .home-signature-inner,
   .home-signature-copy,
@@ -413,5 +422,47 @@
   .premium-services-grid {
     overscroll-behavior-x: contain;
     overscroll-behavior-y: auto;
+  }
+}
+
+/* Desktop hero density correction (2026-08-17)
+   Navbar selectors are deliberately excluded. */
+@media (min-width: 769px) {
+  .home-page .hero.premium-hero {
+    min-height: 560px !important;
+    height: clamp(560px, 64vh, 640px) !important;
+    max-height: 640px !important;
+    padding: 6.8rem 0 2.15rem !important;
+    align-items: center !important;
+  }
+
+  .home-page .hero.premium-hero .hero-content {
+    align-items: center !important;
+    transform: translateY(-22px);
+  }
+
+  .home-page .hero.premium-hero .hero-static-content h1,
+  .home-page .hero.premium-hero .hero-title {
+    max-width: 690px !important;
+    font-size: clamp(2.7rem, 4.7vw, 4.45rem) !important;
+    font-weight: 600 !important;
+    line-height: .98 !important;
+    letter-spacing: -.04em !important;
+  }
+
+  .home-page .hero.premium-hero .hero-search-content {
+    align-self: center !important;
+    transform: translateY(-4px);
+  }
+}
+
+@media (min-width: 1280px) {
+  .home-page .hero.premium-hero {
+    height: clamp(580px, 62vh, 630px) !important;
+    max-height: 630px !important;
+  }
+
+  .home-page .hero.premium-hero .hero-content {
+    transform: translateY(-26px);
   }
 }
