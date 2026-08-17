@@ -103,8 +103,8 @@
 
     initialized = true;
     window.clearTimeout(retryTimer);
-    document.documentElement.dataset.homePublicRuntime = 'ready-independent-curtain';
-    body.dataset.homePublicController = 'v4-20260817-independent-curtain';
+    document.documentElement.dataset.homePublicRuntime = 'ready-independent-curtain-v5';
+    body.dataset.homePublicController = 'v5-20260817-hard-lock';
 
     compactSignature(intro);
     upgradeServiceIcons();
@@ -118,7 +118,7 @@
 
     const curtain = document.createElement('div');
     curtain.className = 'home-public-curtain';
-    curtain.dataset.controller = 'home-public-v4-independent-curtain';
+    curtain.dataset.controller = 'home-public-v5-hard-lock';
     body.appendChild(curtain);
     curtain.appendChild(header);
     curtain.appendChild(hero);
@@ -143,12 +143,49 @@
     hero.appendChild(cue);
 
     let curtainHeight = Math.max(1, window.innerHeight);
+    let mainFlowHeight = Math.max(1, main.scrollHeight);
+    let backgroundLocked = null;
     let raf = 0;
+
+    const setImportant = (property, value) => main.style.setProperty(property, value, 'important');
+
+    const syncSpacer = () => {
+      const reservedMainHeight = backgroundLocked ? mainFlowHeight : 0;
+      spacer.style.height = `${curtainHeight + reservedMainHeight}px`;
+    };
+
+    const setBackgroundLocked = (locked) => {
+      if (backgroundLocked === locked) {
+        syncSpacer();
+        return;
+      }
+
+      backgroundLocked = locked;
+
+      if (locked) {
+        mainFlowHeight = Math.max(1, main.scrollHeight, main.getBoundingClientRect().height);
+        setImportant('position', 'fixed');
+        setImportant('top', '0');
+        setImportant('left', '0');
+        setImportant('right', '0');
+        setImportant('width', '100%');
+        setImportant('margin', '0');
+        setImportant('transform', 'none');
+        setImportant('z-index', '1');
+      } else {
+        ['position', 'top', 'left', 'right', 'width', 'margin', 'transform', 'z-index']
+          .forEach((property) => main.style.removeProperty(property));
+      }
+
+      main.classList.toggle('home-background-locked', locked);
+      syncSpacer();
+    };
 
     const measure = () => {
       curtainHeight = Math.max(1, window.innerHeight, curtain.getBoundingClientRect().height);
+      mainFlowHeight = Math.max(1, main.scrollHeight, main.getBoundingClientRect().height);
       body.style.setProperty('--home-curtain-height', `${curtainHeight}px`);
-      spacer.style.height = `${curtainHeight}px`;
+      syncSpacer();
     };
 
     const render = () => {
@@ -158,15 +195,14 @@
       const curtainOpen = scrollY >= curtainHeight;
 
       /*
-       * Two completely independent phases:
-       * 1) Until the hero has left the viewport, MAIN is position:fixed and
-       *    therefore cannot move. Only the front curtain translates upward.
-       * 2) Once the hero is fully gone, MAIN returns to normal document flow.
-       *    The spacer occupies exactly one hero-height, so at the handoff the
-       *    first section is at viewport top with no jump.
+       * HARD LOCK:
+       * Until the front cover is completely outside the viewport, MAIN is
+       * position:fixed at top:0. It cannot move with document scroll. The
+       * invisible spacer preserves both the hero distance and MAIN's flow
+       * height, so the handoff to normal scrolling is seamless.
        */
+      setBackgroundLocked(!curtainOpen);
       curtain.style.setProperty('--home-curtain-y', `${-travelled}px`);
-      main.classList.toggle('home-background-locked', !curtainOpen);
       curtain.classList.toggle('is-open', curtainOpen);
       cue.classList.toggle('is-hidden', travelled > 42);
     };
@@ -187,6 +223,14 @@
     window.addEventListener('scroll', schedule, { passive: true });
     window.addEventListener('resize', remeasure, { passive: true });
     window.addEventListener('orientationchange', remeasure, { passive: true });
+
+    if ('ResizeObserver' in window) {
+      const mainObserver = new ResizeObserver(() => {
+        mainFlowHeight = Math.max(1, main.scrollHeight, main.getBoundingClientRect().height);
+        if (backgroundLocked) syncSpacer();
+      });
+      mainObserver.observe(main);
+    }
 
     measure();
     render();
