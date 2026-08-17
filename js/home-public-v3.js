@@ -103,8 +103,8 @@
 
     initialized = true;
     window.clearTimeout(retryTimer);
-    document.documentElement.dataset.homePublicRuntime = 'ready-static-background';
-    body.dataset.homePublicController = 'v3-20260817-static-background';
+    document.documentElement.dataset.homePublicRuntime = 'ready-independent-curtain';
+    body.dataset.homePublicController = 'v4-20260817-independent-curtain';
 
     compactSignature(intro);
     upgradeServiceIcons();
@@ -114,13 +114,19 @@
       if (node.contains(header)) node.replaceWith(header);
       else node.remove();
     });
+    document.querySelectorAll('.home-curtain-scroll-spacer').forEach((node) => node.remove());
 
     const curtain = document.createElement('div');
     curtain.className = 'home-public-curtain';
-    curtain.dataset.controller = 'home-public-v3-static-background';
+    curtain.dataset.controller = 'home-public-v4-independent-curtain';
     body.appendChild(curtain);
     curtain.appendChild(header);
     curtain.appendChild(hero);
+
+    const spacer = document.createElement('div');
+    spacer.className = 'home-curtain-scroll-spacer';
+    spacer.setAttribute('aria-hidden', 'true');
+    body.insertBefore(spacer, main);
 
     hero.querySelectorAll('.home-public-scroll-cue, .hero-scroll-cue, .home-final-scroll-cue').forEach((node) => node.remove());
 
@@ -142,21 +148,26 @@
     const measure = () => {
       curtainHeight = Math.max(1, window.innerHeight, curtain.getBoundingClientRect().height);
       body.style.setProperty('--home-curtain-height', `${curtainHeight}px`);
+      spacer.style.height = `${curtainHeight}px`;
     };
 
     const render = () => {
       raf = 0;
-      const travelled = Math.min(Math.max(window.scrollY, 0), curtainHeight);
-      const progress = travelled / curtainHeight;
+      const scrollY = Math.max(window.scrollY, 0);
+      const travelled = Math.min(scrollY, curtainHeight);
+      const curtainOpen = scrollY >= curtainHeight;
 
       /*
-       * The public website is already rendered behind the hero. During the
-       * first viewport of scroll we counter the document scroll exactly so
-       * the background does not move at all. Only the front curtain moves.
+       * Two completely independent phases:
+       * 1) Until the hero has left the viewport, MAIN is position:fixed and
+       *    therefore cannot move. Only the front curtain translates upward.
+       * 2) Once the hero is fully gone, MAIN returns to normal document flow.
+       *    The spacer occupies exactly one hero-height, so at the handoff the
+       *    first section is at viewport top with no jump.
        */
       curtain.style.setProperty('--home-curtain-y', `${-travelled}px`);
-      main.style.setProperty('--home-background-counter', `${travelled}px`);
-      curtain.classList.toggle('is-open', progress >= .995);
+      main.classList.toggle('home-background-locked', !curtainOpen);
+      curtain.classList.toggle('is-open', curtainOpen);
       cue.classList.toggle('is-hidden', travelled > 42);
     };
 
