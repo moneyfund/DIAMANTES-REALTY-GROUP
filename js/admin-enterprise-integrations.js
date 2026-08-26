@@ -10,7 +10,7 @@
     const shell = document.querySelector('.enterprise-admin-shell');
     if (!shell) return false;
 
-    /* El admin histórico edita registros existentes; no presenta una acción falsa de creación. */
+    /* El admin histórico edita registros existentes; no presentamos una acción falsa de creación. */
     const addBtn = document.getElementById('addBtn');
     if (addBtn) {
       addBtn.style.display = 'none';
@@ -46,9 +46,12 @@
       });
     }
 
-    /* Dos botones visibles en la barra del editor: actualizar y limpiar. */
+    /* Dos acciones reales en el editor: actualizar y limpiar. */
     const buttonRow = document.querySelector('#propertyForm .button-row');
-    if (buttonRow) buttonRow.classList.add('enterprise-edit-actions');
+    if (buttonRow) {
+      buttonRow.classList.add('enterprise-edit-actions');
+      buttonRow.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
+    }
 
     return true;
   }
