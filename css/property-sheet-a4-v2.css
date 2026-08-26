@@ -1,0 +1,341 @@
+/* A4 v2: la vista previa y el PDF comparten exactamente la misma proporcion. */
+.property-sheet-a4 {
+  box-sizing: border-box;
+  width: 210mm !important;
+  height: 297mm !important;
+  min-height: 297mm !important;
+  max-height: 297mm !important;
+  overflow: hidden !important;
+}
+
+body.is-generating-pdf .property-sheet-a4 {
+  width: 210mm !important;
+  height: 297mm !important;
+  min-height: 297mm !important;
+  max-height: 297mm !important;
+}
+
+/* Hero mas compacto para reservar espacio util a la informacion. */
+.sheet-hero {
+  flex: 0 0 69mm;
+  height: 69mm !important;
+}
+
+.sheet-hero-logo {
+  left: 8mm;
+  top: 6mm;
+  width: 35mm;
+  max-height: 18mm;
+  padding: 1.5mm 3mm;
+}
+
+.sheet-hero-copy {
+  left: 8mm;
+  bottom: 6mm;
+  max-width: 140mm;
+}
+
+.sheet-hero-overlay span {
+  font-size: 7.5pt;
+  padding: .34rem .72rem;
+}
+
+.sheet-hero-overlay h1 {
+  font-size: 24pt;
+  line-height: 1;
+  margin: 2.2mm 0 1.5mm;
+}
+
+.sheet-hero-overlay p {
+  font-size: 9.5pt;
+  margin-bottom: 1.4mm;
+}
+
+.sheet-hero-overlay strong {
+  font-size: 13.5pt;
+}
+
+/* Galeria secundaria mas baja y limpia. */
+.sheet-gallery-strip {
+  flex: 0 0 auto;
+  gap: 2.4mm;
+  padding: 3mm 8mm .8mm;
+}
+
+.sheet-gallery-image,
+.sheet-gallery-placeholder {
+  height: 23mm !important;
+  border-radius: 3mm;
+}
+
+/* Secciones y caracteristicas adaptadas a una pagina A4. */
+.sheet-section {
+  padding: 2.2mm 8mm;
+}
+
+.sheet-section h2 {
+  font-size: 13.5pt;
+  margin-bottom: 3mm;
+}
+
+.sheet-section h2::after {
+  bottom: -1.5mm;
+  height: .65mm;
+  width: 17mm;
+}
+
+.sheet-features {
+  flex: 0 0 auto;
+}
+
+.sheet-features > div {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 2mm;
+}
+
+.sheet-feature-item {
+  min-height: 15.5mm;
+  padding: 1.8mm 2mm;
+  border-radius: 2.5mm;
+}
+
+.sheet-feature-icon {
+  width: 5mm;
+  height: 5mm;
+  margin-bottom: .7mm;
+}
+
+.sheet-feature-item small {
+  font-size: 5.8pt;
+  line-height: 1.1;
+}
+
+.sheet-feature-item strong {
+  font-size: 7.4pt;
+  line-height: 1.12;
+  margin-top: .7mm;
+  overflow-wrap: anywhere;
+}
+
+/* La informacion usa el espacio restante sin empujar el footer fuera de A4. */
+.sheet-info-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  align-items: stretch;
+  gap: 4mm;
+  grid-template-columns: .86fr 1.14fr;
+  padding-top: 2mm;
+  padding-bottom: 2mm;
+}
+
+.sheet-info-grid > div {
+  box-sizing: border-box;
+  min-height: 0;
+  height: 100%;
+  padding: 3mm;
+  border-radius: 3mm;
+  overflow: hidden;
+}
+
+.sheet-info-grid p {
+  font-size: 8pt;
+  line-height: 1.28;
+  margin-bottom: 1.15mm;
+}
+
+.sheet-description {
+  font-size: 7.9pt !important;
+  line-height: 1.25 !important;
+}
+
+/* Footer mucho mas compacto. */
+.sheet-footer {
+  flex: 0 0 auto;
+  margin-top: 0 !important;
+  padding: 2.6mm 8mm 2mm !important;
+}
+
+.sheet-agent-card {
+  gap: 3mm;
+  grid-template-columns: 20mm 1fr;
+}
+
+.sheet-agent-card > img {
+  width: 20mm;
+  height: 20mm;
+  border-width: 1.8px;
+}
+
+.sheet-agent-card small {
+  font-size: 6pt;
+  letter-spacing: .11em;
+}
+
+.sheet-agent-card h3 {
+  font-size: 12.5pt;
+  margin: .5mm 0;
+}
+
+.sheet-agent-card p {
+  font-size: 7.2pt;
+}
+
+.sheet-agent-card ul {
+  gap: 2mm;
+  margin-top: 1.4mm;
+}
+
+.sheet-agent-card li {
+  font-size: 6.6pt;
+  line-height: 1.15;
+}
+
+.sheet-agent-card li span {
+  width: 3.5mm;
+  height: 3.5mm;
+  margin-bottom: .35mm;
+}
+
+.sheet-agent-card li strong {
+  font-size: 5.4pt;
+  margin-bottom: .25mm;
+}
+
+.sheet-broker-brand {
+  gap: 2mm;
+  margin-top: 1.7mm;
+  padding-top: 1.4mm;
+}
+
+.sheet-broker-brand img {
+  width: 20mm;
+  height: 9mm;
+  border-radius: 2mm;
+  padding: .6mm 1mm;
+}
+
+.sheet-broker-brand p {
+  font-size: 9.5pt;
+}
+
+.sheet-legal-note {
+  font-size: 5.7pt;
+  line-height: 1.15;
+  margin-top: .8mm;
+}
+
+/* Ajustes automaticos si una propiedad contiene una descripcion especialmente extensa. */
+.property-sheet-a4.sheet-density-compact .sheet-hero {
+  flex-basis: 65mm;
+  height: 65mm !important;
+}
+
+.property-sheet-a4.sheet-density-compact .sheet-gallery-image,
+.property-sheet-a4.sheet-density-compact .sheet-gallery-placeholder {
+  height: 21mm !important;
+}
+
+.property-sheet-a4.sheet-density-compact .sheet-feature-item {
+  min-height: 14mm;
+}
+
+.property-sheet-a4.sheet-density-compact .sheet-info-grid p,
+.property-sheet-a4.sheet-density-compact .sheet-description {
+  font-size: 7.3pt !important;
+  line-height: 1.2 !important;
+}
+
+.property-sheet-a4.sheet-density-tight .sheet-hero {
+  flex-basis: 61mm;
+  height: 61mm !important;
+}
+
+.property-sheet-a4.sheet-density-tight .sheet-gallery-strip {
+  padding-top: 2mm;
+}
+
+.property-sheet-a4.sheet-density-tight .sheet-gallery-image,
+.property-sheet-a4.sheet-density-tight .sheet-gallery-placeholder {
+  height: 19mm !important;
+}
+
+.property-sheet-a4.sheet-density-tight .sheet-section {
+  padding-top: 1.7mm;
+  padding-bottom: 1.7mm;
+}
+
+.property-sheet-a4.sheet-density-tight .sheet-feature-item {
+  min-height: 12.8mm;
+  padding: 1.4mm 1.7mm;
+}
+
+.property-sheet-a4.sheet-density-tight .sheet-info-grid p,
+.property-sheet-a4.sheet-density-tight .sheet-description {
+  font-size: 6.8pt !important;
+  line-height: 1.16 !important;
+}
+
+.property-sheet-a4.sheet-density-tight .sheet-footer {
+  padding-top: 2mm !important;
+  padding-bottom: 1.5mm !important;
+}
+
+.property-sheet-a4.sheet-density-ultra .sheet-hero {
+  flex-basis: 57mm;
+  height: 57mm !important;
+}
+
+.property-sheet-a4.sheet-density-ultra .sheet-gallery-image,
+.property-sheet-a4.sheet-density-ultra .sheet-gallery-placeholder {
+  height: 17mm !important;
+}
+
+.property-sheet-a4.sheet-density-ultra .sheet-section h2 {
+  font-size: 12pt;
+  margin-bottom: 2.4mm;
+}
+
+.property-sheet-a4.sheet-density-ultra .sheet-feature-item {
+  min-height: 11.8mm;
+}
+
+.property-sheet-a4.sheet-density-ultra .sheet-feature-icon {
+  width: 4.2mm;
+  height: 4.2mm;
+}
+
+.property-sheet-a4.sheet-density-ultra .sheet-feature-item small {
+  font-size: 5.2pt;
+}
+
+.property-sheet-a4.sheet-density-ultra .sheet-feature-item strong,
+.property-sheet-a4.sheet-density-ultra .sheet-info-grid p,
+.property-sheet-a4.sheet-density-ultra .sheet-description {
+  font-size: 6.3pt !important;
+  line-height: 1.12 !important;
+}
+
+@media (max-width: 900px) {
+  .property-sheet-page {
+    overflow-x: auto;
+    padding: .75rem;
+  }
+
+  .property-sheet-a4 {
+    width: 210mm !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
+    max-height: 297mm !important;
+    transform-origin: top left;
+  }
+}
+
+@media print {
+  @page { size: A4 portrait; margin: 0; }
+  .property-sheet-a4 {
+    width: 210mm !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
+    max-height: 297mm !important;
+  }
+}
