@@ -102,11 +102,15 @@
 (() => {
   const link = document.createElement('link');
   link.rel = 'stylesheet';
-  link.href = 'css/admin-enterprise.css?v=20260826-enterprise-v1';
+  link.href = 'css/admin-enterprise.css?v=20260826-enterprise-v2';
   document.head.appendChild(link);
 
   const script = document.createElement('script');
-  script.src = 'js/admin-enterprise.js?v=20260826-enterprise-v1';
-  script.defer = true;
+  script.src = 'js/admin-enterprise.js?v=20260826-enterprise-v2';
+  script.onload = () => {
+    const integration = document.createElement('script');
+    integration.src = 'js/admin-enterprise-integrations.js?v=20260826-enterprise-v2';
+    document.head.appendChild(integration);
+  };
   document.head.appendChild(script);
 })();
