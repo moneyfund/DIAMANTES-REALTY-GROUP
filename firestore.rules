@@ -149,9 +149,10 @@ service cloud.firestore {
         && isValidCommercialStatus(request.resource.data);
     }
 
-    function agentAssistedAssignmentIsAllowed() {
+    function agentAssistedAssignmentIsAllowed(propertyId) {
       let data = request.resource.data;
       let changed = data.diff(resource.data).affectedKeys();
+      let audit = getAfter(/databases/$(database)/documents/propertyListingAudit/$(propertyId)).data;
       return isAgent()
         && resource.data.agentId == request.auth.uid
         && isOwnProperty(resource.data)
@@ -172,21 +173,18 @@ service cloud.firestore {
         && data.email == data.agentEmail
         && data.ownerEmail == data.agentEmail
         && data.createdByEmail == data.agentEmail
-        && data.uploadedOnBehalf == true
-        && data.uploadedByAgentId == request.auth.uid
-        && data.uploadedByAgentEmail == requestEmail()
-        && data.uploadedOnBehalfOfAgentId == data.agentId
-        && data.uploadedOnBehalfOfAgentEmail == data.agentEmail
-        && data.assignmentAuditVersion == 1
-        && data.assignedAt == request.time
         && data.updatedAt == request.time
+        && audit.propertyId == propertyId
+        && audit.uploadedByAgentId == request.auth.uid
+        && audit.uploadedByAgentEmail == requestEmail()
+        && audit.ownerAgentId == data.agentId
+        && audit.ownerAgentEmail == data.agentEmail
+        && audit.source == 'agent-dashboard-assisted-listing'
+        && audit.createdAt == request.time
         && changed.hasOnly([
           'agentId', 'agenteId', 'createdBy', 'ownerId', 'userId',
           'agentEmail', 'email', 'createdByEmail', 'ownerEmail',
-          'agentName', 'agentPhone', 'agentWhatsapp', 'agentPhoto',
-          'uploadedOnBehalf', 'uploadedByAgentId', 'uploadedByAgentEmail', 'uploadedByAgentName',
-          'uploadedOnBehalfOfAgentId', 'uploadedOnBehalfOfAgentEmail', 'uploadedOnBehalfOfAgentName',
-          'assignmentAuditVersion', 'assignedAt', 'updatedAt'
+          'agentName', 'agentPhone', 'agentWhatsapp', 'agentPhoto', 'updatedAt'
         ]);
     }
 
@@ -198,10 +196,7 @@ service cloud.firestore {
         && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
           'approvedAt', 'approvedBy', 'rejectedAt', 'rejectedBy', 'reviewedAt',
           'agentId', 'agenteId', 'createdBy', 'ownerId', 'userId',
-          'agentEmail', 'email', 'createdByEmail', 'ownerEmail',
-          'uploadedOnBehalf', 'uploadedByAgentId', 'uploadedByAgentEmail', 'uploadedByAgentName',
-          'uploadedOnBehalfOfAgentId', 'uploadedOnBehalfOfAgentEmail', 'uploadedOnBehalfOfAgentName',
-          'assignmentAuditVersion', 'assignedAt'
+          'agentEmail', 'email', 'createdByEmail', 'ownerEmail'
         ])
         && (
           (resource.data.publicationStatus == 'approved'
@@ -274,8 +269,35 @@ service cloud.firestore {
     match /properties/{propertyId} {
       allow read: if canReadProperty(resource.data);
       allow create: if isSignedIn() && (isAdmin() || agentCreateIsReviewOnly());
-      allow update: if isSignedIn() && (isAdmin() || agentUpdateIsAllowed() || agentAssistedAssignmentIsAllowed());
+      allow update: if isSignedIn() && (isAdmin() || agentUpdateIsAllowed() || agentAssistedAssignmentIsAllowed(propertyId));
       allow delete: if isSignedIn() && (isOwnProperty(resource.data) || isAdmin());
+    }
+
+    match /propertyListingAudit/{propertyId} {
+      allow read: if isAdmin();
+      allow create: if isAgent()
+        && request.resource.data.keys().hasAll([
+          'propertyId', 'uploadedByAgentId', 'uploadedByAgentEmail', 'uploadedByAgentName',
+          'ownerAgentId', 'ownerAgentEmail', 'ownerAgentName', 'source', 'createdAt'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'propertyId', 'uploadedByAgentId', 'uploadedByAgentEmail', 'uploadedByAgentName',
+          'ownerAgentId', 'ownerAgentEmail', 'ownerAgentName', 'source', 'createdAt'
+        ])
+        && request.resource.data.propertyId == propertyId
+        && request.resource.data.uploadedByAgentId == request.auth.uid
+        && request.resource.data.uploadedByAgentEmail == requestEmail()
+        && request.resource.data.ownerAgentId is string
+        && request.resource.data.ownerAgentId != request.auth.uid
+        && isAllowedListingAgentEmail(request.resource.data.ownerAgentEmail)
+        && request.resource.data.source == 'agent-dashboard-assisted-listing'
+        && request.resource.data.createdAt == request.time
+        && get(/databases/$(database)/documents/properties/$(propertyId)).data.agentId == request.auth.uid
+        && get(/databases/$(database)/documents/properties/$(propertyId)).data.publicationStatus == 'pending_review'
+        && get(/databases/$(database)/documents/properties/$(propertyId)).data.publicVisible == false
+        && getAfter(/databases/$(database)/documents/properties/$(propertyId)).data.agentId == request.resource.data.ownerAgentId
+        && getAfter(/databases/$(database)/documents/properties/$(propertyId)).data.agentEmail == request.resource.data.ownerAgentEmail;
+      allow update, delete: if isAdmin();
     }
 
     match /properties/{propertyId}/comments/{commentId} {
