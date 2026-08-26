@@ -90,3 +90,10 @@
     const waitForAdmin = setInterval(() => { if (!document.body.classList.contains('auth-checking') && window.inmoFirebase?.auth?.currentUser) { clearInterval(waitForAdmin); listen(); } }, 500);
   });
 })();
+
+(() => {
+  const script = document.createElement('script');
+  script.src = 'js/admin-listing-audit.js?v=20260826-assisted-listing';
+  script.defer = true;
+  document.head.appendChild(script);
+})();
