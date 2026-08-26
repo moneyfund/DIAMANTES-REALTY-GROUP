@@ -226,6 +226,7 @@
     setStatusMessage('Preparando imágenes y generando PDF…', 'info');
 
     try {
+      window.inmoPropertySheetRenderSync?.syncCurrentSheet?.();
       normalizeAllImages();
       await ensureFontsReady();
       const imageResult = await waitForImages(sheet);
@@ -233,6 +234,7 @@
         console.warn('[PropertySheet] Algunas imágenes no estuvieron disponibles para el PDF.', imageResult);
       }
 
+      window.inmoPropertySheetRenderSync?.syncCurrentSheet?.();
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
       const captureWidth = Math.round(sheet.clientWidth);
@@ -249,7 +251,13 @@
           width: captureWidth,
           height: captureHeight,
           windowWidth: Math.max(document.documentElement.clientWidth, captureWidth),
-          windowHeight: Math.max(document.documentElement.clientHeight, captureHeight)
+          windowHeight: Math.max(document.documentElement.clientHeight, captureHeight),
+          onclone: (clonedDocument) => {
+            const clonedSheet = clonedDocument.getElementById('property-sheet-pdf');
+            clonedDocument.body.classList.add('is-generating-pdf');
+            clonedSheet?.classList.add('property-sheet-pdf-render');
+            window.inmoPropertySheetRenderSync?.syncSheet?.(clonedSheet);
+          }
         }),
         PDF_RENDER_TIMEOUT_MS,
         'La generación del PDF tardó demasiado.'
