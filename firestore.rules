@@ -1,401 +1,598 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
+
     function isSignedIn() {
       return request.auth != null;
     }
 
     function userEmail() {
-      return isSignedIn() && request.auth.token.email != null ? request.auth.token.email.lower() : '';
+      return isSignedIn() &&
+             request.auth.token.email is string
+        ? request.auth.token.email.lower()
+        : "";
     }
 
     function isAdmin() {
       return isSignedIn() &&
         userEmail() in [
+          "agentenorvingarcia@gmail.com",
           "norvingarcia220@gmail.com",
-          "diego.valdivia.52056@gmail.com",
           "diamantesrealtygroup@gmail.com"
         ];
     }
 
-    function validPublicForm() {
+    function isAuthorizedAgentEmail(email) {
+      return email is string &&
+        email.lower() in [
+          "norvingarcia220@gmail.com",
+          "valop27@gmail.com",
+          "dra.nazarethbravo@gmail.com",
+          "diego.valdivia.52056@gmail.com",
+          "27marvin@gmail.com",
+          "rubenn2121@gmail.com",
+          "dr.americamora@gmail.com",
+          "norlanflores3@gmail.com",
+          "amyblandon.as@gmail.com",
+          "marccenarokarel@gmail.com",
+          "caguadamuzmoreno@gmail.com",
+          "agentenorvingarcia@gmail.com",
+          "valenzuela.ing120@gmail.com",
+          "nazarethbravo.realestate@gmail.com",
+          "uh243384@gmail.com"
+        ];
+    }
+
+    function isAuthorizedAgent() {
+      return isSignedIn() && isAuthorizedAgentEmail(userEmail());
+    }
+
+    function isApprovedPublic() {
+      return resource.data.publicVisible == true &&
+             resource.data.publicationStatus == "approved";
+    }
+
+    function isLegacyPublic() {
+      return !("publicationStatus" in resource.data) &&
+             !("publicVisible" in resource.data);
+    }
+
+    function isOwnerData(data) {
+      return isSignedIn() && (
+        ("agentId" in data && data.agentId == request.auth.uid) ||
+        ("agenteId" in data && data.agenteId == request.auth.uid) ||
+        ("createdBy" in data && data.createdBy == request.auth.uid) ||
+        ("ownerId" in data && data.ownerId == request.auth.uid) ||
+        ("userId" in data && data.userId == request.auth.uid) ||
+        (
+          "agentEmail" in data &&
+          data.agentEmail is string &&
+          data.agentEmail.lower() == userEmail()
+        ) ||
+        (
+          "createdByEmail" in data &&
+          data.createdByEmail is string &&
+          data.createdByEmail.lower() == userEmail()
+        ) ||
+        (
+          "ownerEmail" in data &&
+          data.ownerEmail is string &&
+          data.ownerEmail.lower() == userEmail()
+        ) ||
+        (
+          "email" in data &&
+          data.email is string &&
+          data.email.lower() == userEmail()
+        )
+      );
+    }
+
+    function isOwner() {
+      return isOwnerData(resource.data);
+    }
+
+    /*
+     * CREACIÓN SEGURA DE PROPIEDADES POR AGENTES
+     *
+     * Una propiedad nueva se crea primero a nombre del agente que tiene
+     * la sesión iniciada. Si se va a enlistar para otro agente, el cambio
+     * se hace después mediante una operación atómica con auditoría privada.
+     */
+
+    function createsOwnProperty() {
       let data = request.resource.data;
-      return data.keys().hasAll(['tipo', 'nombre', 'telefono', 'correo', 'estado', 'createdAt'])
-        && data.keys().hasOnly(['tipo', 'nombre', 'telefono', 'correo', 'mensaje', 'asunto', 'estado', 'origen', 'paginaOrigen', 'createdAt', 'updatedAt', 'tipoPropiedad', 'modalidad', 'ciudad'])
-        && data.tipo in ['contacto', 'quiero-vender']
-        && data.estado == 'nuevo'
-        && data.nombre is string && data.nombre.size() >= 2 && data.nombre.size() <= 120
-        && data.telefono is string && data.telefono.size() <= 40
-        && data.correo is string && data.correo.size() <= 160
-        && data.createdAt == request.time
-        && (!data.keys().hasAny(['updatedAt']) || data.updatedAt == request.time)
-        && (!data.keys().hasAny(['origen']) || data.origen == 'web-publica')
-        && (!data.keys().hasAny(['paginaOrigen']) || (data.paginaOrigen is string && data.paginaOrigen.size() <= 300))
-        && (!data.keys().hasAny(['asunto']) || (data.asunto is string && data.asunto.size() <= 120))
-        && (!data.keys().hasAny(['mensaje']) || (data.mensaje is string && data.mensaje.size() <= 3000))
-        && (!data.keys().hasAny(['tipoPropiedad']) || (data.tipoPropiedad is string && data.tipoPropiedad.size() <= 80))
-        && (!data.keys().hasAny(['modalidad']) || (data.modalidad is string && data.modalidad.size() <= 30))
-        && (!data.keys().hasAny(['ciudad']) || (data.ciudad is string && data.ciudad.size() <= 120));
+
+      return isAuthorizedAgent() &&
+        ("agentId" in data && data.agentId == request.auth.uid) &&
+        ("createdBy" in data && data.createdBy == request.auth.uid) &&
+        (!("agenteId" in data) || data.agenteId == request.auth.uid) &&
+        (!("ownerId" in data) || data.ownerId == request.auth.uid) &&
+        (!("userId" in data) || data.userId == request.auth.uid) &&
+        (
+          !("agentEmail" in data) ||
+          (data.agentEmail is string && data.agentEmail.lower() == userEmail())
+        ) &&
+        (
+          !("createdByEmail" in data) ||
+          (data.createdByEmail is string && data.createdByEmail.lower() == userEmail())
+        ) &&
+        (
+          !("ownerEmail" in data) ||
+          (data.ownerEmail is string && data.ownerEmail.lower() == userEmail())
+        ) &&
+        (
+          !("email" in data) ||
+          (data.email is string && data.email.lower() == userEmail())
+        );
     }
 
-    function isAgent() {
-      return isSignedIn() && (
-        isAdmin()
-        || exists(/databases/$(database)/documents/agents/$(request.auth.uid))
-        || userEmail() in [
-          "valop27@gmail.com", "dra.nazarethbravo@gmail.com", "27marvin@gmail.com",
-          "rubenn2121@gmail.com", "dr.americamora@gmail.com", "norlanflores3@gmail.com",
-          "amyblandon.as@gmail.com", "marccenarokarel@gmail.com", "caguadamuzmoreno@gmail.com",
-          "agentenorvingarcia@gmail.com", "valenzuela.ing120@gmail.com",
-          "nazarethbravo.realestate@gmail.com", "uh243384@gmail.com"
-        ]
-      );
-    }
+    /*
+     * EDICIÓN NORMAL DEL PROPIETARIO
+     *
+     * El agente puede editar su propiedad, pero no puede cambiar libremente
+     * los campos que determinan a quién pertenece el listado.
+     */
 
-    function requestEmail() {
-      return userEmail();
-    }
-
-    function isAllowedListingAgentEmail(value) {
-      return value is string && value.lower() in [
-        "norvingarcia220@gmail.com",
-        "valop27@gmail.com",
-        "dra.nazarethbravo@gmail.com",
-        "diego.valdivia.52056@gmail.com",
-        "27marvin@gmail.com",
-        "rubenn2121@gmail.com",
-        "dr.americamora@gmail.com",
-        "norlanflores3@gmail.com",
-        "amyblandon.as@gmail.com",
-        "marccenarokarel@gmail.com",
-        "caguadamuzmoreno@gmail.com",
-        "agentenorvingarcia@gmail.com",
-        "valenzuela.ing120@gmail.com",
-        "nazarethbravo.realestate@gmail.com",
-        "uh243384@gmail.com"
-      ];
-    }
-
-    function isOwnAgentProfile(data, profileId) {
-      return isSignedIn() && (
-        profileId == request.auth.uid
-        || data.uid == request.auth.uid
-        || data.userId == request.auth.uid
-        || data.agentId == request.auth.uid
-        || (requestEmail() != '' && (data.email == requestEmail() || data.correo == requestEmail()))
-      );
-    }
-
-    function isOwnProperty(data) {
-      return isSignedIn() && (
-        data.agentId == request.auth.uid
-        || data.agenteId == request.auth.uid
-        || data.createdBy == request.auth.uid
-        || data.ownerId == request.auth.uid
-        || data.userId == request.auth.uid
-        || (requestEmail() != '' && (
-          data.agentEmail == requestEmail()
-          || data.email == requestEmail()
-          || data.createdByEmail == requestEmail()
-          || data.ownerEmail == requestEmail()
-          || data.createdBy == requestEmail()
-        ))
-      );
-    }
-
-    function isPublicProperty(data) {
-      let publicVisibility = !data.keys().hasAny(['visibility']) || data.visibility == 'public';
-      return publicVisibility && ((data.publicationStatus == 'approved' && data.publicVisible == true)
-        || (!data.keys().hasAny(['publicationStatus']) && !data.keys().hasAny(['publicVisible'])));
-    }
-
-    function canReadProperty(data) {
-      let visibility = data.keys().hasAny(['visibility']) ? data.visibility : 'public';
-      return isAdmin() || isPublicProperty(data)
-        || (visibility in ['public', 'agents'] && isAgent())
-        || (visibility == 'private' && isOwnProperty(data));
-    }
-
-    function hasValidVisibility(data) {
-      return data.keys().hasAny(['visibility'])
-        && data.visibility in ['public', 'agents', 'private'];
-    }
-
-    function isOwnSharedList(data) {
-      return isSignedIn() && (
-        data.createdByAgentId == request.auth.uid
-        || data.agentId == request.auth.uid
-        || data.createdBy == request.auth.uid
-        || (requestEmail() != '' && (
-          data.createdByAgentEmail == requestEmail()
-          || data.agentEmail == requestEmail()
-          || data.createdByEmail == requestEmail()
-          || data.email == requestEmail()
-        ))
-      );
-    }
-
-    function isValidCommercialStatus(data) {
-      return !data.keys().hasAny(['status'])
-        || data.status in ['Disponible', 'Reservada', 'Vendida', 'Rentada', 'available', 'reserved', 'sold', 'rented'];
-    }
-
-    function agentCreateIsReviewOnly() {
-      return isSignedIn()
-        && request.resource.data.agentId == request.auth.uid
-        && request.resource.data.publicationStatus == 'pending_review'
-        && request.resource.data.publicVisible == false
-        && hasValidVisibility(request.resource.data)
-        && isValidCommercialStatus(request.resource.data);
-    }
-
-    function agentAssistedAssignmentIsAllowed(propertyId) {
-      let data = request.resource.data;
-      let changed = data.diff(resource.data).affectedKeys();
-      let audit = getAfter(/databases/$(database)/documents/propertyListingAudit/$(propertyId)).data;
-      return isAgent()
-        && resource.data.agentId == request.auth.uid
-        && isOwnProperty(resource.data)
-        && resource.data.publicationStatus == 'pending_review'
-        && resource.data.publicVisible == false
-        && data.publicationStatus == 'pending_review'
-        && data.publicVisible == false
-        && hasValidVisibility(data)
-        && isValidCommercialStatus(data)
-        && data.agentId is string
-        && data.agentId != request.auth.uid
-        && data.agenteId == data.agentId
-        && data.ownerId == data.agentId
-        && data.userId == data.agentId
-        && data.createdBy == data.agentId
-        && data.agentEmail is string
-        && isAllowedListingAgentEmail(data.agentEmail)
-        && data.email == data.agentEmail
-        && data.ownerEmail == data.agentEmail
-        && data.createdByEmail == data.agentEmail
-        && data.updatedAt == request.time
-        && audit.propertyId == propertyId
-        && audit.uploadedByAgentId == request.auth.uid
-        && audit.uploadedByAgentEmail == requestEmail()
-        && audit.ownerAgentId == data.agentId
-        && audit.ownerAgentEmail == data.agentEmail
-        && audit.source == 'agent-dashboard-assisted-listing'
-        && audit.createdAt == request.time
-        && changed.hasOnly([
-          'agentId', 'agenteId', 'createdBy', 'ownerId', 'userId',
-          'agentEmail', 'email', 'createdByEmail', 'ownerEmail',
-          'agentName', 'agentPhone', 'agentWhatsapp', 'agentPhoto', 'updatedAt'
+    function regularOwnerUpdateAllowed() {
+      return isAuthorizedAgent() &&
+        isOwnerData(resource.data) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          "agentId",
+          "agenteId",
+          "createdBy",
+          "ownerId",
+          "userId",
+          "agentEmail",
+          "createdByEmail",
+          "ownerEmail",
+          "email"
         ]);
     }
 
-    function agentUpdateIsAllowed() {
-      return isOwnProperty(resource.data)
-        && isOwnProperty(request.resource.data)
-        && isValidCommercialStatus(request.resource.data)
-        && hasValidVisibility(request.resource.data)
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-          'approvedAt', 'approvedBy', 'rejectedAt', 'rejectedBy', 'reviewedAt',
-          'agentId', 'agenteId', 'createdBy', 'ownerId', 'userId',
-          'agentEmail', 'email', 'createdByEmail', 'ownerEmail'
-        ])
-        && (
-          (resource.data.publicationStatus == 'approved'
-            && resource.data.publicVisible == true
-            && request.resource.data.publicationStatus == 'approved'
-            && request.resource.data.publicVisible == true)
-          || (resource.data.publicationStatus == 'rejected'
-            && request.resource.data.publicationStatus == 'pending_review'
-            && request.resource.data.publicVisible == false)
-          || (resource.data.publicationStatus in ['pending_review', 'draft', 'archived']
-            && request.resource.data.publicationStatus == resource.data.publicationStatus
-            && request.resource.data.publicVisible == false)
-          || (!resource.data.keys().hasAny(['publicationStatus'])
-            && !resource.data.keys().hasAny(['publicVisible'])
-            && request.resource.data.publicationStatus == 'approved'
-            && request.resource.data.publicVisible == true)
+    /*
+     * ASIGNACIÓN ASISTIDA ENTRE AGENTES
+     *
+     * Permite que el agente que acaba de crear una propiedad pendiente de
+     * revisión la asigne a otro agente autorizado. El cambio de propietario
+     * únicamente se acepta si en el MISMO batch se crea el registro privado
+     * propertyListingAudit/{propertyId}.
+     */
+
+    function assistedAssignmentAllowed(propertyId) {
+      let auditPath = /databases/$(database)/documents/propertyListingAudit/$(propertyId);
+      let audit = getAfter(auditPath).data;
+
+      return isAuthorizedAgent() &&
+        isOwnerData(resource.data) &&
+        !exists(auditPath) &&
+        ("publicationStatus" in resource.data) &&
+        resource.data.publicationStatus == "pending_review" &&
+        ("publicVisible" in resource.data) &&
+        resource.data.publicVisible == false &&
+        request.resource.data.publicationStatus == "pending_review" &&
+        request.resource.data.publicVisible == false &&
+        request.resource.data.agentId is string &&
+        request.resource.data.agentId != request.auth.uid &&
+        request.resource.data.agentEmail is string &&
+        request.resource.data.agentEmail.lower() != userEmail() &&
+        isAuthorizedAgentEmail(request.resource.data.agentEmail) &&
+        request.resource.data.agenteId == request.resource.data.agentId &&
+        request.resource.data.createdBy == request.resource.data.agentId &&
+        request.resource.data.ownerId == request.resource.data.agentId &&
+        request.resource.data.userId == request.resource.data.agentId &&
+        request.resource.data.email.lower() == request.resource.data.agentEmail.lower() &&
+        request.resource.data.createdByEmail.lower() == request.resource.data.agentEmail.lower() &&
+        request.resource.data.ownerEmail.lower() == request.resource.data.agentEmail.lower() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "agentId",
+          "agenteId",
+          "createdBy",
+          "ownerId",
+          "userId",
+          "agentEmail",
+          "createdByEmail",
+          "ownerEmail",
+          "email",
+          "agentName",
+          "agentPhone",
+          "agentWhatsapp",
+          "agentPhoto",
+          "updatedAt"
+        ]) &&
+        audit.propertyId == propertyId &&
+        audit.uploadedByAgentId == request.auth.uid &&
+        audit.uploadedByAgentEmail is string &&
+        audit.uploadedByAgentEmail.lower() == userEmail() &&
+        audit.uploadedByAgentName is string &&
+        audit.ownerAgentId == request.resource.data.agentId &&
+        audit.ownerAgentEmail is string &&
+        audit.ownerAgentEmail.lower() == request.resource.data.agentEmail.lower() &&
+        audit.ownerAgentName == request.resource.data.agentName &&
+        audit.source == "agent-dashboard-assisted-listing" &&
+        audit.createdAt == request.time;
+    }
+
+    function validListingAuditCreate(auditId) {
+      let propertyPath = /databases/$(database)/documents/properties/$(auditId);
+      let beforeProperty = get(propertyPath).data;
+      let afterProperty = getAfter(propertyPath).data;
+      let data = request.resource.data;
+
+      return isAuthorizedAgent() &&
+        data.keys().hasAll([
+          "propertyId",
+          "uploadedByAgentId",
+          "uploadedByAgentEmail",
+          "uploadedByAgentName",
+          "ownerAgentId",
+          "ownerAgentEmail",
+          "ownerAgentName",
+          "source",
+          "createdAt"
+        ]) &&
+        data.keys().hasOnly([
+          "propertyId",
+          "uploadedByAgentId",
+          "uploadedByAgentEmail",
+          "uploadedByAgentName",
+          "ownerAgentId",
+          "ownerAgentEmail",
+          "ownerAgentName",
+          "source",
+          "createdAt"
+        ]) &&
+        data.propertyId == auditId &&
+        data.uploadedByAgentId == request.auth.uid &&
+        data.uploadedByAgentEmail is string &&
+        data.uploadedByAgentEmail.lower() == userEmail() &&
+        data.uploadedByAgentName is string &&
+        data.ownerAgentId is string &&
+        data.ownerAgentId != request.auth.uid &&
+        data.ownerAgentEmail is string &&
+        data.ownerAgentEmail.lower() != userEmail() &&
+        isAuthorizedAgentEmail(data.ownerAgentEmail) &&
+        data.ownerAgentName is string &&
+        data.source == "agent-dashboard-assisted-listing" &&
+        data.createdAt == request.time &&
+        isOwnerData(beforeProperty) &&
+        beforeProperty.publicationStatus == "pending_review" &&
+        beforeProperty.publicVisible == false &&
+        afterProperty.publicationStatus == "pending_review" &&
+        afterProperty.publicVisible == false &&
+        afterProperty.agentId == data.ownerAgentId &&
+        afterProperty.agenteId == data.ownerAgentId &&
+        afterProperty.createdBy == data.ownerAgentId &&
+        afterProperty.ownerId == data.ownerAgentId &&
+        afterProperty.userId == data.ownerAgentId &&
+        afterProperty.agentEmail is string &&
+        afterProperty.agentEmail.lower() == data.ownerAgentEmail.lower() &&
+        afterProperty.agentName == data.ownerAgentName;
+    }
+
+    /*
+     * VALIDACIONES PARA FORMULARIOS PÚBLICOS
+     */
+
+    function formularioTipoValido() {
+      return request.resource.data.tipo is string &&
+        request.resource.data.tipo in [
+          "contacto",
+          "quiero-vender"
+        ];
+    }
+
+    function formularioEstadoValido() {
+      return request.resource.data.estado is string &&
+             request.resource.data.estado == "nuevo";
+    }
+
+    function formularioNombreValido() {
+      return request.resource.data.nombre is string &&
+             request.resource.data.nombre.size() >= 2 &&
+             request.resource.data.nombre.size() <= 120;
+    }
+
+    function formularioTelefonoValido() {
+      return request.resource.data.telefono is string &&
+             request.resource.data.telefono.size() >= 5 &&
+             request.resource.data.telefono.size() <= 40;
+    }
+
+    function formularioCorreoValido() {
+      return !("correo" in request.resource.data) ||
+        (
+          request.resource.data.correo is string &&
+          request.resource.data.correo.size() <= 160
         );
     }
 
-    match /agents/{agentId} {
-      allow read: if true;
-      allow create: if isSignedIn() && (request.auth.uid == agentId || isAdmin());
-      allow update: if isSignedIn() && (
-        isAdmin()
-        || (
-          (request.auth.uid == agentId || isOwnAgentProfile(resource.data, agentId))
-          && (!request.resource.data.keys().hasAny(['uid']) || request.resource.data.uid == request.auth.uid || request.resource.data.uid == resource.data.uid)
-          && (!request.resource.data.keys().hasAny(['agentId']) || request.resource.data.agentId == request.auth.uid || request.resource.data.agentId == resource.data.agentId)
-          && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-            'role', 'rol', 'admin', 'isAdmin', 'approvedAt', 'approvedBy', 'reviewedAt'
-          ])
-        )
-      );
-      allow delete: if isAdmin();
+    function formularioMensajeValido() {
+      return !("mensaje" in request.resource.data) ||
+        (
+          request.resource.data.mensaje is string &&
+          request.resource.data.mensaje.size() <= 5000
+        );
     }
 
-    match /formularios/{formularioId} {
-      allow create: if validPublicForm();
-      allow read, update, delete: if isAdmin();
+    function formularioAsuntoValido() {
+      return !("asunto" in request.resource.data) ||
+        (
+          request.resource.data.asunto is string &&
+          request.resource.data.asunto.size() <= 250
+        );
     }
 
-    match /agentes/{agentId} {
-      allow get: if (isSignedIn() && request.auth.uid == agentId) || isOwnAgentProfile(resource.data, agentId) || isAdmin();
-      allow list: if isOwnAgentProfile(resource.data, agentId) || isAdmin();
-      allow create, update: if isSignedIn() && (request.auth.uid == agentId || isAdmin());
-      allow delete: if isAdmin();
+    function formularioOrigenValido() {
+      return !("origen" in request.resource.data) ||
+        (
+          request.resource.data.origen is string &&
+          request.resource.data.origen.size() <= 100
+        );
     }
 
-    match /users/{userId} {
-      allow get: if (isSignedIn() && request.auth.uid == userId) || isOwnAgentProfile(resource.data, userId) || isAdmin();
-      allow list: if isOwnAgentProfile(resource.data, userId) || isAdmin();
-      allow create, update: if isSignedIn() && (request.auth.uid == userId || isAdmin());
-      allow delete: if isAdmin();
+    function formularioPaginaValida() {
+      return !("paginaOrigen" in request.resource.data) ||
+        (
+          request.resource.data.paginaOrigen is string &&
+          request.resource.data.paginaOrigen.size() <= 500
+        );
     }
 
-    match /usuarios/{userId} {
-      allow get: if (isSignedIn() && request.auth.uid == userId) || isOwnAgentProfile(resource.data, userId) || isAdmin();
-      allow list: if isOwnAgentProfile(resource.data, userId) || isAdmin();
-      allow create, update: if isSignedIn() && (request.auth.uid == userId || isAdmin());
-      allow delete: if isAdmin();
+    function formularioFechasValidas() {
+      return
+        (
+          !("createdAt" in request.resource.data) ||
+          request.resource.data.createdAt == request.time
+        ) &&
+        (
+          !("updatedAt" in request.resource.data) ||
+          request.resource.data.updatedAt == request.time
+        );
     }
 
-    match /agentProfiles/{profileId} {
-      allow get: if (isSignedIn() && request.auth.uid == profileId) || isOwnAgentProfile(resource.data, profileId) || isAdmin();
-      allow list: if isOwnAgentProfile(resource.data, profileId) || isAdmin();
-      allow create, update: if isSignedIn() && (request.auth.uid == profileId || isAdmin());
-      allow delete: if isAdmin();
+    function formularioPublicoValido() {
+      return formularioTipoValido() &&
+             formularioEstadoValido() &&
+             formularioNombreValido() &&
+             formularioTelefonoValido() &&
+             formularioCorreoValido() &&
+             formularioMensajeValido() &&
+             formularioAsuntoValido() &&
+             formularioOrigenValido() &&
+             formularioPaginaValida() &&
+             formularioFechasValidas();
     }
+
+    /*
+     * PROPIEDADES
+     */
 
     match /properties/{propertyId} {
-      allow read: if canReadProperty(resource.data);
-      allow create: if isSignedIn() && (isAdmin() || agentCreateIsReviewOnly());
-      allow update: if isSignedIn() && (isAdmin() || agentUpdateIsAllowed() || agentAssistedAssignmentIsAllowed(propertyId));
-      allow delete: if isSignedIn() && (isOwnProperty(resource.data) || isAdmin());
+      allow read: if isAdmin() ||
+                     isOwner() ||
+                     isApprovedPublic() ||
+                     isLegacyPublic();
+
+      allow create: if isAdmin() || createsOwnProperty();
+
+      allow update: if isAdmin() ||
+                       regularOwnerUpdateAllowed() ||
+                       assistedAssignmentAllowed(propertyId);
+
+      allow delete: if isAdmin();
+
+      // Comentarios dentro de cada propiedad
+      match /comments/{commentId} {
+        allow read: if true;
+
+        allow create: if isSignedIn();
+
+        allow update, delete: if isAdmin() ||
+          (
+            isSignedIn() &&
+            resource.data.uid == request.auth.uid
+          );
+      }
+
+      // Reseñas dentro de cada propiedad
+      match /reviews/{reviewId} {
+        allow read: if true;
+
+        allow create: if isSignedIn();
+
+        allow update, delete: if isAdmin() ||
+          (
+            isSignedIn() &&
+            resource.data.uid == request.auth.uid
+          );
+      }
+
+      // Likes dentro de cada propiedad
+      match /likes/{uid} {
+        allow read: if true;
+
+        allow create, update, delete: if isSignedIn() &&
+          request.auth.uid == uid;
+      }
+
+      // Favoritos dentro de cada propiedad
+      match /favorites/{uid} {
+        allow read: if isSignedIn() &&
+          request.auth.uid == uid;
+
+        allow create, update, delete: if isSignedIn() &&
+          request.auth.uid == uid;
+      }
+
+      // Formularios privados dentro de una propiedad
+      match /forms/{formId} {
+        allow create: if isSignedIn();
+
+        allow read, update, delete: if isAdmin();
+      }
+
+      // Fallback para otras subcolecciones internas
+      match /{subdocument=**} {
+        allow read: if true;
+
+        allow write: if isAuthorizedAgent() || isAdmin();
+      }
     }
 
-    match /propertyListingAudit/{propertyId} {
+    /*
+     * AUDITORÍA PRIVADA DE CARGAS ASISTIDAS
+     *
+     * El documento usa el mismo ID de la propiedad.
+     * Solo administradores pueden leer esta colección.
+     */
+
+    match /propertyListingAudit/{auditId} {
       allow read: if isAdmin();
-      allow create: if isAgent()
-        && request.resource.data.keys().hasAll([
-          'propertyId', 'uploadedByAgentId', 'uploadedByAgentEmail', 'uploadedByAgentName',
-          'ownerAgentId', 'ownerAgentEmail', 'ownerAgentName', 'source', 'createdAt'
-        ])
-        && request.resource.data.keys().hasOnly([
-          'propertyId', 'uploadedByAgentId', 'uploadedByAgentEmail', 'uploadedByAgentName',
-          'ownerAgentId', 'ownerAgentEmail', 'ownerAgentName', 'source', 'createdAt'
-        ])
-        && request.resource.data.propertyId == propertyId
-        && request.resource.data.uploadedByAgentId == request.auth.uid
-        && request.resource.data.uploadedByAgentEmail == requestEmail()
-        && request.resource.data.ownerAgentId is string
-        && request.resource.data.ownerAgentId != request.auth.uid
-        && isAllowedListingAgentEmail(request.resource.data.ownerAgentEmail)
-        && request.resource.data.source == 'agent-dashboard-assisted-listing'
-        && request.resource.data.createdAt == request.time
-        && get(/databases/$(database)/documents/properties/$(propertyId)).data.agentId == request.auth.uid
-        && get(/databases/$(database)/documents/properties/$(propertyId)).data.publicationStatus == 'pending_review'
-        && get(/databases/$(database)/documents/properties/$(propertyId)).data.publicVisible == false
-        && getAfter(/databases/$(database)/documents/properties/$(propertyId)).data.agentId == request.resource.data.ownerAgentId
-        && getAfter(/databases/$(database)/documents/properties/$(propertyId)).data.agentEmail == request.resource.data.ownerAgentEmail;
+
+      allow create: if isAdmin() || validListingAuditCreate(auditId);
+
       allow update, delete: if isAdmin();
     }
 
-    match /properties/{propertyId}/comments/{commentId} {
+    /*
+     * AGENTES
+     */
+
+    match /agents/{agentId} {
       allow read: if true;
-      allow create: if isSignedIn()
-        && request.resource.data.propertyId == propertyId
-        && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isSignedIn();
+
+      allow create, update: if isAuthorizedAgent() || isAdmin();
+
+      allow delete: if isAdmin();
     }
 
-    match /properties/{propertyId}/reviews/{reviewId} {
+    /*
+     * USUARIOS
+     */
+
+    match /users/{uid} {
+      allow read, create, update: if isSignedIn() &&
+        (
+          request.auth.uid == uid ||
+          isAdmin() ||
+          isAuthorizedAgent()
+        );
+
+      allow delete: if isAdmin();
+    }
+
+    /*
+     * LISTAS COMPARTIDAS
+     */
+
+    match /sharedLists/{listId} {
       allow read: if true;
-      allow create: if isSignedIn()
-        && request.resource.data.propertyId == propertyId
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.rating is number
-        && request.resource.data.rating >= 1
-        && request.resource.data.rating <= 5;
-      allow update, delete: if isSignedIn();
-    }
 
-    match /properties/{propertyId}/likes/{userId} {
-      allow read: if true;
-      allow create, update: if isSignedIn()
-        && request.auth.uid == userId
-        && request.resource.data.propertyId == propertyId
-        && request.resource.data.userId == request.auth.uid;
-      allow delete: if isSignedIn() && request.auth.uid == userId;
-    }
+      allow create: if isAuthorizedAgent();
 
-    match /properties/{propertyId}/favorites/{userId} {
-      allow read: if isSignedIn() && request.auth.uid == userId;
-      allow create, update: if isSignedIn()
-        && request.auth.uid == userId
-        && request.resource.data.propertyId == propertyId
-        && request.resource.data.userId == request.auth.uid;
-      allow delete: if isSignedIn() && request.auth.uid == userId;
-    }
-
-    match /comments/{commentId} {
-      allow read: if true;
-      allow create: if isSignedIn()
-        && request.resource.data.propertyId is string
-        && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isSignedIn();
-    }
-
-    match /reviews/{reviewId} {
-      allow read: if true;
-      allow create: if isSignedIn()
-        && request.resource.data.propertyId is string
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.rating is number
-        && request.resource.data.rating >= 1
-        && request.resource.data.rating <= 5;
-      allow update, delete: if isSignedIn();
-    }
-
-    match /likes/{likeId} {
-      allow read: if true;
-      allow create, update: if isSignedIn()
-        && request.resource.data.propertyId is string
-        && request.resource.data.userId == request.auth.uid;
-      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
-    }
-
-    match /favorites/{favoriteId} {
-      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create, update: if isSignedIn()
-        && request.resource.data.propertyId is string
-        && request.resource.data.userId == request.auth.uid;
-      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin() || isAuthorizedAgent();
     }
 
     match /sharedPropertyLists/{listId} {
-      allow read: if resource.data.status == 'active'
-        || isOwnSharedList(resource.data)
-        || isAdmin();
+      allow read: if true;
 
-      allow create: if isSignedIn()
-        && request.resource.data.createdByAgentId == request.auth.uid
-        && request.resource.data.token is string
-        && request.resource.data.token.size() >= 12
-        && request.resource.data.propertyIds is list
-        && request.resource.data.status in ['active', 'inactive'];
+      allow create: if isAuthorizedAgent();
 
-      allow update: if isSignedIn() && (
-          (isOwnSharedList(resource.data)
-            && isOwnSharedList(request.resource.data)
-            && request.resource.data.token == resource.data.token)
-          || isAdmin()
-        );
-
-      allow delete: if isSignedIn() && (isOwnSharedList(resource.data) || isAdmin());
+      allow update, delete: if isAdmin() || isAuthorizedAgent();
     }
 
-    match /{document=**} {
-      allow read, write: if false;
+    /*
+     * AVALÚOS
+     */
+
+    match /avaluos/{avaluoId} {
+      allow read, create, update: if isAuthorizedAgent() || isAdmin();
+
+      allow delete: if isAdmin();
+    }
+
+    /*
+     * CAPTACIONES
+     */
+
+    match /captaciones/{captacionId} {
+      allow read, create, update: if isAuthorizedAgent() || isAdmin();
+
+      allow delete: if isAdmin();
+    }
+
+    /*
+     * FORMULARIOS PÚBLICOS
+     *
+     * Los visitantes pueden enviar formularios, pero no pueden
+     * leerlos, listarlos, modificarlos ni eliminarlos.
+     */
+
+    match /formularios/{formularioId} {
+      allow create: if formularioPublicoValido();
+
+      allow read, update, delete: if isAdmin();
+    }
+
+    /*
+     * FORMULARIOS PRIVADOS ANTERIORES
+     */
+
+    match /forms/{formId} {
+      allow create: if isSignedIn();
+
+      allow read, update, delete: if isAdmin();
+    }
+
+    /*
+     * RESEÑAS GLOBALES
+     */
+
+    match /reviews/{reviewId} {
+      allow read: if true;
+
+      allow create: if isSignedIn();
+
+      allow update, delete: if isAdmin() ||
+        (
+          isSignedIn() &&
+          resource.data.uid == request.auth.uid
+        );
+    }
+
+    /*
+     * COMENTARIOS GLOBALES
+     */
+
+    match /comments/{commentId} {
+      allow read: if true;
+
+      allow create: if isSignedIn();
+
+      allow update, delete: if isAdmin() ||
+        (
+          isSignedIn() &&
+          resource.data.uid == request.auth.uid
+        );
+    }
+
+    /*
+     * LIKES GLOBALES
+     */
+
+    match /likes/{likeId} {
+      allow read: if true;
+
+      allow create, update, delete: if isSignedIn();
+    }
+
+    /*
+     * FAVORITOS GLOBALES
+     */
+
+    match /favorites/{favoriteId} {
+      allow read, create, update, delete: if isSignedIn();
     }
   }
 }
