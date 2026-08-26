@@ -185,6 +185,27 @@
     await withTimeout(document.fonts.ready, 5000, 'Las tipografías tardaron demasiado en cargar.').catch(() => undefined);
   }
 
+  function getProportionalPlacement(canvas, pageWidth, pageHeight) {
+    const canvasRatio = canvas.width / canvas.height;
+    const pageRatio = pageWidth / pageHeight;
+
+    if (!Number.isFinite(canvasRatio) || canvasRatio <= 0) {
+      return { x: 0, y: 0, width: pageWidth, height: pageHeight };
+    }
+
+    if (Math.abs(canvasRatio - pageRatio) < 0.002) {
+      return { x: 0, y: 0, width: pageWidth, height: pageHeight };
+    }
+
+    if (canvasRatio > pageRatio) {
+      const height = pageWidth / canvasRatio;
+      return { x: 0, y: (pageHeight - height) / 2, width: pageWidth, height };
+    }
+
+    const width = pageHeight * canvasRatio;
+    return { x: (pageWidth - width) / 2, y: 0, width, height: pageHeight };
+  }
+
   async function exportPdf() {
     if (isExporting) return;
     if (!window.html2canvas || !window.jspdf?.jsPDF) {
@@ -214,6 +235,8 @@
 
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
+      const captureWidth = Math.round(sheet.clientWidth);
+      const captureHeight = Math.round(sheet.clientHeight);
       const canvas = await withTimeout(
         window.html2canvas(sheet, {
           scale: 2,
@@ -223,8 +246,10 @@
           logging: false,
           imageTimeout: IMAGE_WAIT_TIMEOUT_MS,
           removeContainer: true,
-          windowWidth: Math.max(document.documentElement.clientWidth, sheet.scrollWidth),
-          windowHeight: Math.max(document.documentElement.clientHeight, sheet.scrollHeight)
+          width: captureWidth,
+          height: captureHeight,
+          windowWidth: Math.max(document.documentElement.clientWidth, captureWidth),
+          windowHeight: Math.max(document.documentElement.clientHeight, captureHeight)
         }),
         PDF_RENDER_TIMEOUT_MS,
         'La generación del PDF tardó demasiado.'
@@ -238,7 +263,8 @@
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       const imageData = canvas.toDataURL('image/jpeg', 0.92);
-      pdf.addImage(imageData, 'JPEG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
+      const placement = getProportionalPlacement(canvas, pageWidth, pageHeight);
+      pdf.addImage(imageData, 'JPEG', placement.x, placement.y, placement.width, placement.height, undefined, 'FAST');
       pdf.save(getFilename());
       setStatusMessage('', '');
     } catch (error) {
