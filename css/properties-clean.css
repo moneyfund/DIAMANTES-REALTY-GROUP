@@ -1,0 +1,122 @@
+/* Diamantes Realty Group — clean public properties surface (2026-08-26)
+   Route-scoped through .properties-page so home sliders and dashboard cards
+   keep their existing presentation. */
+
+body.properties-page:not(.dark):not(.dark-mode) {
+  background: #ffffff !important;
+}
+
+body.properties-page:not(.dark):not(.dark-mode)::before {
+  display: none !important;
+  content: none !important;
+}
+
+body.properties-page:not(.dark):not(.dark-mode) main,
+body.properties-page:not(.dark):not(.dark-mode) .section-properties {
+  background: #ffffff !important;
+}
+
+body.properties-page .section-properties {
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+body.properties-page .properties-compact-header,
+body.properties-page .filter-grid,
+body.properties-page #propertiesGrid,
+body.properties-page .agent-filter-banner {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+body.properties-page .filter-grid {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+body.properties-page #propertiesGrid {
+  padding: 0 !important;
+}
+
+/* One card = one visible surface. The outer article remains only for layout,
+   reveal animations and interaction; it no longer paints a second layer. */
+body.properties-page #propertiesGrid .property-card.public-property-card {
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 14px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+}
+
+body.properties-page #propertiesGrid .public-property-card::before,
+body.properties-page #propertiesGrid .public-property-card::after {
+  display: none !important;
+  content: none !important;
+}
+
+body.properties-page #propertiesGrid .public-property-card .property-card-shell {
+  overflow: hidden !important;
+  border: 1px solid #e4e7ec !important;
+  border-radius: 14px !important;
+  background: #ffffff !important;
+  box-shadow: 0 5px 16px rgba(15, 23, 42, 0.055) !important;
+}
+
+body.properties-page #propertiesGrid .public-property-card .property-card-media {
+  border-radius: 0 !important;
+}
+
+body.properties-page #propertiesGrid .public-property-card .property-card-body,
+body.properties-page #propertiesGrid .public-property-card .property-card-footer {
+  background: #ffffff !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  body.properties-page #propertiesGrid .public-property-card:hover .property-card-shell {
+    transform: translateY(-2px) !important;
+    border-color: #d7dce3 !important;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.085) !important;
+  }
+}
+
+/* Preserve the site's optional dark mode without reintroducing a nested-card look. */
+body.properties-page.dark,
+body.properties-page.dark-mode,
+body.properties-page[data-theme="dark"] {
+  background: #07101d !important;
+}
+
+body.properties-page.dark .section-properties,
+body.properties-page.dark-mode .section-properties,
+body.properties-page[data-theme="dark"] .section-properties {
+  background: #07101d !important;
+}
+
+body.properties-page.dark #propertiesGrid .public-property-card .property-card-shell,
+body.properties-page.dark-mode #propertiesGrid .public-property-card .property-card-shell,
+body.properties-page[data-theme="dark"] #propertiesGrid .public-property-card .property-card-shell {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  background: #0e1d30 !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 720px) {
+  body.properties-page .section-properties.container {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  body.properties-page .properties-compact-header,
+  body.properties-page .filter-grid,
+  body.properties-page #propertiesGrid,
+  body.properties-page .agent-filter-banner {
+    width: calc(100% - 28px);
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+}
