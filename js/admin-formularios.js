@@ -97,3 +97,16 @@
   script.defer = true;
   document.head.appendChild(script);
 })();
+
+/* Enterprise admin shell: mantiene los IDs y listeners existentes, solo reorganiza la interfaz. */
+(() => {
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = 'css/admin-enterprise.css?v=20260826-enterprise-v1';
+  document.head.appendChild(link);
+
+  const script = document.createElement('script');
+  script.src = 'js/admin-enterprise.js?v=20260826-enterprise-v1';
+  script.defer = true;
+  document.head.appendChild(script);
+})();
