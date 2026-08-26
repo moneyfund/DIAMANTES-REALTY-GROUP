@@ -1,0 +1,72 @@
+/* Render sync: preview y PDF comparten los mismos elementos visuales reales. */
+
+/* El footer deja de depender de gradientes/pseudo-elementos que html2canvas interpreta distinto. */
+.sheet-footer {
+  position: relative !important;
+  isolation: isolate !important;
+  overflow: hidden !important;
+  background: #651018 !important;
+}
+
+.sheet-footer::before,
+.sheet-footer::after {
+  display: none !important;
+  content: none !important;
+}
+
+.sheet-footer-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+  display: block;
+}
+
+.sheet-footer .sheet-agent-card {
+  position: relative;
+  z-index: 2;
+}
+
+.sheet-broker-brand,
+.sheet-legal-note {
+  display: none !important;
+}
+
+/* Colores criticos fijados sin depender de herencia o pseudo-reglas. */
+.sheet-hero-copy h1,
+.sheet-hero-copy p,
+.sheet-hero-overlay h1,
+.sheet-hero-overlay p,
+.sheet-hero-overlay span,
+.sheet-hero-copy > strong,
+.sheet-hero-overlay strong,
+.sheet-agent-card small,
+.sheet-agent-card h3,
+.sheet-agent-card p,
+.sheet-agent-card li,
+.sheet-agent-card li strong {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+.sheet-agent-card li span {
+  color: #f1d9a5 !important;
+  -webkit-text-fill-color: #f1d9a5 !important;
+}
+
+.sheet-hero-copy > strong,
+.sheet-hero-overlay strong {
+  background: #b71720 !important;
+  border: 1px solid rgba(255,255,255,.34) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  box-shadow: 0 6px 18px rgba(70,0,7,.32) !important;
+}
+
+/* html2canvas conserva mejor un color solido que un gradiente CSS complejo. */
+body.is-generating-pdf .sheet-footer,
+.property-sheet-pdf-render .sheet-footer {
+  background: #651018 !important;
+}
