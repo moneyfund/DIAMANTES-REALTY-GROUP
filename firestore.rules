@@ -56,6 +56,26 @@ service cloud.firestore {
       return userEmail();
     }
 
+    function isAllowedListingAgentEmail(value) {
+      return value is string && value.lower() in [
+        "norvingarcia220@gmail.com",
+        "valop27@gmail.com",
+        "dra.nazarethbravo@gmail.com",
+        "diego.valdivia.52056@gmail.com",
+        "27marvin@gmail.com",
+        "rubenn2121@gmail.com",
+        "dr.americamora@gmail.com",
+        "norlanflores3@gmail.com",
+        "amyblandon.as@gmail.com",
+        "marccenarokarel@gmail.com",
+        "caguadamuzmoreno@gmail.com",
+        "agentenorvingarcia@gmail.com",
+        "valenzuela.ing120@gmail.com",
+        "nazarethbravo.realestate@gmail.com",
+        "uh243384@gmail.com"
+      ];
+    }
+
     function isOwnAgentProfile(data, profileId) {
       return isSignedIn() && (
         profileId == request.auth.uid
@@ -129,6 +149,47 @@ service cloud.firestore {
         && isValidCommercialStatus(request.resource.data);
     }
 
+    function agentAssistedAssignmentIsAllowed() {
+      let data = request.resource.data;
+      let changed = data.diff(resource.data).affectedKeys();
+      return isAgent()
+        && resource.data.agentId == request.auth.uid
+        && isOwnProperty(resource.data)
+        && resource.data.publicationStatus == 'pending_review'
+        && resource.data.publicVisible == false
+        && data.publicationStatus == 'pending_review'
+        && data.publicVisible == false
+        && hasValidVisibility(data)
+        && isValidCommercialStatus(data)
+        && data.agentId is string
+        && data.agentId != request.auth.uid
+        && data.agenteId == data.agentId
+        && data.ownerId == data.agentId
+        && data.userId == data.agentId
+        && data.createdBy == data.agentId
+        && data.agentEmail is string
+        && isAllowedListingAgentEmail(data.agentEmail)
+        && data.email == data.agentEmail
+        && data.ownerEmail == data.agentEmail
+        && data.createdByEmail == data.agentEmail
+        && data.uploadedOnBehalf == true
+        && data.uploadedByAgentId == request.auth.uid
+        && data.uploadedByAgentEmail == requestEmail()
+        && data.uploadedOnBehalfOfAgentId == data.agentId
+        && data.uploadedOnBehalfOfAgentEmail == data.agentEmail
+        && data.assignmentAuditVersion == 1
+        && data.assignedAt == request.time
+        && data.updatedAt == request.time
+        && changed.hasOnly([
+          'agentId', 'agenteId', 'createdBy', 'ownerId', 'userId',
+          'agentEmail', 'email', 'createdByEmail', 'ownerEmail',
+          'agentName', 'agentPhone', 'agentWhatsapp', 'agentPhoto',
+          'uploadedOnBehalf', 'uploadedByAgentId', 'uploadedByAgentEmail', 'uploadedByAgentName',
+          'uploadedOnBehalfOfAgentId', 'uploadedOnBehalfOfAgentEmail', 'uploadedOnBehalfOfAgentName',
+          'assignmentAuditVersion', 'assignedAt', 'updatedAt'
+        ]);
+    }
+
     function agentUpdateIsAllowed() {
       return isOwnProperty(resource.data)
         && isOwnProperty(request.resource.data)
@@ -137,7 +198,10 @@ service cloud.firestore {
         && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
           'approvedAt', 'approvedBy', 'rejectedAt', 'rejectedBy', 'reviewedAt',
           'agentId', 'agenteId', 'createdBy', 'ownerId', 'userId',
-          'agentEmail', 'createdByEmail', 'ownerEmail'
+          'agentEmail', 'email', 'createdByEmail', 'ownerEmail',
+          'uploadedOnBehalf', 'uploadedByAgentId', 'uploadedByAgentEmail', 'uploadedByAgentName',
+          'uploadedOnBehalfOfAgentId', 'uploadedOnBehalfOfAgentEmail', 'uploadedOnBehalfOfAgentName',
+          'assignmentAuditVersion', 'assignedAt'
         ])
         && (
           (resource.data.publicationStatus == 'approved'
@@ -210,7 +274,7 @@ service cloud.firestore {
     match /properties/{propertyId} {
       allow read: if canReadProperty(resource.data);
       allow create: if isSignedIn() && (isAdmin() || agentCreateIsReviewOnly());
-      allow update: if isSignedIn() && (isAdmin() || agentUpdateIsAllowed());
+      allow update: if isSignedIn() && (isAdmin() || agentUpdateIsAllowed() || agentAssistedAssignmentIsAllowed());
       allow delete: if isSignedIn() && (isOwnProperty(resource.data) || isAdmin());
     }
 
