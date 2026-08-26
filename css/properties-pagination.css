@@ -1,0 +1,117 @@
+/* Diamantes Realty Group — paginación del catálogo público */
+body.properties-page .properties-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  margin: 34px auto 10px;
+  padding: 8px 0 2px;
+}
+
+body.properties-page .properties-pagination.hidden {
+  display: none !important;
+}
+
+body.properties-page .properties-pagination__pages {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+body.properties-page .properties-pagination button {
+  appearance: none;
+  border: 1px solid #dfe3e8;
+  background: #ffffff;
+  color: #1f2937;
+  min-width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  padding: 0 12px;
+  font: 700 0.9rem/1 "Plus Jakarta Sans", sans-serif;
+  cursor: pointer;
+  transition: border-color .18s ease, background .18s ease, color .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+body.properties-page .properties-pagination button:hover:not(:disabled):not(.is-active) {
+  border-color: #b8bec7;
+  background: #f8f9fb;
+  transform: translateY(-1px);
+}
+
+body.properties-page .properties-pagination__page.is-active {
+  border-color: #9e0b0f;
+  background: #9e0b0f;
+  color: #ffffff;
+  box-shadow: 0 6px 16px rgba(158, 11, 15, .16);
+}
+
+body.properties-page .properties-pagination__arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 105px;
+}
+
+body.properties-page .properties-pagination__arrow > span[aria-hidden="true"] {
+  font-size: 1.35rem;
+  line-height: 1;
+  margin-top: -1px;
+}
+
+body.properties-page .properties-pagination button:disabled {
+  opacity: .38;
+  cursor: default;
+}
+
+body.properties-page .properties-pagination__ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 42px;
+  color: #7a828d;
+  font-weight: 700;
+}
+
+body.properties-page #propertiesGrid > .property-card[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 720px) {
+  body.properties-page .properties-pagination {
+    gap: 7px;
+    width: calc(100% - 28px);
+    margin-top: 26px;
+  }
+
+  body.properties-page .properties-pagination__pages {
+    gap: 5px;
+  }
+
+  body.properties-page .properties-pagination button {
+    min-width: 38px;
+    height: 40px;
+    border-radius: 9px;
+    padding: 0 10px;
+    font-size: .84rem;
+  }
+
+  body.properties-page .properties-pagination__arrow {
+    min-width: 40px;
+    width: 40px;
+    padding: 0;
+  }
+
+  body.properties-page .properties-pagination__arrow-label {
+    display: none;
+  }
+
+  body.properties-page .properties-pagination__ellipsis {
+    width: 20px;
+    height: 40px;
+  }
+}
