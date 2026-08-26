@@ -1,4 +1,5 @@
 import './agent-dashboard-core.js?v=20260817-0205-auth-restore';
+import './agent-assisted-listing.js?v=20260826-assisted-listing';
 
 const applyDashboardNavWhite = () => {
   const sidebar = document.getElementById('dashboardSidebar');
