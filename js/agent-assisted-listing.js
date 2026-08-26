@@ -1,4 +1,5 @@
-import { auth, db, collection, doc, getDoc, getDocs, onSnapshot, query, where, updateDoc, serverTimestamp, onAuthStateChanged } from './firebase-services.js';
+import { auth, db, collection, doc, getDoc, getDocs, onSnapshot, query, where, serverTimestamp, onAuthStateChanged } from './firebase-services.js';
+import { writeBatch } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const ALLOWED = new Set([
   'norvingarcia220@gmail.com','valop27@gmail.com','dra.nazarethbravo@gmail.com','diego.valdivia.52056@gmail.com',
@@ -56,7 +57,7 @@ function describe(agent,locked=false){
   const me=selfAgent(), mine=me&&(agent.id===me.id||agent.email===me.email);
   n.innerHTML=locked?`Esta propiedad pertenece a <strong>${esc(agent.name)}</strong>. Al editarla se conserva ese agente.`
     :mine?'La propiedad quedará en <strong>Mis propiedades</strong> y se mostrará a tu nombre.'
-    :`La propiedad quedará en el inventario de <strong>${esc(agent.name)}</strong>. Tu perfil solo quedará como trazabilidad interna para administración.`;
+    :`La propiedad quedará en el inventario de <strong>${esc(agent.name)}</strong>. Tu perfil solo quedará en la auditoría privada de administración.`;
 }
 function renderOptions(preferred=''){
   const sel=document.getElementById('propertyListingAgent'); if(!sel)return;
@@ -85,9 +86,13 @@ function begin(){
 async function transfer(){
   const q=s.pending,u=s.user;if(!q||!u||!q.success||!q.candidate||q.transferring)return;q.transferring=true;const a=q.target,uploader=document.getElementById('agentName')?.value.trim()||u.displayName||u.email||'Agente DRG';
   try{
-    const ref=doc(db,'properties',q.candidate),snap=await getDoc(ref);if(!snap.exists()||norm(snap.data().createdBy)!==norm(u.uid))throw new Error('ownership changed');
-    await updateDoc(ref,{agenteId:a.id,agentId:a.id,agentEmail:a.email,email:a.email,createdByEmail:a.email,ownerEmail:a.email,createdBy:a.id,ownerId:a.id,userId:a.id,agentName:a.name,agentPhone:a.phone||'',agentWhatsapp:a.whatsapp||'',agentPhoto:a.photo||'',uploadedOnBehalf:true,uploadedByAgentId:u.uid,uploadedByAgentEmail:norm(u.email),uploadedByAgentName:uploader,uploadedOnBehalfOfAgentId:a.id,uploadedOnBehalfOfAgentEmail:a.email,uploadedOnBehalfOfAgentName:a.name,assignmentAuditVersion:1,assignedAt:serverTimestamp(),updatedAt:serverTimestamp()});
-    s.pending=null;setMessage(`Propiedad enviada a revisión y enlistada a nombre de ${a.name}. Administración conservará la trazabilidad de que la carga se realizó desde tu perfil.`,'success');unlock();
+    const propertyRef=doc(db,'properties',q.candidate),snap=await getDoc(propertyRef);if(!snap.exists()||norm(snap.data().createdBy)!==norm(u.uid))throw new Error('ownership changed');
+    const auditRef=doc(db,'propertyListingAudit',q.candidate);
+    const batch=writeBatch(db);
+    batch.update(propertyRef,{agenteId:a.id,agentId:a.id,agentEmail:a.email,email:a.email,createdByEmail:a.email,ownerEmail:a.email,createdBy:a.id,ownerId:a.id,userId:a.id,agentName:a.name,agentPhone:a.phone||'',agentWhatsapp:a.whatsapp||'',agentPhoto:a.photo||'',updatedAt:serverTimestamp()});
+    batch.set(auditRef,{propertyId:q.candidate,uploadedByAgentId:u.uid,uploadedByAgentEmail:norm(u.email),uploadedByAgentName:uploader,ownerAgentId:a.id,ownerAgentEmail:a.email,ownerAgentName:a.name,source:'agent-dashboard-assisted-listing',createdAt:serverTimestamp()});
+    await batch.commit();
+    s.pending=null;setMessage(`Propiedad enviada a revisión y enlistada a nombre de ${a.name}. Administración conservará de forma privada la trazabilidad de que la carga se realizó desde tu perfil.`,'success');unlock();
   }catch(e){console.error('[AssistedListing] assignment failed',e);s.pending=null;setMessage(`La propiedad se guardó, pero no pudo asignarse a ${a.name}. No la vuelvas a cargar para evitar duplicados; administración debe revisar los permisos de Firestore.`,'error');}
 }
 function watchMessage(){const n=document.getElementById('dashboardMessage');if(!n||s.observer)return;const inspect=()=>{if(!s.pending)return;const type=n.dataset.type||'',text=norm(n.textContent);if(type==='success'&&text.includes('propiedad enviada a revisión')){s.pending.success=true;transfer();}else if(type==='error'&&!s.pending.transferring)s.pending=null;};s.observer=new MutationObserver(inspect);s.observer.observe(n,{childList:true,subtree:true,attributes:true,attributeFilter:['data-type']});}
