@@ -3,27 +3,70 @@ body:not(.home-page) > .site-header,
 body:not(.home-page) > .site-header.scrolled,
 body:not(.home-page) > .site-header.is-scrolled,
 body:not(.home-page) > .site-header.navbar-scrolled {
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  left: 0 !important;
+  z-index: 1000 !important;
+  width: 100% !important;
+  margin: 0 !important;
   background: transparent !important;
   background-color: transparent !important;
+  border: 0 !important;
   border-bottom-color: transparent !important;
   box-shadow: none !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
 
-body:not(.home-page) > .site-header .nav-wrapper {
+body:not(.home-page) > .site-header::before,
+body:not(.home-page) > .site-header::after,
+body:not(.home-page) > .site-header .nav-wrapper::before,
+body:not(.home-page) > .site-header .nav-wrapper::after {
+  display: none !important;
+  content: none !important;
   background: transparent !important;
+}
+
+body:not(.home-page) > .site-header .nav-wrapper,
+body:not(.home-page) > .site-header .container,
+body:not(.home-page) > .site-header .brand {
+  background: transparent !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
   box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 /* Keep navigation readable over light public content without restoring a navbar band. */
 body:not(.home-page):not(.dark):not(.dark-mode) > .site-header .site-nav > a,
-body:not(.home-page):not(.dark):not(.dark-mode) > .site-header .nav-more-toggle {
+body:not(.home-page):not(.dark):not(.dark-mode) > .site-header .nav-more-toggle,
+body:not(.home-page):not(.dark):not(.dark-mode) > .site-header .nav-more__trigger {
   color: #07162f !important;
+  -webkit-text-fill-color: #07162f !important;
+  text-shadow: none !important;
+}
+
+/* The navbar overlays the page instead of reserving a separate strip. */
+body:not(.home-page) > main {
+  position: relative;
 }
 
 /* The expanded mobile menu is a separate sheet; it remains solid white for readability. */
 @media (max-width: 900px) {
+  body:not(.home-page) > .site-header,
+  body:not(.home-page) > .site-header.scrolled,
+  body:not(.home-page) > .site-header.is-scrolled,
+  body:not(.home-page) > .site-header.navbar-scrolled {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
   body:not(.home-page):not(.dark):not(.dark-mode) > .site-header .site-nav.open,
   body:not(.home-page):not(.dark):not(.dark-mode) > .site-header .site-nav.active,
   body:not(.home-page):not(.dark):not(.dark-mode) > .site-header .nav-wrapper.menu-open .site-nav {
@@ -39,5 +82,6 @@ body:not(.home-page):not(.dark):not(.dark-mode) > .site-header .nav-more-toggle 
   body:not(.home-page):not(.dark):not(.dark-mode) > .site-header .site-nav.active a,
   body:not(.home-page):not(.dark):not(.dark-mode) > .site-header .nav-wrapper.menu-open .site-nav a {
     color: #07162f !important;
+    -webkit-text-fill-color: #07162f !important;
   }
 }
