@@ -1,8 +1,23 @@
 /* Mobile map opens first and keeps desktop-like framing of property markers. */
 @media (max-width: 900px) {
+  html {
+    min-height: 100dvh !important;
+    background: #fff !important;
+  }
+
+  body {
+    min-height: 100dvh !important;
+  }
+
+  body.public-footer-reveal .public-page-surface {
+    min-height: 100dvh !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+  }
+
   body.map-mobile-show-map .map-canvas-panel {
     display: block !important;
-    height: calc(100svh - var(--public-navbar-height, 76px) - 132px) !important;
+    height: calc(100dvh - var(--public-navbar-height, 76px) - 132px) !important;
     min-height: 430px !important;
   }
 
@@ -32,7 +47,7 @@
 
 @media (max-width: 560px) {
   body.map-mobile-show-map .map-canvas-panel {
-    height: calc(100svh - var(--public-navbar-height, 76px) - 118px) !important;
+    height: calc(100dvh - var(--public-navbar-height, 76px) - 118px) !important;
     min-height: 390px !important;
   }
 }
