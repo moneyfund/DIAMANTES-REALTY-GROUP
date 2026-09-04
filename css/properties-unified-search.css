@@ -105,6 +105,62 @@
   border-color: #132b4f !important;
 }
 
+/* Property catalogue refresh: square cards and clearly blue primary action. */
+.properties-page #propertiesGrid .property-card.public-property-card,
+.properties-page #propertiesGrid .public-property-card .property-card-shell,
+.properties-page #propertiesGrid .public-property-card .property-card-media,
+.properties-page #propertiesGrid .public-property-card .property-cover,
+.properties-page #propertiesGrid .public-property-card .property-cover-link,
+.properties-page #propertiesGrid .public-property-card .property-cover-image,
+.properties-page #propertiesGrid .public-property-card .property-card-body,
+.properties-page #propertiesGrid .public-property-card .property-card-footer {
+  border-radius: 0 !important;
+}
+
+.properties-page #propertiesGrid .property-detail-button,
+.properties-page #propertiesGrid .btn-primary-property,
+.properties-page #propertiesGrid .property-card-actions a[href*="propiedad.html"] {
+  background: #0b4f8a !important;
+  border-color: #0b4f8a !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+.properties-page #propertiesGrid .property-detail-button:hover,
+.properties-page #propertiesGrid .property-detail-button:focus-visible,
+.properties-page #propertiesGrid .btn-primary-property:hover,
+.properties-page #propertiesGrid .btn-primary-property:focus-visible,
+.properties-page #propertiesGrid .property-card-actions a[href*="propiedad.html"]:hover,
+.properties-page #propertiesGrid .property-card-actions a[href*="propiedad.html"]:focus-visible {
+  background: #073d6c !important;
+  border-color: #073d6c !important;
+  color: #fff !important;
+}
+
+.properties-page .properties-compact-header h1 {
+  color: #0b1f3a !important;
+  letter-spacing: -.035em !important;
+}
+
+/* Keep the public surface truly full-height on phones; never expose the old beige backing layer. */
+@media (max-width: 900px) {
+  html {
+    min-height: 100% !important;
+    min-height: 100dvh !important;
+    background: #fff !important;
+  }
+
+  body.properties-page {
+    min-height: 100dvh !important;
+  }
+
+  body.public-footer-reveal .public-page-surface {
+    min-height: 100dvh !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+  }
+}
+
 body.dark.properties-page #filterLocation,
 body.dark-mode.properties-page #filterLocation {
   color: #f5f5f5 !important;
@@ -174,7 +230,7 @@ body.dark-mode.properties-page .properties-filter-panel {
     right: 12px !important;
     top: calc(var(--public-navbar-height, 76px) + 76px) !important;
     width: auto !important;
-    max-height: calc(100svh - var(--public-navbar-height, 76px) - 100px) !important;
+    max-height: calc(100dvh - var(--public-navbar-height, 76px) - 100px) !important;
     border-radius: 12px !important;
   }
 
