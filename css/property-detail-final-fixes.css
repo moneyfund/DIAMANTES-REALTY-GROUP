@@ -1,0 +1,41 @@
+/* Final public property-detail corrections — 2026-09-04 */
+
+/* Likes/favorites are intentionally removed from the public property experience. */
+.property-detail-page #propertyDetail .property-main-actions,
+.property-detail-page #propertyDetail .property-like-mount,
+.property-detail-page #propertyDetail .pi-like-top {
+  display: none !important;
+}
+
+.property-detail-page #propertyDetail .detail-map-section {
+  display: block !important;
+  width: 100% !important;
+  margin-top: 1.25rem !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.property-detail-page #propertyDetail #propertyMap,
+.property-detail-page #propertyDetail .property-map {
+  display: block !important;
+  width: 100% !important;
+  height: 420px !important;
+  min-height: 420px !important;
+  background: #e8edf2 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.property-detail-page #propertyDetail #propertyMap .leaflet-container,
+.property-detail-page #propertyDetail #propertyMap .leaflet-map-pane,
+.property-detail-page #propertyDetail #propertyMap .leaflet-tile-pane {
+  visibility: visible !important;
+}
+
+@media (max-width: 640px) {
+  .property-detail-page #propertyDetail #propertyMap,
+  .property-detail-page #propertyDetail .property-map {
+    height: 330px !important;
+    min-height: 330px !important;
+  }
+}
