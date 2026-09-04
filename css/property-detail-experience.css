@@ -1,0 +1,151 @@
+/* Property detail refinements: routing, agent CTA and simplified reviews. */
+
+.property-share-panel {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.property-share-panel .property-share-options {
+  display: none !important;
+}
+
+.property-agent-whatsapp-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid #25D366;
+  border-radius: 10px;
+  background: #25D366;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-weight: 800;
+  text-decoration: none !important;
+  box-shadow: none;
+  transition: transform .18s ease, background-color .18s ease, border-color .18s ease;
+}
+
+.property-agent-whatsapp-cta:hover,
+.property-agent-whatsapp-cta:focus-visible {
+  background: #1ebe5d;
+  border-color: #1ebe5d;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
+.property-agent-whatsapp-cta.is-disabled {
+  display: none !important;
+}
+
+.detail-map-section {
+  position: relative;
+}
+
+.property-map-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+}
+
+.property-route-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 17px;
+  border: 1px solid #b00008;
+  border-radius: 10px;
+  background: #b00008;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.property-route-button:hover,
+.property-route-button:focus-visible {
+  background: #8f0006;
+  border-color: #8f0006;
+}
+
+.property-route-button:disabled {
+  opacity: .62;
+  cursor: wait;
+}
+
+.property-route-status {
+  margin: 0;
+  color: #536176;
+  font-size: .86rem;
+}
+
+.property-diamond-marker-icon {
+  background: transparent !important;
+  border: 0 !important;
+}
+
+.property-diamond-marker {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 2px solid #ffffff;
+  border-radius: 7px;
+  background: #b00008;
+  box-shadow: 0 6px 16px rgba(73, 0, 4, .34);
+  transform: rotate(45deg);
+}
+
+.property-diamond-marker__gem {
+  width: 10px;
+  height: 10px;
+  border: 2px solid #ffffff;
+  transform: rotate(0deg);
+}
+
+.property-user-marker {
+  width: 16px;
+  height: 16px;
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  background: #b00008;
+  box-shadow: 0 0 0 3px rgba(176, 0, 8, .18);
+}
+
+.property-user-marker-icon {
+  background: transparent !important;
+  border: 0 !important;
+}
+
+/* Reviews: only comment field + star rating, no secondary review explanation field. */
+[data-pi-review-form] textarea[name="review"],
+[data-pi-review-form] .pi-rating-value,
+.pi-card[data-simple-review-card] .pi-card-head p {
+  display: none !important;
+}
+
+[data-pi-review-form] .pi-rating-picker {
+  margin-bottom: 12px;
+}
+
+.pi-item > p:empty {
+  display: none !important;
+}
+
+@media (max-width: 700px) {
+  .property-share-panel,
+  .property-map-actions {
+    align-items: stretch !important;
+  }
+
+  .property-share-button,
+  .property-agent-whatsapp-cta,
+  .property-route-button {
+    width: 100%;
+  }
+}
