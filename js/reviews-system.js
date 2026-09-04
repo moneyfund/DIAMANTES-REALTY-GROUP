@@ -7,65 +7,32 @@ import {
   query,
   onSnapshot,
   orderBy,
-  where,
   limit,
   serverTimestamp,
-  doc,
-  setDoc,
-  deleteDoc,
   onAuthStateChanged,
   signInWithPopup
 } from './firebase-services.js';
 
 const MAX_ITEMS = 120;
-const DEBUG_KEY = 'inmoDebugInteractions';
 
 const state = {
   propertyId: '',
+  initializedFor: '',
   user: null,
   authReady: false,
-  initializedFor: '',
+  authBound: false,
   reviewRating: 0,
-  reviewHover: 0,
   comments: [],
   reviews: [],
-  likesCount: 0,
-  isLiked: false,
-  isFavorite: false,
   commentsStatus: 'idle',
   reviewsStatus: 'idle',
-  likesStatus: 'idle',
-  favoritesStatus: 'idle',
-  isSubmittingComment: false,
-  isSubmittingReview: false,
-  isSubmittingFavorite: false,
-  authBound: false,
-  unsubscribers: [],
-  loadTimeouts: {
-    comments: null,
-    reviews: null,
-    likes: null,
-    favorites: null
-  }
+  submittingComment: false,
+  submittingReview: false,
+  unsubscribers: []
 };
 
-function isDebugEnabled() {
-  const params = new URLSearchParams(window.location.search);
-  return params.get('debugInteractions') === '1' || localStorage.getItem(DEBUG_KEY) === '1';
-}
-
-function debugLog(message, payload = {}) {
-  if (!isDebugEnabled()) return;
-  console.log(`[interactions] ${message}`, payload);
-}
-
 function getPropertyIdFromUrl() {
-  const params = new URLSearchParams(window.location.search);
-  return String(params.get('id') || '').trim();
-}
-
-function isValidPropertyId(value) {
-  return typeof value === 'string' && value.trim().length > 0;
+  return String(new URLSearchParams(window.location.search).get('id') || '').trim();
 }
 
 function escapeHtml(value = '') {
@@ -77,16 +44,15 @@ function escapeHtml(value = '') {
     .replaceAll("'", '&#39;');
 }
 
-function formatDate(value) {
-  const rawDate = value?.toDate ? value.toDate() : new Date(value || Date.now());
-  if (Number.isNaN(rawDate.getTime())) return 'Fecha pendiente';
-  return new Intl.DateTimeFormat('es-NI', { dateStyle: 'medium', timeStyle: 'short' }).format(rawDate);
-}
-
 function getInitials(name = 'Usuario') {
   const parts = String(name).trim().split(/\s+/).filter(Boolean).slice(0, 2);
-  if (!parts.length) return 'U';
-  return parts.map((part) => part[0]?.toUpperCase() || '').join('');
+  return parts.length ? parts.map((part) => part[0]?.toUpperCase() || '').join('') : 'U';
+}
+
+function formatDate(value) {
+  const rawDate = value?.toDate ? value.toDate() : new Date(value || Date.now());
+  if (Number.isNaN(rawDate.getTime())) return '';
+  return new Intl.DateTimeFormat('es-NI', { dateStyle: 'medium', timeStyle: 'short' }).format(rawDate);
 }
 
 function starSvg(filled = false) {
@@ -98,57 +64,27 @@ function renderStars(rating = 0) {
   return Array.from({ length: 5 }, (_, index) => starSvg(index < safeRating)).join('');
 }
 
-function setFormMessage(formSelector, text, type = '') {
-  const element = document.querySelector(`${formSelector} [data-pi-form-message]`);
-  if (!element) return;
-  element.textContent = text;
-  element.classList.remove('is-success', 'is-error');
-  if (type) element.classList.add(type);
+function normalizeSnapshot(snapshot) {
+  return snapshot.docs.map((docSnap) => {
+    const data = docSnap.data() || {};
+    return {
+      id: docSnap.id,
+      userId: String(data.userId || '').trim(),
+      userName: data.userName || data.authorName || 'Usuario',
+      userPhoto: data.userPhoto || '',
+      comment: String(data.comment || '').trim(),
+      review: String(data.review || '').trim(),
+      rating: Math.max(0, Math.min(5, Number(data.rating || 0))),
+      createdAt: data.createdAt || null
+    };
+  });
 }
 
-function setFavoriteMessage(text, type = '') {
-  const element = document.querySelector('[data-pi-favorite-message]');
-  if (!element) return;
-  element.textContent = text;
-  element.classList.remove('is-success', 'is-error');
-  if (type) element.classList.add(type);
-}
-
-function renderFavoriteShell() {
-  const mount = document.getElementById('propertyLikeMount');
-  if (!mount) return false;
-
-  mount.innerHTML = `
-    <div class="pi-like-top" data-pi-interactions>
-      <button type="button" class="pi-like-btn" data-pi-like-btn aria-pressed="false">
-        <span class="pi-like-icon" aria-hidden="true">❤</span>
-        <span data-pi-like-label>Me gusta</span>
-      </button>
-      <p class="pi-like-count"><strong data-pi-like-count>0</strong> likes</p>
-      <button type="button" class="pi-like-btn" data-pi-favorite-btn aria-pressed="false">
-        <span class="pi-like-icon" aria-hidden="true">★</span>
-        <span data-pi-favorite-label>Guardar en favoritos</span>
-      </button>
-      <p class="pi-form-message" data-pi-favorite-message></p>
-    </div>
-  `;
-
-  return true;
-}
-
-function renderPropertyIdError(message = 'No se pudo identificar la propiedad.') {
-  const reviewsSection = document.getElementById('propertyReviews');
-  if (reviewsSection) {
-    reviewsSection.innerHTML = `
-      <section class="pi-wrap">
-        <p class="pi-empty">${escapeHtml(message)}</p>
-      </section>
-    `;
-  }
-  const favoriteMount = document.getElementById('propertyLikeMount');
-  if (favoriteMount) {
-    favoriteMount.innerHTML = `<p class="pi-empty">${escapeHtml(message)}</p>`;
-  }
+function clearSubscriptions() {
+  state.unsubscribers.forEach((unsubscribe) => {
+    try { unsubscribe(); } catch (_) {}
+  });
+  state.unsubscribers = [];
 }
 
 function renderDiscussionShell() {
@@ -158,56 +94,52 @@ function renderDiscussionShell() {
   section.innerHTML = `
     <section class="pi-wrap" data-pi-wrap>
       <header class="pi-header">
-        <div>
-          <p class="pi-eyebrow">Interacciones</p>
-          <h2>Comentarios y reseñas</h2>
-        </div>
+        <div><h2>Comentarios y reseñas</h2></div>
         <div class="pi-auth" data-pi-auth></div>
       </header>
 
       <div class="pi-grid pi-grid-two">
         <article class="pi-card">
-          <div class="pi-card-head">
-            <h3>Comentarios</h3>
-            <p>Comparte una consulta o experiencia sobre esta propiedad.</p>
-          </div>
+          <div class="pi-card-head"><h3>Comentarios</h3></div>
           <form data-pi-comment-form>
-            <textarea name="comment" rows="4" maxlength="1200" placeholder="Escribe tu comentario..."></textarea>
+            <textarea name="comment" rows="4" maxlength="1200" placeholder="Escribe tu comentario..." aria-label="Comentario"></textarea>
             <button type="submit" class="pi-primary-btn">Publicar comentario</button>
             <p class="pi-form-message" data-pi-form-message></p>
           </form>
-          <div class="pi-list" data-pi-comment-list></div>
+          <div class="pi-list" data-pi-comment-list aria-live="polite"></div>
         </article>
 
         <article class="pi-card">
-          <div class="pi-card-head">
-            <h3>Reseñas</h3>
-            <p>Califica esta propiedad y comparte tu opinión.</p>
-          </div>
-
+          <div class="pi-card-head"><h3>Reseñas</h3></div>
           <div class="pi-summary">
             <div class="pi-stars" data-pi-average-stars>${renderStars(0)}</div>
             <p><strong data-pi-average-value>0.0</strong>/5</p>
             <p data-pi-review-count>0 reseñas</p>
           </div>
-
           <form data-pi-review-form>
             <div class="pi-rating-picker" role="radiogroup" aria-label="Selecciona una calificación">
               ${Array.from({ length: 5 }, (_, index) => `<button type="button" class="pi-rate-btn" data-pi-rate="${index + 1}" role="radio" aria-checked="false" aria-label="${index + 1} estrella${index ? 's' : ''}">${starSvg(false)}</button>`).join('')}
             </div>
-            <p class="pi-rating-value">Calificación seleccionada: <strong data-pi-rating-value>0</strong>/5</p>
-            <textarea name="review" rows="4" maxlength="1200" placeholder="Cuéntanos por qué das esta calificación..."></textarea>
             <button type="submit" class="pi-primary-btn">Publicar reseña</button>
             <p class="pi-form-message" data-pi-form-message></p>
           </form>
-
-          <div class="pi-list" data-pi-review-list></div>
+          <div class="pi-list" data-pi-review-list aria-live="polite"></div>
         </article>
       </div>
     </section>
   `;
 
+  const likeMount = document.getElementById('propertyLikeMount');
+  if (likeMount) likeMount.replaceChildren();
   return true;
+}
+
+function setFormMessage(formSelector, text, type = '') {
+  const element = document.querySelector(`${formSelector} [data-pi-form-message]`);
+  if (!element) return;
+  element.textContent = text;
+  element.classList.remove('is-success', 'is-error');
+  if (type) element.classList.add(type);
 }
 
 function renderAuthBox() {
@@ -215,7 +147,7 @@ function renderAuthBox() {
   if (!box) return;
 
   if (!state.authReady) {
-    box.innerHTML = '<span class="pi-empty">Verificando sesión...</span>';
+    box.replaceChildren();
     return;
   }
 
@@ -226,7 +158,6 @@ function renderAuthBox() {
         await signInWithPopup(auth, provider);
       } catch (error) {
         console.error('No se pudo iniciar sesión con Google:', error);
-        setFavoriteMessage('No se pudo iniciar sesión.', 'is-error');
       }
     });
     return;
@@ -242,40 +173,48 @@ function renderAuthBox() {
   `;
 }
 
-function renderCommentsState(message) {
-  const list = document.querySelector('[data-pi-comment-list]');
-  if (!list) return;
-  list.innerHTML = `<p class="pi-empty">${escapeHtml(message)}</p>`;
+function updateFormsAvailability() {
+  const commentForm = document.querySelector('[data-pi-comment-form]');
+  const reviewForm = document.querySelector('[data-pi-review-form]');
+
+  commentForm?.querySelectorAll('textarea, button').forEach((control) => {
+    const submit = control.matches('button[type="submit"]');
+    control.disabled = state.submittingComment || (submit && (!state.authReady || !state.user));
+  });
+
+  reviewForm?.querySelectorAll('button').forEach((control) => {
+    const submit = control.matches('button[type="submit"]');
+    control.disabled = state.submittingReview || (submit && (!state.authReady || !state.user));
+  });
 }
 
-function renderReviewsState(message) {
-  const list = document.querySelector('[data-pi-review-list]');
-  if (!list) return;
-  list.innerHTML = `<p class="pi-empty">${escapeHtml(message)}</p>`;
+function paintRatingPicker(value = 0) {
+  const activeValue = Math.max(0, Math.min(5, Number(value) || 0));
+  document.querySelectorAll('[data-pi-rate]').forEach((button) => {
+    const current = Number(button.dataset.piRate || 0);
+    const filled = current <= activeValue;
+    button.classList.toggle('is-active', filled);
+    button.setAttribute('aria-checked', String(current === activeValue));
+    button.innerHTML = starSvg(filled);
+  });
 }
 
 function renderCommentList() {
-  const comments = state.comments;
   const list = document.querySelector('[data-pi-comment-list]');
   if (!list) return;
 
-  if (state.commentsStatus === 'loading') {
-    renderCommentsState('Cargando comentarios...');
-    return;
-  }
   if (state.commentsStatus === 'error') {
-    list.innerHTML = '<p class="pi-empty">No se pudieron cargar los comentarios. <button type="button" class="button-outline" data-pi-retry="comments">Reintentar</button></p>';
-    list.querySelector('[data-pi-retry="comments"]')?.addEventListener('click', () => {
-      restartSubscriptions();
-    });
-    return;
-  }
-  if (!comments.length) {
-    renderCommentsState('Sé el primero en comentar esta propiedad.');
+    list.innerHTML = '<p class="pi-status">No se pudieron cargar los comentarios. <button type="button" class="button-outline" data-pi-retry-comments>Reintentar</button></p>';
+    list.querySelector('[data-pi-retry-comments]')?.addEventListener('click', restartSubscriptions);
     return;
   }
 
-  list.innerHTML = comments.map((item) => {
+  if (!state.comments.length) {
+    list.replaceChildren();
+    return;
+  }
+
+  list.innerHTML = state.comments.map((item) => {
     const userName = escapeHtml(item.userName || 'Usuario');
     const text = escapeHtml(item.comment || '');
     const photo = String(item.userPhoto || '').trim();
@@ -287,10 +226,7 @@ function renderCommentList() {
       <article class="pi-item">
         <div class="pi-item-head">
           <div class="pi-avatar">${avatar}</div>
-          <div>
-            <strong>${userName}</strong>
-            <small>${formatDate(item.createdAt)}</small>
-          </div>
+          <div><strong>${userName}</strong><small>${formatDate(item.createdAt)}</small></div>
         </div>
         <p>${text}</p>
       </article>
@@ -299,38 +235,31 @@ function renderCommentList() {
 }
 
 function renderReviewList() {
-  const reviews = state.reviews;
   const list = document.querySelector('[data-pi-review-list]');
   const avgStars = document.querySelector('[data-pi-average-stars]');
   const avgValue = document.querySelector('[data-pi-average-value]');
   const count = document.querySelector('[data-pi-review-count]');
   if (!list || !avgStars || !avgValue || !count) return;
 
-  const total = reviews.length;
-  const average = total ? reviews.reduce((sum, item) => sum + Number(item.rating || 0), 0) / total : 0;
+  const total = state.reviews.length;
+  const average = total ? state.reviews.reduce((sum, item) => sum + Number(item.rating || 0), 0) / total : 0;
   avgStars.innerHTML = renderStars(Math.round(average));
   avgValue.textContent = average.toFixed(1);
   count.textContent = `${total} reseña${total === 1 ? '' : 's'}`;
 
-  if (state.reviewsStatus === 'loading') {
-    renderReviewsState('Cargando reseñas...');
-    return;
-  }
   if (state.reviewsStatus === 'error') {
-    list.innerHTML = '<p class="pi-empty">No se pudieron cargar las reseñas. <button type="button" class="button-outline" data-pi-retry="reviews">Reintentar</button></p>';
-    list.querySelector('[data-pi-retry="reviews"]')?.addEventListener('click', () => {
-      restartSubscriptions();
-    });
-    return;
-  }
-  if (!reviews.length) {
-    renderReviewsState('Todavía no hay reseñas para esta propiedad.');
+    list.innerHTML = '<p class="pi-status">No se pudieron cargar las reseñas. <button type="button" class="button-outline" data-pi-retry-reviews>Reintentar</button></p>';
+    list.querySelector('[data-pi-retry-reviews]')?.addEventListener('click', restartSubscriptions);
     return;
   }
 
-  list.innerHTML = reviews.map((item) => {
+  if (!state.reviews.length) {
+    list.replaceChildren();
+    return;
+  }
+
+  list.innerHTML = state.reviews.map((item) => {
     const userName = escapeHtml(item.userName || 'Usuario');
-    const text = escapeHtml(item.comment || item.review || '');
     const photo = String(item.userPhoto || '').trim();
     const avatar = photo
       ? `<img src="${escapeHtml(photo)}" alt="${userName}" referrerpolicy="no-referrer">`
@@ -346,334 +275,64 @@ function renderReviewList() {
             <small>${formatDate(item.createdAt)}</small>
           </div>
         </div>
-        <p>${text}</p>
       </article>
     `;
   }).join('');
 }
 
-function renderFavoriteState() {
-  const likeButton = document.querySelector('[data-pi-like-btn]');
-  const likeCount = document.querySelector('[data-pi-like-count]');
-  const likeLabel = document.querySelector('[data-pi-like-label]');
-  const button = document.querySelector('[data-pi-favorite-btn]');
-  const label = document.querySelector('[data-pi-favorite-label]');
-  if (!button || !label) return;
-
-  if (likeButton && likeCount && likeLabel) {
-    likeCount.textContent = String(state.likesCount);
-    likeButton.classList.toggle('is-liked', state.isLiked);
-    likeButton.setAttribute('aria-pressed', String(state.isLiked));
-    likeLabel.textContent = state.isLiked ? 'Te gusta' : 'Me gusta';
-    likeButton.disabled = !state.authReady || state.isSubmittingFavorite || !state.user;
-  }
-
-  button.classList.toggle('is-liked', state.isFavorite);
-  button.setAttribute('aria-pressed', String(state.isFavorite));
-  label.textContent = state.isFavorite ? 'En favoritos' : 'Guardar en favoritos';
-
-  if (!state.authReady) {
-    button.disabled = true;
-    setFavoriteMessage('Verificando sesión...');
-    return;
-  }
-
-  button.disabled = state.isSubmittingFavorite || !state.user;
-  if (!state.user) {
-    setFavoriteMessage('Inicia sesión para guardar favoritos.');
-  } else if (state.likesStatus === 'loading' || state.favoritesStatus === 'loading') {
-    setFavoriteMessage('Verificando interacciones...');
-  } else if (state.favoritesStatus === 'success') {
-    setFavoriteMessage('');
-  }
-}
-
-function paintRatingPicker(value = 0) {
-  const activeValue = Math.max(0, Math.min(5, Number(value) || 0));
-  document.querySelectorAll('[data-pi-rate]').forEach((btn) => {
-    const current = Number(btn.dataset.piRate || 0);
-    const isActive = current <= activeValue;
-    btn.classList.toggle('is-active', isActive);
-    btn.setAttribute('aria-checked', String(current === activeValue));
-    btn.innerHTML = starSvg(isActive);
-  });
-  const valueEl = document.querySelector('[data-pi-rating-value]');
-  if (valueEl) valueEl.textContent = String(activeValue);
-}
-
-function updateFormsAvailability() {
-  const commentForm = document.querySelector('[data-pi-comment-form]');
-  const reviewForm = document.querySelector('[data-pi-review-form]');
-  if (!commentForm || !reviewForm) return;
-
-  const commentControls = [...commentForm.querySelectorAll('textarea, button')];
-  const reviewControls = [...reviewForm.querySelectorAll('textarea, button')];
-  commentControls.forEach((control) => {
-    const isButton = control.tagName === 'BUTTON';
-    control.disabled = !state.authReady || state.isSubmittingComment || (isButton && !state.user);
-  });
-  reviewControls.forEach((control) => {
-    const isButton = control.tagName === 'BUTTON';
-    control.disabled = !state.authReady || state.isSubmittingReview || (isButton && !state.user);
-  });
-}
-
-function normalizeSnapshot(snapshot) {
-  return snapshot.docs.map((docSnap) => {
-    const data = docSnap.data() || {};
-    return {
-      id: docSnap.id,
-      userId: String(data.userId || '').trim(),
-      userName: data.userName || data.authorName || 'Usuario',
-      userPhoto: data.userPhoto || '',
-      comment: String(data.comment || '').trim(),
-      review: String(data.review || '').trim(),
-      rating: Math.max(0, Math.min(5, Number(data.rating || 0))),
-      createdAt: data.createdAt || null,
-      updatedAt: data.updatedAt || null
-    };
-  });
-}
-
-function clearSubscriptions() {
-  Object.keys(state.loadTimeouts).forEach((key) => {
-    if (state.loadTimeouts[key]) {
-      window.clearTimeout(state.loadTimeouts[key]);
-      state.loadTimeouts[key] = null;
-    }
-  });
-  state.unsubscribers.forEach((unsubscribe) => {
-    try {
-      unsubscribe();
-    } catch (error) {
-      console.warn('No se pudo cerrar una suscripción:', error);
-    }
-  });
-  state.unsubscribers = [];
-}
-
-function startLoadTimeout(scope) {
-  if (state.loadTimeouts[scope]) window.clearTimeout(state.loadTimeouts[scope]);
-  state.loadTimeouts[scope] = window.setTimeout(() => {
-    if (scope === 'comments' && state.commentsStatus === 'loading') {
-      state.commentsStatus = 'error';
-      state.comments = [];
-      debugLog('[Comments] timeout', { propertyId: state.propertyId });
-      renderCommentList();
-    }
-    if (scope === 'reviews' && state.reviewsStatus === 'loading') {
-      state.reviewsStatus = 'error';
-      state.reviews = [];
-      debugLog('[Reviews] timeout', { propertyId: state.propertyId });
-      renderReviewList();
-    }
-    if (scope === 'favorites' && state.favoritesStatus === 'loading') {
-      state.favoritesStatus = 'error';
-      state.isFavorite = false;
-      debugLog('[Favorites] timeout', { propertyId: state.propertyId });
-      setFavoriteMessage('No se pudo verificar el favorito.', 'is-error');
-      renderFavoriteState();
-    }
-    if (scope === 'likes' && state.likesStatus === 'loading') {
-      state.likesStatus = 'error';
-      state.likesCount = 0;
-      state.isLiked = false;
-      debugLog('[Likes] timeout', { propertyId: state.propertyId });
-      setFavoriteMessage('No se pudo verificar likes.', 'is-error');
-      renderFavoriteState();
-    }
-  }, 12000);
-}
-
-function resolveLoadTimeout(scope) {
-  if (!state.loadTimeouts[scope]) return;
-  window.clearTimeout(state.loadTimeouts[scope]);
-  state.loadTimeouts[scope] = null;
-}
-
 function subscribeComments() {
   state.commentsStatus = 'loading';
-  renderCommentList();
-
   try {
-    const commentsRef = collection(db, 'properties', state.propertyId, 'comments');
-    const commentsQuery = query(commentsRef, orderBy('createdAt', 'desc'), limit(MAX_ITEMS));
-    debugLog('[Comments] propertyId', { propertyId: state.propertyId });
-    debugLog('[Comments] loading start', { propertyId: state.propertyId });
-    startLoadTimeout('comments');
-
-    const fallbackCommentsQuery = query(collection(db, 'comments'), where('propertyId', '==', state.propertyId), orderBy('createdAt', 'desc'), limit(MAX_ITEMS));
+    const commentsQuery = query(
+      collection(db, 'properties', state.propertyId, 'comments'),
+      orderBy('createdAt', 'desc'),
+      limit(MAX_ITEMS)
+    );
 
     const unsubscribe = onSnapshot(commentsQuery, (snapshot) => {
-      resolveLoadTimeout('comments');
       state.comments = normalizeSnapshot(snapshot);
       state.commentsStatus = 'success';
-      console.log('[ReviewsSystem] propertyId:', state.propertyId);
-      console.log('[ReviewsSystem] comments loaded:', state.comments.length);
-      debugLog('[Comments] snapshot received', { propertyId: state.propertyId, total: state.comments.length });
       renderCommentList();
     }, (error) => {
-      resolveLoadTimeout('comments');
+      console.error('No se pudieron cargar comentarios:', error);
       state.comments = [];
       state.commentsStatus = 'error';
-      console.error('[ReviewsSystem] error:', error);
-      console.error('No se pudieron cargar comentarios:', error);
-      debugLog('[Comments] error', { propertyId: state.propertyId, error });
-      renderCommentsState('No fue posible cargar esta sección.');
-    });
-
-    const unsubscribeGlobal = onSnapshot(fallbackCommentsQuery, (snapshot) => {
-      const globalComments = normalizeSnapshot(snapshot);
-      const merged = [...state.comments, ...globalComments];
-      state.comments = Array.from(new Map(merged.map((item) => [item.id, item])).values()).slice(0, MAX_ITEMS);
-      state.commentsStatus = 'success';
-      console.log('[ReviewsSystem] propertyId:', state.propertyId);
-      console.log('[ReviewsSystem] comments loaded:', state.comments.length);
       renderCommentList();
-    }, (error) => {
-      console.error('[ReviewsSystem] error:', error);
     });
 
-    state.unsubscribers.push(unsubscribe, unsubscribeGlobal);
+    state.unsubscribers.push(unsubscribe);
   } catch (error) {
-    resolveLoadTimeout('comments');
-    state.comments = [];
-    state.commentsStatus = 'error';
-    console.error('[ReviewsSystem] error:', error);
     console.error('No se pudieron iniciar comentarios:', error);
-    renderCommentsState('No fue posible cargar esta sección.');
+    state.commentsStatus = 'error';
+    renderCommentList();
   }
 }
 
 function subscribeReviews() {
   state.reviewsStatus = 'loading';
-  renderReviewList();
-
   try {
-    const reviewsRef = collection(db, 'properties', state.propertyId, 'reviews');
-    const reviewsQuery = query(reviewsRef, orderBy('createdAt', 'desc'), limit(MAX_ITEMS));
-    debugLog('[Reviews] propertyId', { propertyId: state.propertyId });
-    debugLog('[Reviews] loading start', { propertyId: state.propertyId });
-    startLoadTimeout('reviews');
-
-    const fallbackReviewsQuery = query(collection(db, 'reviews'), where('propertyId', '==', state.propertyId), orderBy('createdAt', 'desc'), limit(MAX_ITEMS));
+    const reviewsQuery = query(
+      collection(db, 'properties', state.propertyId, 'reviews'),
+      orderBy('createdAt', 'desc'),
+      limit(MAX_ITEMS)
+    );
 
     const unsubscribe = onSnapshot(reviewsQuery, (snapshot) => {
-      resolveLoadTimeout('reviews');
       state.reviews = normalizeSnapshot(snapshot);
       state.reviewsStatus = 'success';
-      console.log('[ReviewsSystem] propertyId:', state.propertyId);
-      console.log('[ReviewsSystem] reviews loaded:', state.reviews.length);
-      debugLog('[Reviews] snapshot received', { propertyId: state.propertyId, total: state.reviews.length });
       renderReviewList();
     }, (error) => {
-      resolveLoadTimeout('reviews');
+      console.error('No se pudieron cargar reseñas:', error);
       state.reviews = [];
       state.reviewsStatus = 'error';
-      console.error('[ReviewsSystem] error:', error);
-      console.error('No se pudieron cargar reseñas:', error);
-      debugLog('[Reviews] error', { propertyId: state.propertyId, error });
-      renderReviewsState('No fue posible cargar esta sección.');
-    });
-
-    const unsubscribeGlobal = onSnapshot(fallbackReviewsQuery, (snapshot) => {
-      const globalReviews = normalizeSnapshot(snapshot);
-      const merged = [...state.reviews, ...globalReviews];
-      state.reviews = Array.from(new Map(merged.map((item) => [item.id, item])).values()).slice(0, MAX_ITEMS);
-      state.reviewsStatus = 'success';
-      console.log('[ReviewsSystem] propertyId:', state.propertyId);
-      console.log('[ReviewsSystem] reviews loaded:', state.reviews.length);
       renderReviewList();
-    }, (error) => {
-      console.error('[ReviewsSystem] error:', error);
     });
 
-    state.unsubscribers.push(unsubscribe, unsubscribeGlobal);
+    state.unsubscribers.push(unsubscribe);
   } catch (error) {
-    resolveLoadTimeout('reviews');
-    state.reviews = [];
-    state.reviewsStatus = 'error';
-    console.error('[ReviewsSystem] error:', error);
     console.error('No se pudieron iniciar reseñas:', error);
-    renderReviewsState('No fue posible cargar esta sección.');
-  }
-}
-
-function subscribeLikes() {
-  state.likesStatus = 'loading';
-  renderFavoriteState();
-
-  try {
-    const likesRef = collection(db, 'properties', state.propertyId, 'likes');
-    const likesQuery = query(likesRef, limit(1000));
-    debugLog('[Likes] loading start', { propertyId: state.propertyId, user: state.user?.uid || null });
-    startLoadTimeout('likes');
-
-    const unsubscribe = onSnapshot(likesQuery, (snapshot) => {
-      resolveLoadTimeout('likes');
-      const likes = normalizeSnapshot(snapshot);
-      state.likesCount = likes.length;
-      state.isLiked = Boolean(state.user?.uid && likes.some((entry) => entry.id === state.user.uid || entry.userId === state.user.uid));
-      state.likesStatus = 'success';
-      renderFavoriteState();
-    }, (error) => {
-      resolveLoadTimeout('likes');
-      state.likesStatus = 'error';
-      state.likesCount = 0;
-      state.isLiked = false;
-      console.error('No se pudieron cargar likes:', error);
-      setFavoriteMessage('No fue posible cargar esta sección.', 'is-error');
-      renderFavoriteState();
-    });
-
-    state.unsubscribers.push(unsubscribe);
-  } catch (error) {
-    resolveLoadTimeout('likes');
-    state.likesStatus = 'error';
-    console.error('No se pudieron iniciar likes:', error);
-    setFavoriteMessage('No fue posible cargar esta sección.', 'is-error');
-    renderFavoriteState();
-  }
-}
-
-function subscribeFavorites() {
-  if (!state.user?.uid) {
-    resolveLoadTimeout('favorites');
-    state.favoritesStatus = 'success';
-    state.isFavorite = false;
-    renderFavoriteState();
-    return;
-  }
-
-  state.favoritesStatus = 'loading';
-  renderFavoriteState();
-
-  try {
-    const favoriteRef = doc(db, 'properties', state.propertyId, 'favorites', state.user.uid);
-    debugLog('[Favorites] loading start', { propertyId: state.propertyId, user: state.user.uid });
-    startLoadTimeout('favorites');
-
-    const unsubscribe = onSnapshot(favoriteRef, (snapshot) => {
-      resolveLoadTimeout('favorites');
-      state.isFavorite = snapshot.exists();
-      state.favoritesStatus = 'success';
-      renderFavoriteState();
-    }, (error) => {
-      resolveLoadTimeout('favorites');
-      state.favoritesStatus = 'error';
-      state.isFavorite = false;
-      console.error('No se pudieron cargar favoritos:', error);
-      setFavoriteMessage('No fue posible cargar esta sección.', 'is-error');
-      renderFavoriteState();
-    });
-
-    state.unsubscribers.push(unsubscribe);
-  } catch (error) {
-    resolveLoadTimeout('favorites');
-    state.favoritesStatus = 'error';
-    console.error('No se pudieron iniciar favoritos:', error);
-    setFavoriteMessage('No fue posible cargar esta sección.', 'is-error');
-    renderFavoriteState();
+    state.reviewsStatus = 'error';
+    renderReviewList();
   }
 }
 
@@ -682,13 +341,12 @@ function restartSubscriptions() {
   clearSubscriptions();
   subscribeComments();
   subscribeReviews();
-  subscribeLikes();
-  subscribeFavorites();
 }
 
 function bindCommentForm() {
   const form = document.querySelector('[data-pi-comment-form]');
-  if (!form) return;
+  if (!form || form.dataset.bound === 'true') return;
+  form.dataset.bound = 'true';
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -703,9 +361,8 @@ function bindCommentForm() {
       return;
     }
 
-    state.isSubmittingComment = true;
+    state.submittingComment = true;
     updateFormsAvailability();
-    debugLog('Guardando comentario', { propertyId: state.propertyId, userId: state.user.uid });
 
     try {
       await addDoc(collection(db, 'properties', state.propertyId, 'comments'), {
@@ -721,10 +378,9 @@ function bindCommentForm() {
       setFormMessage('[data-pi-comment-form]', 'Comentario publicado correctamente.', 'is-success');
     } catch (error) {
       console.error('No se pudo guardar comentario:', error);
-      debugLog('Error guardando comentario', { propertyId: state.propertyId, error });
       setFormMessage('[data-pi-comment-form]', 'No se pudo publicar el comentario.', 'is-error');
     } finally {
-      state.isSubmittingComment = false;
+      state.submittingComment = false;
       updateFormsAvailability();
     }
   });
@@ -732,18 +388,14 @@ function bindCommentForm() {
 
 function bindReviewForm() {
   const form = document.querySelector('[data-pi-review-form]');
-  if (!form) return;
+  if (!form || form.dataset.bound === 'true') return;
+  form.dataset.bound = 'true';
 
   form.querySelectorAll('[data-pi-rate]').forEach((button) => {
-    const value = Number(button.dataset.piRate || 0);
     button.addEventListener('click', () => {
-      state.reviewRating = value;
+      state.reviewRating = Number(button.dataset.piRate || 0);
       paintRatingPicker(state.reviewRating);
-    });
-    button.addEventListener('pointerdown', (event) => {
-      event.preventDefault();
-      state.reviewRating = value;
-      paintRatingPicker(state.reviewRating);
+      setFormMessage('[data-pi-review-form]', '');
     });
   });
 
@@ -753,20 +405,13 @@ function bindReviewForm() {
       setFormMessage('[data-pi-review-form]', 'Debes iniciar sesión para publicar una reseña.', 'is-error');
       return;
     }
-
-    const review = String(form.querySelector('textarea[name="review"]')?.value || '').trim();
     if (!state.reviewRating) {
       setFormMessage('[data-pi-review-form]', 'Selecciona de 1 a 5 estrellas.', 'is-error');
       return;
     }
-    if (!review) {
-      setFormMessage('[data-pi-review-form]', 'Escribe una reseña para continuar.', 'is-error');
-      return;
-    }
 
-    state.isSubmittingReview = true;
+    state.submittingReview = true;
     updateFormsAvailability();
-    debugLog('Guardando reseña', { propertyId: state.propertyId, userId: state.user.uid, rating: state.reviewRating });
 
     try {
       await addDoc(collection(db, 'properties', state.propertyId, 'reviews'), {
@@ -775,198 +420,74 @@ function bindReviewForm() {
         userName: state.user.displayName || 'Usuario',
         userPhoto: state.user.photoURL || '',
         rating: state.reviewRating,
-        review,
-        comment: review,
+        review: '',
+        comment: '',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
-      form.reset();
       state.reviewRating = 0;
       paintRatingPicker(0);
       setFormMessage('[data-pi-review-form]', 'Reseña publicada correctamente.', 'is-success');
     } catch (error) {
       console.error('No se pudo guardar reseña:', error);
-      debugLog('Error guardando reseña', { propertyId: state.propertyId, error });
       setFormMessage('[data-pi-review-form]', 'No se pudo publicar la reseña.', 'is-error');
     } finally {
-      state.isSubmittingReview = false;
+      state.submittingReview = false;
       updateFormsAvailability();
-    }
-  });
-}
-
-function bindFavoriteButton() {
-  const likeButton = document.querySelector('[data-pi-like-btn]');
-  if (likeButton) {
-    likeButton.addEventListener('click', async () => {
-      if (!state.user) {
-        setFavoriteMessage('Inicia sesión para dar like.', 'is-error');
-        return;
-      }
-      if (state.isSubmittingFavorite || !state.propertyId) return;
-
-      state.isSubmittingFavorite = true;
-      const likeRef = doc(db, 'properties', state.propertyId, 'likes', state.user.uid);
-      const nextValue = !state.isLiked;
-      state.isLiked = nextValue;
-      state.likesCount = Math.max(0, state.likesCount + (nextValue ? 1 : -1));
-      renderFavoriteState();
-
-      try {
-        if (nextValue) {
-          await setDoc(likeRef, {
-            propertyId: state.propertyId,
-            userId: state.user.uid,
-            userName: state.user.displayName || 'Usuario',
-            userPhoto: state.user.photoURL || '',
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-          });
-          setFavoriteMessage('Like agregado.', 'is-success');
-        } else {
-          await deleteDoc(likeRef);
-          setFavoriteMessage('Like eliminado.', 'is-success');
-        }
-      } catch (error) {
-        console.error('No se pudo actualizar like:', error);
-        state.isLiked = !nextValue;
-        state.likesCount = Math.max(0, state.likesCount + (nextValue ? -1 : 1));
-        setFavoriteMessage('No se pudo actualizar like.', 'is-error');
-      } finally {
-        state.isSubmittingFavorite = false;
-        renderFavoriteState();
-      }
-    });
-  }
-
-  const button = document.querySelector('[data-pi-favorite-btn]');
-  if (!button) return;
-
-  button.addEventListener('click', async () => {
-    if (!state.user) {
-      setFavoriteMessage('Inicia sesión para guardar favoritos.', 'is-error');
-      return;
-    }
-    if (state.isSubmittingFavorite || !state.propertyId) return;
-
-    state.isSubmittingFavorite = true;
-    renderFavoriteState();
-    const favoriteRef = doc(db, 'properties', state.propertyId, 'favorites', state.user.uid);
-    const nextValue = !state.isFavorite;
-    state.isFavorite = nextValue;
-    renderFavoriteState();
-
-    try {
-      if (nextValue) {
-        await setDoc(favoriteRef, {
-          propertyId: state.propertyId,
-          userId: state.user.uid,
-          userName: state.user.displayName || 'Usuario',
-          userPhoto: state.user.photoURL || '',
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        });
-        setFavoriteMessage('Propiedad agregada a favoritos.', 'is-success');
-      } else {
-        await deleteDoc(favoriteRef);
-        setFavoriteMessage('Propiedad eliminada de favoritos.', 'is-success');
-      }
-    } catch (error) {
-      console.error('No se pudo actualizar favorito:', error);
-      debugLog('Error guardando favorito', { propertyId: state.propertyId, error });
-      state.isFavorite = !nextValue;
-      setFavoriteMessage('No se pudo actualizar favorito.', 'is-error');
-    } finally {
-      state.isSubmittingFavorite = false;
-      renderFavoriteState();
     }
   });
 }
 
 function bindAuth() {
   if (state.authBound) return;
+  state.authBound = true;
+
   onAuthStateChanged(auth, (user) => {
     state.user = user;
     state.authReady = true;
-    debugLog('[Auth] state changed', { isLoggedIn: Boolean(user), userId: user?.uid || null });
     renderAuthBox();
     updateFormsAvailability();
-    renderFavoriteState();
-    if (state.propertyId && state.initializedFor === state.propertyId) {
-      restartSubscriptions();
-    }
   });
-  state.authBound = true;
 }
 
-async function initInteractionSystem(propertyIdFromEvent = '') {
-  const fromUrl = getPropertyIdFromUrl();
-  const propertyId = String(propertyIdFromEvent || fromUrl || '').trim();
-  debugLog('[Init] propertyId resolved', { propertyIdFromEvent, propertyIdFromUrl: fromUrl, propertyId });
-  if (!isValidPropertyId(propertyId)) {
-    debugLog('[Init] propertyId inválido', { propertyIdFromEvent, propertyIdFromUrl: fromUrl });
-    renderPropertyIdError('No se pudo cargar interacciones: identificador de propiedad inválido.');
-    return;
-  }
-  if (state.initializedFor === propertyId) {
-    debugLog('[Init] ya inicializado', { propertyId });
-    return;
-  }
+function initInteractionSystem(propertyIdFromEvent = '') {
+  const propertyId = String(propertyIdFromEvent || getPropertyIdFromUrl() || '').trim();
+  if (!propertyId) return;
 
-  const hasFavoriteMount = Boolean(document.getElementById('propertyLikeMount'));
-  const hasReviewsSection = Boolean(document.getElementById('propertyReviews'));
-  if (!hasFavoriteMount || !hasReviewsSection) {
-    debugLog('[Init] esperando montaje del detalle', {
-      propertyId,
-      hasFavoriteMount,
-      hasReviewsSection
-    });
-    return;
-  }
+  const reviewsSection = document.getElementById('propertyReviews');
+  if (!reviewsSection) return;
+
+  const shellExists = Boolean(reviewsSection.querySelector('[data-pi-wrap]'));
+  if (state.initializedFor === propertyId && shellExists) return;
+
+  if (state.initializedFor && state.initializedFor !== propertyId) clearSubscriptions();
 
   state.propertyId = propertyId;
+  state.initializedFor = propertyId;
+  state.reviewRating = 0;
   state.comments = [];
   state.reviews = [];
-  state.likesCount = 0;
-  state.isLiked = false;
-  state.isFavorite = false;
-  state.commentsStatus = 'loading';
-  state.reviewsStatus = 'loading';
-  state.likesStatus = 'loading';
-  state.favoritesStatus = 'loading';
-  state.reviewRating = 0;
-  state.reviewHover = 0;
+  state.commentsStatus = 'idle';
+  state.reviewsStatus = 'idle';
 
-  if (!renderFavoriteShell() || !renderDiscussionShell()) {
-    debugLog('[Init] no se pudieron renderizar contenedores', { propertyId });
-    return;
-  }
-  state.initializedFor = propertyId;
+  if (!renderDiscussionShell()) return;
 
-  clearSubscriptions();
   bindAuth();
   bindCommentForm();
   bindReviewForm();
-  bindFavoriteButton();
   renderAuthBox();
   updateFormsAvailability();
   paintRatingPicker(0);
   renderCommentList();
   renderReviewList();
-  renderFavoriteState();
   restartSubscriptions();
 }
 
 function queueInit(event) {
   const propertyId = event?.detail?.propertyId || '';
-  window.requestAnimationFrame(() => {
-    initInteractionSystem(propertyId).catch((error) => {
-      console.error('No se pudo inicializar interacciones:', error);
-      debugLog('Error de inicialización', { error });
-    });
-  });
+  window.requestAnimationFrame(() => initInteractionSystem(propertyId));
 }
 
 window.addEventListener('propertyDetailReady', queueInit);
-window.addEventListener('DOMContentLoaded', queueInit);
+window.addEventListener('DOMContentLoaded', queueInit, { once: true });
 window.addEventListener('beforeunload', clearSubscriptions);
