@@ -24,6 +24,7 @@ import {
   where,
   getDocs,
   orderBy,
+  limit,
   documentId,
   serverTimestamp,
   deleteField
@@ -87,6 +88,7 @@ export {
   where,
   getDocs,
   orderBy,
+  limit,
   documentId,
   serverTimestamp,
   deleteField,
