@@ -1,0 +1,109 @@
+/* Persistent navbar shown after the Home hero curtain has fully moved away. */
+body.home-page > .site-header.home-sticky-navbar {
+  position: fixed !important;
+  inset: 0 0 auto 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 5200 !important;
+  width: 100% !important;
+  margin: 0 !important;
+  background: rgba(255, 255, 255, 0.88) !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(7, 26, 51, 0.10) !important;
+  box-shadow: 0 10px 28px rgba(7, 26, 51, 0.08) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(145%) !important;
+  backdrop-filter: blur(18px) saturate(145%) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translate3d(0, -110%, 0) !important;
+  transition: transform 260ms cubic-bezier(.22,1,.36,1), opacity 180ms ease !important;
+}
+
+body.home-page > .site-header.home-sticky-navbar.is-visible {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  transform: translate3d(0, 0, 0) !important;
+}
+
+body.home-page > .site-header.home-sticky-navbar .nav-wrapper {
+  min-height: var(--public-navbar-height, 76px) !important;
+}
+
+body.home-page > .site-header.home-sticky-navbar .brand,
+body.home-page > .site-header.home-sticky-navbar .brand:hover,
+body.home-page > .site-header.home-sticky-navbar .brand:focus-visible {
+  background: transparent !important;
+}
+
+body.home-page > .site-header.home-sticky-navbar .site-nav > a,
+body.home-page > .site-header.home-sticky-navbar .site-nav a,
+body.home-page > .site-header.home-sticky-navbar .nav-more__trigger {
+  color: #111111 !important;
+  -webkit-text-fill-color: #111111 !important;
+  text-shadow: none !important;
+}
+
+body.home-page > .site-header.home-sticky-navbar .site-nav > a.active,
+body.home-page > .site-header.home-sticky-navbar .site-nav a.active,
+body.home-page > .site-header.home-sticky-navbar .nav-more__trigger.active {
+  color: #111111 !important;
+  -webkit-text-fill-color: #111111 !important;
+}
+
+body.home-page > .site-header.home-sticky-navbar .site-nav > a:hover,
+body.home-page > .site-header.home-sticky-navbar .site-nav > a:focus-visible,
+body.home-page > .site-header.home-sticky-navbar .nav-more__trigger:hover,
+body.home-page > .site-header.home-sticky-navbar .nav-more__trigger:focus-visible {
+  color: #071a33 !important;
+  -webkit-text-fill-color: #071a33 !important;
+}
+
+body.home-page > .site-header.home-sticky-navbar .site-nav a::after {
+  background: #c8a45d !important;
+}
+
+body.home-page > .site-header.home-sticky-navbar .nav-more__trigger svg {
+  stroke: currentColor !important;
+}
+
+body.home-page > .site-header.home-sticky-navbar .nav-more__menu {
+  background: rgba(255, 255, 255, 0.97) !important;
+  border: 1px solid rgba(7, 26, 51, 0.10) !important;
+  box-shadow: 0 18px 44px rgba(7, 26, 51, 0.14) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+  backdrop-filter: blur(18px) !important;
+}
+
+body.home-page > .site-header.home-sticky-navbar .nav-more__menu a {
+  color: #111111 !important;
+  -webkit-text-fill-color: #111111 !important;
+}
+
+body.home-page > .site-header.home-sticky-navbar .menu-toggle {
+  color: #111111 !important;
+  -webkit-text-fill-color: #111111 !important;
+  border-color: rgba(7, 26, 51, 0.14) !important;
+  background: rgba(255, 255, 255, 0.78) !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 900px) {
+  body.home-page > .site-header.home-sticky-navbar {
+    background: rgba(255, 255, 255, 0.92) !important;
+  }
+
+  body.home-page > .site-header.home-sticky-navbar .site-nav.open {
+    background: rgba(255, 255, 255, 0.98) !important;
+    border: 1px solid rgba(7, 26, 51, 0.10) !important;
+    box-shadow: 0 20px 46px rgba(7, 26, 51, 0.14) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    backdrop-filter: blur(20px) !important;
+  }
+
+  body.home-page > .site-header.home-sticky-navbar .site-nav.open a,
+  body.home-page > .site-header.home-sticky-navbar .site-nav.open .nav-more__trigger {
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+  }
+}
