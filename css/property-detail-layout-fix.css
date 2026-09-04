@@ -1,0 +1,376 @@
+/* Corrective layout pass for propiedad.html — 2026-09-04
+   Keeps the premium redesign while restoring compact, non-overlapping proportions. */
+
+.property-detail-page #propertyDetail {
+  width: min(1420px, calc(100% - 28px)) !important;
+  max-width: none !important;
+  padding-top: 10px !important;
+  padding-bottom: clamp(2.4rem, 5vw, 4rem) !important;
+}
+
+.property-detail-page #propertyDetail .detail-grid--top {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.55fr) minmax(340px, .72fr) !important;
+  gap: 22px !important;
+  align-items: start !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: visible !important;
+}
+
+.property-detail-page #propertyDetail .detail-gallery,
+.property-detail-page #propertyDetail .detail-summary-card {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  align-self: start !important;
+}
+
+/* Main gallery: intentionally compact. It must never occupy the summary column. */
+.property-detail-page #propertyDetail .detail-gallery {
+  overflow: hidden !important;
+  border-radius: 5px !important;
+}
+
+.property-detail-page #propertyDetail .detail-gallery .gallery-viewport {
+  position: relative !important;
+  width: 100% !important;
+  height: clamp(350px, 30vw, 455px) !important;
+  max-height: 455px !important;
+  aspect-ratio: auto !important;
+  overflow: hidden !important;
+  border-radius: 5px !important;
+  isolation: isolate !important;
+}
+
+.property-detail-page #propertyDetail .detail-gallery-main-image {
+  position: relative !important;
+  z-index: 1 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  min-height: 0 !important;
+  object-fit: cover !important;
+  object-position: center center !important;
+}
+
+/* Watermark: true center of the visible photo, never of the outer grid. */
+.property-detail-page #propertyDetail .gallery-watermark {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 3 !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  pointer-events: none !important;
+  transform: none !important;
+}
+
+.property-detail-page #propertyDetail .gallery-watermark::before {
+  position: static !important;
+  display: block !important;
+  width: clamp(150px, 30%, 285px) !important;
+  max-width: 38% !important;
+  height: auto !important;
+  aspect-ratio: 523 / 294 !important;
+  margin: 0 !important;
+  transform: none !important;
+  background-position: center center !important;
+  background-size: contain !important;
+  opacity: .11 !important;
+}
+
+.property-detail-page #propertyDetail .gallery-nav {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 9px !important;
+}
+
+.property-detail-page #propertyDetail .gallery-prev { left: 14px !important; }
+.property-detail-page #propertyDetail .gallery-next { right: 14px !important; }
+
+.property-detail-page #propertyDetail .property-gallery-thumbnails {
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  margin-top: 8px !important;
+  overflow: hidden !important;
+}
+
+.property-detail-page #propertyDetail .property-gallery-thumbnail {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: clamp(68px, 7vw, 92px) !important;
+  aspect-ratio: auto !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+
+.property-detail-page #propertyDetail .property-gallery-thumbnail:hover,
+.property-detail-page #propertyDetail .property-gallery-thumbnail:focus-visible,
+.property-detail-page #propertyDetail .property-gallery-thumbnail.is-active {
+  transform: none !important;
+}
+
+/* Compact summary. Static positioning avoids the appearance of a card floating over the gallery. */
+.property-detail-page #propertyDetail .detail-summary-card {
+  position: relative !important;
+  top: auto !important;
+  z-index: 2 !important;
+  min-height: 0 !important;
+  border-radius: 16px !important;
+  padding: 18px 20px !important;
+  gap: 7px !important;
+  overflow: hidden !important;
+}
+
+.property-detail-page #propertyDetail .detail-summary-card .badge {
+  position: static !important;
+  inset: auto !important;
+  order: initial !important;
+  margin: 0 0 2px !important;
+  font-size: .7rem !important;
+}
+
+.property-detail-page #propertyDetail .detail-summary-title {
+  margin: 0 !important;
+  font-size: clamp(1.55rem, 2.25vw, 2.15rem) !important;
+  line-height: 1.08 !important;
+}
+
+.property-detail-page #propertyDetail .detail-summary-location {
+  margin: 3px 0 5px !important;
+  font-size: .92rem !important;
+}
+
+.property-detail-page #propertyDetail .detail-summary-type {
+  display: none !important;
+}
+
+.property-detail-page #propertyDetail .detail-summary-price {
+  margin: 8px 0 4px !important;
+  font-size: clamp(1.65rem, 2.5vw, 2.15rem) !important;
+  line-height: 1.05 !important;
+}
+
+.property-detail-page #propertyDetail .detail-summary-metrics {
+  margin-top: 5px !important;
+}
+
+.property-detail-page #propertyDetail .detail-summary-metric {
+  padding: 11px 9px 11px 0 !important;
+  font-size: .8rem !important;
+}
+
+.property-detail-page #propertyDetail .detail-summary-metric + .detail-summary-metric {
+  padding-left: 10px !important;
+}
+
+.property-detail-page #propertyDetail .property-main-actions {
+  margin: 7px 0 0 !important;
+}
+
+.property-detail-page #propertyDetail .property-share-panel {
+  padding-top: 10px !important;
+  margin-top: 2px !important;
+}
+
+.property-detail-page #propertyDetail .property-share-button {
+  min-height: 40px !important;
+}
+
+/* Bring the information immediately after the hero instead of leaving a large visual gap. */
+.property-detail-page #propertyDetail .detail-extended-card {
+  clear: both !important;
+  margin-top: 16px !important;
+  border-radius: 18px !important;
+}
+
+.property-detail-page #propertyDetail .detail-extended-block + .detail-extended-block {
+  margin-top: 1.25rem !important;
+  padding-top: 1.25rem !important;
+}
+
+.property-detail-page #propertyDetail .detail-extended-block h2,
+.property-detail-page #propertyDetail .property-video-header h2,
+.property-detail-page #propertyDetail .detail-map-section > h2,
+.property-detail-page #propertyDetail .pi-header h2 {
+  font-size: clamp(1.35rem, 2vw, 1.85rem) !important;
+}
+
+/* Wide desktop: cap gallery height even on very large monitors. */
+@media (min-width: 1500px) {
+  .property-detail-page #propertyDetail {
+    width: min(1440px, calc(100% - 40px)) !important;
+  }
+
+  .property-detail-page #propertyDetail .detail-grid--top {
+    grid-template-columns: minmax(0, 1.58fr) minmax(360px, .70fr) !important;
+  }
+
+  .property-detail-page #propertyDetail .detail-gallery .gallery-viewport {
+    height: 455px !important;
+  }
+}
+
+/* Laptop / small desktop */
+@media (max-width: 1200px) {
+  .property-detail-page #propertyDetail {
+    width: min(1180px, calc(100% - 24px)) !important;
+  }
+
+  .property-detail-page #propertyDetail .detail-grid--top {
+    grid-template-columns: minmax(0, 1.32fr) minmax(315px, .78fr) !important;
+    gap: 16px !important;
+  }
+
+  .property-detail-page #propertyDetail .detail-gallery .gallery-viewport {
+    height: clamp(330px, 34vw, 420px) !important;
+  }
+
+  .property-detail-page #propertyDetail .detail-summary-card {
+    padding: 16px !important;
+  }
+}
+
+/* Tablet: stack cleanly before either column becomes cramped. */
+@media (max-width: 900px) {
+  .property-detail-page #propertyDetail {
+    width: min(100% - 22px, 820px) !important;
+    padding-top: 8px !important;
+  }
+
+  .property-detail-page #propertyDetail .detail-grid--top {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  .property-detail-page #propertyDetail .detail-gallery .gallery-viewport {
+    height: clamp(300px, 55vw, 430px) !important;
+  }
+
+  .property-detail-page #propertyDetail .detail-summary-card {
+    position: relative !important;
+    width: 100% !important;
+    border-radius: 14px !important;
+  }
+
+  .property-detail-page #propertyDetail .detail-summary-title {
+    font-size: clamp(1.5rem, 4.5vw, 2rem) !important;
+  }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .property-detail-page #propertyDetail {
+    width: calc(100% - 16px) !important;
+    padding-top: 6px !important;
+    padding-bottom: 2.5rem !important;
+  }
+
+  .property-detail-page #propertyDetail .detail-grid--top {
+    gap: 10px !important;
+  }
+
+  .property-detail-page #propertyDetail .detail-gallery {
+    border-radius: 3px !important;
+  }
+
+  .property-detail-page #propertyDetail .detail-gallery .gallery-viewport {
+    height: clamp(235px, 66vw, 330px) !important;
+    border-radius: 3px !important;
+  }
+
+  .property-detail-page #propertyDetail .gallery-nav {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 8px !important;
+  }
+
+  .property-detail-page #propertyDetail .gallery-prev { left: 9px !important; }
+  .property-detail-page #propertyDetail .gallery-next { right: 9px !important; }
+
+  .property-detail-page #propertyDetail .gallery-counter {
+    top: 9px !important;
+    right: 9px !important;
+    padding: .34rem .5rem !important;
+    font-size: .68rem !important;
+  }
+
+  .property-detail-page #propertyDetail .gallery-watermark::before {
+    width: clamp(110px, 32%, 170px) !important;
+    max-width: 40% !important;
+  }
+
+  .property-detail-page #propertyDetail .property-gallery-thumbnails {
+    display: grid !important;
+    grid-auto-flow: column !important;
+    grid-auto-columns: minmax(86px, 28%) !important;
+    grid-template-columns: none !important;
+    gap: 6px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    overscroll-behavior-inline: contain !important;
+    scroll-snap-type: x proximity !important;
+    scrollbar-width: none !important;
+  }
+
+  .property-detail-page #propertyDetail .property-gallery-thumbnails::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .property-detail-page #propertyDetail .property-gallery-thumbnail {
+    height: 68px !important;
+    scroll-snap-align: start !important;
+  }
+
+  .property-detail-page #propertyDetail .detail-summary-card {
+    padding: 14px !important;
+    border-radius: 12px !important;
+  }
+
+  .property-detail-page #propertyDetail .detail-summary-title {
+    font-size: clamp(1.4rem, 7vw, 1.78rem) !important;
+  }
+
+  .property-detail-page #propertyDetail .detail-summary-price {
+    font-size: clamp(1.5rem, 8vw, 1.9rem) !important;
+  }
+
+  .property-detail-page #propertyDetail .detail-summary-metrics {
+    grid-template-columns: 1fr !important;
+  }
+
+  .property-detail-page #propertyDetail .detail-summary-metric,
+  .property-detail-page #propertyDetail .detail-summary-metric + .detail-summary-metric {
+    padding: 9px 0 !important;
+    border-left: 0 !important;
+  }
+
+  .property-detail-page #propertyDetail .detail-summary-metric + .detail-summary-metric {
+    border-top: 1px solid #e8ebef !important;
+  }
+
+  .property-detail-page #propertyDetail .property-share-options {
+    grid-template-columns: 1fr !important;
+  }
+
+  .property-detail-page #propertyDetail .detail-extended-card {
+    margin-top: 12px !important;
+    padding: 16px 14px !important;
+    border-radius: 14px !important;
+  }
+
+  .property-detail-page #propertyDetail .detail-extended-block h2,
+  .property-detail-page #propertyDetail .property-video-header h2,
+  .property-detail-page #propertyDetail .detail-map-section > h2,
+  .property-detail-page #propertyDetail .pi-header h2 {
+    font-size: clamp(1.25rem, 6vw, 1.55rem) !important;
+    margin-bottom: .65rem !important;
+  }
+}
