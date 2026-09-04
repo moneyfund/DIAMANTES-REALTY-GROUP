@@ -8,6 +8,7 @@
   let mountTimer = null;
   let mounting = false;
   let activeCoordinates = null;
+  let leafletRetryCount = 0;
 
   function numberOrNull(value) {
     if (value === null || value === undefined || value === '') return null;
@@ -101,30 +102,8 @@
     actions.querySelector('[data-property-route-button]')?.addEventListener('click', startRouteFromUser);
   }
 
-  function renderIframeFallback(container, property, coordinates) {
-    const [lat, lng] = coordinates;
-    const deltaLat = 0.012;
-    const deltaLng = 0.016;
-    const bbox = [lng - deltaLng, lat - deltaLat, lng + deltaLng, lat + deltaLat].join(',');
-    const src = `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(bbox)}&layer=mapnik&marker=${encodeURIComponent(`${lat},${lng}`)}`;
-
-    container.innerHTML = '';
-    container.style.position = 'relative';
-    container.style.overflow = 'hidden';
-
-    const iframe = document.createElement('iframe');
-    iframe.className = 'property-map-fallback-frame';
-    iframe.src = src;
-    iframe.loading = 'lazy';
-    iframe.title = `Mapa de ${cleanText(property.titulo || property.title || 'la propiedad')}`;
-    iframe.referrerPolicy = 'strict-origin-when-cross-origin';
-    iframe.style.cssText = 'display:block;width:100%;height:100%;min-height:inherit;border:0;background:#e8edf2;';
-    container.appendChild(iframe);
-    ensureRouteControls();
-  }
-
-  function renderUnavailable(container) {
-    container.innerHTML = '<div style="display:grid;place-items:center;width:100%;height:100%;min-height:inherit;padding:24px;text-align:center;color:#536176;background:#eef2f6;">Ubicación no disponible para esta propiedad.</div>';
+  function renderUnavailable(container, message = 'Ubicación no disponible para esta propiedad.') {
+    container.innerHTML = `<div style="display:grid;place-items:center;width:100%;height:100%;min-height:inherit;padding:24px;text-align:center;color:#536176;background:#eef2f6;">${message}</div>`;
   }
 
   function safelyRemoveMap() {
@@ -161,6 +140,8 @@
     safelyRemoveMap();
     activeCoordinates = coordinates;
 
+    // Use the same Leaflet + OpenStreetMap architecture as the main Mapa page.
+    // No embedded OpenStreetMap iframe is used, avoiding the extra external page messaging.
     const fresh = container.cloneNode(false);
     fresh.removeAttribute('style');
     fresh.className = container.className || 'property-map';
@@ -320,15 +301,24 @@
         return;
       }
 
-      try {
-        if (!mountLeaflet(container, resolvedProperty, coordinates)) {
-          renderIframeFallback(container, resolvedProperty, coordinates);
+      if (typeof window.L === 'undefined') {
+        leafletRetryCount += 1;
+        if (leafletRetryCount <= 8) {
+          setTimeout(() => scheduleMount(resolvedProperty, 0), 250);
+          return;
         }
+        renderUnavailable(container, 'No se pudo cargar el mapa en este momento.');
+        return;
+      }
+
+      leafletRetryCount = 0;
+      try {
+        mountLeaflet(container, resolvedProperty, coordinates);
       } catch (error) {
-        console.error('[PropertyMap] Leaflet no pudo montar el mapa; se usa respaldo.', error);
+        console.error('[PropertyMap] No se pudo montar el mapa Leaflet.', error);
         safelyRemoveMap();
         const current = document.getElementById('propertyMap');
-        if (current) renderIframeFallback(current, resolvedProperty, coordinates);
+        if (current) renderUnavailable(current, 'No se pudo cargar el mapa en este momento.');
       }
     } finally {
       mounting = false;
