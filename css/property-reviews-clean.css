@@ -4,12 +4,6 @@
   padding: 1rem 1.1rem;
 }
 
-/* properties.js paints temporary loading copy before the interaction module is ready.
-   Keep the section visually stable instead of showing Cargando... during module startup. */
-.property-detail-page #propertyReviews > .pi-wrap:not([data-pi-wrap]) .pi-empty {
-  display: none !important;
-}
-
 .property-detail-page #propertyReviews .pi-header {
   margin-bottom: .75rem;
 }
@@ -51,10 +45,11 @@
   margin-top: .75rem;
 }
 
-.property-detail-page #propertyReviews .pi-status {
-  margin: .45rem 0 0;
-  font-size: .86rem;
-  color: #5b6472;
+/* properties.js paints a temporary shell before the reviews module is ready.
+   Keep its layout but never expose a long-lived “Cargando…” message. */
+.property-detail-page #propertyReviews > .pi-wrap:not([data-pi-wrap]) .pi-empty {
+  visibility: hidden !important;
+  opacity: 0 !important;
 }
 
 @media (max-width: 700px) {

@@ -1,14 +1,12 @@
 (() => {
   'use strict';
 
-  let lastProperty = null;
-  let mapInstance = null;
+  let detailMap = null;
+  let propertyMarker = null;
   let routeLayer = null;
   let userMarker = null;
+  let activeProperty = null;
   let activeCoordinates = null;
-  let mountedKey = '';
-  let mountPromise = null;
-  let resizeTimer = null;
 
   function numberOrNull(value) {
     if (value === null || value === undefined || value === '') return null;
@@ -44,81 +42,30 @@
     return null;
   }
 
-  function getPropertyId() {
-    return String(new URLSearchParams(window.location.search).get('id') || '').trim();
-  }
-
-  function getMapKey(property = {}, coordinates = []) {
-    return `${String(property.id || getPropertyId())}|${coordinates[0]}|${coordinates[1]}`;
-  }
-
-  async function fetchPropertyDirectly() {
-    const propertyId = getPropertyId();
-    if (!propertyId) return null;
-
-    try {
-      const compatDb = window.firebase?.firestore?.();
-      if (compatDb?.collection) {
-        const snap = await compatDb.collection('properties').doc(propertyId).get();
-        if (snap.exists) return { id: snap.id, ...snap.data() };
-      }
-    } catch (error) {
-      console.warn('[PropertyMap] No se pudo releer la propiedad con Firestore compat.', error);
-    }
-
-    try {
-      const candidateDb = window.inmoFirebase?.db;
-      if (candidateDb?.collection) {
-        const snap = await candidateDb.collection('properties').doc(propertyId).get();
-        if (snap.exists) return { id: snap.id, ...snap.data() };
-      }
-    } catch (error) {
-      console.warn('[PropertyMap] No se pudo releer la propiedad desde inmoFirebase.', error);
-    }
-
-    return null;
-  }
-
   function cleanText(value = '') {
     return String(value || '').replace(/[<>]/g, '').trim();
   }
 
-  function setRouteStatus(message = '') {
-    const status = document.querySelector('[data-property-route-status]');
-    if (status) status.textContent = message;
-  }
+  function capturePropertyMapFactory() {
+    if (!window.L?.map || window.L.map.__drgPropertyCapture) return;
 
-  function ensureRouteControls() {
-    const section = document.querySelector('.detail-map-section');
-    if (!section || section.querySelector('[data-property-route-button]')) return;
+    const nativeMapFactory = window.L.map;
+    function capturedMapFactory(...args) {
+      const map = nativeMapFactory.apply(window.L, args);
+      const container = map?.getContainer?.();
+      if (container?.id === 'propertyMap') {
+        detailMap = map;
+        propertyMarker = null;
+        routeLayer = null;
+        userMarker = null;
+      }
+      return map;
+    }
 
-    const map = section.querySelector('#propertyMap');
-    if (!map) return;
-
-    const actions = document.createElement('div');
-    actions.className = 'property-map-actions';
-    actions.innerHTML = `
-      <button type="button" class="property-route-button" data-property-route-button>Cómo llegar</button>
-      <p class="property-route-status" data-property-route-status aria-live="polite"></p>
-    `;
-    section.insertBefore(actions, map);
-    actions.querySelector('[data-property-route-button]')?.addEventListener('click', startRouteFromUser);
-  }
-
-  function renderUnavailable(container, message = 'Ubicación no disponible para esta propiedad.') {
-    if (!container || container.dataset.mapUnavailable === message) return;
-    container.dataset.mapUnavailable = message;
-    container.innerHTML = `<div style="display:grid;place-items:center;width:100%;height:100%;min-height:inherit;padding:24px;text-align:center;color:#536176;background:#eef2f6;">${message}</div>`;
-  }
-
-  function safelyRemoveMap() {
-    routeLayer = null;
-    userMarker = null;
-    if (!mapInstance) return;
-    try { mapInstance.off(); } catch (_) {}
-    try { mapInstance.remove(); } catch (_) {}
-    mapInstance = null;
-    mountedKey = '';
+    Object.assign(capturedMapFactory, nativeMapFactory);
+    capturedMapFactory.__drgPropertyCapture = true;
+    capturedMapFactory.__drgNative = nativeMapFactory;
+    window.L.map = capturedMapFactory;
   }
 
   function createPropertyIcon() {
@@ -140,63 +87,77 @@
     });
   }
 
-  function refreshMap() {
-    if (!mapInstance) return;
-    try { mapInstance.invalidateSize(false); } catch (_) {}
+  function removeLegacyPropertyMarkers() {
+    if (!detailMap || !window.L?.Marker) return;
+    detailMap.eachLayer((layer) => {
+      if (!(layer instanceof window.L.Marker)) return;
+      if (layer === userMarker || layer === propertyMarker) return;
+      try { detailMap.removeLayer(layer); } catch (_) {}
+    });
   }
 
-  function mountLeaflet(container, property, coordinates) {
-    if (typeof window.L === 'undefined') return false;
+  function ensurePropertyMarker() {
+    if (!detailMap || !activeCoordinates || !window.L) return;
 
-    const nextKey = getMapKey(property, coordinates);
-    if (mapInstance && mountedKey === nextKey && mapInstance.getContainer?.().isConnected) {
-      activeCoordinates = coordinates;
-      ensureRouteControls();
-      refreshMap();
-      return true;
+    removeLegacyPropertyMarkers();
+    if (propertyMarker) {
+      try { detailMap.removeLayer(propertyMarker); } catch (_) {}
+      propertyMarker = null;
     }
 
-    safelyRemoveMap();
-    activeCoordinates = coordinates;
+    const title = cleanText(activeProperty?.titulo || activeProperty?.title || 'Propiedad');
+    const location = cleanText(activeProperty?.ubicacion || activeProperty?.city || (typeof activeProperty?.location === 'string' ? activeProperty.location : ''));
 
-    // The legacy renderer may have initialized Leaflet immediately before this event.
-    // Replace that node once, then keep one persistent map instance for the rest of the page.
-    const fresh = container.cloneNode(false);
-    fresh.removeAttribute('style');
-    fresh.removeAttribute('data-map-unavailable');
-    fresh.className = container.className || 'property-map';
-    fresh.id = 'propertyMap';
-    container.replaceWith(fresh);
+    propertyMarker = window.L.marker(activeCoordinates, { icon: createPropertyIcon() }).addTo(detailMap);
+    propertyMarker.bindPopup(`<strong>${title}</strong>${location ? `<br>${location}` : ''}`);
+  }
 
-    mapInstance = window.L.map(fresh, {
-      zoomControl: true,
-      scrollWheelZoom: true,
-      dragging: true,
-      touchZoom: true,
-      doubleClickZoom: true,
-      preferCanvas: true,
-      fadeAnimation: false,
-      zoomAnimation: true,
-      markerZoomAnimation: true
-    }).setView(coordinates, 15, { animate: false });
+  function setRouteStatus(message = '') {
+    const status = document.querySelector('[data-property-route-status]');
+    if (status) status.textContent = message;
+  }
 
-    window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors',
-      updateWhenIdle: true,
-      keepBuffer: 3
-    }).addTo(mapInstance);
+  function ensureRouteControls() {
+    const section = document.querySelector('.detail-map-section');
+    const mapNode = section?.querySelector('#propertyMap');
+    if (!section || !mapNode) return;
 
-    const title = cleanText(property.titulo || property.title || 'Propiedad');
-    const location = cleanText(property.ubicacion || property.city || (typeof property.location === 'string' ? property.location : ''));
-    const marker = window.L.marker(coordinates, { icon: createPropertyIcon() }).addTo(mapInstance);
-    marker.bindPopup(`<strong>${title}</strong>${location ? `<br>${location}` : ''}`);
+    let actions = section.querySelector('.property-map-actions');
+    if (!actions) {
+      actions = document.createElement('div');
+      actions.className = 'property-map-actions';
+      actions.innerHTML = `
+        <button type="button" class="property-route-button" data-property-route-button>Cómo llegar</button>
+        <p class="property-route-status" data-property-route-status aria-live="polite"></p>
+      `;
+      section.insertBefore(actions, mapNode);
+    }
 
-    mountedKey = nextKey;
+    const button = actions.querySelector('[data-property-route-button]');
+    if (button && button.dataset.routeBound !== 'true') {
+      button.dataset.routeBound = 'true';
+      button.addEventListener('click', startRouteFromUser);
+    }
+  }
+
+  function refreshMapOnce() {
+    if (!detailMap) return;
+    requestAnimationFrame(() => {
+      try { detailMap.invalidateSize({ pan: false, animate: false }); } catch (_) {}
+    });
+    window.setTimeout(() => {
+      try { detailMap.invalidateSize({ pan: false, animate: false }); } catch (_) {}
+    }, 140);
+  }
+
+  function enhanceCurrentMap(property) {
+    if (property) activeProperty = property;
+    activeCoordinates = getCoordinates(activeProperty || {});
+    if (!detailMap || !activeCoordinates) return;
+
+    ensurePropertyMarker();
     ensureRouteControls();
-    requestAnimationFrame(refreshMap);
-    window.setTimeout(refreshMap, 120);
-    return true;
+    refreshMapOnce();
   }
 
   function getCurrentPosition() {
@@ -205,7 +166,6 @@
         reject(new Error('Geolocation unsupported'));
         return;
       }
-
       navigator.geolocation.getCurrentPosition(resolve, reject, {
         enableHighAccuracy: true,
         timeout: 12000,
@@ -222,7 +182,7 @@
   }
 
   async function drawRoute(origin, destination) {
-    if (!mapInstance || !window.L) throw new Error('Map unavailable');
+    if (!detailMap || !window.L) throw new Error('Map unavailable');
 
     const [originLat, originLng] = origin;
     const [destLat, destLng] = destination;
@@ -234,33 +194,33 @@
     if (!geometry) throw new Error('Route geometry missing');
 
     if (routeLayer) {
-      try { mapInstance.removeLayer(routeLayer); } catch (_) {}
+      try { detailMap.removeLayer(routeLayer); } catch (_) {}
     }
     if (userMarker) {
-      try { mapInstance.removeLayer(userMarker); } catch (_) {}
+      try { detailMap.removeLayer(userMarker); } catch (_) {}
     }
 
     routeLayer = window.L.geoJSON(geometry, {
       style: {
         color: '#b00008',
         weight: 5,
-        opacity: 0.92,
+        opacity: 0.94,
         lineCap: 'round',
         lineJoin: 'round'
       }
-    }).addTo(mapInstance);
+    }).addTo(detailMap);
 
     userMarker = window.L.marker(origin, { icon: createUserIcon() })
-      .addTo(mapInstance)
+      .addTo(detailMap)
       .bindPopup('<strong>Tu ubicación</strong>');
 
-    const group = window.L.featureGroup([routeLayer, userMarker]);
-    mapInstance.fitBounds(group.getBounds().pad(0.12), { animate: true, maxZoom: 16 });
+    const group = window.L.featureGroup([routeLayer, userMarker, propertyMarker].filter(Boolean));
+    detailMap.fitBounds(group.getBounds().pad(0.12), { animate: false, maxZoom: 16 });
   }
 
   async function startRouteFromUser() {
     const button = document.querySelector('[data-property-route-button]');
-    const destination = activeCoordinates || getCoordinates(lastProperty || {});
+    const destination = activeCoordinates || getCoordinates(activeProperty || {});
     if (!destination) {
       setRouteStatus('No hay coordenadas disponibles para esta propiedad.');
       return;
@@ -273,7 +233,6 @@
       const position = await getCurrentPosition();
       const origin = [position.coords.latitude, position.coords.longitude];
       setRouteStatus('Calculando la ruta…');
-
       try {
         await drawRoute(origin, destination);
         setRouteStatus('Ruta calculada desde tu ubicación.');
@@ -290,66 +249,16 @@
     }
   }
 
-  async function resolveProperty(property = null) {
-    if (property && getCoordinates(property)) return property;
-    const fresh = await fetchPropertyDirectly();
-    return fresh || property;
-  }
-
-  async function mountMap(property = lastProperty) {
-    if (mountPromise) return mountPromise;
-
-    mountPromise = (async () => {
-      const resolvedProperty = await resolveProperty(property);
-      if (resolvedProperty) lastProperty = resolvedProperty;
-
-      const container = document.getElementById('propertyMap');
-      if (!container) return;
-
-      const coordinates = getCoordinates(resolvedProperty || {});
-      activeCoordinates = coordinates;
-      ensureRouteControls();
-
-      if (!coordinates) {
-        if (!mapInstance) renderUnavailable(container);
-        return;
-      }
-
-      if (typeof window.L === 'undefined') {
-        window.setTimeout(() => mountMap(resolvedProperty), 250);
-        return;
-      }
-
-      try {
-        mountLeaflet(container, resolvedProperty, coordinates);
-      } catch (error) {
-        console.error('[PropertyMap] No se pudo montar el mapa Leaflet.', error);
-        safelyRemoveMap();
-        const current = document.getElementById('propertyMap');
-        if (current) renderUnavailable(current, 'No se pudo cargar el mapa en este momento.');
-      }
-    })().finally(() => {
-      mountPromise = null;
-    });
-
-    return mountPromise;
-  }
+  capturePropertyMapFactory();
 
   window.addEventListener('propertyDetailReady', (event) => {
-    const property = event.detail?.property || null;
-    if (property) lastProperty = property;
-    mountMap(property);
+    activeProperty = event.detail?.property || activeProperty;
+    activeCoordinates = getCoordinates(activeProperty || {});
+    window.__drgActivePropertyDetail = activeProperty;
+    requestAnimationFrame(() => enhanceCurrentMap(activeProperty));
   });
 
-  // Fallback only for a missed custom event; it never remounts an existing map.
-  window.addEventListener('DOMContentLoaded', () => {
-    window.setTimeout(() => {
-      if (!mapInstance && document.getElementById('propertyMap')) mountMap(lastProperty);
-    }, 500);
-  }, { once: true });
-
   window.addEventListener('resize', () => {
-    window.clearTimeout(resizeTimer);
-    resizeTimer = window.setTimeout(refreshMap, 100);
+    try { detailMap?.invalidateSize({ pan: false, animate: false }); } catch (_) {}
   }, { passive: true });
 })();

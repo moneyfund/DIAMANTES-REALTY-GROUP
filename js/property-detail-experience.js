@@ -2,10 +2,12 @@
   'use strict';
 
   let activeProperty = null;
-  let shareRenderToken = 0;
-  let observerFrame = 0;
+  let activeRequestToken = 0;
   const agentCache = new Map();
-  const agentRequests = new Map();
+
+  function getFirebaseClient() {
+    return window.inmoFirebase || null;
+  }
 
   function cleanPhone(value = '') {
     return String(value || '').replace(/\D+/g, '');
@@ -18,10 +20,10 @@
     if (raw.includes('wa.me/') || raw.includes('api.whatsapp.com') || raw.includes('whatsapp.com/send')) {
       try {
         const parsed = new URL(raw);
-        const queryPhone = cleanPhone(parsed.searchParams.get('phone') || '');
-        if (queryPhone) return queryPhone;
         const pathPhone = cleanPhone(parsed.pathname.replace(/\//g, ''));
         if (pathPhone) return pathPhone;
+        const queryPhone = cleanPhone(parsed.searchParams.get('phone') || '');
+        if (queryPhone) return queryPhone;
       } catch (_) {}
     }
 
@@ -50,196 +52,129 @@
     return '';
   }
 
-  function getAgentId(property = {}) {
-    return String(
-      property.agentId ||
-      property.agenteId ||
-      property.agentUid ||
-      property.agenteUid ||
-      property.createdBy ||
-      property.ownerId ||
-      ''
-    ).trim();
+  function getAgentIdentityCandidates(property = {}) {
+    return [property.agentId, property.agenteId, property.createdBy, property.ownerId, property.userId]
+      .map((value) => String(value || '').trim())
+      .filter(Boolean);
   }
 
-  function getAgentEmail(property = {}) {
-    return String(
-      property.agentEmail ||
-      property.createdByEmail ||
-      property.ownerEmail ||
-      property.email ||
-      ''
-    ).trim().toLowerCase();
-  }
-
-  async function fetchAgentFromCompat(property = {}) {
-    const db = window.firebase?.firestore?.();
-    if (!db?.collection) return null;
-
-    const agentId = getAgentId(property);
-    if (agentId) {
-      try {
-        const snap = await db.collection('agents').doc(agentId).get();
-        if (snap.exists) return { id: snap.id, ...snap.data() };
-      } catch (error) {
-        console.warn('[PropertyExperience] No se pudo consultar el agente por ID.', error);
-      }
-    }
-
-    const email = getAgentEmail(property);
-    if (email) {
-      try {
-        const query = await db.collection('agents').where('email', '==', email).limit(1).get();
-        const doc = query.docs?.[0];
-        if (doc) return { id: doc.id, ...doc.data() };
-      } catch (error) {
-        console.warn('[PropertyExperience] No se pudo consultar el agente por correo.', error);
-      }
-    }
-
-    return null;
-  }
-
-  async function fetchAgentFromClient(property = {}) {
-    const client = window.inmoFirebase;
-    if (!client?.db?.collection) return null;
-
-    const agentId = getAgentId(property);
-    if (agentId) {
-      try {
-        const snap = await client.db.collection('agents').doc(agentId).get();
-        if (snap.exists) return { id: snap.id, ...snap.data() };
-      } catch (error) {
-        console.warn('[PropertyExperience] No se pudo consultar el agente desde inmoFirebase.', error);
-      }
-    }
-
-    return null;
+  function getAgentEmailCandidates(property = {}) {
+    return [property.agentEmail, property.createdByEmail, property.ownerEmail, property.email]
+      .map((value) => String(value || '').trim().toLowerCase())
+      .filter(Boolean);
   }
 
   async function loadPublishingAgent(property = {}) {
-    const cacheKey = getAgentId(property) || getAgentEmail(property);
-    if (!cacheKey) return null;
-    if (agentCache.has(cacheKey)) return agentCache.get(cacheKey);
-    if (agentRequests.has(cacheKey)) return agentRequests.get(cacheKey);
+    const client = getFirebaseClient();
+    if (!client?.enabled || !client.db?.collection) return null;
 
-    const request = (async () => {
-      const agent = await fetchAgentFromCompat(property) || await fetchAgentFromClient(property);
-      if (agent) agentCache.set(cacheKey, agent);
-      return agent;
-    })().finally(() => {
-      agentRequests.delete(cacheKey);
-    });
-
-    agentRequests.set(cacheKey, request);
-    return request;
-  }
-
-  function getPropertyKey(property = {}) {
-    return String(property.id || new URLSearchParams(window.location.search).get('id') || property.titulo || property.title || '').trim();
-  }
-
-  function buildWhatsappUrl(phone, property = {}) {
-    const title = String(property.titulo || property.title || 'Propiedad').trim();
-    const message = encodeURIComponent(`Hola, quisiera más información sobre la propiedad: ${title}. La vi en Diamantes Realty Group. ${window.location.href}`);
-    return `https://wa.me/${phone}?text=${message}`;
-  }
-
-  function upsertWhatsappButton(panel, phone, property = {}) {
-    if (!panel || !phone) return;
-
-    const propertyKey = getPropertyKey(property);
-    const url = buildWhatsappUrl(phone, property);
-    let link = panel.querySelector('.property-agent-whatsapp-cta');
-
-    if (!link) {
-      link = document.createElement('a');
-      link.className = 'property-agent-whatsapp-cta';
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      panel.appendChild(link);
+    const ids = getAgentIdentityCandidates(property);
+    for (const agentId of ids) {
+      if (agentCache.has(`id:${agentId}`)) return agentCache.get(`id:${agentId}`);
+      try {
+        const snap = await client.db.collection('agents').doc(agentId).get();
+        if (snap.exists) {
+          const agent = { id: snap.id, ...snap.data() };
+          agentCache.set(`id:${agentId}`, agent);
+          return agent;
+        }
+      } catch (error) {
+        console.warn('[PropertyExperience] No se pudo cargar agente por ID.', error);
+      }
     }
 
-    link.dataset.propertyKey = propertyKey;
-    link.href = url;
-    link.textContent = 'Más información';
-    link.setAttribute('aria-label', `Solicitar más información sobre ${String(property.titulo || property.title || 'esta propiedad').trim()} por WhatsApp`);
-    link.hidden = false;
+    for (const email of getAgentEmailCandidates(property)) {
+      if (agentCache.has(`email:${email}`)) return agentCache.get(`email:${email}`);
+      try {
+        const query = await client.db.collection('agents').where('email', '==', email).limit(1).get();
+        const first = query.docs?.[0];
+        if (first) {
+          const agent = { id: first.id, ...first.data() };
+          agentCache.set(`email:${email}`, agent);
+          return agent;
+        }
+      } catch (error) {
+        console.warn('[PropertyExperience] No se pudo cargar agente por correo.', error);
+      }
+    }
+
+    return null;
   }
 
-  async function ensureShareActions(property = activeProperty, attempt = 0) {
+  function getCanonicalCta(panel) {
+    const existing = [...panel.querySelectorAll('.property-agent-whatsapp-cta')];
+    const canonical = existing[0] || document.createElement('a');
+
+    existing.slice(1).forEach((node) => node.remove());
+
+    canonical.className = 'property-agent-whatsapp-cta';
+    canonical.id = 'propertyAgentWhatsappCta';
+    canonical.target = '_blank';
+    canonical.rel = 'noopener noreferrer';
+    canonical.textContent = 'Más información';
+
+    if (!canonical.isConnected) panel.appendChild(canonical);
+    return canonical;
+  }
+
+  function updateCtaLink(link, property, phone) {
+    if (!link || !phone) return false;
+    const title = String(property.titulo || property.title || 'Propiedad').trim();
+    const message = encodeURIComponent(`Hola, quisiera más información sobre la propiedad: ${title}. La vi en Diamantes Realty Group. ${window.location.href}`);
+    link.href = `https://wa.me/${phone}?text=${message}`;
+    link.setAttribute('aria-label', `Solicitar más información sobre ${title} por WhatsApp`);
+    link.classList.remove('is-disabled', 'is-loading');
+    link.removeAttribute('aria-hidden');
+    link.dataset.ready = 'true';
+    return true;
+  }
+
+  async function ensureAgentWhatsappCta(property = activeProperty) {
     if (!property) return;
 
     const panel = document.querySelector('.property-share-panel');
     if (!panel) return;
 
-    // Keep only the principal share action and the agent CTA.
     panel.querySelector('.property-share-options')?.remove();
 
-    const propertyKey = getPropertyKey(property);
-    const existing = panel.querySelector('.property-agent-whatsapp-cta');
-    if (existing?.dataset.propertyKey === propertyKey && /^https:\/\/wa\.me\//i.test(existing.href)) {
+    const token = ++activeRequestToken;
+    const link = getCanonicalCta(panel);
+
+    const immediatePhone = resolveAgentPhone({}, property);
+    if (immediatePhone) {
+      updateCtaLink(link, property, immediatePhone);
       return;
     }
 
-    const directPhone = resolveAgentPhone({}, property);
-    if (directPhone) {
-      upsertWhatsappButton(panel, directPhone, property);
-      return;
-    }
+    link.classList.add('is-loading');
+    link.removeAttribute('href');
+    link.setAttribute('aria-hidden', 'true');
 
-    const token = ++shareRenderToken;
     const agent = await loadPublishingAgent(property);
-    if (token !== shareRenderToken || property !== activeProperty) return;
+    if (token !== activeRequestToken || !panel.isConnected || !link.isConnected) return;
 
     const phone = resolveAgentPhone(agent || {}, property);
-    if (phone) {
-      upsertWhatsappButton(panel, phone, property);
+    if (!phone) {
+      link.classList.add('is-disabled');
+      link.classList.remove('is-loading');
       return;
     }
 
-    // Firebase/Auth can still be settling during the first render on a hard refresh.
-    // Retry briefly without ever removing a valid button already on screen.
-    if (attempt < 4) {
-      window.setTimeout(() => ensureShareActions(property, attempt + 1), 350 + attempt * 250);
-    }
+    updateCtaLink(link, property, phone);
   }
 
-  function scheduleShareCheck() {
-    window.cancelAnimationFrame(observerFrame);
-    observerFrame = window.requestAnimationFrame(() => {
-      observerFrame = 0;
-      ensureShareActions(activeProperty);
-    });
-  }
-
-  function observePropertyDetail() {
-    const root = document.getElementById('propertyDetail');
-    if (!root || !('MutationObserver' in window)) return;
-
-    const observer = new MutationObserver((mutations) => {
-      const shareChanged = mutations.some((mutation) =>
-        Array.from(mutation.addedNodes || []).some((node) =>
-          node instanceof Element && (
-            node.matches?.('.property-share-panel, .property-agent-whatsapp-cta') ||
-            node.querySelector?.('.property-share-panel')
-          )
-        )
-      );
-      if (shareChanged) scheduleShareCheck();
-    });
-
-    observer.observe(root, { childList: true, subtree: true });
+  function applyPropertyExperience(property) {
+    if (property) activeProperty = property;
+    if (!activeProperty) return;
+    window.__drgActivePropertyDetail = activeProperty;
+    ensureAgentWhatsappCta(activeProperty);
   }
 
   window.addEventListener('propertyDetailReady', (event) => {
-    activeProperty = event.detail?.property || activeProperty;
-    shareRenderToken += 1;
-    ensureShareActions(activeProperty);
+    applyPropertyExperience(event.detail?.property || null);
   });
 
-  window.addEventListener('DOMContentLoaded', () => {
-    observePropertyDetail();
-    scheduleShareCheck();
-  }, { once: true });
+  document.addEventListener('inmo:firebase-ready', () => {
+    if (activeProperty) ensureAgentWhatsappCta(activeProperty);
+  });
 })();

@@ -2,27 +2,55 @@
   'use strict';
 
   const originalRender = window.renderPropertyDetail;
-  if (typeof originalRender !== 'function') return;
+  if (typeof originalRender !== 'function' || originalRender.__drgStableWrapper) return;
 
-  window.renderPropertyDetail = async function stablePropertyDetailRender(...args) {
+  let renderedPropertyId = '';
+  let inFlightPropertyId = '';
+  let inFlightPromise = null;
+
+  function getPropertyId() {
+    return String(new URLSearchParams(window.location.search).get('id') || '').trim();
+  }
+
+  async function stablePropertyDetailRender(...args) {
+    const propertyId = getPropertyId();
     const container = document.getElementById('propertyDetail');
-    const propertyId = String(new URLSearchParams(window.location.search).get('id') || '').trim();
 
-    // Firestore's live property subscription re-renders public catalog views.
-    // Do not rebuild an already-mounted detail page because that destroys the
-    // comments/reviews DOM while the interaction module correctly remains
-    // initialized for the same property.
     if (
-      container &&
       propertyId &&
-      container.dataset.stablePropertyId === propertyId &&
-      container.querySelector('[data-pi-wrap]')
+      renderedPropertyId === propertyId &&
+      container?.dataset?.drgDetailRendered === 'true'
     ) {
       return;
     }
 
-    const result = await originalRender.apply(this, args);
-    if (container && propertyId) container.dataset.stablePropertyId = propertyId;
-    return result;
-  };
+    if (propertyId && inFlightPromise && inFlightPropertyId === propertyId) {
+      return inFlightPromise;
+    }
+
+    inFlightPropertyId = propertyId;
+    inFlightPromise = Promise.resolve()
+      .then(() => originalRender.apply(this, args))
+      .then((result) => {
+        const currentContainer = document.getElementById('propertyDetail');
+        if (propertyId && currentContainer) {
+          renderedPropertyId = propertyId;
+          currentContainer.dataset.drgDetailRendered = 'true';
+          currentContainer.dataset.stablePropertyId = propertyId;
+        }
+        return result;
+      })
+      .finally(() => {
+        if (inFlightPropertyId === propertyId) {
+          inFlightPropertyId = '';
+          inFlightPromise = null;
+        }
+      });
+
+    return inFlightPromise;
+  }
+
+  stablePropertyDetailRender.__drgStableWrapper = true;
+  stablePropertyDetailRender.__drgOriginal = originalRender;
+  window.renderPropertyDetail = stablePropertyDetailRender;
 })();

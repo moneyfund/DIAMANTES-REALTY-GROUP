@@ -36,7 +36,9 @@
   transform: translateY(-1px);
 }
 
-.property-agent-whatsapp-cta.is-disabled {
+.property-agent-whatsapp-cta.is-disabled,
+.property-agent-whatsapp-cta.is-loading,
+.property-agent-whatsapp-cta[aria-hidden="true"] {
   display: none !important;
 }
 
