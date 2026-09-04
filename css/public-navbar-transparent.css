@@ -149,3 +149,5 @@ body:not(.home-page) > main {
     -webkit-text-fill-color: #07162f !important;
   }
 }
+
+/* Consolidated public architecture fix — 2026-09-04. */
