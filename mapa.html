@@ -20,8 +20,9 @@
   <link rel="stylesheet" href="css/premium-theme.css?v=20260807-navbar-more" />
   <link rel="stylesheet" href="css/footer.css?v=20260806-typography-fix" />
   <link rel="stylesheet" href="css/map-unified-search.css?v=20260816-unified-search-2" />
+  <link rel="stylesheet" href="css/map-mobile-view-fix.css?v=20260904-01" />
 </head>
-<body>
+<body class="map-mobile-show-map">
   <header class="site-header">
     <div class="container nav-wrapper">
       <a class="brand" href="index.html" aria-label="Diamantes Realty Group - Inicio">
@@ -82,8 +83,8 @@
     </section>
 
     <div class="map-mobile-view-toggle" role="group" aria-label="Cambiar vista de propiedades">
-      <button type="button" class="is-active" data-map-mobile-view="list">Lista</button>
-      <button type="button" data-map-mobile-view="map">Mapa</button>
+      <button type="button" class="is-active" data-map-mobile-view="map">Mapa</button>
+      <button type="button" data-map-mobile-view="list">Lista</button>
     </div>
 
     <section class="map-split-shell" aria-label="Resultados y mapa de propiedades">
@@ -124,6 +125,7 @@
   <script src="js/map-geocoding.js?v=20260724-01"></script>
   <script src="js/property-utils.js?v=20260613-01"></script>
   <script src="js/public-property-filter.js?v=20260613-01"></script>
-  <script src="js/properties.js?v=20260613-01"></script>
+  <script src="js/properties.js?v=20260904-map-mobile"></script>
+  <script src="js/map-mobile-view-fix.js?v=20260904-01"></script>
 </body>
 </html>

@@ -1,0 +1,61 @@
+/* Keep property interactions visually concise and stable. */
+.property-detail-page #propertyReviews .pi-wrap {
+  margin-top: 1.35rem;
+  padding: 1rem 1.1rem;
+}
+
+.property-detail-page #propertyReviews .pi-header {
+  margin-bottom: .75rem;
+}
+
+.property-detail-page #propertyReviews .pi-eyebrow,
+.property-detail-page #propertyReviews .pi-card-head p {
+  display: none !important;
+}
+
+.property-detail-page #propertyReviews .pi-header h2 {
+  margin: 0 !important;
+  font-size: clamp(1.35rem, 2.1vw, 1.8rem) !important;
+  line-height: 1.1 !important;
+}
+
+.property-detail-page #propertyReviews .pi-card {
+  padding: .9rem;
+}
+
+.property-detail-page #propertyReviews .pi-card-head {
+  margin-bottom: .55rem;
+}
+
+.property-detail-page #propertyReviews .pi-card-head h3 {
+  margin: 0 !important;
+  font-size: 1rem !important;
+  line-height: 1.2 !important;
+}
+
+.property-detail-page #propertyReviews .pi-summary {
+  margin-bottom: .6rem;
+}
+
+.property-detail-page #propertyReviews textarea {
+  min-height: 82px;
+}
+
+.property-detail-page #propertyReviews .pi-list {
+  margin-top: .75rem;
+}
+
+@media (max-width: 700px) {
+  .property-detail-page #propertyReviews .pi-wrap {
+    padding: .85rem;
+  }
+
+  .property-detail-page #propertyReviews .pi-header {
+    align-items: flex-start;
+    gap: .55rem;
+  }
+
+  .property-detail-page #propertyReviews .pi-header h2 {
+    font-size: 1.35rem !important;
+  }
+}

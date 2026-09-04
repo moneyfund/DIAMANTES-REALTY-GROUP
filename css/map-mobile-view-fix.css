@@ -1,0 +1,38 @@
+/* Mobile map opens first and keeps desktop-like framing of property markers. */
+@media (max-width: 900px) {
+  body.map-mobile-show-map .map-canvas-panel {
+    display: block !important;
+    height: calc(100svh - var(--public-navbar-height, 76px) - 132px) !important;
+    min-height: 430px !important;
+  }
+
+  body.map-mobile-show-map .map-results-panel {
+    display: none !important;
+  }
+
+  body.map-mobile-show-map .properties-map-full,
+  body.map-mobile-show-map #propertiesMap {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100% !important;
+  }
+
+  .map-mobile-view-toggle {
+    grid-template-columns: repeat(2, minmax(0,1fr));
+  }
+
+  .map-mobile-view-toggle [data-map-mobile-view="map"] {
+    order: 1;
+  }
+
+  .map-mobile-view-toggle [data-map-mobile-view="list"] {
+    order: 2;
+  }
+}
+
+@media (max-width: 560px) {
+  body.map-mobile-show-map .map-canvas-panel {
+    height: calc(100svh - var(--public-navbar-height, 76px) - 118px) !important;
+    min-height: 390px !important;
+  }
+}

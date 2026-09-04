@@ -22,6 +22,8 @@
   <link rel="stylesheet" href="css/home-vip-refresh.css?v=20260816-vip-refresh" />
   <link rel="stylesheet" href="css/properties-clean.css?v=20260826-clean-surface" />
   <link rel="stylesheet" href="css/properties-pagination.css?v=20260826-pagination" />
+  <link rel="stylesheet" href="css/map-unified-search.css?v=20260816-unified-search-2" />
+  <link rel="stylesheet" href="css/properties-unified-search.css?v=20260904-01" />
 </head>
 <body class="properties-page">
   <header class="site-header">
@@ -51,48 +53,70 @@
       </header>
       <p id="agentFilterBanner" class="agent-filter-banner hidden"></p>
 
-      <form id="filterForm" class="filter-grid">
-        <select id="filterLocation" aria-label="Ubicación">
-          <option value="">Todos los departamentos</option>
-          <option value="Boaco">Boaco</option>
-          <option value="Carazo">Carazo</option>
-          <option value="Chinandega">Chinandega</option>
-          <option value="Chontales">Chontales</option>
-          <option value="Estelí">Estelí</option>
-          <option value="Granada">Granada</option>
-          <option value="Jinotega">Jinotega</option>
-          <option value="León">León</option>
-          <option value="Madriz">Madriz</option>
-          <option value="Managua">Managua</option>
-          <option value="Masaya">Masaya</option>
-          <option value="Matagalpa">Matagalpa</option>
-          <option value="Nueva Segovia">Nueva Segovia</option>
-          <option value="Rivas">Rivas</option>
-          <option value="Río San Juan">Río San Juan</option>
-        </select>
-        <select id="filterType">
-          <option value="">Tipo de propiedad</option>
-          <option value="house">Casas</option>
-          <option value="apartment">Apartamentos</option>
-          <option value="land">Terrenos</option>
-          <option value="warehouse">Bodegas</option>
-          <option value="farm">Fincas</option>
-          <option value="quinta">Quintas</option>
-          <option value="beach_house">Casas cerca del mar</option>
-        </select>
-        <select id="filterOperation">
-          <option value="">Tipo de operación</option>
-          <option value="venta">Venta</option>
-          <option value="alquiler">Alquiler</option>
-        </select>
-        <select id="filterBudget">
-          <option value="">Presupuesto máximo</option>
-          <option value="150000">Hasta $150,000</option>
-          <option value="300000">Hasta $300,000</option>
-          <option value="500000">Hasta $500,000</option>
-          <option value="1000000">Hasta $1,000,000</option>
-        </select>
-        <button type="submit">Aplicar filtros</button>
+      <form id="filterForm" class="properties-unified-form" autocomplete="off">
+        <div class="map-unified-searchbar properties-searchbar">
+          <div class="map-search-control public-map-search-control properties-search-control">
+            <label class="sr-only" for="filterLocation">Buscar ciudad, barrio, zona o dirección</label>
+            <div class="map-search-input-row">
+              <span class="map-search-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M10.5 4a6.5 6.5 0 0 1 5.18 10.43l4.45 4.44-1.42 1.42-4.44-4.45A6.5 6.5 0 1 1 10.5 4Zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Z"></path></svg></span>
+              <input id="filterLocation" type="search" autocomplete="off" placeholder="Busca ciudad, barrio, zona o dirección" aria-label="Buscar ciudad, barrio, zona o dirección" />
+              <button type="button" id="propertiesSearchClear" class="map-search-clear hidden" aria-label="Limpiar búsqueda">×</button>
+            </div>
+          </div>
+
+          <details class="map-unified-filter-popover properties-filter-popover" id="propertiesFilterPopover">
+            <summary aria-label="Abrir filtros avanzados">
+              <span class="map-filter-summary-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 7h10m4 0h2M4 17h2m4 0h10M14 4v6M6 14v6"/></svg>
+              </span>
+              <strong>Filtros</strong>
+              <small>Ajustar búsqueda</small>
+              <span class="map-filter-chevron" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m7 9 5 5 5-5"/></svg></span>
+            </summary>
+            <div class="map-filter-panel properties-filter-panel">
+              <header class="map-filter-panel-header">
+                <div>
+                  <p>Búsqueda avanzada</p>
+                  <h2>Afina tus resultados</h2>
+                </div>
+              </header>
+              <div class="map-filter-strip properties-filter-strip">
+                <label>
+                  <span>Tipo de propiedad</span>
+                  <select id="filterType">
+                    <option value="">Todos los tipos</option>
+                    <option value="house">Casas</option>
+                    <option value="apartment">Apartamentos</option>
+                    <option value="land">Terrenos</option>
+                    <option value="warehouse">Bodegas</option>
+                    <option value="farm">Fincas</option>
+                    <option value="quinta">Quintas</option>
+                    <option value="beach_house">Casas cerca del mar</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Operación</span>
+                  <select id="filterOperation">
+                    <option value="">Venta o alquiler</option>
+                    <option value="venta">Venta</option>
+                    <option value="alquiler">Alquiler</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Presupuesto máximo</span>
+                  <select id="filterBudget">
+                    <option value="">Sin límite</option>
+                    <option value="150000">Hasta $150,000</option>
+                    <option value="300000">Hasta $300,000</option>
+                    <option value="500000">Hasta $500,000</option>
+                    <option value="1000000">Hasta $1,000,000</option>
+                  </select>
+                </label>
+                <button class="properties-filter-apply" type="submit">Aplicar filtros</button>
+              </div>
+            </div>
+          </details>
+        </div>
       </form>
 
       <div id="propertiesGrid" class="properties-grid"></div>
@@ -108,7 +132,8 @@
   <script src="js/image-utils.js?v=20260613-public-fix"></script>
   <script src="js/property-utils.js?v=20260613-01"></script>
   <script src="js/public-property-filter.js?v=20260613-01"></script>
-  <script src="js/properties.js?v=20260613-01"></script>
+  <script src="js/properties.js?v=20260904-search-refresh"></script>
+  <script src="js/properties-unified-search.js?v=20260904-01"></script>
   <script src="js/properties-pagination.js?v=20260826-pagination"></script>
 </body>
 </html>
