@@ -5,10 +5,10 @@
   let mapInstance = null;
   let routeLayer = null;
   let userMarker = null;
-  let mountTimer = null;
-  let mounting = false;
   let activeCoordinates = null;
-  let leafletRetryCount = 0;
+  let mountedKey = '';
+  let mountPromise = null;
+  let resizeTimer = null;
 
   function numberOrNull(value) {
     if (value === null || value === undefined || value === '') return null;
@@ -46,6 +46,10 @@
 
   function getPropertyId() {
     return String(new URLSearchParams(window.location.search).get('id') || '').trim();
+  }
+
+  function getMapKey(property = {}, coordinates = []) {
+    return `${String(property.id || getPropertyId())}|${coordinates[0]}|${coordinates[1]}`;
   }
 
   async function fetchPropertyDirectly() {
@@ -98,11 +102,12 @@
       <p class="property-route-status" data-property-route-status aria-live="polite"></p>
     `;
     section.insertBefore(actions, map);
-
     actions.querySelector('[data-property-route-button]')?.addEventListener('click', startRouteFromUser);
   }
 
   function renderUnavailable(container, message = 'Ubicación no disponible para esta propiedad.') {
+    if (!container || container.dataset.mapUnavailable === message) return;
+    container.dataset.mapUnavailable = message;
     container.innerHTML = `<div style="display:grid;place-items:center;width:100%;height:100%;min-height:inherit;padding:24px;text-align:center;color:#536176;background:#eef2f6;">${message}</div>`;
   }
 
@@ -113,6 +118,7 @@
     try { mapInstance.off(); } catch (_) {}
     try { mapInstance.remove(); } catch (_) {}
     mapInstance = null;
+    mountedKey = '';
   }
 
   function createPropertyIcon() {
@@ -134,16 +140,30 @@
     });
   }
 
+  function refreshMap() {
+    if (!mapInstance) return;
+    try { mapInstance.invalidateSize(false); } catch (_) {}
+  }
+
   function mountLeaflet(container, property, coordinates) {
     if (typeof window.L === 'undefined') return false;
+
+    const nextKey = getMapKey(property, coordinates);
+    if (mapInstance && mountedKey === nextKey && mapInstance.getContainer?.().isConnected) {
+      activeCoordinates = coordinates;
+      ensureRouteControls();
+      refreshMap();
+      return true;
+    }
 
     safelyRemoveMap();
     activeCoordinates = coordinates;
 
-    // Use the same Leaflet + OpenStreetMap architecture as the main Mapa page.
-    // No embedded OpenStreetMap iframe is used, avoiding the extra external page messaging.
+    // The legacy renderer may have initialized Leaflet immediately before this event.
+    // Replace that node once, then keep one persistent map instance for the rest of the page.
     const fresh = container.cloneNode(false);
     fresh.removeAttribute('style');
+    fresh.removeAttribute('data-map-unavailable');
     fresh.className = container.className || 'property-map';
     fresh.id = 'propertyMap';
     container.replaceWith(fresh);
@@ -154,32 +174,28 @@
       dragging: true,
       touchZoom: true,
       doubleClickZoom: true,
-      preferCanvas: true
-    }).setView(coordinates, 15);
+      preferCanvas: true,
+      fadeAnimation: false,
+      zoomAnimation: true,
+      markerZoomAnimation: true
+    }).setView(coordinates, 15, { animate: false });
 
     window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
+      attribution: '&copy; OpenStreetMap contributors',
+      updateWhenIdle: true,
+      keepBuffer: 3
     }).addTo(mapInstance);
 
     const title = cleanText(property.titulo || property.title || 'Propiedad');
     const location = cleanText(property.ubicacion || property.city || (typeof property.location === 'string' ? property.location : ''));
     const marker = window.L.marker(coordinates, { icon: createPropertyIcon() }).addTo(mapInstance);
-    marker.bindPopup(`<strong>${title}</strong>${location ? `<br>${location}` : ''}`).openPopup();
+    marker.bindPopup(`<strong>${title}</strong>${location ? `<br>${location}` : ''}`);
 
+    mountedKey = nextKey;
     ensureRouteControls();
-
-    const refresh = () => {
-      try {
-        mapInstance?.invalidateSize(true);
-        mapInstance?.setView(coordinates, 15, { animate: false });
-      } catch (_) {}
-    };
-
-    requestAnimationFrame(refresh);
-    setTimeout(refresh, 80);
-    setTimeout(refresh, 260);
-    setTimeout(refresh, 700);
+    requestAnimationFrame(refreshMap);
+    window.setTimeout(refreshMap, 120);
     return true;
   }
 
@@ -274,18 +290,17 @@
     }
   }
 
-  async function ensurePropertyWithCoordinates(property = null) {
+  async function resolveProperty(property = null) {
     if (property && getCoordinates(property)) return property;
     const fresh = await fetchPropertyDirectly();
     return fresh || property;
   }
 
   async function mountMap(property = lastProperty) {
-    if (mounting) return;
-    mounting = true;
+    if (mountPromise) return mountPromise;
 
-    try {
-      const resolvedProperty = await ensurePropertyWithCoordinates(property);
+    mountPromise = (async () => {
+      const resolvedProperty = await resolveProperty(property);
       if (resolvedProperty) lastProperty = resolvedProperty;
 
       const container = document.getElementById('propertyMap');
@@ -296,22 +311,15 @@
       ensureRouteControls();
 
       if (!coordinates) {
-        safelyRemoveMap();
-        renderUnavailable(container);
+        if (!mapInstance) renderUnavailable(container);
         return;
       }
 
       if (typeof window.L === 'undefined') {
-        leafletRetryCount += 1;
-        if (leafletRetryCount <= 8) {
-          setTimeout(() => scheduleMount(resolvedProperty, 0), 250);
-          return;
-        }
-        renderUnavailable(container, 'No se pudo cargar el mapa en este momento.');
+        window.setTimeout(() => mountMap(resolvedProperty), 250);
         return;
       }
 
-      leafletRetryCount = 0;
       try {
         mountLeaflet(container, resolvedProperty, coordinates);
       } catch (error) {
@@ -320,45 +328,28 @@
         const current = document.getElementById('propertyMap');
         if (current) renderUnavailable(current, 'No se pudo cargar el mapa en este momento.');
       }
-    } finally {
-      mounting = false;
-    }
-  }
+    })().finally(() => {
+      mountPromise = null;
+    });
 
-  function scheduleMount(property = lastProperty, delay = 0) {
-    if (property) lastProperty = property;
-    if (mountTimer) window.clearTimeout(mountTimer);
-    mountTimer = window.setTimeout(() => mountMap(lastProperty), delay);
+    return mountPromise;
   }
 
   window.addEventListener('propertyDetailReady', (event) => {
     const property = event.detail?.property || null;
-    scheduleMount(property, 0);
-    setTimeout(() => scheduleMount(property, 0), 350);
+    if (property) lastProperty = property;
+    mountMap(property);
   });
 
+  // Fallback only for a missed custom event; it never remounts an existing map.
   window.addEventListener('DOMContentLoaded', () => {
-    scheduleMount(null, 250);
-    setTimeout(() => scheduleMount(lastProperty, 0), 1000);
-    setTimeout(() => scheduleMount(lastProperty, 0), 2200);
-
-    const detailRoot = document.getElementById('propertyDetail');
-    if (detailRoot && 'MutationObserver' in window) {
-      const observer = new MutationObserver((mutations) => {
-        if (mounting) return;
-        const mapTouched = mutations.some((mutation) =>
-          Array.from(mutation.addedNodes || []).some((node) =>
-            node instanceof Element && (node.id === 'propertyMap' || node.querySelector?.('#propertyMap'))
-          )
-        );
-        if (mapTouched) scheduleMount(lastProperty, 30);
-        ensureRouteControls();
-      });
-      observer.observe(detailRoot, { childList: true, subtree: true });
-    }
-  });
+    window.setTimeout(() => {
+      if (!mapInstance && document.getElementById('propertyMap')) mountMap(lastProperty);
+    }, 500);
+  }, { once: true });
 
   window.addEventListener('resize', () => {
-    try { mapInstance?.invalidateSize(false); } catch (_) {}
+    window.clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(refreshMap, 100);
   }, { passive: true });
 })();
