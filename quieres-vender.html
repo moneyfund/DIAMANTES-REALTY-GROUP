@@ -3,25 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="title" content="Diamantes Realty Group" />
-  <meta name="description" content="Plataforma inmobiliaria profesional en Nicaragua" />
-  <title>Diamantes Realty Group</title>
+  <meta name="title" content="Vende tu propiedad | Diamantes Realty Group" />
+  <meta name="description" content="Envía la información de tu propiedad a Diamantes Realty Group o contacta directamente a uno de nuestros asesores." />
+  <title>Vende tu propiedad | Diamantes Realty Group</title>
   <link rel="icon" type="image/png" href="assets/logo.png" />
   <link rel="shortcut icon" type="image/png" href="assets/logo.png" />
   <link rel="apple-touch-icon" href="assets/logo.png" />
-  <meta name="theme-color" content="#B00008" />
+  <meta name="theme-color" content="#071a33" />
   <meta property="og:site_name" content="Diamantes Realty Group" />
-  <meta property="og:title" content="Diamantes Realty Group" />
+  <meta property="og:title" content="Vende tu propiedad | Diamantes Realty Group" />
   <meta property="og:image" content="https://www.diamantesrealtygroup.com/assets/logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <link rel="stylesheet" href="css/styles.css?v=20260806-typography-fix" />
   <link rel="stylesheet" href="css/premium-theme.css?v=20260807-navbar-more" />
   <link rel="stylesheet" href="css/footer.css?v=20260806-typography-fix" />
+  <link rel="stylesheet" href="css/seller-forms-redesign.css?v=20260904-01" />
 </head>
-<body class="navbar-over-hero">
+<body class="seller-form-page">
   <header class="site-header">
     <div class="container nav-wrapper">
       <a class="brand" href="index.html" aria-label="Diamantes Realty Group - Inicio">
@@ -42,98 +42,73 @@
     </div>
   </header>
 
-  <main>
-    <section class="page-banner seller-hero">
-      <div class="container">
-        <h1>¿Quieres vender tu propiedad?</h1>
-        <p class="seller-lead">En Diamantes Realty Group acompañamos a propietarios que desean vender su casa, apartamento, terreno o finca de forma segura, rápida y con una estrategia comercial efectiva.</p>
-      </div>
-    </section>
+  <main class="seller-forms-main">
+    <div class="seller-forms-shell">
+      <div class="seller-forms-grid">
+        <form class="seller-form" id="sellerForm" data-public-form="quiero-vender" novalidate>
+          <div class="form-honeypot" aria-hidden="true"><label>Sitio web<input type="text" name="website" tabindex="-1" autocomplete="off" /></label></div>
+          <h1>Vende tu propiedad</h1>
 
-    <section class="section container">
-      <h2>¿Por qué vender con nosotros?</h2>
-      <div class="seller-benefits">
-        <article class="seller-benefit-card">
-          <div class="seller-benefit-icon" aria-hidden="true"><i class="fas fa-home"></i></div>
-          <h3>Publica tu propiedad</h3>
-        </article>
-        <article class="seller-benefit-card">
-          <div class="seller-benefit-icon" aria-hidden="true"><i class="fas fa-dollar-sign"></i></div>
-          <h3>Valoración estratégica</h3>
-        </article>
-        <article class="seller-benefit-card">
-          <div class="seller-benefit-icon" aria-hidden="true"><i class="fas fa-file-signature"></i></div>
-          <h3>Gestión documental</h3>
-        </article>
-        <article class="seller-benefit-card">
-          <div class="seller-benefit-icon" aria-hidden="true"><i class="fas fa-user-tie"></i></div>
-          <h3>Acompañamiento experto</h3>
-        </article>
-      </div>
-    </section>
+          <div class="form-row">
+            <label>Nombre
+              <input type="text" name="name" autocomplete="name" maxlength="100" required />
+            </label>
+            <label>Teléfono
+              <input type="tel" name="phone" autocomplete="tel" maxlength="30" required />
+            </label>
+          </div>
 
-    <section class="section container seller-layout">
-      <form class="seller-form" id="sellerForm" data-public-form="quiero-vender" novalidate>
-        <div class="form-honeypot" aria-hidden="true"><label>Sitio web<input type="text" name="website" tabindex="-1" autocomplete="off" /></label></div>
-        <h2>Cuéntanos sobre tu propiedad</h2>
-        <div class="form-row">
-          <label>Nombre
-            <input type="text" name="name" autocomplete="name" maxlength="100" required />
+          <div class="form-row">
+            <label>Email
+              <input type="email" name="email" autocomplete="email" maxlength="160" required />
+            </label>
+            <label>Tipo de publicación
+              <select name="listing-type" required>
+                <option value="">Selecciona</option>
+                <option value="Venta">Venta</option>
+                <option value="Alquiler">Alquiler</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="form-row">
+            <label>Tipo de propiedad
+              <select name="property-type" required>
+                <option value="">Selecciona</option>
+                <option>Casa</option>
+                <option>Apartamento</option>
+                <option>Terreno</option>
+                <option>Finca</option>
+                <option>Local comercial</option>
+              </select>
+            </label>
+            <label>Ciudad
+              <input type="text" name="city" maxlength="120" required />
+            </label>
+          </div>
+
+          <label>Información de la propiedad
+            <textarea name="message" rows="4" maxlength="3000" placeholder="Ubicación, estado, precio estimado y cualquier información importante." required></textarea>
           </label>
-          <label>Teléfono
-            <input type="tel" name="phone" autocomplete="tel" maxlength="30" required />
-          </label>
-        </div>
-        <div class="form-row">
-          <label>Email
-            <input type="email" name="email" autocomplete="email" maxlength="160" required />
-          </label>
-          <label>Tipo de publicación
-            <select name="listing-type" required>
-              <option value="">Selecciona</option>
-              <option value="Venta">Venta</option>
-              <option value="Alquiler">Alquiler</option>
+
+          <p class="seller-auth-message" id="sellerAuthMessage" aria-live="polite"></p>
+          <button type="submit">Enviar información</button>
+        </form>
+
+        <section class="seller-contact-card" aria-labelledby="sellerContactTitle">
+          <h2 id="sellerContactTitle">Contacta un asesor</h2>
+          <label class="seller-agent-label" for="sellerAgentSelect">Asesor
+            <select id="sellerAgentSelect" class="seller-agent-select" aria-label="Selecciona un asesor para contactar por WhatsApp">
+              <option value="">Cargando asesores...</option>
             </select>
           </label>
-        </div>
-        <div class="form-row">
-          <label>Tipo de propiedad
-            <select name="property-type" required>
-              <option value="">Selecciona</option>
-              <option>Casa</option>
-              <option>Apartamento</option>
-              <option>Terreno</option>
-              <option>Finca</option>
-              <option>Local comercial</option>
-            </select>
-          </label>
-        </div>
-        <div class="form-row">
-          <label>Ciudad
-            <input type="text" name="city" maxlength="120" required />
-          </label>
-        </div>
-        <label>Mensaje
-          <textarea name="message" rows="4" maxlength="3000" placeholder="Describe ubicación, estado de la propiedad y precio estimado." required></textarea>
-        </label>
-        <p class="seller-auth-message" id="sellerAuthMessage" aria-live="polite"></p>
-        <button type="submit">Enviar información</button>
-      </form>
-
-      <aside class="seller-contact-card">
-        <h2>Atención inmediata</h2>
-        <p>Si prefieres una respuesta más rápida, escríbenos directamente por WhatsApp y uno de nuestros asesores te guiará en el proceso de venta.</p>
-        <label class="seller-agent-label" for="sellerAgentSelect">Selecciona un asesor</label>
-        <select id="sellerAgentSelect" class="seller-agent-select" aria-label="Selecciona un asesor para contactar por WhatsApp">
-          <option value="">Cargando asesores...</option>
-        </select>
-        <p class="seller-agent-message" id="sellerAgentMessage" aria-live="polite"></p>
-        <a class="seller-whatsapp-btn" id="sellerWhatsappBtn" href="#" aria-disabled="true" target="_blank" rel="noopener noreferrer" aria-label="Contactar por WhatsApp">
-          <span aria-hidden="true">💬</span>
-          Contactar por WhatsApp
-        </a>
-      </aside>
-    </section>
+          <p class="seller-agent-message" id="sellerAgentMessage" aria-live="polite"></p>
+          <a class="seller-whatsapp-btn" id="sellerWhatsappBtn" href="#" aria-disabled="true" target="_blank" rel="noopener noreferrer" aria-label="Contactar por WhatsApp">
+            Contactar por WhatsApp
+          </a>
+        </section>
+      </div>
+    </div>
   </main>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
