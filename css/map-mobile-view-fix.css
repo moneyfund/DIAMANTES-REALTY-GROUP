@@ -15,6 +15,30 @@
     background: #fff !important;
   }
 
+  /* Keep the mobile search comfortably below the public navbar. */
+  body.map-mobile-show-map .map-search-experience {
+    padding-top: calc(var(--public-navbar-height, 76px) + 12px) !important;
+  }
+
+  body.map-mobile-show-map .map-search-experience .map-page-toolbar.map-unified-toolbar {
+    top: calc(var(--public-navbar-height, 76px) + 8px) !important;
+    margin-top: 0 !important;
+  }
+
+  /* While the user scrolls down, keep the navbar controls but remove its surface. */
+  body.map-mobile-show-map.map-navbar-bg-hidden > .site-header {
+    background: transparent !important;
+    background-color: transparent !important;
+    border-bottom-color: transparent !important;
+    box-shadow: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  body.map-mobile-show-map .site-header {
+    transition: background-color .22s ease, border-color .22s ease, box-shadow .22s ease, backdrop-filter .22s ease !important;
+  }
+
   body.map-mobile-show-map .map-canvas-panel {
     display: block !important;
     height: calc(100dvh - var(--public-navbar-height, 76px) - 132px) !important;
@@ -46,6 +70,10 @@
 }
 
 @media (max-width: 560px) {
+  body.map-mobile-show-map .map-search-experience {
+    padding-top: calc(var(--public-navbar-height, 76px) + 10px) !important;
+  }
+
   body.map-mobile-show-map .map-canvas-panel {
     height: calc(100dvh - var(--public-navbar-height, 76px) - 118px) !important;
     min-height: 390px !important;
