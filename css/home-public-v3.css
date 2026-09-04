@@ -297,6 +297,27 @@ body.home-page > main > .home-vip-intro.is-revealed .home-signature-inner {
   border-radius: 0 !important;
 }
 
+/* Make every home property CTA visibly blue, including featured properties. */
+.home-page .home-property-slider .property-detail-button,
+.home-page .home-property-slider .btn-primary-property,
+.home-page .home-property-slider .property-card-actions a[href*="propiedad.html"] {
+  background: #0b4f8a !important;
+  border-color: #0b4f8a !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+.home-page .home-property-slider .property-detail-button:hover,
+.home-page .home-property-slider .property-detail-button:focus-visible,
+.home-page .home-property-slider .btn-primary-property:hover,
+.home-page .home-property-slider .btn-primary-property:focus-visible,
+.home-page .home-property-slider .property-card-actions a[href*="propiedad.html"]:hover,
+.home-page .home-property-slider .property-card-actions a[href*="propiedad.html"]:focus-visible {
+  background: #073d6c !important;
+  border-color: #073d6c !important;
+  color: #fff !important;
+}
+
 @media (hover:hover) and (pointer:fine) {
   .home-page .home-property-slider .property-card:hover .property-card-shell {
     border-color: rgba(0,0,0,.27) !important;
@@ -317,8 +338,28 @@ body.home-page > main > .home-vip-intro.is-revealed .home-signature-inner {
 }
 
 @media (max-width: 768px) {
+  html {
+    min-height: 100dvh !important;
+    background: #fff !important;
+  }
+
+  body.home-page {
+    min-height: 100dvh !important;
+  }
+
+  body.public-footer-reveal .public-page-surface {
+    min-height: 100dvh !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+  }
+
+  body.home-page > .home-public-curtain {
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+  }
+
   body.home-page > .home-public-curtain > .hero.premium-hero {
-    border-radius: 0 0 14px 14px !important;
+    border-radius: 0 !important;
   }
 
   body.home-page > .home-public-curtain > .hero.premium-hero .hero-content {
