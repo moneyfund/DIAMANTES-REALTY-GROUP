@@ -1,4 +1,59 @@
-/* Public navbar surface reset: inner public pages use the same frameless treatment as the home hero. */
+/* Public architecture reset: inner public pages use the same clean white canvas and frameless navbar treatment as Home. */
+
+/* The legacy premium theme painted the whole document ivory/beige (#FAF9F5) with extra gradients.
+   Inner public pages now use one white canvas so the navbar never looks like a separate beige strip. */
+body:not(.home-page),
+body:not(.home-page).public-footer-reveal,
+body:not(.home-page) > .public-page-surface,
+body:not(.home-page).public-footer-reveal > .public-page-surface {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+}
+
+body:not(.home-page)::before {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+  animation: none !important;
+}
+
+/* Remove the legacy fixed-footer reveal layer on inner public pages. It created a second
+   visual surface, rounded edge and ivory band that made the viewport feel cropped. */
+body:not(.home-page).public-footer-reveal > .public-page-surface,
+body:not(.home-page) .public-page-surface {
+  position: relative !important;
+  z-index: auto !important;
+  width: 100% !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  margin: 0 !important;
+  margin-bottom: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+body:not(.home-page).public-footer-reveal > .drg-site-footer,
+body:not(.home-page) > .drg-site-footer {
+  position: relative !important;
+  inset: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  z-index: auto !important;
+  width: 100% !important;
+}
+
+/* WhatsApp floating bubble belongs exclusively to Home. main.js may create it before
+   this stylesheet is evaluated, but it is never exposed on another public page. */
+body:not(.home-page) #whatsapp-float {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Frameless navbar: fixed over the page rather than reserving a colored strip. */
 body:not(.home-page) > .site-header,
 body:not(.home-page) > .site-header.scrolled,
 body:not(.home-page) > .site-header.is-scrolled,
@@ -48,13 +103,20 @@ body:not(.home-page):not(.dark):not(.dark-mode) > .site-header .nav-more__trigge
   text-shadow: none !important;
 }
 
-/* The navbar overlays the page instead of reserving a separate strip. */
 body:not(.home-page) > main {
   position: relative;
+  background: #ffffff !important;
 }
 
 /* The expanded mobile menu is a separate sheet; it remains solid white for readability. */
 @media (max-width: 900px) {
+  html:has(body:not(.home-page)),
+  body:not(.home-page),
+  body:not(.home-page) > .public-page-surface,
+  body:not(.home-page).public-footer-reveal > .public-page-surface {
+    background: #ffffff !important;
+  }
+
   body:not(.home-page) > .site-header,
   body:not(.home-page) > .site-header.scrolled,
   body:not(.home-page) > .site-header.is-scrolled,
@@ -80,7 +142,9 @@ body:not(.home-page) > main {
 
   body:not(.home-page):not(.dark):not(.dark-mode) > .site-header .site-nav.open a,
   body:not(.home-page):not(.dark):not(.dark-mode) > .site-header .site-nav.active a,
-  body:not(.home-page):not(.dark):not(.dark-mode) > .site-header .nav-wrapper.menu-open .site-nav a {
+  body:not(.home-page):not(.dark):not(.dark-mode) > .site-header .nav-wrapper.menu-open .site-nav a,
+  body:not(.home-page):not(.dark):not(.dark-mode) > .site-header .site-nav.open .nav-more__trigger,
+  body:not(.home-page):not(.dark):not(.dark-mode) > .site-header .site-nav.active .nav-more__trigger {
     color: #07162f !important;
     -webkit-text-fill-color: #07162f !important;
   }
