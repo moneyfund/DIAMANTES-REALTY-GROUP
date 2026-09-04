@@ -240,6 +240,21 @@
 
 /* Tablet: stack cleanly before either column becomes cramped. */
 @media (max-width: 900px) {
+  html {
+    min-height: 100dvh !important;
+    background: #fff !important;
+  }
+
+  body.property-detail-page {
+    min-height: 100dvh !important;
+  }
+
+  body.public-footer-reveal .public-page-surface {
+    min-height: 100dvh !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+  }
+
   .property-detail-page #propertyDetail {
     width: min(100% - 22px, 820px) !important;
     padding-top: 8px !important;
