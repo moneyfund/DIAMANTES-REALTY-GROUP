@@ -79,15 +79,15 @@
     const phone = resolveAgentPhone(agent || {}, property);
     if (!phone) return;
 
-    const title = String(property.titulo || property.title || 'esta propiedad').trim();
-    const message = encodeURIComponent(`Hola, me interesa ${title}. La vi en Diamantes Realty Group. ${window.location.href}`);
+    const title = String(property.titulo || property.title || 'Propiedad').trim();
+    const message = encodeURIComponent(`Hola, quisiera más información sobre la propiedad: ${title}. La vi en Diamantes Realty Group. ${window.location.href}`);
     const link = document.createElement('a');
     link.className = 'property-agent-whatsapp-cta';
     link.href = `https://wa.me/${phone}?text=${message}`;
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
-    link.textContent = 'Contactar al agente por WhatsApp';
-    link.setAttribute('aria-label', `Contactar por WhatsApp a ${agent?.name || 'el agente que publicó esta propiedad'}`);
+    link.textContent = 'Más información';
+    link.setAttribute('aria-label', `Solicitar más información sobre ${title} por WhatsApp`);
     panel.appendChild(link);
   }
 
