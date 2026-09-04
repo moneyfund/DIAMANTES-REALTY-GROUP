@@ -7,6 +7,10 @@
   const popover = document.getElementById('propertiesFilterPopover');
   if (!form || !searchInput) return;
 
+  // Prevent a native page submission while the async property loader is still
+  // attaching its own filtering listener. Other submit listeners still run.
+  form.addEventListener('submit', (event) => event.preventDefault());
+
   // Extend the existing location matcher so the same compact search can find
   // city, barrio, zone, neighborhood and address text without adding more UI.
   if (typeof window.propertyMatchesLocation === 'function') {
