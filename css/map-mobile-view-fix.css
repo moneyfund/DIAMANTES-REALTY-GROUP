@@ -15,13 +15,13 @@
     background: #fff !important;
   }
 
-  /* Keep the mobile search below the navbar, but slightly higher than before. */
+  /* Keep the mobile search under the transparent navbar, a little higher. */
   body.map-mobile-show-map .map-search-experience {
-    padding-top: calc(var(--public-navbar-height, 76px) + 4px) !important;
+    padding-top: calc(var(--public-navbar-height, 76px) - 4px) !important;
   }
 
   body.map-mobile-show-map .map-search-experience .map-page-toolbar.map-unified-toolbar {
-    top: calc(var(--public-navbar-height, 76px) + 2px) !important;
+    top: calc(var(--public-navbar-height, 76px) - 6px) !important;
     margin-top: 0 !important;
   }
 
@@ -88,7 +88,11 @@
 
 @media (max-width: 560px) {
   body.map-mobile-show-map .map-search-experience {
-    padding-top: calc(var(--public-navbar-height, 76px) + 2px) !important;
+    padding-top: calc(var(--public-navbar-height, 76px) - 6px) !important;
+  }
+
+  body.map-mobile-show-map .map-search-experience .map-page-toolbar.map-unified-toolbar {
+    top: calc(var(--public-navbar-height, 76px) - 8px) !important;
   }
 
   body.map-mobile-show-map .map-canvas-panel {
