@@ -104,7 +104,7 @@
     initialized = true;
     window.clearTimeout(retryTimer);
     document.documentElement.dataset.homePublicRuntime = 'ready-gesture-curtain';
-    body.dataset.homePublicController = 'v6-20260817-gesture-curtain';
+    body.dataset.homePublicController = 'v7-20260904-mobile-performance';
 
     compactSignature(intro);
     upgradeServiceIcons();
@@ -118,7 +118,7 @@
 
     const curtain = document.createElement('div');
     curtain.className = 'home-public-curtain';
-    curtain.dataset.controller = 'home-public-v6-gesture-curtain';
+    curtain.dataset.controller = 'home-public-v7-mobile-performance';
     body.appendChild(curtain);
     curtain.appendChild(header);
     curtain.appendChild(hero);
@@ -141,6 +141,8 @@
     let coverOffset = 0;
     let lastTouchY = null;
     let animationFrame = 0;
+    let touchMoveListening = false;
+    let lastViewportWidth = window.innerWidth;
 
     const clampOffset = (value) => Math.max(0, Math.min(curtainHeight, value));
 
@@ -197,11 +199,26 @@
       }
     };
 
-    const handleTouchStart = (event) => {
-      lastTouchY = event.touches[0]?.clientY ?? null;
+    const removeTouchMoveListener = () => {
+      if (!touchMoveListening) return;
+      window.removeEventListener('touchmove', handleTouchMove);
+      touchMoveListening = false;
     };
 
-    const handleTouchMove = (event) => {
+    const addTouchMoveListener = () => {
+      if (touchMoveListening) return;
+      window.addEventListener('touchmove', handleTouchMove, { passive: false });
+      touchMoveListening = true;
+    };
+
+    const handleTouchStart = (event) => {
+      lastTouchY = event.touches[0]?.clientY ?? null;
+      const pageAtTop = window.scrollY <= 0.5;
+      const coverNeedsGesture = coverOffset < curtainHeight - 0.5 || (pageAtTop && coverOffset > 0);
+      if (coverNeedsGesture) addTouchMoveListener();
+    };
+
+    function handleTouchMove(event) {
       const currentY = event.touches[0]?.clientY;
       if (currentY == null || lastTouchY == null) return;
 
@@ -219,9 +236,10 @@
         event.preventDefault();
         setCoverOffset(coverOffset + delta);
       }
-    };
+    }
 
     const handleTouchEnd = () => {
+      removeTouchMoveListener();
       lastTouchY = null;
       if (coverOffset > 0 && coverOffset < curtainHeight) {
         const target = coverOffset >= curtainHeight * 0.5 ? curtainHeight : 0;
@@ -235,14 +253,25 @@
       }
     };
 
+    const handleResize = () => {
+      const currentWidth = window.innerWidth;
+      const widthChanged = Math.abs(currentWidth - lastViewportWidth) > 2;
+      lastViewportWidth = currentWidth;
+
+      /* Mobile browser chrome changes innerHeight repeatedly during normal scroll.
+         Once the hero is open, ignore those height-only resize events so scrolling
+         the page does not keep recalculating and repainting the curtain. */
+      if (currentWidth <= 768 && body.classList.contains('home-cover-open') && !widthChanged) return;
+      measure();
+    };
+
     cue.addEventListener('click', () => animateCoverTo(curtainHeight));
     window.addEventListener('wheel', handleWheel, { passive: false });
     window.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('touchmove', handleTouchMove, { passive: false });
     window.addEventListener('touchend', handleTouchEnd, { passive: true });
     window.addEventListener('touchcancel', handleTouchEnd, { passive: true });
     window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('resize', measure, { passive: true });
+    window.addEventListener('resize', handleResize, { passive: true });
     window.addEventListener('orientationchange', measure, { passive: true });
 
     main.style.setProperty('position', 'relative', 'important');
