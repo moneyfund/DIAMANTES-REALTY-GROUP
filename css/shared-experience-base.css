@@ -1,0 +1,57 @@
+/* Minimal isolated foundation for private shared views */
+html {
+  min-width: 100%;
+  background: #f5f6f8;
+}
+
+.shared-experience-page,
+.shared-experience-page *,
+.shared-experience-page *::before,
+.shared-experience-page *::after {
+  box-sizing: border-box;
+}
+
+.shared-experience-page {
+  width: 100%;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.shared-experience-page img {
+  max-width: 100%;
+}
+
+.shared-experience-page button,
+.shared-experience-page input,
+.shared-experience-page textarea,
+.shared-experience-page select {
+  font: inherit;
+}
+
+.shared-experience-page a {
+  text-decoration: none;
+}
+
+.shared-property-price .price-usd,
+.shared-property-price .price-nio,
+.shared-detail-price .price-usd,
+.shared-detail-price .price-nio {
+  display: block;
+}
+
+.shared-property-price .price-nio,
+.shared-detail-price .price-nio {
+  margin-top: 2px;
+  color: #667085;
+  font-size: .62em;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.shared-property-price .price-unavailable,
+.shared-detail-price .price-unavailable {
+  display: block;
+  color: #667085;
+  font-size: .78em;
+}
