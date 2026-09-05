@@ -1,5 +1,6 @@
 @import url('home-public-v3-base.css?v=20260904-navy-base');
 @import url('home-sticky-navbar.css?v=20260904-02');
+@import url('home-mobile-performance.css?v=20260904-01');
 
 /* Keep every property-card CTA on Home aligned with the catalogue navy action. */
 .home-page .home-property-section .property-detail-button,
