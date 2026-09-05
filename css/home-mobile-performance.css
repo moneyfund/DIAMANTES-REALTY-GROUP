@@ -1,0 +1,55 @@
+/* Mobile performance layer for Home. Keeps the current visual design while reducing expensive paint and gesture work. */
+@media (max-width: 768px) {
+  /* The global premium aurora is a fixed full-screen animated layer. On phones it
+     causes continuous repainting while the user scrolls, so Home uses its normal
+     section backgrounds without that extra animated surface. */
+  body.home-page::before {
+    display: none !important;
+    content: none !important;
+    animation: none !important;
+    background: none !important;
+  }
+
+  /* Once the opening hero is completely above the viewport, do not keep painting
+     its four full-screen images behind the page. The navbar remains visible because
+     it is a separate child of the curtain and already counter-translates to the top. */
+  body.home-page.home-cover-open > .home-public-curtain {
+    box-shadow: none !important;
+    will-change: auto !important;
+  }
+
+  body.home-page.home-cover-open > .home-public-curtain > .hero.premium-hero {
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  /* Property rows use the browser's native momentum scrolling on touch devices.
+     Mandatory snap + JS pointer dragging was making the row fight the finger,
+     especially in Destacadas. */
+  .home-page .home-property-slider,
+  .home-page #featuredGrid.home-property-slider.properties-grid {
+    touch-action: pan-x pan-y !important;
+    scroll-snap-type: x proximity !important;
+    scroll-behavior: auto !important;
+    overscroll-behavior-x: contain !important;
+    -webkit-overflow-scrolling: touch !important;
+    cursor: auto !important;
+  }
+
+  .home-page .home-property-slider .property-card {
+    scroll-snap-stop: normal !important;
+    transition: none !important;
+  }
+
+  .home-page .home-property-slider .property-card-shell,
+  .home-page .home-property-slider .property-cover-image,
+  .home-page .home-property-slider .property-card > img {
+    transition: none !important;
+  }
+
+  .home-page .home-property-slider .property-card:hover,
+  .home-page .home-property-slider .property-card:hover .property-cover-image,
+  .home-page .home-property-slider .property-card:hover > img {
+    transform: none !important;
+  }
+}
