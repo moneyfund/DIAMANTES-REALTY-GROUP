@@ -129,6 +129,25 @@ body:not(.home-page) > main {
     backdrop-filter: none !important;
   }
 
+  /* On phones every public inner page starts in normal flow immediately below
+     the fixed navbar. Home is intentionally excluded and keeps its hero architecture. */
+  body:not(.home-page) {
+    --public-mobile-content-offset: calc(var(--public-navbar-height, 76px) + env(safe-area-inset-top, 0px));
+  }
+
+  body:not(.home-page) > main,
+  body:not(.home-page) > .public-page-surface > main,
+  body:not(.home-page).public-footer-reveal > .public-page-surface > main {
+    margin-top: var(--public-mobile-content-offset) !important;
+  }
+
+  /* The map already had an internal navbar-sized padding. Once the whole page is
+     moved below the navbar that old padding would double the gap, so remove it. */
+  body:not(.home-page).map-mobile-show-map > main.map-search-experience,
+  body:not(.home-page).map-mobile-show-map > .public-page-surface > main.map-search-experience {
+    padding-top: 0 !important;
+  }
+
   body:not(.home-page):not(.dark):not(.dark-mode) > .site-header .site-nav.open,
   body:not(.home-page):not(.dark):not(.dark-mode) > .site-header .site-nav.active,
   body:not(.home-page):not(.dark):not(.dark-mode) > .site-header .nav-wrapper.menu-open .site-nav {
