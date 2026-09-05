@@ -2,33 +2,50 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="title" content="Selección compartida | Diamantes Realty Group" />
-  <meta name="description" content="Selección privada de propiedades compartida por un asesor inmobiliario" />
+  <meta name="description" content="Selección privada de propiedades preparada por un asesor de Diamantes Realty Group" />
   <title>Selección compartida | Diamantes Realty Group</title>
   <link rel="icon" type="image/png" href="assets/logo.png" />
   <link rel="shortcut icon" type="image/png" href="assets/logo.png" />
   <link rel="apple-touch-icon" href="assets/logo.png" />
-  <meta name="theme-color" content="#B00008" />
+  <meta name="theme-color" content="#071a33" />
   <meta property="og:site_name" content="Diamantes Realty Group" />
-  <meta property="og:title" content="Diamantes Realty Group" />
+  <meta property="og:title" content="Selección privada | Diamantes Realty Group" />
   <meta property="og:image" content="https://www.diamantesrealtygroup.com/assets/logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css?v=20260806-typography-fix" />
   <link rel="stylesheet" href="css/premium-theme.css?v=20260807-navbar-more" />
-  <link rel="stylesheet" href="css/footer.css?v=20260806-typography-fix" />
+  <link rel="stylesheet" href="css/shared-experience.css?v=20260904-01" />
 </head>
-<body>
-  <main class="section container share-page" id="sharedListPage">
-    <p>Cargando selección compartida...</p>
+<body class="shared-experience-page">
+  <header class="shared-shell-header">
+    <div class="shared-shell-inner">
+      <a class="shared-shell-brand" href="index.html" aria-label="Diamantes Realty Group - Inicio">
+        <img src="assets/logo.png" alt="Diamantes Realty Group" />
+        <span class="shared-shell-brand-copy">
+          <strong>Diamantes Realty Group</strong>
+          <span>Real Estate · Nicaragua</span>
+        </span>
+      </a>
+      <span class="shared-shell-status">Selección privada</span>
+    </div>
+  </header>
+
+  <main class="shared-page-container" id="sharedListPage">
+    <div class="shared-loading" role="status" aria-live="polite">Preparando tu selección de propiedades...</div>
   </main>
 
-  <script src="js/main.js?v=20260725-whatsapp-movement"></script>
+  <footer class="shared-page-footer">
+    <strong>Diamantes Realty Group</strong> · Selección inmobiliaria privada
+  </footer>
+
+  <script src="js/main.js?v=20260807-navbar-more"></script>
   <script src="js/image-utils.js?v=20260613-public-fix"></script>
   <script src="js/property-utils.js?v=20260613-01"></script>
   <script src="js/public-property-filter.js?v=20260613-01"></script>
-  <script type="module" src="js/shared-view.js?v=20260613-public-fix"></script>
+  <script type="module" src="js/shared-view.js?v=20260904-private-redesign"></script>
 </body>
 </html>
