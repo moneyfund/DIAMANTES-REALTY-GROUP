@@ -1,0 +1,107 @@
+/* Paginación de propiedades en perfiles públicos de agentes */
+.agent-public-page-compact .agent-profile-properties .property-card[hidden] {
+  display: none !important;
+}
+
+.agent-properties-pagination {
+  width: 100%;
+  margin: 30px auto 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.agent-properties-pagination[hidden] {
+  display: none !important;
+}
+
+.agent-properties-pagination__pages {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.agent-properties-pagination button {
+  appearance: none;
+  border: 1px solid rgba(11, 31, 58, .14);
+  background: #fff;
+  color: #0b1f3a;
+  font: inherit;
+  font-size: .78rem;
+  font-weight: 750;
+  cursor: pointer;
+  box-shadow: 0 7px 18px rgba(11,31,58,.055);
+  transition: transform .18s ease, border-color .18s ease, background .18s ease, color .18s ease, box-shadow .18s ease;
+}
+
+.agent-properties-pagination__page {
+  min-width: 40px;
+  height: 40px;
+  padding: 0 10px;
+  border-radius: 11px;
+}
+
+.agent-properties-pagination__page.is-active {
+  color: #fff;
+  border-color: #0b1f3a;
+  background: #0b1f3a;
+  box-shadow: 0 10px 24px rgba(11,31,58,.16);
+}
+
+.agent-properties-pagination__arrow {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.agent-properties-pagination button:not(:disabled):hover {
+  transform: translateY(-1px);
+  border-color: rgba(11,31,58,.28);
+  box-shadow: 0 11px 24px rgba(11,31,58,.09);
+}
+
+.agent-properties-pagination button:disabled {
+  opacity: .38;
+  cursor: default;
+  box-shadow: none;
+}
+
+.agent-properties-pagination__ellipsis {
+  min-width: 22px;
+  color: #7b8492;
+  text-align: center;
+  font-weight: 700;
+}
+
+@media (max-width: 620px) {
+  .agent-properties-pagination {
+    gap: 7px;
+    margin-top: 24px;
+  }
+
+  .agent-properties-pagination__pages {
+    gap: 5px;
+  }
+
+  .agent-properties-pagination__page {
+    min-width: 36px;
+    height: 38px;
+    padding: 0 8px;
+  }
+
+  .agent-properties-pagination__arrow {
+    min-width: 38px;
+    min-height: 38px;
+    padding: 0 10px;
+  }
+
+  .agent-properties-pagination__arrow-label {
+    display: none;
+  }
+}
