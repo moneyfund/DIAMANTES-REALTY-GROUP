@@ -111,6 +111,8 @@ const fields = {
 
 const imagesContainer = document.getElementById('imagesContainer');
 const addImageBtn = document.getElementById('addImageBtn');
+const uploadImageBtn = document.getElementById('uploadImageBtn');
+const imageFileInput = document.getElementById('imageFileInput');
 const imageManagerStatus = document.getElementById('imageManagerStatus');
 const agentNameModal = document.getElementById('agentNameModal');
 const agentNameInput = document.getElementById('agentNameInput');
@@ -582,10 +584,14 @@ function getImagesFromProperty(property = {}) {
   ]);
 }
 
+function getImageItemDisplayUrl(item = {}) {
+  return String(item.url || item.previewUrl || '').trim();
+}
+
 function resolveCoverFromItems(items = state.imageItems) {
-  const urls = normalizeImageUrls(items.map((item) => item.url));
+  const urls = normalizeImageUrls(items.map((item) => getImageItemDisplayUrl(item)));
   if (!urls.length) return '';
-  const selected = items.find((item) => item.isCover)?.url;
+  const selected = getImageItemDisplayUrl(items.find((item) => item.isCover) || {});
   return selected && urls.includes(selected) ? selected : urls[0];
 }
 
@@ -602,13 +608,14 @@ function getImageUrlsFromForm() {
 function renderImageManager() {
   if (!imagesContainer) return;
   const cover = resolveCoverFromItems();
-  state.imageItems = state.imageItems.map((item, index) => ({ ...item, isCover: item.url === cover || (!cover && index === 0) }));
+  state.imageItems = state.imageItems.map((item, index) => ({ ...item, isCover: getImageItemDisplayUrl(item) === cover || (!cover && index === 0) }));
   imagesContainer.innerHTML = state.imageItems.length ? state.imageItems.map((item, index) => {
-    const isCover = item.url === resolveCoverFromItems();
+    const displayUrl = getImageItemDisplayUrl(item);
+    const isCover = displayUrl === resolveCoverFromItems();
     return `
       <article class="image-manager-card${isCover ? ' is-cover' : ''}" data-index="${index}">
         <div class="image-thumb-wrap">
-          <img src="${escapeHtml(item.url)}" alt="Imagen ${index + 1} de la propiedad" loading="lazy" onerror="this.onerror=null;this.src='assets/placeholder.svg'">
+          <img src="${escapeHtml(displayUrl)}" alt="Imagen ${index + 1} de la propiedad" loading="lazy" onerror="this.onerror=null;this.src='assets/placeholder.svg'">
           <span class="image-position">${index + 1}</span>
           ${isCover ? '<span class="cover-badge">PORTADA</span>' : ''}
         </div>
@@ -619,7 +626,7 @@ function renderImageManager() {
           <button type="button" class="delete-btn image-action" data-image-action="delete" title="Eliminar imagen" aria-label="Eliminar imagen ${index + 1}">Eliminar</button>
         </div>
       </article>`;
-  }).join('') : '<p class="empty-image-manager">No hay imágenes configuradas. Agrega una URL para iniciar la galería.</p>';
+  }).join('') : '<p class="empty-image-manager">No hay imágenes configuradas. Sube imágenes desde tu dispositivo o agrega una URL.</p>';
   imagesContainer.querySelectorAll('[data-image-action]').forEach((button) => {
     button.addEventListener('click', () => handleImageAction(button.closest('[data-index]'), button.dataset.imageAction));
   });
@@ -640,8 +647,87 @@ function handleImageAction(card, action) {
     if (!confirmed) return;
     const [removed] = state.imageItems.splice(index, 1);
     if (removed?.persisted && removed.url) state.deletedImageUrls.push(removed.url);
+    if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
   }
   renderImageManager();
+}
+
+function addImageFiles(fileList) {
+  const files = Array.from(fileList || []);
+  if (!files.length) return;
+
+  const accepted = [];
+  const rejected = [];
+
+  files.forEach((file) => {
+    if (!String(file.type || '').startsWith('image/')) {
+      rejected.push(`${file.name}: formato no válido`);
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      rejected.push(`${file.name}: supera 10 MB`);
+      return;
+    }
+    accepted.push(file);
+  });
+
+  accepted.forEach((file) => {
+    state.imageItems.push({
+      url: '',
+      previewUrl: URL.createObjectURL(file),
+      file,
+      fileName: file.name,
+      isCover: state.imageItems.length === 0,
+      persisted: false
+    });
+  });
+
+  const parts = [];
+  if (accepted.length) parts.push(`${accepted.length} ${accepted.length === 1 ? 'imagen seleccionada' : 'imágenes seleccionadas'} para subir al guardar`);
+  if (rejected.length) parts.push(rejected.join(' · '));
+  setImageStatus(parts.join('. '), rejected.length ? 'error' : 'success');
+  if (imageFileInput) imageFileInput.value = '';
+  renderImageManager();
+}
+
+function sanitizeStorageFileName(name = 'imagen') {
+  return String(name || 'imagen')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9._-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 90) || 'imagen';
+}
+
+async function uploadPendingImages(propertyId) {
+  const client = getFirebaseOrNotify();
+  if (!client?.storage) throw new Error('Firebase Storage no está disponible.');
+  const pending = state.imageItems.filter((item) => item.file && !item.url);
+  if (!pending.length) return [];
+
+  const uploadedUrls = [];
+  for (let index = 0; index < pending.length; index += 1) {
+    const item = pending[index];
+    setImageStatus(`Subiendo imagen ${index + 1} de ${pending.length}...`, '');
+    const safeName = sanitizeStorageFileName(item.fileName || item.file?.name || 'imagen');
+    const storagePath = `properties/${propertyId}/admin/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
+    const storageRef = client.storage.ref().child(storagePath);
+    const uploadSnapshot = await storageRef.put(item.file, { contentType: item.file.type || 'image/jpeg' });
+    const downloadUrl = await uploadSnapshot.ref.getDownloadURL();
+    item.url = downloadUrl;
+    item.storagePath = storagePath;
+    uploadedUrls.push(downloadUrl);
+  }
+  return uploadedUrls;
+}
+
+function finalizeUploadedImageItems() {
+  state.imageItems = state.imageItems.map((item) => {
+    if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+    const { file, previewUrl, ...rest } = item;
+    return { ...rest, persisted: true };
+  });
 }
 
 function addImageField(value = '') {
@@ -659,6 +745,9 @@ function addImageField(value = '') {
 function resetImageFields(values = [], coverImage = '') {
   const urls = normalizeImageUrls(values);
   const resolvedCover = urls.includes(String(coverImage || '').trim()) ? String(coverImage || '').trim() : urls[0] || '';
+  state.imageItems.forEach((item) => {
+    if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+  });
   state.imageItems = urls.map((url) => ({ url, isCover: url === resolvedCover, persisted: true }));
   state.deletedImageUrls = [];
   setImageStatus(urls.length ? 'Imágenes cargadas.' : 'Sin imágenes configuradas.', '');
@@ -925,20 +1014,25 @@ async function savePropertyUpdate() {
     return;
   }
 
+  let uploadedThisAttempt = [];
   try {
+    uploadedThisAttempt = await uploadPendingImages(propertyId);
     const payload = buildPropertyPayload(current.data());
     await ref.set(payload, { merge: true });
     await deleteStorageImagesAfterSave(snapshotDeleted);
     state.deletedImageUrls = [];
-    state.imageItems = state.imageItems.map((item) => ({ ...item, persisted: true }));
-    setImageStatus('Propiedad actualizada correctamente.', 'success');
+    finalizeUploadedImageItems();
+    setImageStatus('Propiedad actualizada correctamente. Las imágenes quedaron guardadas en Firebase Storage.', 'success');
     alert('Propiedad actualizada.');
   } catch (error) {
     console.error(error);
+    if (uploadedThisAttempt.length) {
+      await deleteStorageImagesAfterSave(uploadedThisAttempt);
+    }
     state.imageItems = snapshotImageItems;
     state.deletedImageUrls = snapshotDeleted;
     renderImageManager();
-    setImageStatus('No se pudo guardar la propiedad. No se eliminó ningún archivo de Storage.', 'error');
+    setImageStatus('No se pudo guardar la propiedad. Las imágenes nuevas no fueron conservadas en Storage.', 'error');
     alert('No se pudo actualizar la propiedad. Revisa Firestore y vuelve a intentar.');
   } finally {
     state.savingProperty = false;
@@ -1098,7 +1192,15 @@ function redirectTo(path) {
 }
 
 function bindActions() {
-  addImageBtn.addEventListener('click', () => addImageField(''));
+  addImageBtn?.addEventListener('click', () => addImageField(''));
+  uploadImageBtn?.addEventListener('click', () => {
+    if (!String(fields.id?.value || '').trim()) {
+      alert('Primero selecciona una propiedad de la tabla para editarla.');
+      return;
+    }
+    imageFileInput?.click();
+  });
+  imageFileInput?.addEventListener('change', (event) => addImageFiles(event.target.files));
   document.getElementById('agentNameModalClose')?.addEventListener('click', closeAgentNameModal);
   document.getElementById('agentNameCancelBtn')?.addEventListener('click', closeAgentNameModal);
   agentNameSaveBtn?.addEventListener('click', updateAgentName);
