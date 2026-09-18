@@ -158,7 +158,11 @@
               <small id="imageManagerStatus" aria-live="polite"></small>
             </div>
             <div id="imagesContainer" class="images-container image-manager-grid"></div>
-            <button type="button" id="addImageBtn" class="secondary add-image-btn">Agregar imagen por URL</button>
+            <div class="admin-image-source-actions">
+              <button type="button" id="uploadImageBtn" class="secondary add-image-btn">Subir imágenes desde dispositivo</button>
+              <button type="button" id="addImageBtn" class="ghost add-image-btn">Agregar imagen por URL</button>
+              <input type="file" id="imageFileInput" class="admin-image-file-input" accept="image/*" multiple />
+            </div>
           </div>
 
           <div>
