@@ -341,7 +341,7 @@ function renderSiteFooter() {
         </div>
       </div>
     </section>
-    <div class="drg-footer-copyright">© <span id="drgFooterCurrentYear">2026</span> ${APP_NAME}. Todos los derechos reservados.</div>
+    <div class="drg-footer-copyright">©<span id="drgFooterCurrentYear">2026</span>diamantesrealtygroup.com <span class="drg-footer-credit-separator" aria-hidden="true">|</span> powered by <a class="drg-footer-powered-link" href="https://xaron-ni.com" target="_blank" rel="noopener noreferrer" aria-label="Visitar el sitio web de Xarcon">Xarcon</a></div>
   `;
 
   let footer = document.querySelector('.drg-site-footer');
