@@ -1,0 +1,39 @@
+{
+  "id": "/agent-dashboard",
+  "name": "DRG Agentes",
+  "short_name": "DRG Agentes",
+  "description": "Panel de agentes de Diamantes Realty Group",
+  "start_url": "/agent-dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#07121f",
+  "theme_color": "#07121f",
+  "orientation": "any",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/agent-icon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/agent-icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/agent-icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/assets/logo.png",
+      "sizes": "3112x3112",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
