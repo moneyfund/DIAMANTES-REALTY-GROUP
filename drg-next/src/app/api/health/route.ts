@@ -5,8 +5,9 @@ export function GET() {
   return NextResponse.json({
     ok: true,
     app: "diamantes-realty-group-next",
-    stage: 1,
+    stage: 1.1,
     dataMode: drgDataMode,
-    firebaseConfigured: hasFirebasePublicConfig()
+    firebaseConfigured: hasFirebasePublicConfig(),
+    writesImplemented: false
   });
 }

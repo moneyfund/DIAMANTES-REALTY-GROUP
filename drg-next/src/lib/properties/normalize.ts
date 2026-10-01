@@ -1,24 +1,49 @@
+import {
+  getPropertyCoverImage,
+  getPropertyImages,
+  getPropertyTypeLabel,
+  isPublicProperty,
+  normalizeOperation,
+  normalizePropertyType,
+  normalizeStatus,
+  toFiniteNumber
+} from "./compat";
 import type { Property } from "@/types/property";
 
 function asString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function asNumber(value: unknown) {
-  const number = typeof value === "number" ? value : Number(value);
-  return Number.isFinite(number) ? number : null;
-}
-
 export function normalizeProperty(id: string, raw: Record<string, unknown>): Property {
-  const title = asString(raw.title) || asString(raw.titulo) || asString(raw.nombre);
-  const location = asString(raw.city) || asString(raw.location) || asString(raw.ubicacion);
-  const priceUsd = asNumber(raw.priceUsd) ?? asNumber(raw.price) ?? asNumber(raw.precio);
-  const type = asString(raw.type) || asString(raw.tipo);
-  const operation =
-    asString(raw.operationType) ||
-    asString(raw.tipoOperacion) ||
-    asString(raw.operation) ||
-    asString(raw.operacion);
+  const title =
+    asString(raw.title) ||
+    asString(raw.titulo) ||
+    asString(raw.propertyTitle) ||
+    asString(raw.nombre) ||
+    asString(raw.headline);
+
+  const location =
+    asString(raw.city) ||
+    asString(raw.location) ||
+    asString(raw.ubicacion);
+
+  const priceUsd =
+    toFiniteNumber(raw.priceUsd) ??
+    toFiniteNumber(raw.price) ??
+    toFiniteNumber(raw.precio);
+
+  const type = normalizePropertyType(raw.propertyType ?? raw.type ?? raw.tipo);
+
+  const operation = normalizeOperation(
+    raw.operationType ??
+    raw.tipoOperacion ??
+    raw.operation ??
+    raw.operacion ??
+    raw.transactionType ??
+    raw.listingType ??
+    raw.purpose ??
+    raw.mode
+  );
 
   return {
     id,
@@ -26,16 +51,17 @@ export function normalizeProperty(id: string, raw: Record<string, unknown>): Pro
     location,
     priceUsd,
     type,
+    typeLabel: getPropertyTypeLabel(type),
     operation,
-    coverImage:
-      asString(raw.coverImage) ||
-      asString(raw.image) ||
-      asString(raw.imagen) ||
-      null,
-    bedrooms: asNumber(raw.bedrooms) ?? asNumber(raw.habitaciones),
-    bathrooms: asNumber(raw.bathrooms) ?? asNumber(raw.banos),
-    area: asNumber(raw.area),
-    status: asString(raw.status) || "available",
+    coverImage: getPropertyCoverImage(raw),
+    images: getPropertyImages(raw),
+    bedrooms: toFiniteNumber(raw.bedrooms) ?? toFiniteNumber(raw.habitaciones),
+    bathrooms: toFiniteNumber(raw.bathrooms) ?? toFiniteNumber(raw.banos),
+    area: toFiniteNumber(raw.areaValue) ?? toFiniteNumber(raw.area),
+    areaUnit: asString(raw.areaUnit),
+    status: normalizeStatus(raw.status),
+    description: asString(raw.description) || asString(raw.descripcion),
+    publicVisible: isPublicProperty(raw),
     raw
   };
 }
