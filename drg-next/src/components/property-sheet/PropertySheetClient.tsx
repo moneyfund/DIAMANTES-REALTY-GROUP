@@ -76,11 +76,11 @@ export function PropertySheetClient({propertyId}:{propertyId:string}){
         <section className={"drg-sheet-hero"+(!cover?" is-empty":"")}>
           {cover?<img src={proxy(cover)} alt={property.title} crossOrigin="anonymous"/>:null}
           <div className="drg-sheet-hero-shade"/>
-          <div className="drg-sheet-hero-brand"><div className="drg-sheet-diamond">◆</div><span>DIAMANTES REALTY GROUP</span></div>
+          <div className="drg-sheet-hero-brand"><img className="drg-sheet-brand-logo" src="/assets/logo.png" alt="Diamantes Realty Group"/></div>
           <div className="drg-sheet-hero-copy"><small>Ficha técnica inmobiliaria</small><h1>{property.typeLabel||"Propiedad"} en {operation(property.operation).toLowerCase()}</h1><p><MapPin size={12}/>{property.location||"Nicaragua"}</p><strong>{property.priceUsd?"$"+property.priceUsd.toLocaleString("en-US")+" USD":"Precio disponible bajo consulta"}</strong></div>
         </section>
 
-        <section className="drg-sheet-gallery">{gallery.length?gallery.map((url,index)=><img key={url} src={proxy(url)} alt={"Imagen "+(index+2)} crossOrigin="anonymous"/>):Array.from({length:4},(_,index)=><div key={index}>Imagen secundaria</div>)}</section>
+        <section className="drg-sheet-gallery">{Array.from({length:4},(_,index)=>{const url=gallery[index];return <figure key={url||"placeholder-"+index} className={!url?"is-placeholder":""}>{url?<img src={proxy(url)} alt={"Imagen "+(index+2)} crossOrigin="anonymous"/>:<span>Imagen secundaria</span>}</figure>})}</section>
 
         <section className="drg-sheet-content">
           <div className="drg-sheet-feature-section"><h2>Características principales</h2><div>{features.map(feature=><article key={feature.label}><small>{feature.label}</small><strong>{feature.value}</strong></article>)}</div></div>
@@ -96,7 +96,7 @@ export function PropertySheetClient({propertyId}:{propertyId:string}){
             <span><small>Agente responsable</small><strong>{name}</strong><em>{agent?.role||"Asesor inmobiliario"}</em></span>
             <ul>{phone?<li><Phone size={11}/>{phone}</li>:null}{email?<li><Mail size={11}/>{email}</li>:null}{whatsapp?<li>WhatsApp · {whatsapp}</li>:null}</ul>
           </section>
-          <div className="drg-sheet-footer-brand"><strong>DIAMANTES</strong><span>REALTY GROUP</span><p>¡Visita, conoce e invierte en Nicaragua!</p></div>
+          <div className="drg-sheet-footer-brand"><img className="drg-sheet-footer-logo" src="/assets/logo.png" alt="Diamantes Realty Group"/><p>¡Visita, conoce e invierte en Nicaragua!</p></div>
           <p className="drg-sheet-note">La información contenida en esta ficha es aproximada y puede estar sujeta a cambios sin previo aviso.</p>
         </footer>
       </article>
