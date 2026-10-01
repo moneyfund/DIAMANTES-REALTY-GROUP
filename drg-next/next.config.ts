@@ -25,7 +25,9 @@ const nextConfig: NextConfig = {
       { source: "/politicas-de-privacidad.html", destination: "/politicas-de-privacidad", permanent: true },
       { source: "/condiciones-de-uso.html", destination: "/condiciones-de-uso", permanent: true },
       { source: "/licencia-de-operacion.html", destination: "/licencia-de-operacion", permanent: true },
-      { source: "/property-sheet.html", destination: "/property-sheet", permanent: false }
+      { source: "/property-sheet.html", destination: "/property-sheet", permanent: false },
+      { source: "/share.html", destination: "/share", permanent: false },
+      { source: "/share-property.html", destination: "/share-property", permanent: false }
     ];
   }
 };
