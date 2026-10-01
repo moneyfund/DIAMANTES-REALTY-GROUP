@@ -388,51 +388,51 @@ function buildGalleryWatermarkMarkup() {
 }
 
 function propertyCardTemplate(property) {
-  const featuredClass = property.featured ? ' is-featured' : '';
+  const featuredClass = isFeaturedProperty(property) ? ' is-featured' : '';
   const status = String(property.status || 'disponible').toLowerCase();
   const imageSrc = getPrimaryPropertyImage(property);
-  const propertyTitle = getPropertyTitle(property);
-  const imageAlt = propertyTitle || 'Imagen de la propiedad';
+  const propertyTitle = String(getPropertyTitle(property)).replace(/\p{Extended_Pictographic}\uFE0F?/gu, '').trim() || 'Propiedad en Nicaragua';
+  const imageAlt = propertyTitle;
   const detailUrl = getPropertyDetailUrl(property);
-  const locationLabel = property.city || property.ubicacion || 'Ubicación no disponible';
+  const locationLabel = property.city || property.ubicacion || 'Nicaragua';
   const typeLabel = property.typeLabel || getPropertyTypeLabel(property.tipo) || 'Propiedad';
   const operationLabel = property.operationLabel || formatPropertyOperation(property.operacion) || 'Venta';
-  const displayDetails = getPropertyDisplayDetails(property).slice(0, 3);
+  const displayDetails = getPropertyDisplayDetails(property).slice(0, 3).filter((detail) => detail.label !== 'Unidad de área');
   const pricePerArea = getPricePerAreaUsd(property);
   const areaUnit = property.areaUnit || property.propertyDetails?.areaUnit || '';
   const pricePerAreaMarkup = Number.isFinite(pricePerArea) && pricePerArea > 0 && areaUnit
-    ? `<p class="property-price-area">${escapeHtml(formatPricePerArea(pricePerArea, areaUnit))}</p>`
-    : '';
+    ? `<p class="property-price-area">${escapeHtml(formatPricePerArea(pricePerArea, areaUnit))}</p>` : '';
   const isSold = ['sold', 'vendida', 'vendido'].includes(status);
-  const isExclusive = Boolean(property.exclusive || property.exclusiva || status === 'exclusive' || status === 'exclusiva');
-  const specialBadges = [
-    property.featured ? '<span class="property-media-badge property-media-badge--special">Destacada</span>' : '',
-    isSold ? '<span class="property-media-badge property-media-badge--sold">Vendida</span>' : '',
-    isExclusive ? '<span class="property-media-badge property-media-badge--special">Exclusiva</span>' : ''
-  ].filter(Boolean).join('');
+  const isRented = ['rented', 'alquilada', 'alquilado'].includes(status);
+  const isPending = ['pending', 'pendiente', 'reserved', 'reservada', 'reservado'].includes(status);
+  const isRental = isRentalOperation(getRawPropertyOperation(property));
+  const isExclusive = Boolean(property.exclusive || property.exclusiva || ['exclusive', 'exclusiva'].includes(status));
+  const stateLabel = isSold ? 'Vendida' : isRented ? 'Alquilada' : isPending ? 'Pendiente' : '';
+  const specialLabel = stateLabel || (isExclusive ? 'Exclusiva' : isFeaturedProperty(property) ? 'Destacada' : '');
+  const labels = { Habitaciones: 'hab.', Baños: 'baños', 'Área de construcción': 'constr.', 'Área de terreno': 'terreno', 'Área total': '', 'Área': '' };
+  const priceMarkup = formatDualPriceMarkup(getPriceUsd(property)).replace('</span>', `${isRental && getPriceUsd(property) > 0 ? '<small class="drg-rent-period"> / mes</small>' : ''}</span>`);
   return `
-    <article class="property-card public-property-card${featuredClass}">
+    <article class="property-card public-property-card drg-property-card${featuredClass}${stateLabel ? ' drg-property-unavailable' : ''}">
       <div class="property-card-shell">
         <a class="property-card-media property-cover property-cover-link" href="${detailUrl}" data-property-link aria-label="Ver detalle de ${escapeHtml(imageAlt)}">
-          <img class="property-cover-image" src="${imageSrc}" alt="${escapeHtml(imageAlt)}" loading="lazy" onerror="this.onerror=null;this.src='${PROPERTY_IMAGE_PLACEHOLDER}'">
+          <img class="property-cover-image" src="${escapeHtml(imageSrc)}" alt="${escapeHtml(imageAlt)}" width="800" height="600" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${PROPERTY_IMAGE_PLACEHOLDER}'">
           <span class="property-media-gradient" aria-hidden="true"></span>
-          <span class="property-media-badges property-media-badges--primary">
-            <span class="property-media-badge">${escapeHtml(operationLabel)}</span>
-            <span class="property-media-badge property-media-badge--type">${escapeHtml(typeLabel)}</span>
-          </span>
-          ${specialBadges ? `<span class="property-media-badges property-media-badges--special">${specialBadges}</span>` : ''}
+          <span class="property-media-badges property-media-badges--primary"><span class="property-media-badge${isRental ? ' property-media-badge--rental' : ''}">${escapeHtml(operationLabel)}</span></span>
+          ${specialLabel ? `<span class="property-media-badges property-media-badges--special"><span class="property-media-badge ${stateLabel ? 'property-media-badge--sold' : 'property-media-badge--special'}">${escapeHtml(specialLabel)}</span></span>` : ''}
+          <span class="drg-photo-type">${escapeHtml(typeLabel)}</span>
         </a>
         <div class="property-card-body property-card-content">
-          <p class="property-location">${featureIcon('location')}<span>${escapeHtml(locationLabel)}</span></p>
+          <p class="price">${priceMarkup}</p>
           <h3><a class="property-title-link" href="${detailUrl}" data-property-link>${escapeHtml(propertyTitle)}</a></h3>
-          <p class="price">${formatDualPriceMarkup(getPriceUsd(property))}</p>
+          <p class="property-location">${featureIcon('location')}<span>${escapeHtml(locationLabel)}</span></p>
           <div class="property-features property-meta property-meta-icons">
-            ${displayDetails.map((detail) => `<span>${featureIcon(detail.icon)}<span>${escapeHtml(detail.value)} ${escapeHtml(detail.label).toLowerCase()}</span></span>`).join('')}
+            ${displayDetails.map((detail) => `<span title="${escapeHtml(detail.label)}">${featureIcon(detail.icon)}<span>${escapeHtml(detail.value)} ${escapeHtml(detail.label === 'Baños' && Number(detail.value) === 1 ? 'baño' : (labels[detail.label] ?? detail.label)).toLowerCase()}</span></span>`).join('')}
           </div>
           ${pricePerAreaMarkup}
         </div>
         <div class="property-card-footer property-card-actions">
-          <a class="property-detail-button btn-primary-property" href="${detailUrl}" data-property-link>Ver propiedad</a>
+          <a class="property-detail-button btn-primary-property" href="${detailUrl}" data-property-link>Ver propiedad <span aria-hidden="true">↗</span></a>
+          <button class="drg-card-share" type="button" data-share-property="${escapeHtml(property.id)}" data-share-title="${escapeHtml(propertyTitle)}" aria-label="Compartir ${escapeHtml(propertyTitle)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 5a3 3 0 1 0 6 0 3 3 0 0 0-6 0ZM2 12a3 3 0 1 0 6 0 3 3 0 0 0-6 0Zm14 7a3 3 0 1 0 6 0 3 3 0 0 0-6 0ZM8 11l8-5M8 13l8 5"/></svg></button>
         </div>
       </div>
     </article>
@@ -519,6 +519,8 @@ function renderPropertySlider({ containerId, properties = [], prevSelector, next
 
   slider.classList.add('home-property-slider');
   slider.classList.remove('home-recent-grid', 'home-farms-land-grid');
+  slider.dataset.loadState = 'ready';
+  slider.setAttribute('aria-busy', 'false');
   slider.innerHTML = properties.map(propertyCardTemplate).join('');
   section?.classList.toggle('is-empty', properties.length === 0);
   emptyState?.classList.toggle('hidden', properties.length !== 0);
@@ -569,6 +571,10 @@ function renderFarmsAndLand(properties) {
 function initializeHorizontalSlider(slider, options = {}) {
   if (!slider) return;
   if (typeof slider._homeSliderCleanup === 'function') slider._homeSliderCleanup();
+  if (document.body.classList.contains('drg-premium') && window.drgExperience?.initSlider) {
+    window.drgExperience.initSlider(slider, options);
+    return;
+  }
 
   const cards = Array.from(slider.querySelectorAll('.property-card'));
   const prevButton = options.prevButton || null;
@@ -725,7 +731,7 @@ function initializeHorizontalSlider(slider, options = {}) {
   };
 
   const handleCardClick = (event) => {
-    if (suppressSliderClick || getPropertyDetailLinkFromEvent(event)) return;
+    if (suppressSliderClick || event.target.closest('button, input, select') || getPropertyDetailLinkFromEvent(event)) return;
     const card = event.target.closest('.property-card');
     const detailLink = card?.querySelector('[data-property-link]');
     if (!detailLink?.href) return;
@@ -817,14 +823,24 @@ function renderPropertyList(properties) {
   const emptyState = document.getElementById('emptyState');
   if (!grid) return;
 
+  grid.dataset.loadState = 'ready';
+  grid.setAttribute('aria-busy', 'false');
   grid.innerHTML = properties.map(propertyCardTemplate).join('');
+  const count = document.getElementById('propertiesResultsCount');
+  if (count) count.textContent = `${properties.length} ${properties.length === 1 ? 'propiedad' : 'propiedades'}`;
+  document.dispatchEvent(new CustomEvent('drg:catalog-rendered'));
   if (emptyState) emptyState.classList.toggle('hidden', properties.length !== 0);
   applyCardRevealAnimation(grid);
 }
 
 function applyCardRevealAnimation(container) {
+  container._cardRevealObserver?.disconnect();
   const cards = container.querySelectorAll('.property-card');
   if (!cards.length) return;
+  if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    cards.forEach((card) => card.classList.add('is-visible'));
+    return;
+  }
 
   cards.forEach((card) => card.classList.add('reveal-on-scroll'));
 
@@ -839,7 +855,11 @@ function applyCardRevealAnimation(container) {
     rootMargin: '0px 0px -30px 0px'
   });
 
-  cards.forEach((card) => observer.observe(card));
+  container._cardRevealObserver = observer;
+  cards.forEach((card, index) => {
+    card.style.setProperty('--drg-card-delay', `${(index % 3) * 70}ms`);
+    observer.observe(card);
+  });
 }
 
 function getInitialFilters() {
@@ -893,13 +913,30 @@ function applyFilters(properties) {
   const typeInput = normalizePropertyType(document.getElementById('filterType')?.value || '');
   const operationInput = normalizePropertyOperation(document.getElementById('filterOperation')?.value || '');
   const budgetInput = Number(document.getElementById('filterBudget')?.value || 0);
-
-  return properties.filter((property) => {
-    const matchesLocation = propertyMatchesLocation(property, locationInput);
-    const matchesType = !typeInput || normalizePropertyType(property.tipo) === typeInput;
-    const matchesOperation = !operationInput || getNormalizedPropertyOperation(property) === operationInput;
-    const matchesBudget = !budgetInput || Number(getPriceUsd(property) || 0) <= budgetInput;
-    return matchesLocation && matchesType && matchesOperation && matchesBudget;
+  const minPrice = Number(document.getElementById('filterMinPrice')?.value || 0);
+  const bedrooms = Number(document.getElementById('filterBedrooms')?.value || 0);
+  const bathrooms = Number(document.getElementById('filterBathrooms')?.value || 0);
+  const sort = document.getElementById('propertiesSort')?.value || '';
+  const filtered = properties.filter((property) => {
+    const price = getPriceUsd(property);
+    const operation = getNormalizedPropertyOperation(property);
+    return propertyMatchesLocation(property, locationInput)
+      && (!typeInput || normalizePropertyType(property.tipo) === typeInput)
+      && (!operationInput || operation === operationInput || operation === 'venta_renta')
+      && (!(budgetInput || minPrice) || (Number.isFinite(price) && price > 0 && (!budgetInput || price <= budgetInput) && (!minPrice || price >= minPrice)))
+      && (!bedrooms || getPropertyNumber(property, ['propertyDetails.bedrooms', 'bedrooms', 'habitaciones']) >= bedrooms)
+      && (!bathrooms || getPropertyNumber(property, ['propertyDetails.bathrooms', 'bathrooms', 'banos', 'baños']) >= bathrooms);
+  });
+  return filtered.sort((a, b) => {
+    if (sort === 'price-asc' || sort === 'price-desc') {
+      const aPrice = getPriceUsd(a), bPrice = getPriceUsd(b);
+      const aKnown = Number.isFinite(aPrice) && aPrice > 0, bKnown = Number.isFinite(bPrice) && bPrice > 0;
+      if (aKnown !== bKnown) return aKnown ? -1 : 1;
+      return aKnown ? (aPrice - bPrice) * (sort === 'price-desc' ? -1 : 1) : 0;
+    }
+    if (sort === 'featured') return Number(isFeaturedProperty(b)) - Number(isFeaturedProperty(a));
+    if (sort === 'recent') return getPropertyTimestamp(b) - getPropertyTimestamp(a);
+    return 0;
   });
 }
 
@@ -1310,6 +1347,7 @@ function getNumericValue(value) {
 function getPropertyNumber(property = {}, keys = []) {
   for (const key of keys) {
     const value = key.includes('.') ? key.split('.').reduce((acc, part) => acc?.[part], property) : property[key];
+    if (value === undefined || value === null || value === '') continue;
     const number = getNumericValue(value);
     if (Number.isFinite(number)) return number;
   }
@@ -1489,7 +1527,7 @@ function bindPublicMapSearch(map, closePreview) {
 
 (async function initProperties() {
   try {
-    const agents = await loadAgents().catch(() => []);
+    window.drgExperience?.showLoading();
     const initial = getInitialFilters();
     const filterForm = document.getElementById('filterForm');
     let hasRenderedGlobalMap = false;
@@ -1502,8 +1540,18 @@ function bindPublicMapSearch(map, closePreview) {
       if (filterLocation) filterLocation.value = initial.ubicacion;
       if (filterType) filterType.value = initial.tipo;
       if (filterOperation) filterOperation.value = initial.operacion;
+      const params = new URLSearchParams(window.location.search);
+      const fields = { presupuesto: 'filterBudget', minimo: 'filterMinPrice', habitaciones: 'filterBedrooms', banos: 'filterBathrooms', orden: 'propertiesSort' };
+      Object.entries(fields).forEach(([key, id]) => {
+        const control = document.getElementById(id);
+        const value = params.get(key);
+        if (!control || !value) return;
+        if (id === 'filterBudget' && Number(value) > 0 && !Array.from(control.options).some((option) => option.value === value)) control.add(new Option(`Hasta $${Number(value).toLocaleString('en-US')}`, value));
+        control.value = value;
+      });
     }
 
+    const agents = await loadAgents().catch(() => []);
     const renderCatalogViews = (properties) => {
       const marketProperties = properties.filter((property) => String(property.status || 'available').toLowerCase() !== 'sold');
       const agentFiltered = filterByAgent(marketProperties, initial.agent);
@@ -1549,6 +1597,11 @@ function bindPublicMapSearch(map, closePreview) {
           params.delete('tipoOperacion');
         }
 
+        const fields = { presupuesto: 'filterBudget', minimo: 'filterMinPrice', habitaciones: 'filterBedrooms', banos: 'filterBathrooms', orden: 'propertiesSort' };
+        Object.entries(fields).forEach(([key, id]) => {
+          const value = document.getElementById(id)?.value || '';
+          if (value) params.set(key, value); else params.delete(key);
+        });
         const nextUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
         window.history.replaceState({}, '', nextUrl);
 
@@ -1561,6 +1614,7 @@ function bindPublicMapSearch(map, closePreview) {
     });
   } catch (error) {
     console.error('Error cargando propiedades:', error);
+    window.drgExperience?.showError();
     const mapStatus = document.getElementById('mapListStatus');
     const mapCount = document.getElementById('mapResultsCount');
     const mapList = document.getElementById('mapPropertyList');
@@ -1572,3 +1626,21 @@ function bindPublicMapSearch(map, closePreview) {
     }
   }
 })();
+
+// Delegation survives live Firestore rerenders and catalogue pagination.
+document.addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-share-property]');
+  if (!button) return;
+  const property = allProperties.find((item) => item.id === button.dataset.shareProperty);
+  if (!property) return;
+  const url = getPropertyOpenGraphUrl(property);
+  try {
+    if (navigator.share) await navigator.share({ title: button.dataset.shareTitle, url });
+    else { await navigator.clipboard.writeText(url); button.classList.add('is-copied'); button.setAttribute('aria-label', 'Enlace copiado'); }
+  } catch (error) {
+    if (error.name !== 'AbortError') {
+      window.prompt('Copia el enlace de la propiedad:', url);
+    }
+  }
+  window.setTimeout(() => { button.classList.remove('is-copied'); button.setAttribute('aria-label', `Compartir ${button.dataset.shareTitle}`); }, 2200);
+});

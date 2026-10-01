@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="title" content="Diamantes Realty Group" />
   <meta name="description" content="Plataforma inmobiliaria profesional en Nicaragua" />
-  <title>Diamantes Realty Group</title>
+  <title>Propiedades en Nicaragua | Diamantes Realty Group</title>
   <link rel="icon" type="image/png" href="assets/logo.png" />
   <link rel="shortcut icon" type="image/png" href="assets/logo.png" />
   <link rel="apple-touch-icon" href="assets/logo.png" />
@@ -16,18 +16,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=20260806-typography-fix" />
-  <link rel="stylesheet" href="css/premium-theme.css?v=20260807-navbar-more" />
-  <link rel="stylesheet" href="css/footer.css?v=20260806-typography-fix" />
-  <link rel="stylesheet" href="css/home-vip-refresh.css?v=20260816-vip-refresh" />
-  <link rel="stylesheet" href="css/properties-clean.css?v=20260826-clean-surface" />
   <link rel="stylesheet" href="css/properties-pagination.css?v=20260826-pagination" />
-  <link rel="stylesheet" href="css/map-unified-search.css?v=20260816-unified-search-2" />
-  <link rel="stylesheet" href="css/properties-unified-search.css?v=20260904-03" />
-  <link rel="stylesheet" href="css/mobile-fullscreen-reset.css?v=20260904-02" />
-  <link rel="stylesheet" href="css/public-navbar-transparent.css?v=20260904-03" />
+  <link rel="stylesheet" href="css/drg-premium.css?v=20261001" />
 </head>
-<body class="properties-page">
+<body class="properties-page drg-premium">
   <header class="site-header">
     <div class="container nav-wrapper">
       <a class="brand" href="index.html" aria-label="Diamantes Realty Group - Inicio">
@@ -48,13 +40,15 @@
     </div>
   </header>
 
-  <main>
-    <section class="section section-properties container">
+  <a class="drg-skip-link" href="#mainContent">Ir al contenido</a>
+  <main id="mainContent">
+    <section class="section section-properties container drg-catalog">
       <header class="properties-compact-header">
-        <h1>Encuentra tu propiedad ideal</h1>
+        <div><p class="drg-kicker">Encuentra tu próximo capítulo</p><h1>Espacios con posibilidades.</h1><p>Propiedades para vivir, invertir y crecer en Nicaragua.</p></div><a class="drg-map-link" href="mapa.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2V5Zm6-2v16m6-14v16"/></svg> Explorar el mapa ↗</a>
       </header>
       <p id="agentFilterBanner" class="agent-filter-banner hidden"></p>
 
+      <div class="drg-catalog-tabs" role="group" aria-label="Tipo de operación"><button type="button" data-catalog-operation="" aria-pressed="true">Todas</button><button type="button" data-catalog-operation="venta" aria-pressed="false">Comprar</button><button type="button" data-catalog-operation="alquiler" aria-pressed="false">Alquilar</button></div>
       <form id="filterForm" class="properties-unified-form" autocomplete="off">
         <div class="map-unified-searchbar properties-searchbar">
           <div class="map-search-control public-map-search-control properties-search-control">
@@ -72,7 +66,7 @@
                 <svg viewBox="0 0 24 24"><path d="M4 7h10m4 0h2M4 17h2m4 0h10M14 4v6M6 14v6"/></svg>
               </span>
               <strong>Filtros</strong>
-              <small>Ajustar búsqueda</small>
+              <small id="drgFilterCount"></small>
               <span class="map-filter-chevron" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m7 9 5 5 5-5"/></svg></span>
             </summary>
             <div class="map-filter-panel properties-filter-panel">
@@ -81,6 +75,7 @@
                   <p>Búsqueda avanzada</p>
                   <h2>Afina tus resultados</h2>
                 </div>
+                <button type="button" class="drg-filter-close" aria-label="Cerrar filtros">×</button>
               </header>
               <div class="map-filter-strip properties-filter-strip">
                 <label>
@@ -94,6 +89,7 @@
                     <option value="farm">Fincas</option>
                     <option value="quinta">Quintas</option>
                     <option value="beach_house">Casas cerca del mar</option>
+                    <option value="office">Oficinas</option><option value="commercial">Comercial</option><option value="hotel">Hoteles</option><option value="building">Edificios</option><option value="investment">Inversión</option><option value="other">Otras</option>
                   </select>
                 </label>
                 <label>
@@ -108,12 +104,16 @@
                   <span>Presupuesto máximo</span>
                   <select id="filterBudget">
                     <option value="">Sin límite</option>
-                    <option value="150000">Hasta $150,000</option>
+                    <option value="500">Hasta $500</option><option value="1000">Hasta $1,000</option><option value="2000">Hasta $2,000</option><option value="50000">Hasta $50,000</option><option value="100000">Hasta $100,000</option><option value="150000">Hasta $150,000</option>
                     <option value="300000">Hasta $300,000</option>
                     <option value="500000">Hasta $500,000</option>
                     <option value="1000000">Hasta $1,000,000</option>
                   </select>
                 </label>
+                <label><span>Habitaciones</span><select id="filterBedrooms"><option value="">Cualquiera</option><option value="1">1 o más</option><option value="2">2 o más</option><option value="3">3 o más</option><option value="4">4 o más</option></select></label>
+                <label><span>Baños</span><select id="filterBathrooms"><option value="">Cualquiera</option><option value="1">1 o más</option><option value="2">2 o más</option><option value="3">3 o más</option></select></label>
+                <label><span>Precio mínimo · USD</span><input id="filterMinPrice" type="number" min="0" step="any" placeholder="Sin mínimo" /></label>
+                <button type="button" class="drg-filter-reset" data-clear-filters>Limpiar filtros</button>
                 <button class="properties-filter-apply" type="submit">Aplicar filtros</button>
               </div>
             </div>
@@ -121,8 +121,10 @@
         </div>
       </form>
 
-      <div id="propertiesGrid" class="properties-grid"></div>
-      <p id="emptyState" class="empty-state hidden">No se encontraron propiedades con esos criterios.</p>
+      <div class="drg-results-toolbar"><p id="propertiesResultsCount" role="status" aria-live="polite">Cargando propiedades…</p><label for="propertiesSort">Ordenar por <select id="propertiesSort"><option value="recent">Más recientes</option><option value="price-asc">Menor precio</option><option value="price-desc">Mayor precio</option><option value="featured">Destacadas</option></select></label></div>
+      <div id="drgActiveFilters" class="drg-active-filters" aria-label="Filtros activos"></div>
+      <div id="propertiesGrid" class="properties-grid" aria-busy="true"></div>
+      <div id="emptyState" class="empty-state hidden"><span aria-hidden="true">⌕</span><h2>No encontramos propiedades con estos filtros.</h2><p>Prueba otra ubicación o amplía tu búsqueda.</p><button class="drg-button" type="button" data-clear-filters>Limpiar filtros</button></div>
     </section>
   </main>
 
@@ -130,12 +132,13 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="js/firebase-client.js?v=20260613-01"></script>
-  <script src="js/main.js?v=20260807-navbar-more"></script>
+  <script src="js/main.js?v=20261001"></script>
   <script src="js/image-utils.js?v=20260613-public-fix"></script>
   <script src="js/property-utils.js?v=20260613-01"></script>
   <script src="js/public-property-filter.js?v=20260613-01"></script>
-  <script src="js/properties.js?v=20260904-search-refresh"></script>
-  <script src="js/properties-unified-search.js?v=20260904-01"></script>
-  <script src="js/properties-pagination.js?v=20260826-pagination"></script>
+  <script src="js/drg-experience.js?v=20261001"></script>
+  <script src="js/properties.js?v=20261001"></script>
+  <script src="js/properties-unified-search.js?v=20261001"></script>
+  <script src="js/properties-pagination.js?v=20261001"></script>
 </body>
 </html>
