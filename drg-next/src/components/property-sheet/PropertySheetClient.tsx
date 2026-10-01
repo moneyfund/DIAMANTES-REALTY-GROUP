@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Download, Mail, MapPin, Phone } from "lucide-react";
+import { PropertyFeatureIcon } from "@/components/properties/PropertyFeatureIcon";
 import { readPrivatePropertyById } from "@/lib/firebase/private-properties";
 import { readAgentById } from "@/lib/firebase/agents";
 import { getPropertyFeatures, getPublishingAgentId, getPublishingAgentName, getPublishingAgentPhone } from "@/lib/properties/detail";
@@ -67,7 +68,7 @@ export function PropertySheetClient({propertyId}:{propertyId:string}){
   const email=agent?.email||String(property.raw.agentEmail||"");
   const whatsapp=agent?.whatsapp||phone;
   const description=(property.description||"Información descriptiva pendiente de actualización.").trim();
-  const sheetDescription=description.length>680?description.slice(0,677).trim()+"…":description;
+  const sheetDescription=description;
 
   return <div className="drg-sheet-page">
     <header className="drg-sheet-toolbar"><Link href="/agent-dashboard">← Volver al panel</Link><div><Link href={"/propiedad/"+property.id} target="_blank">Ver propiedad</Link><button onClick={()=>void downloadPdf()} disabled={generating}><Download size={15}/>{generating?"Generando…":"Descargar PDF"}</button></div></header>
@@ -83,10 +84,10 @@ export function PropertySheetClient({propertyId}:{propertyId:string}){
         <section className="drg-sheet-gallery">{Array.from({length:4},(_,index)=>{const url=gallery[index];return <figure key={url||"placeholder-"+index} className={!url?"is-placeholder":""}>{url?<img src={proxy(url)} alt={"Imagen "+(index+2)} crossOrigin="anonymous"/>:<span>Imagen secundaria</span>}</figure>})}</section>
 
         <section className="drg-sheet-content">
-          <div className="drg-sheet-feature-section"><h2>Características principales</h2><div>{features.map(feature=><article key={feature.label}><small>{feature.label}</small><strong>{feature.value}</strong></article>)}</div></div>
+          <div className="drg-sheet-feature-section"><h2>Características principales</h2><div>{features.map(feature=><article key={feature.label}><PropertyFeatureIcon label={feature.label} size={18}/><span><small>{feature.label}</small><strong>{feature.value}</strong></span></article>)}</div></div>
           <div className="drg-sheet-info-grid">
             <section><h2>Información general</h2><dl><div><dt>Título</dt><dd>{property.title}</dd></div><div><dt>Ubicación</dt><dd>{property.location||"Nicaragua"}</dd></div><div><dt>Operación</dt><dd>{operation(property.operation)}</dd></div><div><dt>Tipo</dt><dd>{property.typeLabel}</dd></div><div><dt>Estado</dt><dd>{property.status}</dd></div></dl></section>
-            <section><h2>Descripción</h2><p>{sheetDescription}</p></section>
+            <section className="drg-sheet-description"><h2>Descripción</h2><p>{sheetDescription}</p></section>
           </div>
         </section>
 
