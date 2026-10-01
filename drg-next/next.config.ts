@@ -1,8 +1,23 @@
 import type { NextConfig } from "next";
 
+const deploymentEnvironment = process.env.VERCEL_ENV ?? "development";
+const deploymentBranch = process.env.VERCEL_GIT_COMMIT_REF ?? "";
+const migrationWritePreview =
+  deploymentEnvironment === "preview" &&
+  deploymentBranch === "migration/drg-next";
+
 const nextConfig: NextConfig = {
   env: {
-    DRG_DEPLOYMENT_ENV: process.env.VERCEL_ENV ?? "development",
+    DRG_DEPLOYMENT_ENV: deploymentEnvironment,
+    DRG_DEPLOYMENT_BRANCH: deploymentBranch,
+    NEXT_PUBLIC_DRG_DATA_MODE: migrationWritePreview
+      ? "staging"
+      : (process.env.NEXT_PUBLIC_DRG_DATA_MODE ?? "readonly"),
+    NEXT_PUBLIC_DRG_ALLOW_WRITES: migrationWritePreview
+      ? "true"
+      : deploymentEnvironment === "production"
+        ? "false"
+        : (process.env.NEXT_PUBLIC_DRG_ALLOW_WRITES ?? "false"),
   },
   reactStrictMode: true,
   poweredByHeader: false,
