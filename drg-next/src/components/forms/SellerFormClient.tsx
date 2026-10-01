@@ -6,6 +6,7 @@ import { normalizeExternalUrl } from "@/lib/agents/utils";
 import { drgWritesEnabled } from "@/lib/config/writes";
 import { cleanPublicFormValue, submitSellerForm } from "@/lib/firebase/forms";
 import type { Agent } from "@/types/agent";
+import { SocialIcon } from "@/components/social/SocialIcon";
 
 const MIN_FILL_TIME=2000;
 const SESSION_COOLDOWN=15000;
@@ -74,7 +75,7 @@ export function SellerFormClient(){
       <p className="drg-kicker">Contacto directo</p><h2>Contacta un asesor</h2>
       <p>Si prefieres conversar directamente, selecciona un agente disponible y abre WhatsApp.</p>
       <label>Asesor<select value={agentId} onChange={event=>setAgentId(event.target.value)}><option value="">{agents.length?"Selecciona un asesor":"Cargando asesores..."}</option>{agents.filter(agent=>agent.whatsapp||agent.phone).map(agent=><option key={agent.id} value={agent.id}>{agent.name}</option>)}</select></label>
-      {whatsapp?<a className="drg-seller-whatsapp" href={whatsapp+(whatsapp.includes("?")?"&":"?")+"text="+encodeURIComponent("Hola, quiero vender mi propiedad y deseo más información.")} target="_blank" rel="noreferrer">Contactar por WhatsApp</a>:<span className="drg-seller-whatsapp is-disabled">Selecciona un asesor</span>}
+      {whatsapp?<a className="drg-seller-whatsapp" href={whatsapp+(whatsapp.includes("?")?"&":"?")+"text="+encodeURIComponent("Hola, quiero vender mi propiedad y deseo más información.")} target="_blank" rel="noreferrer"><SocialIcon network="WhatsApp" size={17}/> Contactar por WhatsApp</a>:<span className="drg-seller-whatsapp is-disabled">Selecciona un asesor</span>}
     </aside>
   </div>;
 }

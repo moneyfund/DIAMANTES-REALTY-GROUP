@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { SocialIcon } from "@/components/social/SocialIcon";
 
 const socials = [
   ["Facebook", "https://www.facebook.com/profile.php?id=100092004164726"],
@@ -40,7 +41,7 @@ export function PublicFooter() {
             <a href="mailto:diamantesrealtygroup@gmail.com">diamantesrealtygroup@gmail.com</a>
             <div className="drg-footer-socials">
               {socials.map(([label, href]) => (
-                <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label}>{label.slice(0, 1)}</a>
+                <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label} title={label}><SocialIcon network={label} size={17}/></a>
               ))}
             </div>
           </div>

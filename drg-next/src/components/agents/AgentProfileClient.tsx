@@ -10,6 +10,7 @@ import { agentCoverageDepartments, getAgentInitials, normalizeExternalUrl, prope
 import { PropertyCard } from "@/components/properties/PropertyCard";
 import type { Agent } from "@/types/agent";
 import type { Property } from "@/types/property";
+import { SocialIcon } from "@/components/social/SocialIcon";
 
 export function AgentProfileClient({ agentId }: { agentId: string }) {
   const [agent, setAgent] = useState<Agent | null>(null);
@@ -64,7 +65,7 @@ export function AgentProfileClient({ agentId }: { agentId: string }) {
             {agent.email ? <a href={"mailto:" + agent.email}><span>Correo</span><strong><Mail size={14} /> {agent.email}</strong></a> : null}
           </div>
 
-          {socials.length ? <div className="drg-agent-profile-socials">{socials.map(([label, href]) => <a key={label} href={href} target="_blank" rel="noreferrer">{label}</a>)}</div> : null}
+          {socials.length ? <div className="drg-agent-profile-socials">{socials.map(([label, href]) => <a key={label} href={href} target="_blank" rel="noreferrer"><SocialIcon network={label} size={15}/><span>{label}</span></a>)}</div> : null}
           <div className="drg-agent-profile-actions">{whatsapp ? <a className="is-primary" href={whatsapp} target="_blank" rel="noreferrer">Hablar por WhatsApp</a> : null}<a href="#agentProperties">Ver propiedades</a></div>
         </div>
 

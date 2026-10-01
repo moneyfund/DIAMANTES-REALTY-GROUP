@@ -168,3 +168,59 @@
   .drg-scroll-icon i{animation:none;top:11px}
   .drg-more-chevron,.drg-more-dropdown,.drg-search-submit{transition:none}
 }
+
+
+/* DRG home refinement v2: larger brand, elevated hero, semantic iconography */
+.drg-header{height:96px}
+.drg-brand img{height:112px}
+.drg-nav-links>a,.drg-more-trigger{font-size:14px}
+.drg-hero-content{grid-template-columns:minmax(0,1.04fr) minmax(470px,.82fr);padding-bottom:62px}
+.drg-hero-copy{transform:translateY(-78px)}
+.drg-hero-search-wrap{transform:translateY(-58px)}
+
+.drg-hero-search{gap:9px}
+.drg-operation-tabs{padding:4px;border:1px solid rgba(255,255,255,.44);background:rgba(255,255,255,.78);box-shadow:0 14px 34px rgba(4,18,35,.16);backdrop-filter:blur(20px) saturate(130%)}
+.drg-operation-tabs button{min-height:38px;font-size:12px;letter-spacing:-.01em}
+.drg-operation-tabs button.is-active{box-shadow:0 7px 18px rgba(7,26,51,.20)}
+.drg-search-field{position:relative;display:block!important}
+.drg-search-field>svg{position:absolute;left:14px;top:50%;z-index:2;width:17px;height:17px;transform:translateY(-50%);color:#536176;pointer-events:none}
+.drg-search-field select{height:46px;min-height:46px;padding:0 35px 0 42px!important;border:1px solid rgba(255,255,255,.58)!important;border-radius:13px!important;background:rgba(255,255,255,.92)!important;box-shadow:0 13px 28px rgba(5,17,33,.15)!important;font-size:12px!important;font-weight:650;outline:none;backdrop-filter:blur(18px) saturate(135%);transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+.drg-search-field select:hover,.drg-search-field select:focus{border-color:rgba(176,0,8,.35)!important;box-shadow:0 15px 34px rgba(5,17,33,.18)!important;transform:translateY(-1px)}
+.drg-search-submit{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;border-radius:13px;background:linear-gradient(135deg,#c0000a,var(--drg-red));box-shadow:0 14px 32px rgba(176,0,8,.28);font-size:11px}
+.drg-search-submit svg{stroke-width:2.2}
+.drg-search-submit:hover{background:linear-gradient(135deg,#aa0008,var(--drg-red-dark))}
+
+.drg-footer-socials a,.drg-agent-socials a{transition:transform .18s ease,border-color .18s ease,background .18s ease,color .18s ease}
+.drg-footer-socials a:hover{transform:translateY(-2px);border-color:#fff;background:#ffffff14}
+.drg-agent-socials a:hover{transform:translateY(-2px);border-color:rgba(176,0,8,.35);background:#fff4f4;color:var(--drg-red)}
+.drg-footer-socials svg,.drg-agent-socials svg{display:block}
+.drg-agent-profile-socials a{display:inline-flex;align-items:center;gap:7px}
+.drg-agent-profile-socials a svg{color:var(--drg-red)}
+.drg-contact-copy>a{display:flex;align-items:center;gap:8px}
+.drg-seller-whatsapp{display:flex!important;align-items:center;justify-content:center;gap:8px}
+.drg-detail-actions button,.drg-detail-actions a{gap:7px}
+.drg-detail-actions button svg,.drg-detail-actions a svg{flex:none}
+
+.drg-property-location svg{flex:none;color:var(--drg-red)}
+.drg-property-features>span{display:inline-flex;align-items:center;gap:5px}
+.drg-property-features>span svg{flex:none;color:#8f1e24;stroke-width:1.8}
+.drg-property-share{display:grid;place-items:center}
+.drg-property-share svg{stroke-width:1.8}
+
+.drg-detail-features article>svg{width:38px;height:38px;padding:9px;border-radius:10px;background:#fff1f1;color:var(--drg-red);stroke-width:1.6}
+.drg-shared-feature-grid>div{display:grid!important;grid-template-columns:30px 1fr!important;align-items:center;gap:8px}
+.drg-shared-feature-grid>div>svg{color:var(--drg-red);stroke-width:1.7}
+.drg-shared-feature-grid>div>span{display:grid;gap:2px;min-width:0}
+
+@media(max-width:960px){
+  .drg-nav-links.is-open{top:96px}
+}
+@media(max-width:768px){
+  .drg-header{height:72px}
+  .drg-brand img{height:76px}
+  .drg-nav-links.is-open{top:72px}
+  .drg-hero-copy{transform:translateY(-30px)}
+  .drg-hero-search-wrap{transform:none}
+  .drg-mobile-sheet .drg-search-field select{background:#fff!important;border-color:#dce2e8!important;box-shadow:none!important}
+  .drg-mobile-sheet .drg-operation-tabs{background:#f2f4f7;border-color:#e4e7ec;box-shadow:none;backdrop-filter:none}
+}

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { BadgeDollarSign, Building2, MapPin, Search } from "lucide-react";
 
 const slides = ["/assets/imagenhero1.jpeg", "/assets/imagenhero2.jpeg", "/assets/imagenhero3.jpeg", "/assets/imagenhero4.jpeg"];
 const departments = ["Boaco","Carazo","Chinandega","Chontales","Estelí","Granada","Jinotega","León","Madriz","Managua","Masaya","Matagalpa","Nueva Segovia","Rivas","Río San Juan"];
@@ -37,7 +38,8 @@ export function OriginalHero() {
         <button type="button" className={operation === "venta" ? "is-active" : ""} onClick={() => setOperation("venta")}>Venta</button>
         <button type="button" className={operation === "alquiler" ? "is-active" : ""} onClick={() => setOperation("alquiler")}>Alquiler</button>
       </div>
-      <label>
+      <label className="drg-search-field">
+        <Building2 aria-hidden="true" />
         <span>Tipo de propiedad</span>
         <select name="tipo" defaultValue="">
           <option value="">Tipo de propiedad</option>
@@ -45,14 +47,16 @@ export function OriginalHero() {
           <option value="warehouse">Bodega</option><option value="farm">Finca</option><option value="quinta">Quinta</option><option value="beach_house">Casa de playa</option>
         </select>
       </label>
-      <label>
+      <label className="drg-search-field">
+        <MapPin aria-hidden="true" />
         <span>Departamento</span>
         <select name="ubicacion" defaultValue="">
           <option value="">Todos los departamentos</option>
           {departments.map((department) => <option key={department}>{department}</option>)}
         </select>
       </label>
-      <label>
+      <label className="drg-search-field">
+        <BadgeDollarSign aria-hidden="true" />
         <span>Rango de precio</span>
         <select name="precio" defaultValue="">
           <option value="">Rango de precio</option>
@@ -62,7 +66,7 @@ export function OriginalHero() {
           <option value="700000+">$700K+</option>
         </select>
       </label>
-      <button className="drg-search-submit" type="submit">BUSCAR</button>
+      <button className="drg-search-submit" type="submit"><Search size={16} aria-hidden="true" /><span>BUSCAR</span></button>
     </form>
   );
 
