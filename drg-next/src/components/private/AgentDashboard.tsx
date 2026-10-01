@@ -15,6 +15,7 @@ import type { Property } from "@/types/property";
 import { AgentSharedLists } from "./AgentSharedLists";
 import { AgentBrokerageInventory } from "./AgentBrokerageInventory";
 import { AvaluosPlaceholder } from "./AvaluosPlaceholder";
+import { readOwnSharedLists } from "@/lib/firebase/shared-lists";
 import { PropertyLocationPicker } from "@/components/properties/PropertyLocationPicker";
 import { PropertyImageManager, propertyImageFileKey } from "@/components/properties/PropertyImageManager";
 
@@ -54,6 +55,8 @@ export function AgentDashboard() {
   const [allAgents,setAllAgents]=useState<Agent[]>([]);
   const [listingOwnerId,setListingOwnerId]=useState("");
   const [loading,setLoading]=useState(true);
+  const [sharedListCount,setSharedListCount]=useState(0);
+  const [now,setNow]=useState(()=>new Date());
   const [message,setMessage]=useState("");
   const [editingId,setEditingId]=useState("");
   const [draft,setDraft]=useState<AgentPropertyDraft>(emptyAgentPropertyDraft());
@@ -74,8 +77,8 @@ export function AgentDashboard() {
     if(!user)return;
     setLoading(true);
     try{
-      const [own,agents]=await Promise.all([readAgentProperties(user,agent),readAgents()]);
-      setProperties(own.sort((a,b)=>propertyDate(b)-propertyDate(a)));setAllAgents(agents);
+      const [own,agents,lists]=await Promise.all([readAgentProperties(user,agent),readAgents(),readOwnSharedLists(user)]);
+      setProperties(own.sort((a,b)=>propertyDate(b)-propertyDate(a)));setAllAgents(agents);setSharedListCount(lists.length);
       if(!listingOwnerId){
         const current=agents.find(item=>item.id===agent?.id)||agents.find(item=>item.email&&item.email.toLowerCase()===String(user.email||"").toLowerCase());
         setListingOwnerId(current?.id||agent?.id||"");
@@ -85,6 +88,7 @@ export function AgentDashboard() {
   }
 
   useEffect(()=>{void reload()},[user?.uid,agent?.id]);
+  useEffect(()=>{const timer=window.setInterval(()=>setNow(new Date()),1000);return()=>window.clearInterval(timer)},[]);
   useEffect(()=>{
     setProfileDraft({
       name:agent?.name||user?.displayName||"",
@@ -98,10 +102,14 @@ export function AgentDashboard() {
 
   const stats=useMemo(()=>({
     total:properties.length,
+    available:properties.filter(p=>String(p.status||"available")==="available").length,
     published:properties.filter(p=>p.publicVisible).length,
     pending:properties.filter(p=>String(p.raw.publicationStatus)==="pending_review").length,
     sold:properties.filter(p=>["sold","vendida"].includes(String(p.status))).length
   }),[properties]);
+  const profileComplete=Boolean((agent?.name||profileDraft.name)&&(agent?.email||profileDraft.email)&&(agent?.phone||profileDraft.phone));
+  const primaryArea=Number(draft.details.totalArea||draft.details.landArea||draft.details.constructionArea||draft.area||0);
+  const pricePerArea=draft.priceUsd>0&&primaryArea>0?draft.priceUsd/primaryArea:null;
 
   function editProperty(property:Property){
     setEditingId(property.id);setDraft(propertyToDraft(property));setPendingImages([]);setPendingCoverKey("");setPendingLegalPdf(null);setRemoveExistingLegal(false);setUploadProgress("");setView("propiedad");setMessage("");
@@ -204,7 +212,8 @@ export function AgentDashboard() {
       {message?<div className="drg-agent-message">{message}<button onClick={()=>setMessage("")}>×</button></div>:null}
 
       {view==="inicio"?<section className="drg-agent-home">
-        <div className="drg-private-stats"><article><strong>{stats.total}</strong><span>Propiedades</span></article><article><strong>{stats.published}</strong><span>Publicadas</span></article><article><strong>{stats.pending}</strong><span>Pendientes</span></article><article><strong>{stats.sold}</strong><span>Vendidas</span></article></div>
+        <div className="drg-agent-welcome"><div><p className="drg-kicker">Sesión activa</p><h2>Hola, {agent?.name||user?.displayName||"Agente DRG"}</h2></div><div><span>{new Intl.DateTimeFormat("es-NI",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).format(now)}</span><strong>{new Intl.DateTimeFormat("es-NI",{hour:"numeric",minute:"2-digit",second:"2-digit"}).format(now)}</strong></div></div>
+        <div className="drg-private-stats"><article><strong>{stats.total}</strong><span>Mis propiedades</span></article><article><strong>{stats.available}</strong><span>Disponibles</span></article><article><strong>{sharedListCount}</strong><span>Listas compartidas</span></article><article><strong>{profileComplete?"Completo":"Pendiente"}</strong><span>Perfil</span></article></div>
         <div className="drg-agent-home-grid"><article><p className="drg-kicker">Estado de migración</p><h2>Tu panel ya reconoce tu inventario real</h2><p>La arquitectura nueva consulta propiedades asociadas a tu UID y correo, manteniendo compatibilidad con los documentos existentes.</p><button onClick={()=>setView("inventario")}>Revisar inventario</button></article><article><p className="drg-kicker">Seguridad</p><h2>Las mutaciones siguen bloqueadas</h2><p>Perfil, propiedades y Storage están preparados en código, pero no podrán escribir hasta validar reglas y activar explícitamente la bandera de escritura.</p></article></div>
       </section>:null}
 
@@ -228,7 +237,7 @@ export function AgentDashboard() {
       {view==="propiedad"?<form className="drg-agent-editor" onSubmit={submitProperty}>
         <fieldset className="drg-agent-editor-section"><legend>01 · Información general</legend><div className="drg-agent-form-grid">
           <label className="is-wide">Título<input required value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})}/></label>
-          <label>Precio USD<input required type="number" min="1" step="0.01" value={draft.priceUsd||""} onChange={e=>setDraft({...draft,priceUsd:Number(e.target.value)||0})}/></label>
+          <label>Precio USD<input required type="number" min="1" step="0.01" value={draft.priceUsd||""} onChange={e=>setDraft({...draft,priceUsd:Number(e.target.value)||0})}/><small className="drg-calculated-value">{pricePerArea?"$"+pricePerArea.toLocaleString("en-US",{maximumFractionDigits:2})+" por "+(draft.areaUnit||String(draft.details.areaUnit||"unidad")):"Precio por área se calculará automáticamente"}</small></label>
           <label>Departamento<select value={draft.department} onChange={e=>setDraft({...draft,department:e.target.value})}><option value="">Seleccionar</option>{departments.map(d=><option key={d}>{d}</option>)}</select></label>
           <label className="is-wide">Ubicación<input required value={draft.location} onChange={e=>setDraft({...draft,location:e.target.value})} placeholder="Ciudad, barrio, referencia"/></label>
           <label>Tipo<select value={draft.type} onChange={e=>setDraft({...draft,type:e.target.value,details:{}})}>{propertyTypes.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>

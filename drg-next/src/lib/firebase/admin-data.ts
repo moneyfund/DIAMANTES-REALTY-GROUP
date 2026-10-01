@@ -1,4 +1,4 @@
-import { collection, deleteDoc, deleteField, doc, getDoc, getDocs, serverTimestamp, updateDoc } from "firebase/firestore";
+import { collection, deleteDoc, deleteField, doc, getDoc, getDocs, serverTimestamp, updateDoc, writeBatch } from "firebase/firestore";
 import type { User } from "firebase/auth";
 import { getFirebaseClient } from "./client";
 import { assertDrgWritesEnabled } from "@/lib/config/writes";
@@ -142,4 +142,31 @@ export async function updatePropertyAsAdmin({
     lastEditedByRole:"admin",
     updatedAt:serverTimestamp()
   });
+}
+
+export async function deletePropertyAsAdmin(propertyId:string){
+  assertDrgWritesEnabled();
+  const firebase=getFirebaseClient(); if(!firebase)throw new Error("Firebase no está disponible.");
+  const propertyRef=doc(firebase.db,"properties",propertyId);
+  const snapshot=await getDoc(propertyRef); if(!snapshot.exists())return[] as string[];
+  const raw=snapshot.data() as Record<string,unknown>;
+  const [comments,reviews]=await Promise.all([
+    getDocs(collection(firebase.db,"properties",propertyId,"comments")),
+    getDocs(collection(firebase.db,"properties",propertyId,"reviews"))
+  ]);
+  const batch=writeBatch(firebase.db);
+  comments.docs.forEach(item=>batch.delete(item.ref));
+  reviews.docs.forEach(item=>batch.delete(item.ref));
+  batch.delete(propertyRef);
+  batch.delete(doc(firebase.db,"propertyListingAudit",propertyId));
+  await batch.commit();
+
+  const paths:string[]=[];
+  const push=(value:unknown)=>{const text=String(value||"").trim();if(text&&!paths.includes(text))paths.push(text)};
+  const legal=raw.legalDocument&&typeof raw.legalDocument==="object"?raw.legalDocument as Record<string,unknown>:null;
+  push(legal?.storagePath);
+  for(const key of ["storagePaths","imageStoragePaths"]){
+    const values=raw[key]; if(Array.isArray(values))values.forEach(push);
+  }
+  return paths;
 }
