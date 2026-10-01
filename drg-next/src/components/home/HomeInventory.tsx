@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { readProperties } from "@/lib/firebase/properties";
 import { PropertyCard } from "@/components/properties/PropertyCard";
+import { BrandMarquee } from "./BrandMarquee";
 import type { Property } from "@/types/property";
 
 function isFeatured(property: Property) {
@@ -51,6 +52,7 @@ export function HomeInventory() {
       <InventorySection title="Propiedades destacadas" items={sets.featured} />
       <InventorySection title="Propiedades recientes" items={sets.recent} />
       <InventorySection title="Fincas y terrenos" items={sets.land} href="/propiedades?tipo=land" />
+      <BrandMarquee />
     </>
   );
 }

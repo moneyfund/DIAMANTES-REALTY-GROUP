@@ -132,12 +132,13 @@
 .drg-home-page .drg-services-grid article > b { border: 1px solid #dce3ed; border-radius: 14px; background: linear-gradient(145deg, #fff, #e8edf4); color: #a81424; box-shadow: 0 4px 8px #1029420d; font-size: 21px; }
 .drg-home-page .drg-services-grid h3 { margin-block: 22px 12px; }
 .drg-home-page .drg-services-grid p { font-size: 13px; line-height: 1.8; color: #5d6b7e; }
-.drg-home-page .drg-trust { overflow: hidden; padding: 80px 0; border-top: 1px solid #ffffff45; background: radial-gradient(ellipse at 100% 0%, #a5193452, transparent 52%), radial-gradient(ellipse at 10% 100%, #28517d80, transparent 60%), linear-gradient(130deg, #06162a, #0f2b4a); box-shadow: 0 -15px 55px #071a331a; }
-.drg-home-page .drg-trust::before { content: ""; position: absolute; right: -130px; bottom: -310px; width: 640px; height: 640px; border: 1px solid #ffffff12; border-radius: 50%; box-shadow: 0 0 0 80px #ffffff03; pointer-events: none; }
+.drg-home-page .drg-trust { overflow: hidden; padding: 80px 0; border-top: 1px solid #b9c4d126; background: transparent; box-shadow: none; color: #10233b; }
+.drg-home-page .drg-trust::before { content: none; }
 .drg-home-page .drg-trust-grid { position: relative; }
-.drg-home-page .drg-trust .drg-kicker { color: #e3c795; margin-bottom: 18px; }
-.drg-home-page .drg-trust p { font-size: 14px; line-height: 1.9; }
-.drg-home-page .drg-trust a { display: inline-flex; align-items: center; min-height: 44px; margin-top: 8px; text-underline-offset: 7px; font-size: 12px; }
+.drg-home-page .drg-trust .drg-kicker { color: #b00008; margin-bottom: 18px; }
+.drg-home-page .drg-trust h2 { color: #10233b; text-shadow: 0 1px 0 #ffffff99; }
+.drg-home-page .drg-trust p { color: #4f6074; font-size: 14px; line-height: 1.9; text-shadow: 0 1px 0 #ffffffa8; }
+.drg-home-page .drg-trust a { display: inline-flex; align-items: center; min-height: 44px; margin-top: 8px; color: #8f0006; text-underline-offset: 7px; font-size: 12px; font-weight: 700; }
 .drg-home-page .drg-hero-search { box-shadow: 0 20px 60px #030e2342, inset 0 1px #ffffffb0; }
 .drg-home-page .drg-btn-red { background: linear-gradient(135deg, #cc1821, #a3000b); box-shadow: 0 7px 20px #69071135, inset 0 1px #ffffff2e; }
 .drg-home-page :is(a, button, select):focus-visible { outline: 3px solid #be8d4b; outline-offset: 4px; }
