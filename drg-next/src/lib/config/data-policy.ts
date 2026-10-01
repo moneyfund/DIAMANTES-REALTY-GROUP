@@ -7,7 +7,11 @@ export function canReadData() {
 }
 
 export function canWriteData() {
-  return drgDataMode === "staging" || drgDataMode === "production";
+  return (
+    process.env.DRG_DEPLOYMENT_ENV === "preview" &&
+    process.env.NEXT_PUBLIC_DRG_ALLOW_WRITES === "true" &&
+    drgDataMode === "staging"
+  );
 }
 
 export function assertDataCapability(capability: DataCapability) {

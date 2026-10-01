@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  env: {
+    DRG_DEPLOYMENT_ENV: process.env.VERCEL_ENV ?? "development",
+  },
   reactStrictMode: true,
   poweredByHeader: false,
   images: {
