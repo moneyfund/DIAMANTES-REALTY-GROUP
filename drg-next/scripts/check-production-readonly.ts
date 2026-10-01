@@ -32,7 +32,10 @@ async function main() {
   const app = initializeApp(firebaseConfig, "drg-readonly-parity");
   try {
     const db = getFirestore(app);
-    const snapshot = await getDocs(collection(db, "properties"));
+    const [snapshot, agentsSnapshot] = await Promise.all([
+      getDocs(collection(db, "properties")),
+      getDocs(collection(db, "agents"))
+    ]);
 
     const rawDocs = snapshot.docs.map((document) => ({
       id: document.id,
@@ -62,7 +65,24 @@ async function main() {
         }))
     };
 
-    console.log(JSON.stringify(diagnostics, null, 2));
+    const agentDiagnostics = {
+      sourceCount: agentsSnapshot.size,
+      activeCount: agentsSnapshot.docs.filter((document) => {
+        const data = document.data();
+        return data.active !== false && String(data.status || "").toLowerCase() !== "inactive";
+      }).length,
+      withName: agentsSnapshot.docs.filter((document) => Boolean(String(document.data().name || "").trim())).length,
+      withPhoto: agentsSnapshot.docs.filter((document) => {
+        const data = document.data();
+        return Boolean(data.photo || data.photoURL || data.photoUrl || data.profileImage || data.profilePhoto || data.avatar);
+      }).length,
+      withContact: agentsSnapshot.docs.filter((document) => {
+        const data = document.data();
+        return Boolean(data.phone || data.telefono || data.mobile || data.email || data.whatsapp || data.whatsApp);
+      }).length
+    };
+
+    console.log(JSON.stringify({ properties: diagnostics, agents: agentDiagnostics }, null, 2));
 
     if (!rawDocs.length) throw new Error("Firestore returned zero property documents.");
     if (!normalized.length) throw new Error("No public properties matched DRG visibility rules.");
