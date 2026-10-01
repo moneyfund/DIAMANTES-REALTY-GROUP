@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { HomeInventory } from "./HomeInventory";
+import { BrandDepthScene } from "./BrandDepthScene";
+import { BrandMarquee } from "./BrandMarquee";
+import "./home-premium.css";
 
 export function HomeContent() {
   return (
     <main className="drg-home-main">
+      <BrandDepthScene />
       <section className="drg-signature">
         <div className="drg-container drg-signature-grid">
           <div>
@@ -18,6 +22,7 @@ export function HomeContent() {
           </nav>
         </div>
       </section>
+      <BrandMarquee />
       <HomeInventory />
       <section className="drg-services drg-container">
         <p className="drg-kicker">Servicios</p>

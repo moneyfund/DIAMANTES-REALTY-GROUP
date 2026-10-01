@@ -20,7 +20,7 @@ import { PropertyLocationPicker } from "@/components/properties/PropertyLocation
 import { PropertyImageManager, propertyImageFileKey } from "@/components/properties/PropertyImageManager";
 import { PropertyVideoPreview } from "@/components/properties/PropertyVideoPreview";
 import { validatePropertyVideo } from "@/lib/properties/video";
-import { ArrowUpRight, Building2, CheckCircle2, ListChecks, Menu, RefreshCw, UserRound, X } from "lucide-react";
+import { ArrowUpRight, Building2, CheckCircle2, ListChecks, Menu, RefreshCw, UserRound, X, House, Plus, UsersRound, ChartNoAxesCombined, LogOut } from "lucide-react";
 import { PropertyFormStepper } from "@/components/properties/PropertyFormStepper";
 
 type View="inicio"|"perfil"|"propiedad"|"listas"|"inventario"|"red-agentes"|"avaluos";
@@ -268,15 +268,15 @@ export function AgentDashboard() {
       <Link className="drg-agent-sidebar-brand" href="/"><strong>DIAMANTES</strong><span>Realty Group</span></Link>
       <div className="drg-agent-sidebar-person"><div className="drg-agent-sidebar-avatar">{agent?.photo?<img src={agent.photo} alt="" />:<span>{(agent?.name||user?.displayName||"DR").split(/\s+/).slice(0,2).map(v=>v[0]).join("").toUpperCase()}</span>}</div><strong>{agent?.name||user?.displayName||"Agente DRG"}</strong><span>{user?.email}</span></div>
       <nav>
-        <button className={view==="inicio"?"is-active":""} onClick={()=>{setView("inicio");setMobileNavOpen(false)}}>Inicio</button>
-        <button className={view==="perfil"?"is-active":""} onClick={()=>{setView("perfil");setMobileNavOpen(false)}}>Mi perfil</button>
-        <button className={view==="propiedad"?"is-active":""} onClick={newProperty}>Subir propiedad</button>
-        <button className={view==="listas"?"is-active":""} onClick={()=>{setView("listas");setMobileNavOpen(false)}}>Listas compartidas</button>
-        <button className={view==="inventario"?"is-active":""} onClick={()=>{setView("inventario");setMobileNavOpen(false)}}>Mis propiedades</button>
-        <button className={view==="red-agentes"?"is-active":""} onClick={()=>{setView("red-agentes");setMobileNavOpen(false)}}>Propiedades de agentes</button>
-        <button className={view==="avaluos"?"is-active":""} onClick={()=>{setView("avaluos");setMobileNavOpen(false)}}>Avalúos</button>
+        <button className={view==="inicio"?"is-active":""} onClick={()=>{setView("inicio");setMobileNavOpen(false)}}><House size={18} aria-hidden="true"/><span>Inicio</span></button>
+        <button className={view==="perfil"?"is-active":""} onClick={()=>{setView("perfil");setMobileNavOpen(false)}}><UserRound size={18} aria-hidden="true"/><span>Mi perfil</span></button>
+        <button className={view==="propiedad"?"is-active":""} onClick={newProperty}><Plus size={18} aria-hidden="true"/><span>Subir propiedad</span></button>
+        <button className={view==="listas"?"is-active":""} onClick={()=>{setView("listas");setMobileNavOpen(false)}}><ListChecks size={18} aria-hidden="true"/><span>Listas compartidas</span></button>
+        <button className={view==="inventario"?"is-active":""} onClick={()=>{setView("inventario");setMobileNavOpen(false)}}><Building2 size={18} aria-hidden="true"/><span>Mis propiedades</span></button>
+        <button className={view==="red-agentes"?"is-active":""} onClick={()=>{setView("red-agentes");setMobileNavOpen(false)}}><UsersRound size={18} aria-hidden="true"/><span>Propiedades de agentes</span></button>
+        <button className={view==="avaluos"?"is-active":""} onClick={()=>{setView("avaluos");setMobileNavOpen(false)}}><ChartNoAxesCombined size={18} aria-hidden="true"/><span>Avalúos</span></button>
       </nav>
-      <div className="drg-agent-sidebar-foot"><span className={drgWritesEnabled?"is-write":"is-readonly"}>{drgWritesEnabled?"Escritura habilitada":"Modo seguro · solo lectura"}</span><button onClick={()=>void logout()}>Cerrar sesión</button></div>
+      <div className="drg-agent-sidebar-foot"><span className={drgWritesEnabled?"is-write":"is-readonly"}>{drgWritesEnabled?"Escritura habilitada":"Modo seguro · solo lectura"}</span><button onClick={()=>void logout()}><LogOut size={16} aria-hidden="true"/>Cerrar sesión</button></div>
     </aside>
 
     <main className="drg-agent-workspace">

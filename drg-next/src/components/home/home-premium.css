@@ -1,0 +1,174 @@
+/* Home-only presentation. Hero, navigation and inventory behavior stay intact. */
+.drg-home-page .drg-home-main {
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 98% 5%, #b0000814, transparent 32%),
+    radial-gradient(ellipse at 0% 39%, #173b6414, transparent 31%),
+    radial-gradient(ellipse at 92% 75%, #b000080a, transparent 25%),
+    linear-gradient(155deg, #f7f9fc 0%, #fff 28%, #f0f3f7 64%, #fff 90%);
+}
+.drg-home-main > section,
+.drg-home-main > .drg-brand-ribbon { position: relative; z-index: 1; }
+.drg-brand-atmosphere {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: clip;
+  pointer-events: none;
+  user-select: none;
+}
+.drg-brand-stage {
+  position: sticky;
+  top: 110px;
+  width: min(660px, 57vw);
+  aspect-ratio: 1;
+  margin-left: auto;
+  margin-right: -1.5%;
+  perspective: 1100px;
+}
+.drg-brand-stage::before {
+  content: "";
+  position: absolute;
+  inset: 5% -14% 0;
+  background: radial-gradient(ellipse, #c31b2320, transparent 66%);
+}
+.drg-brand-object {
+  position: absolute;
+  inset: 0;
+  opacity: .42;
+  transform-style: preserve-3d;
+  transform: translate3d(0, var(--brand-y, 0px), 0) rotateX(9deg) rotateY(var(--brand-rotate, -18deg)) rotateZ(-5deg);
+  transition: transform 350ms ease-out;
+}
+.drg-brand-object::before,
+.drg-brand-object::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("/assets/logo.png") center / contain no-repeat;
+  filter: brightness(.34) saturate(.7);
+  transform: translate3d(4px, 4px, -9px);
+}
+.drg-brand-object::after {
+  filter: brightness(.58) saturate(.8);
+  transform: translate3d(2px, 2px, -4px);
+}
+.drg-brand-face {
+  z-index: 2;
+  object-fit: contain;
+  transform: translateZ(1px);
+  filter: drop-shadow(0 26px 18px #071a3329) drop-shadow(-1px -1px 0 #ffffffb0);
+}
+.drg-home-page .drg-signature {
+  padding: 70px 0 55px;
+  border: 0;
+  background: transparent;
+}
+.drg-home-page .drg-signature-grid { gap: clamp(35px, 7vw, 100px); }
+.drg-home-page .drg-signature h2 { max-width: 580px; font-size: clamp(40px, 4.5vw, 66px); line-height: 1.02; }
+.drg-home-page .drg-signature .drg-kicker { margin-bottom: 18px; }
+.drg-home-page .drg-signature-grid > div > p:last-child { max-width: 530px; font-size: 14px; line-height: 1.85; color: #536277; }
+.drg-home-page .drg-signature nav {
+  align-self: end;
+  margin-top: 178px;
+  overflow: hidden;
+  border: 1px solid #ffffff;
+  border-radius: 16px;
+  background: #ffffffde;
+  box-shadow: 0 20px 48px #11274414, 0 3px 8px #11274408, inset 0 1px #fff;
+  backdrop-filter: blur(8px);
+}
+.drg-home-page .drg-signature nav a { position: relative; min-height: 110px; padding: 24px 18px 18px; transition: background 250ms, color 250ms; }
+.drg-home-page .drg-signature nav a::before { content: "↗"; position: absolute; top: 10px; right: 14px; color: #b00008; font-size: 16px; }
+.drg-home-page .drg-signature nav b { font-size: 14px; }
+.drg-home-page .drg-signature nav small { font-size: 10px; line-height: 1.6; color: #59687c; }
+.drg-home-page .drg-signature nav a:hover { background: #f4f6fa; }
+.drg-brand-ribbon {
+  display: flex;
+  align-items: center;
+  height: 66px;
+  margin: 8px 0 34px;
+  overflow: hidden;
+  border-block: 1px solid #ffffff24;
+  background: radial-gradient(ellipse at 5% 0%, #78132780, transparent 45%), linear-gradient(110deg, #06182e, #102b4a 55%, #091c34);
+  box-shadow: 0 10px 35px #071a3324, inset 0 1px #ffffff0f;
+  color: #f2f5fa;
+}
+.drg-brand-ribbon-window { flex: 1; min-width: 0; overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 3%, #000 97%, transparent); }
+.drg-brand-ribbon-track { display: flex; width: max-content; animation: drg-ribbon-travel 65s linear infinite; }
+.drg-brand-ribbon-group { display: flex; flex-shrink: 0; align-items: center; margin: 0; padding: 0; list-style: none; }
+.drg-brand-ribbon-group li { display: flex; align-items: center; gap: 36px; padding-right: 36px; white-space: nowrap; font-size: 10px; font-weight: 600; letter-spacing: .16em; }
+.drg-brand-ribbon-diamond { width: 6px; height: 6px; flex: none; transform: rotate(45deg); border: 1px solid #d5b578; background: #d5b57825; }
+.drg-brand-ribbon-control { display: grid; place-items: center; flex: none; width: 44px; height: 44px; margin-inline: 8px 16px; border: 1px solid #ffffff30; border-radius: 50%; background: #ffffff08; color: #fff; cursor: pointer; transition: background 220ms; }
+.drg-brand-ribbon-control:hover { background: #ffffff20; }
+.drg-brand-ribbon:hover .drg-brand-ribbon-track,
+.drg-brand-ribbon:focus-within .drg-brand-ribbon-track,
+.drg-brand-ribbon.is-paused .drg-brand-ribbon-track { animation-play-state: paused; }
+@keyframes drg-ribbon-travel { to { transform: translateX(-50%); } }
+.drg-home-page .drg-home-section { padding: 34px 0 38px; }
+.drg-home-page .drg-section-head { gap: 20px; margin-bottom: 24px; }
+.drg-home-page .drg-section-head h2 { position: relative; padding-left: 20px; line-height: 1.12; }
+.drg-home-page .drg-section-head h2::before { content: ""; position: absolute; left: 0; top: 12%; bottom: 12%; width: 3px; border-radius: 2px; background: linear-gradient(#b00008, #dc8b9060); }
+.drg-home-page .drg-section-head > a { flex-shrink: 0; padding: 12px 16px; border-color: #c9d1dd; border-radius: 10px; background: #ffffffb0; color: #233c58; font-size: 11px; box-shadow: 0 3px 8px #071a3305; transition: background 220ms, border-color 220ms; }
+.drg-home-page .drg-section-head > a:hover { background: #fff; border-color: #869bb5; }
+.drg-home-page .drg-home-slider { padding-top: 8px; padding-bottom: 34px; scrollbar-width: thin; scrollbar-color: #afbac9 #e9edf2; }
+.drg-home-page .drg-property-shell { border: 1px solid #ffffff; border-radius: 18px; box-shadow: 0 12px 24px #0a203713, 0 2px 4px #0a20370b; }
+.drg-home-page .drg-property-body { background: linear-gradient(150deg, #fff, #fbfcfe); }
+.drg-home-page .drg-property-footer { border-top-color: #dde4ed; }
+.drg-home-page .drg-property-price strong { color: #112c4d; }
+.drg-home-page .drg-services { padding-block: 78px 90px; }
+.drg-home-page .drg-services > .drg-kicker { margin-bottom: 14px; }
+.drg-home-page .drg-services > h2 { margin-bottom: 38px; }
+.drg-home-page .drg-services-grid article { position: relative; border: 1px solid #fff; border-radius: 18px; background: linear-gradient(140deg, #fffffffa, #f7f9fcfa); box-shadow: 0 16px 35px #11274410, 0 2px 3px #11274406; transition: transform 300ms, box-shadow 300ms; }
+.drg-home-page .drg-services-grid article > b { border: 1px solid #dce3ed; border-radius: 14px; background: linear-gradient(145deg, #fff, #e8edf4); color: #a81424; box-shadow: 0 4px 8px #1029420d; font-size: 21px; }
+.drg-home-page .drg-services-grid h3 { margin-block: 22px 12px; }
+.drg-home-page .drg-services-grid p { font-size: 13px; line-height: 1.8; color: #5d6b7e; }
+.drg-home-page .drg-trust { overflow: hidden; padding: 80px 0; border-top: 1px solid #ffffff45; background: radial-gradient(ellipse at 100% 0%, #a5193452, transparent 52%), radial-gradient(ellipse at 10% 100%, #28517d80, transparent 60%), linear-gradient(130deg, #06162a, #0f2b4a); box-shadow: 0 -15px 55px #071a331a; }
+.drg-home-page .drg-trust::before { content: ""; position: absolute; right: -130px; bottom: -310px; width: 640px; height: 640px; border: 1px solid #ffffff12; border-radius: 50%; box-shadow: 0 0 0 80px #ffffff03; pointer-events: none; }
+.drg-home-page .drg-trust-grid { position: relative; }
+.drg-home-page .drg-trust .drg-kicker { color: #e3c795; margin-bottom: 18px; }
+.drg-home-page .drg-trust p { font-size: 14px; line-height: 1.9; }
+.drg-home-page .drg-trust a { display: inline-flex; align-items: center; min-height: 44px; margin-top: 8px; text-underline-offset: 7px; font-size: 12px; }
+.drg-home-page .drg-hero-search { box-shadow: 0 20px 60px #030e2342, inset 0 1px #ffffffb0; }
+.drg-home-page .drg-btn-red { background: linear-gradient(135deg, #cc1821, #a3000b); box-shadow: 0 7px 20px #69071135, inset 0 1px #ffffff2e; }
+.drg-home-page :is(a, button, select):focus-visible { outline: 3px solid #be8d4b; outline-offset: 4px; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .drg-home-page .drg-services-grid article:hover { transform: translateY(-4px); box-shadow: 0 24px 44px #11274419; }
+}
+@media (max-width: 960px) {
+  .drg-home-page .drg-signature-grid { grid-template-columns: 1fr; gap: 26px; }
+  .drg-home-page .drg-signature-grid > div { max-width: 75%; }
+  .drg-home-page .drg-signature nav { margin-top: 0; }
+  .drg-brand-stage { width: 480px; opacity: .65; margin-right: -10%; }
+}
+@media (max-width: 768px) {
+  .drg-home-page .drg-signature { padding: 46px 0 36px; }
+  .drg-home-page .drg-signature-grid > div { max-width: none; }
+  .drg-home-page .drg-signature h2 { max-width: 460px; font-size: 42px; }
+  .drg-home-page .drg-signature-grid > div > p:last-child { font-size: 13px; }
+  .drg-home-page .drg-signature nav { grid-template-columns: repeat(3, minmax(0, 1fr)); backdrop-filter: none; }
+  .drg-home-page .drg-signature nav a { min-height: 106px; padding: 26px 12px 14px; }
+  .drg-home-page .drg-signature nav b { font-size: 12px; }
+  .drg-home-page .drg-signature nav small { font-size: 9px; }
+  .drg-brand-stage { top: 90px; width: 420px; margin-right: -35%; opacity: .22; }
+  .drg-brand-object::after { display: none; }
+  .drg-brand-ribbon { height: 58px; margin-bottom: 20px; }
+  .drg-brand-ribbon-group li { gap: 24px; padding-right: 24px; font-size: 9px; }
+  .drg-brand-ribbon-control { margin-inline: 4px 8px; }
+  .drg-home-page .drg-home-section { padding-block: 22px; }
+  .drg-home-page .drg-section-head { align-items: flex-start; flex-direction: column; gap: 12px; margin-bottom: 15px; }
+  .drg-home-page .drg-section-head h2 { font-size: 33px; padding-left: 14px; }
+  .drg-home-page .drg-section-head > a { padding: 9px 12px; font-size: 10px; }
+  .drg-home-page .drg-services { padding-block: 46px 44px; }
+  .drg-home-page .drg-trust { padding-block: 54px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .drg-brand-object { transition: none; }
+  .drg-brand-ribbon-track { animation: none; width: auto; }
+  .drg-brand-ribbon { height: auto; padding: 20px 16px; }
+  .drg-brand-ribbon-window { mask-image: none; }
+  .drg-brand-ribbon-group { flex-wrap: wrap; justify-content: center; gap: 16px; }
+  .drg-brand-ribbon-group li { white-space: normal; padding: 0; gap: 12px; font-size: 9px; }
+  .drg-brand-ribbon-group[aria-hidden="true"], .drg-brand-ribbon-control { display: none; }
+  .drg-home-page .drg-services-grid article { transition: none; }
+}

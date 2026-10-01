@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
 import { AgentPwaRegistration } from "@/components/pwa/AgentPwaRegistration";
 import "./agent-dashboard.css";
+import "./agent-premium.css";
 
 const poppins = Poppins({
   subsets: ["latin"],
