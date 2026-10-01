@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useDrgAuth } from "@/components/auth/AuthProvider";
 import { drgWritesEnabled } from "@/lib/config/writes";
 import { approvePropertyAsAdmin, deleteFormAsAdmin, deletePropertyAsAdmin, readAdminForms, readAllAdminAgents, readAllAdminProperties, readListingAudit, rejectPropertyAsAdmin, renameAgentAsAdmin, updateFormStatusAsAdmin, type AdminFormItem, type ListingAuditRecord } from "@/lib/firebase/admin-data";
-import { deleteStoragePath } from "@/lib/firebase/private-storage";
+import { deleteStorageReference } from "@/lib/firebase/private-storage";
 import { AdminPropertyEditor } from "./AdminPropertyEditor";
 import { getContractStatus } from "@/lib/properties/private";
 import type { Property } from "@/types/property";
@@ -98,8 +98,11 @@ export function AdminDashboard(){
     if(!drgWritesEnabled){setMessage("Eliminación de propiedades bloqueada en Preview.");return}
     if(!window.confirm("¿Eliminar permanentemente esta propiedad, sus comentarios y reseñas?"))return;
     try{
-      const paths=await deletePropertyAsAdmin(property.id);
-      for(const path of paths){try{await deleteStoragePath(path)}catch(error){console.warn("[DRG admin storage cleanup]",error)}}
+      const targets=await deletePropertyAsAdmin(property.id);
+      for(const target of targets){
+        try{await deleteStorageReference(target)}
+        catch(error){console.warn("[DRG admin storage cleanup]",target,error)}
+      }
       setEditingProperty(null);setReviewDetail(null);await reload();setMessage("Propiedad eliminada.");
     }catch(error){setMessage(error instanceof Error?error.message:"No fue posible eliminar la propiedad.")}
   }

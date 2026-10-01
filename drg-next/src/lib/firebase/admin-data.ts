@@ -161,14 +161,31 @@ export async function deletePropertyAsAdmin(propertyId:string){
   batch.delete(doc(firebase.db,"propertyListingAudit",propertyId));
   await batch.commit();
 
-  const paths:string[]=[];
-  const push=(value:unknown)=>{const text=String(value||"").trim();if(text&&!paths.includes(text))paths.push(text)};
-  const legal=raw.legalDocument&&typeof raw.legalDocument==="object"?raw.legalDocument as Record<string,unknown>:null;
+  const targets:string[]=[];
+  const push=(value:unknown)=>{
+    const text=String(value||"").trim();
+    if(text&&!targets.includes(text))targets.push(text);
+  };
+  const pushArray=(value:unknown)=>{
+    if(Array.isArray(value))value.forEach(push);
+  };
+
+  const legal=raw.legalDocument&&typeof raw.legalDocument==="object"
+    ? raw.legalDocument as Record<string,unknown>
+    : null;
+
   push(legal?.storagePath);
-  for(const key of ["storagePaths","imageStoragePaths"]){
-    const values=raw[key]; if(Array.isArray(values))values.forEach(push);
+  push(legal?.fileUrl);
+
+  for(const key of ["storagePaths","imageStoragePaths","images","imagenes","galleryImages"]){
+    pushArray(raw[key]);
   }
-  return paths;
+
+  for(const key of ["coverImage","image","imagen"]){
+    push(raw[key]);
+  }
+
+  return targets;
 }
 
 export async function setPropertyLegalDocumentAsAdmin(

@@ -86,3 +86,14 @@ export async function deleteStorageUrlIfOwned(url:string){
     throw error;
   }
 }
+
+
+export async function deleteStorageReference(value:string){
+  const target=String(value||"").trim();
+  if(!target)return false;
+  if(target.startsWith("http://")||target.startsWith("https://")||target.startsWith("gs://")){
+    return deleteStorageUrlIfOwned(target);
+  }
+  await deleteStoragePath(target);
+  return true;
+}
