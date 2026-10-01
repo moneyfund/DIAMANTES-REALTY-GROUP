@@ -16,7 +16,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/drg-premium.css?v=20261001" />
+  <link rel="stylesheet" href="css/drg-premium.css?v=20261001-home2" />
+  <link rel="stylesheet" href="css/home-journey.css?v=20261001-home2" />
 </head>
 <body class="home-page navbar-over-hero drg-premium">
   <!-- PUBLIC FIX VERIFIED 2026-06-13 -->
@@ -44,32 +45,24 @@
   </header>
 
   <a class="drg-skip-link" href="#mainContent">Ir al contenido</a>
+  <div class="home-environment" aria-hidden="true"><div class="home-ambient-light"></div><div class="home-architectural-lines"></div></div>
+  <div class="home-visual-layer" id="homeVisualLayer" aria-hidden="true"></div>
   <main id="mainContent">
-    <section class="hero premium-hero">
-      <div class="hero-slider" aria-hidden="true">
-        <figure class="hero-slide is-active" data-location="Hero 1">
-          <img src="assets/imagenhero1.jpeg" alt="Arquitectura residencial y espacios para vivir en Nicaragua" loading="eager" fetchpriority="high" />
-        </figure>
-        <figure class="hero-slide" data-location="Hero 2">
-          <img src="assets/imagenhero2.jpeg" alt="Propiedad en Nicaragua" loading="lazy" />
-        </figure>
-        <figure class="hero-slide" data-location="Hero 3">
-          <img src="assets/imagenhero3.jpeg" alt="Arquitectura y entorno natural" loading="lazy" />
-        </figure>
-        <figure class="hero-slide" data-location="Hero 4">
-          <img src="assets/imagenhero4.jpeg" alt="Espacios residenciales" loading="lazy" />
-        </figure>
-      </div>
-      <div class="hero-overlay"></div>
-      <div class="container hero-content">
-        <div class="hero-static-content">
-          <p class="eyebrow">Diamantes Realty Group</p>
-
-          <h1 class="hero-title">Un lugar para tu<br /><em>próximo capítulo.</em></h1>
-          <p class="drg-hero-lead">Compra, vende o alquila en Nicaragua.<br />Nosotros te acompañamos.</p>
-          <div class="premium-hero-actions">
-            <a class="premium-btn premium-btn-primary" href="propiedades.html">Explorar propiedades</a>
-            <a class="premium-btn premium-btn-secondary" href="https://wa.me/50577265009?text=Hola%2C%20quiero%20hablar%20con%20un%20asesor%20inmobiliario." target="_blank" rel="noopener noreferrer">Hablar con un asesor</a>
+    <section class="home-hero" id="homeHero" aria-labelledby="homeHeroTitle">
+      <div class="home-hero-architecture" aria-hidden="true"><span></span><span></span></div>
+      <figure class="home-hero-media">
+        <div class="home-photo-window"><img src="assets/imagenhero4.jpeg" alt="Arquitectura y tejados de Granada, Nicaragua" width="1200" height="800" fetchpriority="high" decoding="async" /></div>
+        <figcaption><span>Una nueva perspectiva</span><span>Granada, Nicaragua <i aria-hidden="true">↗</i></span></figcaption>
+      </figure>
+      <div class="home-hero-symbol" aria-hidden="true"><svg viewBox="496 452 2119 1244"><use href="assets/drg-symbol.svg#symbol" /></svg></div>
+      <div class="container home-hero-shell">
+        <div class="home-hero-copy">
+          <p class="home-eyebrow"><span aria-hidden="true"></span> Propiedades en Nicaragua</p>
+          <h1 id="homeHeroTitle"><span class="home-title-line"><span>Tu próxima</span></span><span class="home-title-line"><span>gran decisión</span></span><span class="home-title-line home-title-line--accent"><span>comienza aquí.</span></span></h1>
+          <p class="home-hero-lead">Compra, vende, alquila. Invierte con perspectiva.</p>
+          <div class="home-hero-actions">
+            <a href="propiedades.html" class="home-main-link">Explorar propiedades <span aria-hidden="true">↗</span></a>
+            <a href="https://wa.me/50577265009?text=Hola%2C%20quiero%20hablar%20con%20un%20asesor%20inmobiliario." target="_blank" rel="noopener noreferrer">Hablemos <span aria-hidden="true">↗</span></a>
           </div>
           <button class="mobile-search-trigger" id="mobileSearchTrigger" type="button" aria-expanded="false" aria-controls="heroSearchForm" aria-label="Abrir filtros para buscar propiedades">
             <svg class="mobile-search-trigger-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"/></svg>
@@ -78,7 +71,7 @@
           </button>
         </div>
 
-        <div class="hero-search-content">
+        <div class="hero-search-content home-search-dock">
           <form class="search-form premium-search" id="heroSearchForm" aria-label="Filtros de propiedades">
             <div class="mobile-filter-field mobile-operation-field">
               <label>Operación</label>
@@ -157,18 +150,18 @@
       <div id="featuredGrid" class="properties-grid home-property-slider" aria-label="Espacios que destacan." aria-busy="true"></div>
 
     </section>
-    <section class="drg-immersive" id="homeExperience" aria-labelledby="drgExperienceTitle">
-      <div class="drg-immersive-stage">
-        <div class="drg-scene-grid" aria-hidden="true"></div>
-        <div class="drg-immersive-heading" data-drg-reveal><p class="drg-kicker">El valor de estar bien acompañado</p><h2 id="drgExperienceTitle">Tu visión. Nuestro compromiso.</h2></div>
-        <div class="drg-brand-sculpture" role="img" aria-label="Diamantes Realty Group, logo dorado en relieve">
-          <div class="drg-brand-depth" aria-hidden="true"><span class="drg-logo-layer" style="--depth:0"></span><span class="drg-logo-layer" style="--depth:1"></span><span class="drg-logo-layer" style="--depth:2"></span><span class="drg-logo-layer" style="--depth:3"></span><span class="drg-logo-layer" style="--depth:4"></span><span class="drg-logo-layer" style="--depth:5"></span><span class="drg-logo-layer" style="--depth:6"></span><span class="drg-logo-layer" style="--depth:7"></span><span class="drg-logo-layer" style="--depth:8"></span></div>
-          <div class="drg-sculpture-shadow" aria-hidden="true"></div>
+    <section class="home-brand-journey" id="homeExperience" aria-labelledby="drgExperienceTitle">
+      <div class="home-brand-stage">
+        <div class="home-brand-frame" aria-hidden="true"><span></span><span></span></div>
+        <p class="home-brand-eyebrow">Patrimonio. Perspectiva. Confianza.</p>
+        <div class="home-brand-symbol" aria-hidden="true"><svg viewBox="496 452 2119 1244"><use href="assets/drg-symbol.svg#symbol" /></svg></div>
+        <div class="home-brand-caption">
+          <h2 id="drgExperienceTitle"><span class="sr-only">DIAMANTES REALTY GROUP</span><svg class="home-brand-wordmark" viewBox="550 1915 2052 515" aria-hidden="true"><image href="assets/logo.png" width="3112" height="3112" /></svg></h2>
+          <p>Visita, conoce e invierte en Nicaragua.</p>
+          <a href="nosotros.html" class="home-brand-link">Conoce nuestra visión <span aria-hidden="true">↗</span></a>
         </div>
-        <div class="drg-scene-note drg-scene-note--left"><span>01 / Descubrir</span><p>El espacio que imaginas.</p></div>
-        <div class="drg-scene-note drg-scene-note--right"><span>02 / Conectar</span><p>Las personas que te acompañan.</p></div>
-        <div class="drg-immersive-bottom"><p>Visita, conoce e invierte en Nicaragua.</p><a href="nosotros.html" class="drg-text-link">Conoce Diamantes <span aria-hidden="true">↗</span></a></div>
-        <div class="drg-scene-progress" aria-hidden="true"><span></span></div>
+        <span class="home-brand-side-note home-brand-side-note--left" aria-hidden="true">El valor de elegir bien</span>
+        <span class="home-brand-side-note home-brand-side-note--right" aria-hidden="true">Nicaragua · Diamantes Realty Group</span>
       </div>
     </section>
     <section class="drg-section container home-property-section" id="recentPropertiesSection" aria-labelledby="recentPropertiesTitle">
@@ -213,7 +206,7 @@
       <div data-drg-reveal><p class="drg-kicker">Personas detrás de cada propiedad</p><h2>Una gran decisión.<br /><em>Un equipo a tu lado.</em></h2><p>Desde la primera búsqueda hasta tu próxima visita, encuentra orientación y un trato cercano en cada paso.</p><a class="drg-button" href="agentes.html">Conoce a nuestros agentes <span aria-hidden="true">↗</span></a></div>
       <div class="drg-service-list" data-drg-reveal><a href="propiedades.html"><span>01</span><div><h3>Compra con perspectiva</h3><p>Compara propiedades y coordina tu visita.</p></div><b aria-hidden="true">↗</b></a><a href="quieres-vender.html"><span>02</span><div><h3>Dale valor a tu propiedad</h3><p>Una estrategia para conectar con compradores.</p></div><b aria-hidden="true">↗</b></a><a href="contacto.html"><span>03</span><div><h3>Invierte con información</h3><p>Consulta oportunidades y servicios de avalúo.</p></div><b aria-hidden="true">↗</b></a></div>
     </div></section>
-    <section class="drg-seller container" aria-labelledby="drgSellerTitle" data-drg-reveal><div><p class="drg-kicker">El próximo paso empieza aquí</p><h2 id="drgSellerTitle">Tu propiedad merece<br />una gran presentación.</h2><p>Conectemos su potencial con las personas correctas.</p><a class="drg-button drg-button--light" href="quieres-vender.html">Quiero vender mi propiedad <span aria-hidden="true">↗</span></a></div><span class="drg-seller-mark" aria-hidden="true"></span></section>
+    <section class="drg-seller container" aria-labelledby="drgSellerTitle" data-drg-reveal><div><p class="drg-kicker">El próximo paso empieza aquí</p><h2 id="drgSellerTitle">Tu propiedad merece<br />una gran presentación.</h2><p>Conectemos su potencial con las personas correctas.</p><a class="drg-button drg-button--light" href="quieres-vender.html">Quiero vender mi propiedad <span aria-hidden="true">↗</span></a></div><span class="home-seller-lines" aria-hidden="true"></span></section>
 
   </main>
 
@@ -246,7 +239,8 @@
   <script src="js/image-utils.js?v=20260613-public-fix"></script>
   <script src="js/property-utils.js?v=20260613-01"></script>
   <script src="js/public-property-filter.js?v=20260613-01"></script>
-  <script src="js/drg-experience.js?v=20261001"></script>
+  <script src="js/drg-experience.js?v=20261001-home2"></script>
   <script src="js/properties.js?v=20261001"></script>
+  <script type="module" src="js/home/home-experience.js?v=20261001-home2"></script>
 </body>
 </html>

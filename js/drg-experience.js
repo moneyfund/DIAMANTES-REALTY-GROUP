@@ -58,7 +58,7 @@
   window.drgExperience = { showLoading, showError, initSlider };
   showLoading();
 
-  if ('IntersectionObserver' in window && !reducedMotion.matches) {
+  if (!document.body.classList.contains('home-page') && 'IntersectionObserver' in window && !reducedMotion.matches) {
     document.documentElement.classList.add('drg-reveal-ready');
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
@@ -73,77 +73,6 @@
     });
     // Keyboard navigation must never focus invisible revealed content.
     document.addEventListener('focusin', (event) => event.target.closest('[data-drg-reveal]')?.classList.add('is-visible'));
-  }
-
-  const scene = document.querySelector('.drg-immersive');
-  if (scene) {
-    let frame = 0;
-    let visible = false;
-    const draw = () => {
-      frame = 0;
-      const rect = scene.getBoundingClientRect();
-      const p = reducedMotion.matches ? 0.55 : Math.max(0, Math.min(1, (innerHeight - rect.top) / (rect.height + innerHeight)));
-      const strength = mobile.matches ? 0.5 : 1;
-      const center = Math.sin(p * Math.PI);
-      const vars = {
-        '--scene-progress': p.toFixed(4),
-        '--scene-rx': `${(10 - p * 16) * strength}deg`,
-        '--scene-ry': `${(-28 + p * 48) * strength}deg`,
-        '--scene-y': `${(35 - p * 65) * strength}px`,
-        '--scene-scale': (0.86 + center * 0.19).toFixed(4),
-        '--scene-opacity': Math.min(1, 0.65 + center * 0.5).toFixed(4),
-        '--scene-shine': `${20 + p * 65}%`
-      };
-      Object.entries(vars).forEach(([key, value]) => scene.style.setProperty(key, value));
-    };
-    const schedule = () => { if (visible && !document.hidden && !frame) frame = requestAnimationFrame(draw); };
-    const observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; schedule(); }, { rootMargin: '120px' });
-    observer.observe(scene);
-    window.addEventListener('scroll', schedule, { passive: true });
-    window.addEventListener('resize', schedule, { passive: true });
-    reducedMotion.addEventListener('change', draw);
-    document.addEventListener('visibilitychange', schedule);
-    draw();
-    window.addEventListener('pagehide', (event) => {
-      cancelAnimationFrame(frame); frame = 0;
-      if (event.persisted) return;
-      observer.disconnect(); window.removeEventListener('scroll', schedule); window.removeEventListener('resize', schedule);
-    });
-    window.addEventListener('pageshow', schedule);
-  }
-
-  // Slow photographic crossfade, paused while hidden/offscreen or by the reader.
-  const hero = document.querySelector('.hero.premium-hero');
-  if (hero) {
-    const slides = [...hero.querySelectorAll('.hero-slide')];
-    let active = 0, timer = 0, inView = true, paused = false;
-    const pause = document.createElement('button');
-    pause.type = 'button'; pause.className = 'drg-hero-pause';
-    const label = () => {
-      const still = paused || reducedMotion.matches;
-      pause.textContent = still ? '▷' : 'Ⅱ';
-      pause.setAttribute('aria-label', still ? 'Reanudar fotografías de portada' : 'Pausar fotografías de portada');
-      pause.setAttribute('aria-pressed', String(still));
-      pause.hidden = reducedMotion.matches;
-    };
-    const schedule = () => {
-      clearTimeout(timer); label();
-      if (paused || reducedMotion.matches || document.hidden || !inView || slides.length < 2) return;
-      timer = window.setTimeout(() => {
-        active = (active + 1) % slides.length;
-        slides.forEach((slide, index) => slide.classList.toggle('is-active', index === active));
-        schedule();
-      }, 7500);
-    };
-    pause.addEventListener('click', () => { paused = !paused; schedule(); });
-    hero.appendChild(pause);
-    const observer = new IntersectionObserver(([entry]) => { inView = entry.isIntersecting; schedule(); });
-    observer.observe(hero);
-    document.addEventListener('visibilitychange', schedule);
-    reducedMotion.addEventListener('change', schedule);
-    schedule();
-    window.addEventListener('pagehide', (event) => { clearTimeout(timer); if (!event.persisted) observer.disconnect(); });
-    window.addEventListener('pageshow', schedule);
   }
 
   const nav = document.getElementById('mainNav');
