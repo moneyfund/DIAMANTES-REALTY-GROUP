@@ -758,3 +758,35 @@
     max-height:279.4mm;
   }
 }
+
+
+/* Hero city additions: unobtrusive photo attribution for licensed imagery */
+.drg-hero-photo-credit{
+  position:absolute;
+  z-index:6;
+  right:16px;
+  bottom:11px;
+  padding:4px 7px;
+  border-radius:999px;
+  background:rgba(4,18,35,.28);
+  color:rgba(255,255,255,.66);
+  text-decoration:none;
+  font-size:6.5px;
+  font-weight:650;
+  letter-spacing:.02em;
+  backdrop-filter:blur(6px);
+  transition:color .18s ease,background .18s ease;
+}
+.drg-hero-photo-credit span{color:rgba(255,255,255,.86);font-weight:800}
+.drg-hero-photo-credit:hover{background:rgba(4,18,35,.5);color:#fff}
+@media(max-width:768px){
+  .drg-hero-photo-credit{
+    right:9px;
+    bottom:8px;
+    max-width:46vw;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+    font-size:5.8px;
+  }
+}

@@ -5,7 +5,30 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BadgeDollarSign, Building2, MapPin, Search } from "lucide-react";
 
-const slides = ["/assets/imagenhero1.jpeg", "/assets/imagenhero2.jpeg", "/assets/imagenhero3.jpeg", "/assets/imagenhero4.jpeg"];
+const slides = [
+  { src: "/assets/imagenhero1.jpeg" },
+  { src: "/assets/imagenhero2.jpeg" },
+  { src: "/assets/imagenhero3.jpeg" },
+  { src: "/assets/imagenhero4.jpeg" },
+  {
+    src: "https://upload.wikimedia.org/wikipedia/commons/f/f1/Esteli_Nicaragua_full_Skyline_from_Tisey.jpg",
+    city: "Estelí",
+    credit: "Tisey · CC BY-SA 4.0",
+    source: "https://commons.wikimedia.org/wiki/File:Esteli_Nicaragua_full_Skyline_from_Tisey.jpg"
+  },
+  {
+    src: "https://upload.wikimedia.org/wikipedia/commons/b/b5/Matagalpa_landscape.jpg",
+    city: "Matagalpa",
+    credit: "Byralaal · CC BY-SA 4.0",
+    source: "https://commons.wikimedia.org/wiki/File:Matagalpa_landscape.jpg"
+  },
+  {
+    src: "https://upload.wikimedia.org/wikipedia/commons/d/db/Lake_Managua_after_a_storm.jpg",
+    city: "Managua",
+    credit: "Byralaal · CC BY-SA 4.0",
+    source: "https://commons.wikimedia.org/wiki/File:Lake_Managua_after_a_storm.jpg"
+  }
+];
 const departments = ["Boaco","Carazo","Chinandega","Chontales","Estelí","Granada","Jinotega","León","Madriz","Managua","Masaya","Matagalpa","Nueva Segovia","Rivas","Río San Juan"];
 
 export function OriginalHero() {
@@ -73,13 +96,24 @@ export function OriginalHero() {
   return (
     <section className="drg-hero">
       <div className="drg-hero-slider" aria-hidden="true">
-        {slides.map((src, index) => (
-          <figure key={src} className={index === slide ? "is-active" : ""}>
-            <Image src={src} alt="" fill priority={index === 0} sizes="100vw" />
+        {slides.map((item, index) => (
+          <figure key={item.src} className={index === slide ? "is-active" : ""}>
+            <Image
+              src={item.src}
+              alt={item.city ? "Vista de " + item.city + ", Nicaragua" : ""}
+              fill
+              priority={index === 0}
+              sizes="100vw"
+            />
           </figure>
         ))}
       </div>
       <div className="drg-hero-overlay" />
+      {slides[slide].credit && slides[slide].source ? (
+        <a className="drg-hero-photo-credit" href={slides[slide].source} target="_blank" rel="noreferrer">
+          <span>{slides[slide].city}</span> · Foto: {slides[slide].credit}
+        </a>
+      ) : null}
       <div className="drg-container drg-hero-content">
         <div className="drg-hero-copy">
           <p className="drg-eyebrow">Diamantes Realty Group</p>
