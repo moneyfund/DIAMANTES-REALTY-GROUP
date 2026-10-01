@@ -114,7 +114,7 @@ export async function readShareableBrokerageProperties(currentUser?:Pick<User,"u
 
 export async function readSharedListByToken(token:string){
   const firebase=getFirebaseClient(); if(!firebase||!token)return null;
-  const snap=await getDocs(query(collection(firebase.db,"sharedPropertyLists"),where("token","==",token)));
+  const snap=await getDocs(query(collection(firebase.db,"sharedPropertyLists"),where("token","==",token),where("status","==","active")));
   const first=snap.docs[0]; return first?normalize(first.id,first.data()):null;
 }
 

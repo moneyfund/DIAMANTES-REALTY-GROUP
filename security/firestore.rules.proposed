@@ -3,10 +3,10 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
     function verifiedEmail() { return signedIn() && request.auth.token.email_verified == true; }
-    function email() { return signedIn() ? request.auth.token.email : ""; }
+    function email() { return signedIn() && request.auth.token.email is string ? request.auth.token.email.lower() : ""; }
     function accessExists() { return signedIn() && exists(/databases/$(database)/documents/access/$(request.auth.uid)); }
     function accessRole() { return accessExists() ? get(/databases/$(database)/documents/access/$(request.auth.uid)).data.get("role","") : ""; }
-    function isAdmin() { return verifiedEmail() && (email() in ["norvingarcia220@gmail.com", "diego.valdivia.52056@gmail.com", "diamantesrealtygroup@gmail.com"] || accessRole()=="admin"); }
+    function isAdmin() { return verifiedEmail() && (email() in ["norvingarcia220@gmail.com", "agentenorvingarcia@gmail.com", "diego.valdivia.52056@gmail.com", "diamantesrealtygroup@gmail.com"] || accessRole()=="admin"); }
     function isAgent() {
       return verifiedEmail() && (
         isAdmin() ||
@@ -37,11 +37,23 @@ service cloud.firestore {
     function agentReadable(data) {
       return isAgent() && (f(data,"visibility") in ["","public","agents"] || ownProperty(data));
     }
+    function authorizedAgentOwner(data) {
+      return f(data,"agentId")!="" &&
+        (
+          f(data,"agentEmail") in ["norvingarcia220@gmail.com", "valop27@gmail.com", "dra.nazarethbravo@gmail.com", "diego.valdivia.52056@gmail.com", "27marvin@gmail.com", "rubenn2121@gmail.com", "dr.americamora@gmail.com", "norlanflores3@gmail.com", "amyblandon.as@gmail.com", "marccenarokarel@gmail.com", "caguadamuzmoreno@gmail.com", "agentenorvingarcia@gmail.com", "valenzuela.ing120@gmail.com", "nazarethbravo.realestate@gmail.com", "uh243384@gmail.com"] ||
+          (
+            exists(/databases/$(database)/documents/agents/$(f(data,"agentId"))) &&
+            get(/databases/$(database)/documents/agents/$(f(data,"agentId"))).data.get("email","").lower()==f(data,"agentEmail").lower()
+          )
+        );
+    }
     function assistedAuditValid(propertyId,data) {
       return isAgent() &&
+        authorizedAgentOwner(data) &&
         existsAfter(/databases/$(database)/documents/propertyListingAudit/$(propertyId)) &&
         getAfter(/databases/$(database)/documents/propertyListingAudit/$(propertyId)).data.get("uploadedByAgentId","")==request.auth.uid &&
-        getAfter(/databases/$(database)/documents/propertyListingAudit/$(propertyId)).data.get("ownerAgentId","")==f(data,"agentId");
+        getAfter(/databases/$(database)/documents/propertyListingAudit/$(propertyId)).data.get("ownerAgentId","")==f(data,"agentId") &&
+        getAfter(/databases/$(database)/documents/propertyListingAudit/$(propertyId)).data.get("ownerAgentEmail","").lower()==f(data,"agentEmail").lower();
     }
     function samePublicationState(before,after) {
       return f(after,"publicationStatus")==f(before,"publicationStatus") &&
@@ -80,13 +92,36 @@ service cloud.firestore {
 
       match /comments/{commentId} {
         allow read: if true;
-        allow create: if signedIn() && request.resource.data.get("userId","")==request.auth.uid;
-        allow update, delete: if isAdmin() || (signedIn() && resource.data.get("userId","")==request.auth.uid);
+        allow create: if signedIn() && (
+          request.resource.data.get("userId","")==request.auth.uid ||
+          request.resource.data.get("uid","")==request.auth.uid
+        );
+        allow update, delete: if isAdmin() || (signedIn() && (
+          resource.data.get("userId","")==request.auth.uid ||
+          resource.data.get("uid","")==request.auth.uid
+        ));
       }
       match /reviews/{reviewId} {
         allow read: if true;
-        allow create: if signedIn() && request.resource.data.get("userId","")==request.auth.uid;
-        allow update, delete: if isAdmin() || (signedIn() && resource.data.get("userId","")==request.auth.uid);
+        allow create: if signedIn() && (
+          request.resource.data.get("userId","")==request.auth.uid ||
+          request.resource.data.get("uid","")==request.auth.uid
+        );
+        allow update, delete: if isAdmin() || (signedIn() && (
+          resource.data.get("userId","")==request.auth.uid ||
+          resource.data.get("uid","")==request.auth.uid
+        ));
+      }
+      match /likes/{uid} {
+        allow read: if true;
+        allow create, update, delete: if signedIn() && request.auth.uid==uid;
+      }
+      match /favorites/{uid} {
+        allow read, create, update, delete: if signedIn() && request.auth.uid==uid;
+      }
+      match /forms/{formId} {
+        allow create: if signedIn();
+        allow read, update, delete: if isAdmin();
       }
     }
 
@@ -110,24 +145,30 @@ service cloud.firestore {
         request.resource.data.get("tipo","") in ["contacto","quiero-vender"] &&
         request.resource.data.get("estado","")=="nuevo" &&
         request.resource.data.get("origen","")=="web-publica" &&
-        request.resource.data.get("nombre","").size() > 0 &&
-        request.resource.data.get("nombre","").size() <= 100 &&
-        request.resource.data.get("telefono","").size() > 0 &&
-        request.resource.data.get("telefono","").size() <= 30 &&
-        request.resource.data.get("correo","").size() > 0 &&
+        request.resource.data.get("nombre","") is string &&
+        request.resource.data.get("nombre","").size() >= 2 &&
+        request.resource.data.get("nombre","").size() <= 120 &&
+        request.resource.data.get("telefono","") is string &&
+        request.resource.data.get("telefono","").size() >= 5 &&
+        request.resource.data.get("telefono","").size() <= 40 &&
+        request.resource.data.get("correo","") is string &&
         request.resource.data.get("correo","").size() <= 160 &&
-        request.resource.data.get("mensaje","").size() > 0 &&
-        request.resource.data.get("mensaje","").size() <= 3000;
+        request.resource.data.get("mensaje","") is string &&
+        request.resource.data.get("mensaje","").size() <= 5000 &&
+        request.resource.data.get("asunto","").size() <= 250 &&
+        request.resource.data.get("paginaOrigen","").size() <= 500 &&
+        request.resource.data.get("createdAt",request.time)==request.time &&
+        request.resource.data.get("updatedAt",request.time)==request.time;
       allow read, update, delete: if isAdmin();
     }
 
     match /sharedPropertyLists/{listId} {
       allow create: if isAgent() && request.resource.data.get("createdByAgentId","")==request.auth.uid;
-      allow read: if isAdmin() || (
+      allow read: if resource.data.get("status","active")=="active" || isAdmin() || (
         isAgent() && (
           resource.data.get("createdByAgentId","")==request.auth.uid ||
-          resource.data.get("createdByAgentEmail","")==email() ||
-          resource.data.get("agentEmail","")==email()
+          resource.data.get("createdByAgentEmail","").lower()==email() ||
+          resource.data.get("agentEmail","").lower()==email()
         )
       );
       allow update, delete: if isAdmin() || (
@@ -142,8 +183,58 @@ service cloud.firestore {
       allow read: if isAdmin();
       allow create: if isAgent() &&
         request.resource.data.get("propertyId","")==propertyId &&
-        request.resource.data.get("uploadedByAgentId","")==request.auth.uid;
+        request.resource.data.get("uploadedByAgentId","")==request.auth.uid &&
+        request.resource.data.get("uploadedByAgentEmail","").lower()==email() &&
+        request.resource.data.get("ownerAgentId","")!="" &&
+        request.resource.data.get("ownerAgentEmail","")!="";
       allow update, delete: if isAdmin();
+    }
+
+    // Compatibility for data that remains in the current DRG Firebase project.
+    // DRG 2.0 does not expose Avalúos yet; these rules only avoid locking existing records.
+    match /users/{uid} {
+      allow read, create, update: if signedIn() && (request.auth.uid==uid || isAdmin() || isAgent());
+      allow delete: if isAdmin();
+    }
+    match /sharedLists/{listId} {
+      allow read: if true;
+      allow create: if isAgent();
+      allow update, delete: if isAdmin() || isAgent();
+    }
+    match /avaluos/{avaluoId} {
+      allow read, create, update: if isAgent() || isAdmin();
+      allow delete: if isAdmin();
+    }
+    match /captaciones/{captacionId} {
+      allow read, create, update: if isAgent() || isAdmin();
+      allow delete: if isAdmin();
+    }
+    match /forms/{formId} {
+      allow create: if signedIn();
+      allow read, update, delete: if isAdmin();
+    }
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if signedIn();
+      allow update, delete: if isAdmin() || (signedIn() && (
+        resource.data.get("userId","")==request.auth.uid ||
+        resource.data.get("uid","")==request.auth.uid
+      ));
+    }
+    match /comments/{commentId} {
+      allow read: if true;
+      allow create: if signedIn();
+      allow update, delete: if isAdmin() || (signedIn() && (
+        resource.data.get("userId","")==request.auth.uid ||
+        resource.data.get("uid","")==request.auth.uid
+      ));
+    }
+    match /likes/{likeId} {
+      allow read: if true;
+      allow create, update, delete: if signedIn();
+    }
+    match /favorites/{favoriteId} {
+      allow read, create, update, delete: if signedIn();
     }
 
     match /access/{uid} {
