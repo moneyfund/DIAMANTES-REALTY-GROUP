@@ -18,6 +18,7 @@ import {
 } from "firebase/firestore";
 import { getBytes, ref, uploadBytes } from "firebase/storage";
 
+async function main(){
 const projectId="demo-drg-next";
 const firestoreRules=readFileSync("../security/firestore.rules.proposed","utf8");
 const storageRules=readFileSync("../security/storage.rules.proposed","utf8");
@@ -148,3 +149,10 @@ try{
 }finally{
   await env.cleanup();
 }
+
+}
+
+main().catch((error)=>{
+  console.error(error);
+  process.exitCode=1;
+});
