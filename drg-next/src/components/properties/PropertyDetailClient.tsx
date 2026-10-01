@@ -18,7 +18,7 @@ import type { Agent } from "@/types/agent";
 import type { Property } from "@/types/property";
 import { PropertyDetailGallery } from "./PropertyDetailGallery";
 import { PropertyShareActions } from "./PropertyShareActions";
-import { PropertyInteractionsReadOnly } from "./PropertyInteractionsReadOnly";
+import { PropertyInteractions } from "./PropertyInteractions";
 
 const iconByLabel: Record<string, typeof Ruler> = {
   "Habitaciones": BedDouble,
@@ -157,7 +157,7 @@ export function PropertyDetailClient({ propertyId }: { propertyId: string }) {
         {mapUrl ? <iframe src={mapUrl} title={"Mapa de " + property.title} loading="lazy" /> : <div className="drg-detail-map-empty">Esta propiedad todavía no tiene coordenadas públicas disponibles.</div>}
       </section>
 
-      <PropertyInteractionsReadOnly propertyId={property.id} />
+      <PropertyInteractions propertyId={property.id} />
     </div>
   );
 }
