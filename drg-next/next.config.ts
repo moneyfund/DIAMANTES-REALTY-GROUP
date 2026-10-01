@@ -18,7 +18,10 @@ const nextConfig: NextConfig = {
       { source: "/agentes.html", destination: "/agentes", permanent: true },
       { source: "/educacion.html", destination: "/educacion", permanent: true },
       { source: "/quieres-vender.html", destination: "/quieres-vender", permanent: true },
-      { source: "/contacto.html", destination: "/contacto", permanent: true }
+      { source: "/contacto.html", destination: "/contacto", permanent: true },
+      { source: "/propiedad.html", destination: "/propiedad", permanent: true },
+      { source: "/agent.html", destination: "/agent", permanent: true },
+      { source: "/agente.html", destination: "/agente", permanent: true }
     ];
   }
 };

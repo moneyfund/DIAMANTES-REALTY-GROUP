@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { readProperties } from "@/lib/firebase/properties";
+import { getPublishingAgentId } from "@/lib/properties/detail";
 import { PropertyCard } from "@/components/properties/PropertyCard";
 import type { Property } from "@/types/property";
 
@@ -35,12 +36,14 @@ export function PropertyCatalogClient() {
   const [bedrooms, setBedrooms] = useState("");
   const [bathrooms, setBathrooms] = useState("");
   const [sort, setSort] = useState<SortMode>("recent");
+  const [agentId, setAgentId] = useState("");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setLocation(params.get("ubicacion") || "");
     setType(params.get("tipo") || "");
     setOperation(params.get("operacion") || params.get("tipoOperacion") || "");
+    setAgentId(params.get("agent") || "");
 
     readProperties(200)
       .then((result) => setProperties(result.properties))
@@ -62,7 +65,8 @@ export function PropertyCatalogClient() {
       const matchesBudget = !maxBudget || Boolean(property.priceUsd && property.priceUsd <= maxBudget);
       const matchesBedrooms = !minBedrooms || Boolean(property.bedrooms && property.bedrooms >= minBedrooms);
       const matchesBathrooms = !minBathrooms || Boolean(property.bathrooms && property.bathrooms >= minBathrooms);
-      return matchesLocation && matchesType && matchesOperation && matchesBudget && matchesBedrooms && matchesBathrooms;
+      const matchesAgent = !agentId || getPublishingAgentId(property) === agentId;
+      return matchesLocation && matchesType && matchesOperation && matchesBudget && matchesBedrooms && matchesBathrooms && matchesAgent;
     });
 
     result.sort((a, b) => {
@@ -73,10 +77,10 @@ export function PropertyCatalogClient() {
     });
 
     return result;
-  }, [properties, location, type, operation, budget, bedrooms, bathrooms, sort]);
+  }, [properties, location, type, operation, budget, bedrooms, bathrooms, sort, agentId]);
 
   function clearFilters() {
-    setLocation(""); setType(""); setOperation(""); setBudget(""); setBedrooms(""); setBathrooms("");
+    setLocation(""); setType(""); setOperation(""); setBudget(""); setBedrooms(""); setBathrooms(""); setAgentId("");
   }
 
   function submit(event: FormEvent) {

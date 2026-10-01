@@ -16,7 +16,8 @@
     "motion": "13.4.0",
     "next": "16.3.3",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "leaflet": "1.9.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.3.3",
@@ -27,6 +28,7 @@
     "eslint-config-next": "16.3.3",
     "tailwindcss": "4.3.3",
     "typescript": "6.0.3",
-    "tsx": "^4.21.0"
+    "tsx": "^4.21.0",
+    "@types/leaflet": "^1.9.21"
   }
 }
