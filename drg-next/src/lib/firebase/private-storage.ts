@@ -54,11 +54,32 @@ export async function uploadAdminPropertyImage(file:File,propertyId:string){
 export async function deleteStorageUrlIfOwned(url:string){
   assertDrgWritesEnabled();
   const firebase=getFirebaseClient(); if(!firebase||!url)return false;
-  let parsed:URL;
-  try{parsed=new URL(url)}catch{return false}
-  const host=parsed.hostname.toLowerCase();
-  if(host!=="firebasestorage.googleapis.com"&&host!=="storage.googleapis.com")return false;
-  try{await deleteObject(ref(firebase.storage,url));return true}
+  const value=url.trim();
+  const bucket=String(firebase.app.options.storageBucket||"").trim();
+  if(!bucket)return false;
+
+  let storagePath="";
+  if(value.startsWith("gs://")){
+    if(!value.startsWith("gs://"+bucket+"/"))return false;
+    storagePath=value.slice(("gs://"+bucket+"/").length);
+  }else{
+    let parsed:URL;
+    try{parsed=new URL(value)}catch{return false}
+    const host=parsed.hostname.toLowerCase();
+    if(host==="firebasestorage.googleapis.com"){
+      const marker="/b/"+bucket+"/o/";
+      const index=parsed.pathname.indexOf(marker);
+      if(index<0)return false;
+      storagePath=decodeURIComponent(parsed.pathname.slice(index+marker.length));
+    }else if(host==="storage.googleapis.com"){
+      const prefix="/"+bucket+"/";
+      if(!parsed.pathname.startsWith(prefix))return false;
+      storagePath=decodeURIComponent(parsed.pathname.slice(prefix.length));
+    }else return false;
+  }
+  if(!storagePath)return false;
+
+  try{await deleteObject(ref(firebase.storage,storagePath));return true}
   catch(error){
     const code=(error as {code?:string})?.code;
     if(code==="storage/object-not-found")return true;

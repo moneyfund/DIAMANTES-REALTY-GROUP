@@ -3,8 +3,8 @@ service firebase.storage {
   match /b/{bucket}/o {
     function signedIn(){ return request.auth != null; }
     function verifiedEmail(){ return signedIn() && request.auth.token.email_verified == true; }
-    function email(){ return signedIn() ? request.auth.token.email : ""; }
-    function isAdmin(){ return verifiedEmail() && email() in ["norvingarcia220@gmail.com", "diego.valdivia.52056@gmail.com", "diamantesrealtygroup@gmail.com"]; }
+    function email(){ return signedIn() && request.auth.token.email is string ? request.auth.token.email.lower() : ""; }
+    function isAdmin(){ return verifiedEmail() && email() in ["norvingarcia220@gmail.com", "agentenorvingarcia@gmail.com", "diego.valdivia.52056@gmail.com", "diamantesrealtygroup@gmail.com"]; }
     function isAgent(){ return verifiedEmail() && (isAdmin() || email() in ["norvingarcia220@gmail.com", "valop27@gmail.com", "dra.nazarethbravo@gmail.com", "diego.valdivia.52056@gmail.com", "27marvin@gmail.com", "rubenn2121@gmail.com", "dr.americamora@gmail.com", "norlanflores3@gmail.com", "amyblandon.as@gmail.com", "marccenarokarel@gmail.com", "caguadamuzmoreno@gmail.com", "agentenorvingarcia@gmail.com", "valenzuela.ing120@gmail.com", "nazarethbravo.realestate@gmail.com", "uh243384@gmail.com"]); }
     function propertyData(propertyId){ return firestore.get(/databases/(default)/documents/properties/$(propertyId)).data; }
     function ownsProperty(propertyId){
@@ -32,7 +32,13 @@ service firebase.storage {
       allow create, update: if isAdmin() || (
         isAgent() && agentId==request.auth.uid && isImage() && request.resource.size < 15 * 1024 * 1024
       );
-      allow delete: if isAdmin() || (isAgent() && agentId==request.auth.uid);
+      allow delete: if isAdmin() || (
+        isAgent() && (
+          agentId==request.auth.uid ||
+          ownsProperty(propertyId) ||
+          assistedUploader(propertyId)
+        )
+      );
     }
 
     match /properties/{propertyId}/admin/{fileName} {

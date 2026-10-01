@@ -10,7 +10,7 @@ import type { Agent } from "@/types/agent";
 import type { Property } from "@/types/property";
 import { PropertyLocationPicker } from "@/components/properties/PropertyLocationPicker";
 import { PropertyImageManager, propertyImageFileKey } from "@/components/properties/PropertyImageManager";
-import { deleteStoragePath, uploadAdminPropertyImage, uploadLegalPdf } from "@/lib/firebase/private-storage";
+import { deleteStoragePath, deleteStorageUrlIfOwned, uploadAdminPropertyImage, uploadLegalPdf } from "@/lib/firebase/private-storage";
 import { PropertyVideoPreview } from "@/components/properties/PropertyVideoPreview";
 import { validatePropertyVideo } from "@/lib/properties/video";
 
@@ -63,6 +63,7 @@ export function AdminPropertyEditor({property,agents,onClose,onSaved}:{property:
       const pendingIndex=pendingCoverKey?pendingImages.findIndex(file=>propertyImageFileKey(file)===pendingCoverKey):-1;
       const nextDraft={...draft,images,coverImage:pendingIndex>=0?uploadedUrls[pendingIndex]:(draft.coverImage&&images.includes(draft.coverImage)?draft.coverImage:(images[0]||""))};
       setUploading("Guardando propiedad…");
+      const removedOwnedImages=property.images.filter(url=>!nextDraft.images.includes(url));
       await updatePropertyAsAdmin({propertyId:property.id,draft:nextDraft,assignedAgent:assigned,adminUser:profile.user});
       const existingLegal=property.raw.legalDocument&&typeof property.raw.legalDocument==="object" ? property.raw.legalDocument as Record<string,unknown> : null;
       const oldLegalPath=String(existingLegal?.storagePath||"");
@@ -76,6 +77,7 @@ export function AdminPropertyEditor({property,agents,onClose,onSaved}:{property:
         await setPropertyLegalDocumentAsAdmin(property.id,null);
         if(oldLegalPath){try{await deleteStoragePath(oldLegalPath)}catch{}}
       }
+      for(const url of removedOwnedImages){try{await deleteStorageUrlIfOwned(url)}catch(error){console.warn("[DRG admin image cleanup]",url,error)}}
       setPendingImages([]);setPendingCoverKey("");setPendingLegalPdf(null);setRemoveLegal(false);setUploading("");await onSaved();setMessage("Propiedad actualizada.");
     }catch(error){
       for(const path of uploadedPaths){try{await deleteStoragePath(path)}catch{}}

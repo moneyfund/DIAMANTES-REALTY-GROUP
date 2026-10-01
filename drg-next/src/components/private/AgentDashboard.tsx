@@ -169,6 +169,8 @@ export function AgentDashboard() {
       const nextDraft={...draft,images,coverImage:requestedPendingCover||(draft.coverImage&&images.includes(draft.coverImage)?draft.coverImage:(images[0]||""))};
       setUploadProgress("Guardando propiedad…");
       const listingOwner=isNew?allAgents.find(item=>item.id===listingOwnerId)||agent:null;
+      const originalImages=editingId?(properties.find(item=>item.id===editingId)?.images||[]):[];
+      const removedOwnedImages=originalImages.filter(url=>!nextDraft.images.includes(url));
       const id=await saveAgentProperty({id:propertyId,draft:nextDraft,user,agent,createIfMissing:isNew,listingOwner});
       if(removeExistingLegal && editingId){
         setUploadProgress("Retirando documentación legal anterior…");
@@ -181,6 +183,7 @@ export function AgentDashboard() {
         uploadedPaths.push(legal.path);
         await attachLegalDocumentToAgentProperty(id,user,{fileName:pendingLegalPdf.name,fileUrl:legal.url,storagePath:legal.path},agent);
       }
+      for(const url of removedOwnedImages){try{await deleteStorageUrlIfOwned(url)}catch(error){console.warn("[DRG image cleanup]",url,error)}}
       setDraft(nextDraft);setEditingId(id);setPendingImages([]);setPendingCoverKey("");setPendingLegalPdf(null);setRemoveExistingLegal(false);setUploadProgress("");
       await reload();setMessage(isNew?"Propiedad enviada a revisión.":"Propiedad actualizada.");
     }catch(error){
