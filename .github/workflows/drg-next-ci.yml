@@ -61,6 +61,10 @@ jobs:
         with:
           node-version: 24
 
+      - name: Install DRG test dependencies
+        working-directory: drg-next
+        run: npm install --no-audit --no-fund
+
       - name: Java for Firebase emulators
         uses: actions/setup-java@v4
         with:
@@ -74,4 +78,4 @@ jobs:
           --project demo-drg-next
           --config firebase.validation.json
           --only firestore,storage
-          "node -e \"console.log('Security rules compiled successfully')\""
+          "cd drg-next && npm run test:rules"
