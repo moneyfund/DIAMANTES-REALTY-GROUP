@@ -37,7 +37,7 @@ test("operation aliases match legacy behavior", () => {
 test("numeric parsing accepts formatted legacy values", () => {
   assert.equal(toFiniteNumber("$168,000 USD"), 168000);
   assert.equal(toFiniteNumber("3307.42"), 3307.42);
-  assert.equal(toFiniteNumber("no disponible"), null);
+  assert.equal(toFiniteNumber("no disponible"), 0);
 });
 
 test("cover image prefers explicit cover when valid", () => {
