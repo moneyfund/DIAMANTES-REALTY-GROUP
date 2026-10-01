@@ -1,0 +1,39 @@
+name: DRG Next CI
+
+on:
+  push:
+    branches:
+      - migration/drg-next
+  pull_request:
+    paths:
+      - "drg-next/**"
+      - ".github/workflows/drg-next-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: drg-next
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: drg-next/package.json
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
