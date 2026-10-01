@@ -19,6 +19,11 @@ service firebase.storage {
         propertyData(propertyId).get("ownerEmail","")==email()
       );
     }
+    function assistedUploader(propertyId){
+      return signedIn() &&
+        firestore.exists(/databases/(default)/documents/propertyListingAudit/$(propertyId)) &&
+        firestore.get(/databases/(default)/documents/propertyListingAudit/$(propertyId)).data.get("uploadedByAgentId","")==request.auth.uid;
+    }
     function isImage(){ return request.resource.contentType.matches('image/.*'); }
     function isPdf(){ return request.resource.contentType=="application/pdf"; }
 
@@ -47,9 +52,9 @@ service firebase.storage {
     match /property-legal-documents/{propertyId}/{fileName} {
       allow read: if isAdmin() || (isAgent() && ownsProperty(propertyId));
       allow create, update: if isAdmin() || (
-        isAgent() && ownsProperty(propertyId) && isPdf() && request.resource.size < 20 * 1024 * 1024
+        isAgent() && (ownsProperty(propertyId) || assistedUploader(propertyId)) && isPdf() && request.resource.size < 20 * 1024 * 1024
       );
-      allow delete: if isAdmin() || (isAgent() && ownsProperty(propertyId));
+      allow delete: if isAdmin() || (isAgent() && (ownsProperty(propertyId) || assistedUploader(propertyId)));
     }
 
     match /{allPaths=**} {

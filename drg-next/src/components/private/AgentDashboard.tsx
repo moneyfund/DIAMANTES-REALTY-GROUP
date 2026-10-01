@@ -7,6 +7,8 @@ import { drgWritesEnabled } from "@/lib/config/writes";
 import { attachLegalDocumentToAgentProperty, readAgentProperties, reserveAgentPropertyId, saveAgentProperty, markAgentPropertySold, deleteAgentProperty, removeLegalDocumentFromAgentProperty } from "@/lib/firebase/private-properties";
 import { deleteStoragePath, uploadAgentProfilePhoto, uploadAgentPropertyImage, uploadLegalPdf } from "@/lib/firebase/private-storage";
 import { saveAgentProfile, type AgentProfileDraft } from "@/lib/firebase/private-agents";
+import { readAgents } from "@/lib/firebase/agents";
+import type { Agent } from "@/types/agent";
 import { emptyAgentPropertyDraft, getContractStatus, propertyToDraft, validateContractDates, type AgentPropertyDraft } from "@/lib/properties/private";
 import { getDynamicFieldsForType } from "@/lib/properties/fields";
 import type { Property } from "@/types/property";
@@ -47,6 +49,8 @@ export function AgentDashboard() {
   const {profile,logout,refresh}=useDrgAuth();
   const [view,setView]=useState<View>("inicio");
   const [properties,setProperties]=useState<Property[]>([]);
+  const [allAgents,setAllAgents]=useState<Agent[]>([]);
+  const [listingOwnerId,setListingOwnerId]=useState("");
   const [loading,setLoading]=useState(true);
   const [message,setMessage]=useState("");
   const [editingId,setEditingId]=useState("");
@@ -66,8 +70,14 @@ export function AgentDashboard() {
   async function reload(){
     if(!user)return;
     setLoading(true);
-    try{setProperties((await readAgentProperties(user,agent)).sort((a,b)=>propertyDate(b)-propertyDate(a)));}
-    catch(error){console.error(error);setMessage("No fue posible cargar el inventario privado.");}
+    try{
+      const [own,agents]=await Promise.all([readAgentProperties(user,agent),readAgents()]);
+      setProperties(own.sort((a,b)=>propertyDate(b)-propertyDate(a)));setAllAgents(agents);
+      if(!listingOwnerId){
+        const current=agents.find(item=>item.id===agent?.id)||agents.find(item=>item.email&&item.email.toLowerCase()===String(user.email||"").toLowerCase());
+        setListingOwnerId(current?.id||agent?.id||"");
+      }
+    }catch(error){console.error(error);setMessage("No fue posible cargar el inventario privado.");}
     finally{setLoading(false)}
   }
 
@@ -92,8 +102,15 @@ export function AgentDashboard() {
 
   function editProperty(property:Property){
     setEditingId(property.id);setDraft(propertyToDraft(property));setPendingImages([]);setPendingLegalPdf(null);setRemoveExistingLegal(false);setUploadProgress("");setView("propiedad");setMessage("");
+    const raw=property.raw;const ids=[raw.agentId,raw.agenteId,raw.ownerId,raw.userId,raw.createdBy].map(v=>String(v||""));const emails=[raw.agentEmail,raw.ownerEmail,raw.createdByEmail].map(v=>String(v||"").toLowerCase());
+    const owner=allAgents.find(item=>[item.id,item.raw.uid,item.raw.userId,item.raw.agentId].map(v=>String(v||"")).some(id=>ids.includes(id)))||allAgents.find(item=>item.email&&emails.includes(item.email.toLowerCase()));
+    setListingOwnerId(owner?.id||agent?.id||"");
   }
-  function newProperty(){setEditingId("");setDraft(emptyAgentPropertyDraft());setPendingImages([]);setPendingLegalPdf(null);setRemoveExistingLegal(false);setUploadProgress("");setView("propiedad");setMessage("")}
+  function newProperty(){
+    setEditingId("");setDraft(emptyAgentPropertyDraft());setPendingImages([]);setPendingLegalPdf(null);setRemoveExistingLegal(false);setUploadProgress("");setView("propiedad");setMessage("");
+    const current=allAgents.find(item=>item.id===agent?.id)||allAgents.find(item=>item.email&&item.email.toLowerCase()===String(user?.email||"").toLowerCase());
+    setListingOwnerId(current?.id||agent?.id||"");
+  }
 
   async function submitProfile(event:FormEvent){
     event.preventDefault();
@@ -126,7 +143,8 @@ export function AgentDashboard() {
       const images=[...draft.images,...uploadedUrls];
       const nextDraft={...draft,images,coverImage:draft.coverImage&&images.includes(draft.coverImage)?draft.coverImage:(images[0]||"")};
       setUploadProgress("Guardando propiedad…");
-      const id=await saveAgentProperty({id:propertyId,draft:nextDraft,user,agent,createIfMissing:isNew});
+      const listingOwner=isNew?allAgents.find(item=>item.id===listingOwnerId)||agent:null;
+      const id=await saveAgentProperty({id:propertyId,draft:nextDraft,user,agent,createIfMissing:isNew,listingOwner});
       if(removeExistingLegal && editingId){
         setUploadProgress("Retirando documentación legal anterior…");
         const oldPath=await removeLegalDocumentFromAgentProperty(id,user,agent);
@@ -211,6 +229,7 @@ export function AgentDashboard() {
           <label>Tipo<select value={draft.type} onChange={e=>setDraft({...draft,type:e.target.value,details:{}})}>{propertyTypes.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
           <label>Operación<select value={draft.operation} onChange={e=>setDraft({...draft,operation:e.target.value})}><option value="venta">Venta</option><option value="alquiler">Alquiler</option><option value="venta_renta">Venta / Renta</option></select></label>
           <label>Estado comercial<select value={draft.status} onChange={e=>setDraft({...draft,status:e.target.value})}><option value="available">Disponible</option><option value="reserved">Reservada</option><option value="sold">Vendida</option><option value="rented">Rentada</option></select></label>
+          <label className="is-wide drg-assisted-owner">Agente propietario del listado<select value={listingOwnerId} disabled={Boolean(editingId)} onChange={e=>setListingOwnerId(e.target.value)}><option value="">Seleccionar agente</option>{allAgents.map(item=><option key={item.id} value={item.id}>{item.id===agent?.id||item.email===user?.email?"Mi perfil — ":""}{item.name}{item.email?" · "+item.email:""}</option>)}</select><small>{editingId?"Al editar se conserva el agente propietario actual.":"Puedes enlistarla para tu perfil o ayudar a otro agente habilitado; la carga asistida queda registrada en auditoría privada."}</small></label>
           <label>Visibilidad<select value={draft.visibility} onChange={e=>setDraft({...draft,visibility:e.target.value as AgentPropertyDraft["visibility"]})}><option value="public">Público</option><option value="agents">Solo agentes</option><option value="private">Solo yo</option></select></label>
           <label className="is-wide">Descripción<textarea rows={6} value={draft.description} onChange={e=>setDraft({...draft,description:e.target.value})}/></label>
           <fieldset className="drg-agent-tags is-wide"><legend>Etiquetas destacadas · máximo 2</legend>{["Nuevo ingreso","Oportunidad","Exclusiva","Negociable","Alta plusvalía"].map(tag=><label key={tag}><input type="checkbox" checked={draft.highlightedTags.includes(tag)} onChange={e=>{const next=e.target.checked?[...draft.highlightedTags,tag]:draft.highlightedTags.filter(item=>item!==tag);if(next.length<=2)setDraft({...draft,highlightedTags:next})}}/>{tag}</label>)}</fieldset>

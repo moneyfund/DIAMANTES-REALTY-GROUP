@@ -1,4 +1,4 @@
-import { collection, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where, type QueryConstraint } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where, writeBatch } from "firebase/firestore";
 import type { User } from "firebase/auth";
 import { getFirebaseClient } from "./client";
 import { assertDrgWritesEnabled } from "@/lib/config/writes";
@@ -41,9 +41,18 @@ export function reserveAgentPropertyId(){
   return doc(collection(firebase.db,"properties")).id;
 }
 
+function ownerIdentity(user:User,agent?:Agent|null){
+  if(!agent)return {uid:user.uid,email:user.email||"",displayName:user.displayName||"Agente DRG"};
+  return {
+    uid:String(agent.raw.uid||agent.raw.userId||agent.raw.agentId||agent.id),
+    email:agent.email||user.email||"",
+    displayName:agent.name||user.displayName||"Agente DRG"
+  };
+}
+
 export async function saveAgentProperty({
-  id,draft,user,agent,createIfMissing=false
-}:{id?:string;draft:AgentPropertyDraft;user:User;agent?:Agent|null;createIfMissing?:boolean}){
+  id,draft,user,agent,createIfMissing=false,listingOwner
+}:{id?:string;draft:AgentPropertyDraft;user:User;agent?:Agent|null;createIfMissing?:boolean;listingOwner?:Agent|null}){
   assertDrgWritesEnabled();
   const firebase=getFirebaseClient(); if(!firebase) throw new Error("Firebase no está disponible.");
   const ref=id?doc(firebase.db,"properties",id):doc(collection(firebase.db,"properties"));
@@ -59,7 +68,9 @@ export async function saveAgentProperty({
       throw new Error("La propiedad no existe.");
     }
   }
-  const payload=buildAgentPropertyPayload(draft,user,agent);
+  const ownerAgent=listingOwner||agent||null;
+  const owner=listingOwner?ownerIdentity(user,listingOwner):{uid:user.uid,email:user.email||"",displayName:user.displayName||""};
+  const payload=buildAgentPropertyPayload(draft,owner as Pick<User,"uid"|"email"|"displayName">,ownerAgent);
   if(id && exists){
     const currentStatus=String(existing?.raw.publicationStatus||"approved");
     const reviewFields=currentStatus==="rejected"
@@ -67,7 +78,29 @@ export async function saveAgentProperty({
       : {publicationStatus:currentStatus,publicVisible:currentStatus==="approved"};
     await updateDoc(ref,{...payload,...reviewFields,lastEditedBy:user.uid,updatedAt:serverTimestamp()});
   }else{
-    await setDoc(ref,{...payload,publicationStatus:"pending_review",publicVisible:false,reviewStatus:"pending_review",submittedAt:serverTimestamp(),createdAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});
+    const createPayload={...payload,publicationStatus:"pending_review",publicVisible:false,reviewStatus:"pending_review",submittedAt:serverTimestamp(),createdAt:serverTimestamp(),updatedAt:serverTimestamp()};
+    const ownerUid=String(owner.uid||"");
+    const ownerEmail=String(owner.email||"").toLowerCase();
+    const uploaderEmail=String(user.email||"").toLowerCase();
+    const assisted=Boolean(listingOwner && ownerUid && (ownerUid!==user.uid || (ownerEmail&&ownerEmail!==uploaderEmail)));
+    if(assisted){
+      const batch=writeBatch(firebase.db);
+      batch.set(ref,createPayload,{merge:true});
+      batch.set(doc(firebase.db,"propertyListingAudit",ref.id),{
+        propertyId:ref.id,
+        uploadedByAgentId:user.uid,
+        uploadedByAgentEmail:uploaderEmail,
+        uploadedByAgentName:agent?.name||user.displayName||user.email||"Agente DRG",
+        ownerAgentId:ownerUid,
+        ownerAgentEmail:ownerEmail,
+        ownerAgentName:listingOwner?.name||owner.displayName||"Agente DRG",
+        source:"drg-next-assisted-listing",
+        createdAt:serverTimestamp()
+      },{merge:true});
+      await batch.commit();
+    }else{
+      await setDoc(ref,createPayload,{merge:true});
+    }
   }
   return ref.id;
 }

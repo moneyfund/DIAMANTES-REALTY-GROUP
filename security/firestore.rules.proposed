@@ -37,6 +37,12 @@ service cloud.firestore {
     function agentReadable(data) {
       return isAgent() && (f(data,"visibility") in ["","public","agents"] || ownProperty(data));
     }
+    function assistedAuditValid(propertyId,data) {
+      return isAgent() &&
+        existsAfter(/databases/$(database)/documents/propertyListingAudit/$(propertyId)) &&
+        getAfter(/databases/$(database)/documents/propertyListingAudit/$(propertyId)).data.get("uploadedByAgentId","")==request.auth.uid &&
+        getAfter(/databases/$(database)/documents/propertyListingAudit/$(propertyId)).data.get("ownerAgentId","")==f(data,"agentId");
+    }
     function samePublicationState(before,after) {
       return f(after,"publicationStatus")==f(before,"publicationStatus") &&
         after.get("publicVisible",false)==before.get("publicVisible",false);
@@ -56,7 +62,7 @@ service cloud.firestore {
       allow read: if publicProperty(resource.data) || isAdmin() || agentReadable(resource.data);
       allow create: if isAdmin() || (
         isAgent() &&
-        ownProperty(request.resource.data) &&
+        (ownProperty(request.resource.data) || assistedAuditValid(propertyId,request.resource.data)) &&
         f(request.resource.data,"publicationStatus") in ["draft","pending_review"] &&
         request.resource.data.get("publicVisible",false)==false
       );
@@ -119,6 +125,14 @@ service cloud.firestore {
           resource.data.get("createdByAgentEmail","")==email()
         )
       );
+    }
+
+    match /propertyListingAudit/{propertyId} {
+      allow read: if isAdmin();
+      allow create: if isAgent() &&
+        request.resource.data.get("propertyId","")==propertyId &&
+        request.resource.data.get("uploadedByAgentId","")==request.auth.uid;
+      allow update, delete: if isAdmin();
     }
 
     match /access/{uid} {
