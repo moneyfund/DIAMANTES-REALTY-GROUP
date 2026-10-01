@@ -1,6 +1,4 @@
 import {
-  addDoc,
-  collection,
   deleteDoc,
   doc,
   getDoc,
@@ -36,7 +34,7 @@ export async function runMigrationSmokeTest(user:User,onStep:(step:MigrationSmok
   const listRef=doc(firebase.db,"sharedPropertyLists",id);
   const commentRef=doc(firebase.db,"properties",id,"comments","smoke-comment");
   const reviewRef=doc(firebase.db,"properties",id,"reviews","smoke-review");
-  const storageRef=ref(firebase.storage,`properties/${user.uid}/${id}/smoke.txt`);
+  const storageRef=ref(firebase.storage,`properties/${user.uid}/${id}/smoke.jpg`);
 
   const created:{property?:boolean;audit?:boolean;form?:boolean;list?:boolean;comment?:boolean;review?:boolean;storage?:boolean}={};
 
@@ -128,7 +126,7 @@ export async function runMigrationSmokeTest(user:User,onStep:(step:MigrationSmok
     });
 
     await step("storage","Subir archivo temporal a Storage",async()=>{
-      await uploadBytes(storageRef,new TextEncoder().encode("DRG MIGRATION SMOKE TEST"),{contentType:"text/plain"});
+      await uploadBytes(storageRef,new Uint8Array([255,216,255,224,0,16,74,70,73,70,0,1,1,0,0,1,0,1,0,0,255,217]),{contentType:"image/jpeg"});
       created.storage=true;
       return await getDownloadURL(storageRef);
     });
