@@ -1,5 +1,14 @@
 import type { Metadata, Viewport } from "next";
+import { Poppins } from "next/font/google";
 import { AgentPwaRegistration } from "@/components/pwa/AgentPwaRegistration";
+import "./agent-dashboard.css";
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-drg-agent",
+});
 
 export const metadata: Metadata = {
   applicationName: "DRG Agentes",
@@ -26,9 +35,9 @@ export default function AgentDashboardLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <>
+    <div className={poppins.variable}>
       <AgentPwaRegistration />
       {children}
-    </>
+    </div>
   );
 }

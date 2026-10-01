@@ -20,7 +20,7 @@ import { PropertyLocationPicker } from "@/components/properties/PropertyLocation
 import { PropertyImageManager, propertyImageFileKey } from "@/components/properties/PropertyImageManager";
 import { PropertyVideoPreview } from "@/components/properties/PropertyVideoPreview";
 import { validatePropertyVideo } from "@/lib/properties/video";
-import { Menu, X } from "lucide-react";
+import { ArrowUpRight, Building2, CheckCircle2, ListChecks, Menu, RefreshCw, UserRound, X } from "lucide-react";
 import { PropertyFormStepper } from "@/components/properties/PropertyFormStepper";
 
 type View="inicio"|"perfil"|"propiedad"|"listas"|"inventario"|"red-agentes"|"avaluos";
@@ -128,7 +128,24 @@ export function AgentDashboard() {
       (!ownCommercialStatus||property.status===ownCommercialStatus) &&
       (!ownVisibility||visibility===ownVisibility);
   }),[properties,ownSearch,ownPublication,ownCommercialStatus,ownVisibility]);
-  const profileComplete=Boolean((agent?.name||profileDraft.name)&&(agent?.email||profileDraft.email)&&(agent?.phone||profileDraft.phone));
+  const profileProgress=useMemo(()=>{
+    const values=[
+      profileDraft.name,
+      profileDraft.email,
+      profileDraft.phone,
+      profileDraft.licenseNumber,
+      profileDraft.description,
+      profileDraft.whatsapp,
+      profileDraft.instagram,
+      profileDraft.facebook,
+      profileDraft.tiktok,
+      pendingProfilePhoto?"pending-photo":(!removeProfilePhoto&&agent?.photo)||""
+    ];
+    const completed=values.filter(value=>String(value||"").trim().length>0).length;
+    const total=values.length;
+    return {completed,total,percent:Math.round((completed/total)*100)};
+  },[profileDraft,pendingProfilePhoto,removeProfilePhoto,agent?.photo]);
+  const profileComplete=profileProgress.completed===profileProgress.total;
   const primaryArea=Number(draft.details.totalArea||draft.details.landArea||draft.details.constructionArea||draft.area||0);
   const pricePerArea=draft.priceUsd>0&&primaryArea>0?draft.priceUsd/primaryArea:null;
 
@@ -249,7 +266,7 @@ export function AgentDashboard() {
     <aside className={"drg-agent-sidebar"+(mobileNavOpen?" is-mobile-open":"")}>
       <button className="drg-agent-sidebar-close" type="button" aria-label="Cerrar menú" onClick={()=>setMobileNavOpen(false)}><X size={20}/></button>
       <Link className="drg-agent-sidebar-brand" href="/"><strong>DIAMANTES</strong><span>Realty Group</span></Link>
-      <div className="drg-agent-sidebar-person"><div>{(agent?.name||user?.displayName||"DR").split(/\s+/).slice(0,2).map(v=>v[0]).join("").toUpperCase()}</div><strong>{agent?.name||user?.displayName||"Agente DRG"}</strong><span>{user?.email}</span></div>
+      <div className="drg-agent-sidebar-person"><div className="drg-agent-sidebar-avatar">{agent?.photo?<img src={agent.photo} alt="" />:<span>{(agent?.name||user?.displayName||"DR").split(/\s+/).slice(0,2).map(v=>v[0]).join("").toUpperCase()}</span>}</div><strong>{agent?.name||user?.displayName||"Agente DRG"}</strong><span>{user?.email}</span></div>
       <nav>
         <button className={view==="inicio"?"is-active":""} onClick={()=>{setView("inicio");setMobileNavOpen(false)}}>Inicio</button>
         <button className={view==="perfil"?"is-active":""} onClick={()=>{setView("perfil");setMobileNavOpen(false)}}>Mi perfil</button>
@@ -263,13 +280,32 @@ export function AgentDashboard() {
     </aside>
 
     <main className="drg-agent-workspace">
-      <header className="drg-agent-topbar"><button className="drg-agent-mobile-menu" type="button" aria-label="Abrir menú" onClick={()=>setMobileNavOpen(true)}><Menu size={20}/></button><div><p className="drg-kicker">Panel de agente · DRG 2.0</p><h1>{view==="inicio"?"Resumen":view==="perfil"?"Perfil profesional":view==="propiedad"?(editingId?"Editar propiedad":"Nueva propiedad"):view==="listas"?"Listas compartidas":view==="inventario"?"Mis propiedades":view==="red-agentes"?"Propiedades de agentes":"Avalúos"}</h1></div><button onClick={()=>void reload()}>Actualizar datos</button></header>
+      <header className="drg-agent-topbar"><button className="drg-agent-mobile-menu" type="button" aria-label="Abrir menú" onClick={()=>setMobileNavOpen(true)}><Menu size={20}/></button><div><p className="drg-kicker">Panel de agente · DRG</p><h1>{view==="inicio"?"Resumen":view==="perfil"?"Perfil profesional":view==="propiedad"?(editingId?"Editar propiedad":"Nueva propiedad"):view==="listas"?"Listas compartidas":view==="inventario"?"Mis propiedades":view==="red-agentes"?"Propiedades de agentes":"Avalúos"}</h1></div><button className="drg-agent-refresh" onClick={()=>void reload()}><RefreshCw size={14}/><span>Actualizar datos</span></button></header>
       {message?<div className="drg-agent-message">{message}<button onClick={()=>setMessage("")}>×</button></div>:null}
 
       {view==="inicio"?<section className="drg-agent-home">
-        <div className="drg-agent-welcome"><div><p className="drg-kicker">Sesión activa</p><h2>Hola, {agent?.name||user?.displayName||"Agente DRG"}</h2></div><div><span>{new Intl.DateTimeFormat("es-NI",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).format(now)}</span><strong>{new Intl.DateTimeFormat("es-NI",{hour:"numeric",minute:"2-digit",second:"2-digit"}).format(now)}</strong></div></div>
-        <div className="drg-private-stats"><article><strong>{stats.total}</strong><span>Mis propiedades</span></article><article><strong>{stats.available}</strong><span>Disponibles</span></article><article><strong>{sharedListCount}</strong><span>Listas compartidas</span></article><article><strong>{profileComplete?"Completo":"Pendiente"}</strong><span>Perfil</span></article></div>
-        <div className="drg-agent-home-grid"><article><p className="drg-kicker">Estado de migración</p><h2>Tu panel ya reconoce tu inventario real</h2><p>La arquitectura nueva consulta propiedades asociadas a tu UID y correo, manteniendo compatibilidad con los documentos existentes.</p><button onClick={()=>setView("inventario")}>Revisar inventario</button></article><article><p className="drg-kicker">Seguridad</p><h2>Las mutaciones siguen bloqueadas</h2><p>Perfil, propiedades y Storage están preparados en código, pero no podrán escribir hasta validar reglas y activar explícitamente la bandera de escritura.</p></article></div>
+        <div className="drg-agent-welcome">
+          <div><p className="drg-kicker">Sesión activa</p><h2>Hola, {agent?.name||user?.displayName||"Agente DRG"}</h2><p className="drg-agent-welcome-subtitle">Gestiona tu inventario, perfil profesional y herramientas comerciales desde un solo lugar.</p></div>
+          <div className="drg-agent-clock"><span>{new Intl.DateTimeFormat("es-NI",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).format(now)}</span><strong>{new Intl.DateTimeFormat("es-NI",{hour:"numeric",minute:"2-digit",second:"2-digit"}).format(now)}</strong></div>
+        </div>
+        <div className="drg-private-stats">
+          <article><span className="drg-agent-stat-icon"><Building2 size={20}/></span><div><strong>{stats.total}</strong><span>Mis propiedades</span><small>Inventario registrado</small></div></article>
+          <article><span className="drg-agent-stat-icon is-green"><CheckCircle2 size={20}/></span><div><strong>{stats.available}</strong><span>Disponibles</span><small>Activas para gestión</small></div></article>
+          <article><span className="drg-agent-stat-icon is-gold"><ListChecks size={20}/></span><div><strong>{sharedListCount}</strong><span>Listas compartidas</span><small>Seguimiento comercial</small></div></article>
+          <article className={profileComplete?"is-profile-complete":""}><span className="drg-agent-stat-icon is-red"><UserRound size={20}/></span><div><strong>{profileProgress.completed}/{profileProgress.total}</strong><span>Perfil</span><small>{profileProgress.percent}% completado</small></div></article>
+        </div>
+        <div className="drg-agent-home-grid">
+          <article className="drg-agent-overview-card">
+            <div><p className="drg-kicker">Gestión inmobiliaria</p><h2>Tu espacio de trabajo DRG</h2><p>Consulta tus propiedades, registra nuevos inmuebles y mantén tu información profesional al día desde este panel.</p></div>
+            <div className="drg-agent-quick-actions"><button onClick={()=>setView("inventario")}>Revisar inventario <ArrowUpRight size={15}/></button><button className="is-secondary" onClick={newProperty}>Subir propiedad</button></div>
+          </article>
+          <article className="drg-agent-profile-progress-card">
+            <div className="drg-agent-profile-progress-head"><div><p className="drg-kicker">Perfil profesional</p><h2>{profileProgress.percent}%</h2></div><span>{profileProgress.completed}/{profileProgress.total}</span></div>
+            <p>Completa tus datos para que tu perfil público tenga toda la información que necesitan tus clientes.</p>
+            <div className="drg-agent-progress-track" aria-label={"Perfil completado al "+profileProgress.percent+"%"}><span style={{width:profileProgress.percent+"%"}}/></div>
+            <div className="drg-agent-profile-progress-meta"><span>{profileComplete?"Perfil completo":"Campos pendientes: "+(profileProgress.total-profileProgress.completed)}</span><button onClick={()=>setView("perfil")}>{profileComplete?"Revisar perfil":"Completar perfil"}</button></div>
+          </article>
+        </div>
       </section>:null}
 
       {view==="perfil"?<form className="drg-agent-editor" onSubmit={submitProfile}>

@@ -1,0 +1,182 @@
+/* DRG Agents — professional app surface */
+.drg-agent-dashboard-page{
+  --agent-navy:#071a33;
+  --agent-navy-2:#0b2546;
+  --agent-red:#b00008;
+  --agent-red-2:#d01820;
+  --agent-gold:#d4b474;
+  --agent-bg:#f4f7fb;
+  --agent-card:#ffffff;
+  --agent-text:#122033;
+  --agent-muted:#718096;
+  --agent-line:#e4e9f0;
+  min-height:100svh;
+  background:
+    radial-gradient(circle at 76% 0%,rgba(176,0,8,.045),transparent 26rem),
+    radial-gradient(circle at 36% 12%,rgba(7,26,51,.05),transparent 24rem),
+    var(--agent-bg);
+}
+.drg-agent-dashboard-page .drg-agent-app,
+.drg-agent-dashboard-page .drg-agent-app button,
+.drg-agent-dashboard-page .drg-agent-app input,
+.drg-agent-dashboard-page .drg-agent-app select,
+.drg-agent-dashboard-page .drg-agent-app textarea{
+  font-family:var(--font-drg-agent),"Poppins",Arial,sans-serif!important;
+}
+.drg-agent-dashboard-page .drg-agent-app{grid-template-columns:272px minmax(0,1fr);background:transparent;color:var(--agent-text)}
+.drg-agent-dashboard-page .drg-agent-app h1,
+.drg-agent-dashboard-page .drg-agent-app h2,
+.drg-agent-dashboard-page .drg-agent-app h3{font-family:inherit!important;letter-spacing:-.035em}
+.drg-agent-dashboard-page .drg-kicker{font-family:inherit;font-size:10px;font-weight:700;letter-spacing:.16em;color:var(--agent-red)}
+
+.drg-agent-dashboard-page .drg-agent-sidebar{
+  padding:26px 19px 18px;
+  background:
+    radial-gradient(circle at 50% 12%,rgba(59,106,160,.16),transparent 15rem),
+    linear-gradient(180deg,#06172c 0%,#071b35 54%,#06162a 100%);
+  border-right:1px solid rgba(255,255,255,.055);
+  box-shadow:16px 0 50px rgba(7,26,51,.08);
+}
+.drg-agent-dashboard-page .drg-agent-sidebar-brand{padding:2px 0 23px;border-bottom:1px solid rgba(255,255,255,.08)}
+.drg-agent-dashboard-page .drg-agent-sidebar-brand strong{font-family:inherit!important;font-size:24px;font-weight:600;letter-spacing:.11em}
+.drg-agent-dashboard-page .drg-agent-sidebar-brand span{margin-top:3px;color:var(--agent-gold);font-size:7px;font-weight:500;letter-spacing:.22em}
+.drg-agent-dashboard-page .drg-agent-sidebar-person{margin:22px 0 18px;padding:17px 7px 20px;border-top:0;border-bottom:1px solid rgba(255,255,255,.085)}
+.drg-agent-dashboard-page .drg-agent-sidebar-avatar{width:68px;height:68px;display:grid;place-items:center;overflow:hidden;border:1px solid rgba(255,255,255,.24);border-radius:22px;background:linear-gradient(145deg,rgba(255,255,255,.13),rgba(255,255,255,.04));box-shadow:0 12px 28px rgba(0,0,0,.16)}
+.drg-agent-dashboard-page .drg-agent-sidebar-avatar img{width:100%;height:100%;object-fit:cover}
+.drg-agent-dashboard-page .drg-agent-sidebar-avatar span{font-size:21px;font-weight:600;letter-spacing:.02em}
+.drg-agent-dashboard-page .drg-agent-sidebar-person strong{margin-top:11px;font-size:11px;font-weight:600}
+.drg-agent-dashboard-page .drg-agent-sidebar-person>span{max-width:190px;color:rgba(255,255,255,.5);font-size:7.5px}
+.drg-agent-dashboard-page .drg-agent-sidebar nav{gap:6px}
+.drg-agent-dashboard-page .drg-agent-sidebar nav button{
+  min-height:44px;padding:0 14px;border-radius:11px;color:rgba(255,255,255,.66);
+  font-size:10px;font-weight:500;transition:background .18s ease,color .18s ease,transform .18s ease,box-shadow .18s ease
+}
+.drg-agent-dashboard-page .drg-agent-sidebar nav button:hover{background:rgba(255,255,255,.065);color:#fff;transform:translateX(2px)}
+.drg-agent-dashboard-page .drg-agent-sidebar nav button.is-active{
+  background:linear-gradient(90deg,rgba(176,0,8,.28),rgba(255,255,255,.075));
+  box-shadow:inset 3px 0 #ef2730,0 10px 22px rgba(0,0,0,.08);color:#fff;font-weight:600
+}
+.drg-agent-dashboard-page .drg-agent-sidebar-foot{gap:8px}
+.drg-agent-dashboard-page .drg-agent-sidebar-foot>span{padding:8px 10px;border-radius:999px;font-size:7px;font-weight:600;letter-spacing:.03em}
+.drg-agent-dashboard-page .drg-agent-sidebar-foot .is-write{background:rgba(30,168,102,.13);color:#78e1ad;border:1px solid rgba(120,225,173,.12)}
+.drg-agent-dashboard-page .drg-agent-sidebar-foot button{height:41px;border:1px solid rgba(255,255,255,.12);border-radius:10px;color:rgba(255,255,255,.68);font-size:9px;font-weight:500;transition:.18s}
+.drg-agent-dashboard-page .drg-agent-sidebar-foot button:hover{background:rgba(255,255,255,.06);color:#fff}
+
+.drg-agent-dashboard-page .drg-agent-workspace{padding:28px clamp(24px,3.5vw,52px) 64px}
+.drg-agent-dashboard-page .drg-agent-topbar{min-height:100px;align-items:center;padding:8px 0 21px;border-bottom:1px solid var(--agent-line)}
+.drg-agent-dashboard-page .drg-agent-topbar h1{margin:5px 0 0;font-size:clamp(36px,3.4vw,48px);font-weight:600;line-height:1;letter-spacing:-.045em}
+.drg-agent-dashboard-page .drg-agent-refresh{
+  height:42px!important;display:inline-flex!important;align-items:center;gap:8px;padding:0 15px!important;
+  border:1px solid #dce2ea!important;border-radius:11px!important;background:rgba(255,255,255,.9)!important;color:#29394f;
+  box-shadow:0 8px 24px rgba(15,30,50,.055);font-size:9px!important;font-weight:600!important;transition:.18s
+}
+.drg-agent-dashboard-page .drg-agent-refresh:hover{border-color:#cfd7e2!important;transform:translateY(-1px);box-shadow:0 11px 28px rgba(15,30,50,.085)}
+.drg-agent-dashboard-page .drg-agent-message{margin-top:16px;padding:12px 44px 12px 14px;border:1px solid #eadbdd;border-left:3px solid var(--agent-red);border-radius:10px;background:#fff;color:#5d6979;box-shadow:0 6px 18px rgba(20,35,55,.035);font-size:9px}
+
+.drg-agent-dashboard-page .drg-agent-home{margin-top:20px}
+.drg-agent-dashboard-page .drg-agent-welcome{
+  position:relative;overflow:hidden;margin-bottom:16px;padding:24px 26px;border:1px solid rgba(214,222,232,.9);border-radius:18px;
+  background:linear-gradient(135deg,#fff 0%,#fbfcfe 66%,#f4f7fb 100%);box-shadow:0 12px 34px rgba(20,35,55,.05)
+}
+.drg-agent-dashboard-page .drg-agent-welcome:after{content:"";position:absolute;right:-80px;top:-100px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(176,0,8,.065),transparent 68%);pointer-events:none}
+.drg-agent-dashboard-page .drg-agent-welcome h2{margin:6px 0 4px;font-size:27px;font-weight:600;letter-spacing:-.04em}
+.drg-agent-dashboard-page .drg-agent-welcome-subtitle{max-width:650px;margin:7px 0 0;color:#738095;font-size:9.5px;line-height:1.65}
+.drg-agent-dashboard-page .drg-agent-clock{position:relative;z-index:1}
+.drg-agent-dashboard-page .drg-agent-clock span{font-size:7.5px!important;font-weight:500;color:#8a95a5!important}
+.drg-agent-dashboard-page .drg-agent-clock strong{margin-top:5px!important;font-size:18px!important;font-weight:600;letter-spacing:-.035em}
+
+.drg-agent-dashboard-page .drg-private-stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-top:0}
+.drg-agent-dashboard-page .drg-private-stats article{
+  min-height:126px;display:flex;align-items:center;gap:15px;padding:20px;border:1px solid var(--agent-line);border-radius:17px;
+  background:rgba(255,255,255,.96);box-shadow:0 10px 28px rgba(20,35,55,.045);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease
+}
+.drg-agent-dashboard-page .drg-private-stats article:hover{transform:translateY(-2px);border-color:#d7dee8;box-shadow:0 15px 36px rgba(20,35,55,.075)}
+.drg-agent-dashboard-page .drg-agent-stat-icon{width:42px;height:42px;display:grid;place-items:center;flex:none;border-radius:13px;background:#edf3f9;color:#1e4d7b}
+.drg-agent-dashboard-page .drg-agent-stat-icon.is-green{background:#e9f7ef;color:#218351}
+.drg-agent-dashboard-page .drg-agent-stat-icon.is-gold{background:#f8f1e3;color:#9a6c18}
+.drg-agent-dashboard-page .drg-agent-stat-icon.is-red{background:#fff0f1;color:var(--agent-red)}
+.drg-agent-dashboard-page .drg-private-stats article>div{min-width:0}
+.drg-agent-dashboard-page .drg-private-stats strong{font-size:31px;font-weight:600;letter-spacing:-.055em;line-height:1}
+.drg-agent-dashboard-page .drg-private-stats article>div>span{display:block;margin-top:6px;color:#536174;font-size:9px;font-weight:600}
+.drg-agent-dashboard-page .drg-private-stats small{display:block;margin-top:3px;color:#97a1ae;font-size:7px;font-weight:400}
+.drg-agent-dashboard-page .drg-private-stats article.is-profile-complete{border-color:#d8eadf;background:linear-gradient(135deg,#fff,#f8fcfa)}
+
+.drg-agent-dashboard-page .drg-agent-home-grid{grid-template-columns:minmax(0,1.35fr) minmax(300px,.65fr);gap:14px;margin-top:14px}
+.drg-agent-dashboard-page .drg-agent-home-grid>article{
+  min-height:220px;padding:25px;border:1px solid var(--agent-line);border-radius:18px;background:#fff;box-shadow:0 10px 30px rgba(20,35,55,.045)
+}
+.drg-agent-dashboard-page .drg-agent-home-grid h2{margin:6px 0 8px;font-size:24px;font-weight:600;line-height:1.16}
+.drg-agent-dashboard-page .drg-agent-home-grid p:not(.drg-kicker){max-width:720px;margin:0;color:#738095;font-size:9.5px;line-height:1.75}
+.drg-agent-dashboard-page .drg-agent-overview-card{display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(145deg,#fff 0%,#fbfcfe 100%)}
+.drg-agent-dashboard-page .drg-agent-quick-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:24px}
+.drg-agent-dashboard-page .drg-agent-quick-actions button,
+.drg-agent-dashboard-page .drg-agent-profile-progress-meta button{
+  min-height:40px;display:inline-flex;align-items:center;justify-content:center;gap:7px;margin:0;padding:0 14px;border:0;border-radius:10px;
+  background:linear-gradient(135deg,#c3131c,var(--agent-red));color:#fff;font-size:8.5px;font-weight:600;box-shadow:0 9px 20px rgba(176,0,8,.16);cursor:pointer
+}
+.drg-agent-dashboard-page .drg-agent-quick-actions button.is-secondary{border:1px solid #dce2ea;background:#fff;color:#33445b;box-shadow:none}
+.drg-agent-dashboard-page .drg-agent-profile-progress-card{display:flex;flex-direction:column}
+.drg-agent-dashboard-page .drg-agent-profile-progress-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.drg-agent-dashboard-page .drg-agent-profile-progress-head h2{margin-top:4px;font-size:34px}
+.drg-agent-dashboard-page .drg-agent-profile-progress-head>span{padding:7px 10px;border-radius:999px;background:#f3f5f8;color:#59677a;font-size:8px;font-weight:600}
+.drg-agent-dashboard-page .drg-agent-progress-track{height:8px;margin:22px 0 13px;overflow:hidden;border-radius:999px;background:#edf1f5}
+.drg-agent-dashboard-page .drg-agent-progress-track>span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--agent-red),#ee4b52);box-shadow:0 0 18px rgba(176,0,8,.18);transition:width .35s ease}
+.drg-agent-dashboard-page .drg-agent-profile-progress-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:auto}
+.drg-agent-dashboard-page .drg-agent-profile-progress-meta>span{color:#7b8796;font-size:8px;font-weight:500}
+.drg-agent-dashboard-page .drg-agent-profile-progress-meta button{min-height:36px;padding:0 12px;box-shadow:none}
+
+.drg-agent-dashboard-page .drg-agent-editor{gap:16px}
+.drg-agent-dashboard-page .drg-agent-editor-section{padding:24px;border:1px solid var(--agent-line);border-radius:17px;background:#fff;box-shadow:0 10px 28px rgba(20,35,55,.04)}
+.drg-agent-dashboard-page .drg-agent-editor-section>legend{color:#4d5c70;font-size:9px;font-weight:600;letter-spacing:.06em}
+.drg-agent-dashboard-page .drg-agent-form-grid label{color:#5b6879;font-size:8.5px;font-weight:600}
+.drg-agent-dashboard-page .drg-agent-form-grid input,
+.drg-agent-dashboard-page .drg-agent-form-grid select,
+.drg-agent-dashboard-page .drg-agent-form-grid textarea{border-color:#dce3ea;border-radius:10px;background:#fbfcfd;font-size:10px;font-weight:400;outline:none;transition:border-color .18s ease,box-shadow .18s ease}
+.drg-agent-dashboard-page .drg-agent-form-grid input:focus,
+.drg-agent-dashboard-page .drg-agent-form-grid select:focus,
+.drg-agent-dashboard-page .drg-agent-form-grid textarea:focus{border-color:#aebccd;box-shadow:0 0 0 3px rgba(7,26,51,.055)}
+.drg-agent-dashboard-page .drg-profile-photo-editor{border-color:#e1e7ed;border-radius:14px;background:#f8fafc}
+.drg-agent-dashboard-page .drg-profile-photo-editor>div{font-family:inherit!important}
+.drg-agent-dashboard-page .drg-agent-editor-actions button,
+.drg-agent-dashboard-page .drg-agent-editor-actions a{border-radius:10px;font-size:8.5px;font-weight:600}
+
+.drg-agent-dashboard-page .drg-agent-inventory>header button,
+.drg-agent-dashboard-page .drg-agent-inventory-actions button,
+.drg-agent-dashboard-page .drg-agent-inventory-actions a,
+.drg-agent-dashboard-page .drg-agent-own-filters input,
+.drg-agent-dashboard-page .drg-agent-own-filters select{border-radius:9px}
+.drg-agent-dashboard-page .drg-agent-inventory-list article{border-color:var(--agent-line);border-radius:14px;box-shadow:0 8px 24px rgba(20,35,55,.035)}
+.drg-agent-dashboard-page .drg-agent-inventory-image{border-radius:10px;font-family:inherit!important}
+
+@media(max-width:1180px){
+  .drg-agent-dashboard-page .drg-private-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .drg-agent-dashboard-page .drg-agent-home-grid{grid-template-columns:1fr}
+}
+@media(max-width:920px) and (min-width:641px){
+  .drg-agent-dashboard-page .drg-agent-app{grid-template-columns:86px minmax(0,1fr)}
+  .drg-agent-dashboard-page .drg-agent-sidebar{padding-inline:10px}
+  .drg-agent-dashboard-page .drg-agent-sidebar-brand strong{font-size:15px}
+  .drg-agent-dashboard-page .drg-agent-sidebar-avatar{width:50px;height:50px;border-radius:16px}
+}
+@media(max-width:640px){
+  .drg-agent-dashboard-page .drg-agent-workspace{padding:14px 13px 40px}
+  .drg-agent-dashboard-page .drg-agent-topbar{min-height:76px;padding-bottom:14px}
+  .drg-agent-dashboard-page .drg-agent-topbar h1{font-size:30px}
+  .drg-agent-dashboard-page .drg-agent-mobile-menu{border-radius:11px!important}
+  .drg-agent-dashboard-page .drg-agent-welcome{align-items:flex-start;padding:20px;border-radius:16px}
+  .drg-agent-dashboard-page .drg-agent-welcome h2{font-size:23px}
+  .drg-agent-dashboard-page .drg-agent-clock{justify-items:start!important}
+  .drg-agent-dashboard-page .drg-private-stats{grid-template-columns:1fr 1fr;gap:9px}
+  .drg-agent-dashboard-page .drg-private-stats article{min-height:116px;display:grid;align-content:center;justify-items:start;gap:10px;padding:15px}
+  .drg-agent-dashboard-page .drg-agent-stat-icon{width:36px;height:36px;border-radius:11px}
+  .drg-agent-dashboard-page .drg-private-stats strong{font-size:26px}
+  .drg-agent-dashboard-page .drg-agent-home-grid>article{min-height:0;padding:20px;border-radius:16px}
+  .drg-agent-dashboard-page .drg-agent-quick-actions{display:grid;grid-template-columns:1fr 1fr}
+  .drg-agent-dashboard-page .drg-agent-profile-progress-meta{align-items:flex-start;flex-direction:column}
+  .drg-agent-dashboard-page .drg-agent-profile-progress-meta button{width:100%}
+}
+@media(max-width:430px){
+  .drg-agent-dashboard-page .drg-private-stats{grid-template-columns:1fr}
+  .drg-agent-dashboard-page .drg-private-stats article{grid-template-columns:36px 1fr}
+  .drg-agent-dashboard-page .drg-agent-quick-actions{grid-template-columns:1fr}
+}
