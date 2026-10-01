@@ -8,6 +8,7 @@ import { getDynamicFieldsForType } from "@/lib/properties/fields";
 import { propertyToDraft, validateContractDates, type AgentPropertyDraft } from "@/lib/properties/private";
 import type { Agent } from "@/types/agent";
 import type { Property } from "@/types/property";
+import { PropertyLocationPicker } from "@/components/properties/PropertyLocationPicker";
 
 const propertyTypes=[["house","Casa"],["apartment","Apartamento"],["land","Terreno"],["farm","Finca"],["quinta","Quinta"],["warehouse","Bodega"],["commercial","Comercial"],["office","Oficina"],["investment","Inversión"],["other","Otro"]] as const;
 const departments=["Boaco","Carazo","Chinandega","Chontales","Estelí","Granada","Jinotega","León","Madriz","Managua","Masaya","Matagalpa","Nueva Segovia","Rivas","Río San Juan"];
@@ -66,6 +67,7 @@ export function AdminPropertyEditor({property,agents,onClose,onSaved}:{property:
       return input==="select"?<label key={key}>{label}<select value={String(value)} onChange={e=>set(e.target.value)}><option value="">Seleccionar</option>{options?.map(option=><option key={option}>{option}</option>)}</select></label>:input==="textarea"?<label key={key} className="is-wide">{label}<textarea rows={3} value={String(value)} onChange={e=>set(e.target.value)}/></label>:<label key={key}>{label}<input type={input} value={String(value)} onChange={e=>set(e.target.value)}/></label>
     })}</div></fieldset>:null}
     <fieldset><legend>Ubicación, contrato y multimedia</legend><div className="drg-agent-form-grid">
+      <div className="is-wide"><PropertyLocationPicker lat={draft.lat} lng={draft.lng} locationText={draft.location} onChange={(lat,lng)=>setDraft({...draft,lat,lng})}/></div>
       <label>Latitud<input type="number" step="any" value={draft.lat??""} onChange={e=>setDraft({...draft,lat:num(e.target.value)})}/></label><label>Longitud<input type="number" step="any" value={draft.lng??""} onChange={e=>setDraft({...draft,lng:num(e.target.value)})}/></label>
       <label>Emisión contrato<input type="date" value={draft.contractStartDate} onChange={e=>setDraft({...draft,contractStartDate:e.target.value})}/></label><label>Vencimiento contrato<input type="date" value={draft.contractEndDate} onChange={e=>setDraft({...draft,contractEndDate:e.target.value})}/></label>
       <label>Video<select value={draft.videoType} onChange={e=>setDraft({...draft,videoType:e.target.value as AgentPropertyDraft["videoType"]})}><option value="">Sin video</option><option value="youtube">YouTube</option><option value="tiktok">TikTok</option></select></label><label>URL video<input value={draft.videoUrl} onChange={e=>setDraft({...draft,videoUrl:e.target.value})}/></label>

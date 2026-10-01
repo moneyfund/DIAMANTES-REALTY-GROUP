@@ -15,6 +15,7 @@ import type { Property } from "@/types/property";
 import { AgentSharedLists } from "./AgentSharedLists";
 import { AgentBrokerageInventory } from "./AgentBrokerageInventory";
 import { AvaluosPlaceholder } from "./AvaluosPlaceholder";
+import { PropertyLocationPicker } from "@/components/properties/PropertyLocationPicker";
 
 type View="inicio"|"perfil"|"propiedad"|"listas"|"inventario"|"red-agentes"|"avaluos";
 const departments=["Boaco","Carazo","Chinandega","Chontales","Estelí","Granada","Jinotega","León","Madriz","Managua","Masaya","Matagalpa","Nueva Segovia","Rivas","Río San Juan"];
@@ -238,6 +239,7 @@ export function AgentDashboard() {
         <DynamicFields draft={draft} setDraft={setDraft}/>
 
         <fieldset className="drg-agent-editor-section"><legend>03 · Ubicación y contrato</legend><div className="drg-agent-form-grid">
+          <div className="is-wide"><PropertyLocationPicker lat={draft.lat} lng={draft.lng} locationText={draft.location} onChange={(lat,lng)=>setDraft({...draft,lat,lng})}/></div>
           <label>Latitud<input type="number" step="any" value={draft.lat??""} onChange={e=>setDraft({...draft,lat:n(e.target.value)})}/></label>
           <label>Longitud<input type="number" step="any" value={draft.lng??""} onChange={e=>setDraft({...draft,lng:n(e.target.value)})}/></label>
           <label>Emisión de contrato<input type="date" value={draft.contractStartDate} onChange={e=>setDraft({...draft,contractStartDate:e.target.value})}/></label>
