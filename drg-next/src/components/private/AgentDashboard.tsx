@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useDrgAuth } from "@/components/auth/AuthProvider";
 import { drgWritesEnabled } from "@/lib/config/writes";
-import { readAgentProperties, saveAgentProperty, markAgentPropertySold, deleteAgentProperty } from "@/lib/firebase/private-properties";
+import { attachLegalDocumentToAgentProperty, readAgentProperties, reserveAgentPropertyId, saveAgentProperty, markAgentPropertySold, deleteAgentProperty } from "@/lib/firebase/private-properties";
+import { deleteStoragePath, uploadAgentPropertyImage, uploadLegalPdf } from "@/lib/firebase/private-storage";
 import { saveAgentProfile, type AgentProfileDraft } from "@/lib/firebase/private-agents";
 import { emptyAgentPropertyDraft, propertyToDraft, validateContractDates, type AgentPropertyDraft } from "@/lib/properties/private";
 import { getDynamicFieldsForType } from "@/lib/properties/fields";
@@ -47,6 +48,9 @@ export function AgentDashboard() {
   const [message,setMessage]=useState("");
   const [editingId,setEditingId]=useState("");
   const [draft,setDraft]=useState<AgentPropertyDraft>(emptyAgentPropertyDraft());
+  const [pendingImages,setPendingImages]=useState<File[]>([]);
+  const [pendingLegalPdf,setPendingLegalPdf]=useState<File|null>(null);
+  const [uploadProgress,setUploadProgress]=useState("");
   const [profileDraft,setProfileDraft]=useState<AgentProfileDraft>({
     name:"",description:"",email:"",phone:"",licenseNumber:"",instagram:"",facebook:"",tiktok:"",whatsapp:""
   });
@@ -82,9 +86,9 @@ export function AgentDashboard() {
   }),[properties]);
 
   function editProperty(property:Property){
-    setEditingId(property.id);setDraft(propertyToDraft(property));setView("propiedad");setMessage("");
+    setEditingId(property.id);setDraft(propertyToDraft(property));setPendingImages([]);setPendingLegalPdf(null);setUploadProgress("");setView("propiedad");setMessage("");
   }
-  function newProperty(){setEditingId("");setDraft(emptyAgentPropertyDraft());setView("propiedad");setMessage("")}
+  function newProperty(){setEditingId("");setDraft(emptyAgentPropertyDraft());setPendingImages([]);setPendingLegalPdf(null);setUploadProgress("");setView("propiedad");setMessage("")}
 
   async function submitProfile(event:FormEvent){
     event.preventDefault();
@@ -101,10 +105,32 @@ export function AgentDashboard() {
     if(!contract.valid){setMessage(contract.message);return}
     if(!draft.title.trim()||!draft.location.trim()||draft.priceUsd<=0){setMessage("Título, ubicación y precio son obligatorios.");return}
     if(!drgWritesEnabled){setMessage("El formulario ya está listo, pero el guardado sigue bloqueado hasta aprobar las reglas nuevas.");return}
+    const uploadedPaths:string[]=[];
     try{
-      const id=await saveAgentProperty({id:editingId||undefined,draft,user,agent});
-      setEditingId(id);await reload();setMessage(editingId?"Propiedad actualizada.":"Propiedad enviada a revisión.");
-    }catch(error){setMessage(error instanceof Error?error.message:"No fue posible guardar la propiedad.")}
+      const isNew=!editingId;
+      const propertyId=editingId||reserveAgentPropertyId();
+      const uploadedUrls:string[]=[];
+      for(let index=0;index<pendingImages.length;index+=1){
+        setUploadProgress(`Subiendo imagen ${index+1} de ${pendingImages.length}…`);
+        const uploaded=await uploadAgentPropertyImage(pendingImages[index],user.uid,propertyId);
+        uploadedUrls.push(uploaded.url); uploadedPaths.push(uploaded.path);
+      }
+      const images=[...draft.images,...uploadedUrls];
+      const nextDraft={...draft,images,coverImage:draft.coverImage&&images.includes(draft.coverImage)?draft.coverImage:(images[0]||"")};
+      setUploadProgress("Guardando propiedad…");
+      const id=await saveAgentProperty({id:propertyId,draft:nextDraft,user,agent,createIfMissing:isNew});
+      if(pendingLegalPdf){
+        setUploadProgress("Subiendo documentación legal…");
+        const legal=await uploadLegalPdf(pendingLegalPdf,id);
+        uploadedPaths.push(legal.path);
+        await attachLegalDocumentToAgentProperty(id,user,{fileName:pendingLegalPdf.name,fileUrl:legal.url,storagePath:legal.path},agent);
+      }
+      setDraft(nextDraft);setEditingId(id);setPendingImages([]);setPendingLegalPdf(null);setUploadProgress("");
+      await reload();setMessage(isNew?"Propiedad enviada a revisión.":"Propiedad actualizada.");
+    }catch(error){
+      for(const path of uploadedPaths){try{await deleteStoragePath(path)}catch{}}
+      setUploadProgress("");setMessage(error instanceof Error?error.message:"No fue posible guardar la propiedad.");
+    }
   }
 
   async function markSold(property:Property){
@@ -187,9 +213,11 @@ export function AgentDashboard() {
           <label>URL de video<input type="url" value={draft.videoUrl} onChange={e=>setDraft({...draft,videoUrl:e.target.value})}/></label>
           <label className="is-wide">Imágenes actuales / URLs<textarea rows={5} value={draft.images.join("\n")} onChange={e=>{const images=e.target.value.split(/\n+/).map(v=>v.trim()).filter(Boolean);setDraft({...draft,images,coverImage:images.includes(draft.coverImage)?draft.coverImage:(images[0]||"")})}} placeholder="Una URL por línea"/></label>
           {draft.images.length?<label className="is-wide">Imagen de portada<select value={draft.coverImage} onChange={e=>setDraft({...draft,coverImage:e.target.value})}>{draft.images.map((image,index)=><option value={image} key={image}>Imagen {index+1}</option>)}</select></label>:null}
-          <label className="is-wide drg-agent-upload-placeholder">Subida directa desde dispositivo<input type="file" accept="image/*" multiple disabled={!drgWritesEnabled}/><span>{drgWritesEnabled?"El uploader se conectará a Storage al guardar.":"Deshabilitado mientras DRG 2.0 permanezca en modo seguro."}</span></label>
+          <label className="is-wide drg-agent-upload-placeholder">Subida directa desde dispositivo<input type="file" accept="image/*" multiple disabled={!drgWritesEnabled} onChange={e=>setPendingImages(Array.from(e.target.files||[]))}/><span>{pendingImages.length?pendingImages.length+" imagen(es) seleccionadas":drgWritesEnabled?"Selecciona una o varias imágenes; se subirán al guardar.":"Deshabilitado mientras DRG 2.0 permanezca en modo seguro."}</span></label>
+          <label className="is-wide drg-agent-upload-placeholder">Documento legal privado (PDF)<input type="file" accept="application/pdf,.pdf" disabled={!drgWritesEnabled} onChange={e=>setPendingLegalPdf(e.target.files?.[0]||null)}/><span>{pendingLegalPdf?pendingLegalPdf.name:"PDF privado · máximo 20 MB"}</span></label>
         </div></fieldset>
 
+        {uploadProgress?<p className="drg-agent-upload-progress">{uploadProgress}</p>:null}
         <div className="drg-agent-editor-actions"><button type="submit">{drgWritesEnabled?(editingId?"Actualizar propiedad":"Enviar a revisión"):"Guardado bloqueado en Preview"}</button>{editingId?<button type="button" className="is-secondary" onClick={()=>{setEditingId("");setDraft(emptyAgentPropertyDraft())}}>Cancelar edición</button>:null}</div>
       </form>:null}
 

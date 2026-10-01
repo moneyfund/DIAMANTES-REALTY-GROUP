@@ -36,21 +36,31 @@ export async function readPrivatePropertyById(id:string){
   return snapshot.exists()?normalizeProperty(snapshot.id,snapshot.data()):null;
 }
 
+export function reserveAgentPropertyId(){
+  const firebase=getFirebaseClient(); if(!firebase) throw new Error("Firebase no está disponible.");
+  return doc(collection(firebase.db,"properties")).id;
+}
+
 export async function saveAgentProperty({
-  id,draft,user,agent
-}:{id?:string;draft:AgentPropertyDraft;user:User;agent?:Agent|null}){
+  id,draft,user,agent,createIfMissing=false
+}:{id?:string;draft:AgentPropertyDraft;user:User;agent?:Agent|null;createIfMissing?:boolean}){
   assertDrgWritesEnabled();
   const firebase=getFirebaseClient(); if(!firebase) throw new Error("Firebase no está disponible.");
   const ref=id?doc(firebase.db,"properties",id):doc(collection(firebase.db,"properties"));
   let existing:Property|null=null;
+  let exists=false;
   if(id){
     const current=await getDoc(ref);
-    if(!current.exists()) throw new Error("La propiedad no existe.");
-    existing=normalizeProperty(current.id,current.data());
-    if(!ownsPropertyForUser(existing,user,agent)) throw new Error("No tienes permisos para editar esta propiedad.");
+    exists=current.exists();
+    if(exists){
+      existing=normalizeProperty(current.id,current.data());
+      if(!ownsPropertyForUser(existing,user,agent)) throw new Error("No tienes permisos para editar esta propiedad.");
+    }else if(!createIfMissing){
+      throw new Error("La propiedad no existe.");
+    }
   }
   const payload=buildAgentPropertyPayload(draft,user,agent);
-  if(id){
+  if(id && exists){
     const currentStatus=String(existing?.raw.publicationStatus||"approved");
     const reviewFields=currentStatus==="rejected"
       ? {publicationStatus:"pending_review",publicVisible:false,reviewStatus:"pending_review",rejectionReason:"",resubmittedAt:serverTimestamp(),submittedAt:serverTimestamp()}
@@ -80,4 +90,17 @@ export async function deleteAgentProperty(id:string,user:User,agent?:Agent|null)
   const property=normalizeProperty(snapshot.id,snapshot.data());
   if(!ownsPropertyForUser(property,user,agent)) throw new Error("No tienes permisos para eliminar esta propiedad.");
   await deleteDoc(ref);
+}
+
+export async function attachLegalDocumentToAgentProperty(
+  id:string,user:User,legalDocument:{fileName:string;fileUrl:string;storagePath:string},agent?:Agent|null
+){
+  assertDrgWritesEnabled();
+  const firebase=getFirebaseClient(); if(!firebase) throw new Error("Firebase no está disponible.");
+  const ref=doc(firebase.db,"properties",id);
+  const snapshot=await getDoc(ref);
+  if(!snapshot.exists()) throw new Error("La propiedad no existe.");
+  const property=normalizeProperty(snapshot.id,snapshot.data());
+  if(!ownsPropertyForUser(property,user,agent)) throw new Error("No tienes permisos para modificar esta propiedad.");
+  await updateDoc(ref,{legalDocument:{...legalDocument,visibility:"private"},updatedAt:serverTimestamp()});
 }
