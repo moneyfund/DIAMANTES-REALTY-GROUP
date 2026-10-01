@@ -60,6 +60,10 @@ export function AgentDashboard() {
   const [sharedListCount,setSharedListCount]=useState(0);
   const [now,setNow]=useState(()=>new Date());
   const [message,setMessage]=useState("");
+  const [ownSearch,setOwnSearch]=useState("");
+  const [ownPublication,setOwnPublication]=useState("");
+  const [ownCommercialStatus,setOwnCommercialStatus]=useState("");
+  const [ownVisibility,setOwnVisibility]=useState("");
   const [editingId,setEditingId]=useState("");
   const [draft,setDraft]=useState<AgentPropertyDraft>(emptyAgentPropertyDraft());
   const [pendingImages,setPendingImages]=useState<File[]>([]);
@@ -110,6 +114,16 @@ export function AgentDashboard() {
     pending:properties.filter(p=>String(p.raw.publicationStatus)==="pending_review").length,
     sold:properties.filter(p=>["sold","vendida"].includes(String(p.status))).length
   }),[properties]);
+  const filteredOwnProperties=useMemo(()=>properties.filter(property=>{
+    const raw=property.raw;
+    const hay=[property.title,property.location,property.typeLabel,raw.department,raw.city].join(" ").toLowerCase();
+    const publication=String(raw.publicationStatus||"approved");
+    const visibility=String(raw.visibility||"public");
+    return (!ownSearch||hay.includes(ownSearch.toLowerCase())) &&
+      (!ownPublication||publication===ownPublication) &&
+      (!ownCommercialStatus||property.status===ownCommercialStatus) &&
+      (!ownVisibility||visibility===ownVisibility);
+  }),[properties,ownSearch,ownPublication,ownCommercialStatus,ownVisibility]);
   const profileComplete=Boolean((agent?.name||profileDraft.name)&&(agent?.email||profileDraft.email)&&(agent?.phone||profileDraft.phone));
   const primaryArea=Number(draft.details.totalArea||draft.details.landArea||draft.details.constructionArea||draft.area||0);
   const pricePerArea=draft.priceUsd>0&&primaryArea>0?draft.priceUsd/primaryArea:null;
@@ -293,12 +307,24 @@ export function AgentDashboard() {
 
       {view==="inventario"?<section className="drg-agent-inventory">
         <header><div><p>{loading?"Cargando…":properties.length+" propiedades asociadas a tu cuenta"}</p></div><button onClick={newProperty}>Nueva propiedad</button></header>
-        <div className="drg-agent-inventory-list">{properties.map(property=><article key={property.id}>
+        <div className="drg-agent-own-filters">
+          <input value={ownSearch} onChange={e=>setOwnSearch(e.target.value)} placeholder="Buscar por título, ubicación o tipo"/>
+          <select value={ownPublication} onChange={e=>setOwnPublication(e.target.value)}><option value="">Todas las publicaciones</option><option value="approved">Publicadas</option><option value="pending_review">Pendientes</option><option value="rejected">Rechazadas</option><option value="draft">Borradores</option><option value="archived">Archivadas</option></select>
+          <select value={ownCommercialStatus} onChange={e=>setOwnCommercialStatus(e.target.value)}><option value="">Todos los estados</option><option value="available">Disponible</option><option value="reserved">Reservada</option><option value="sold">Vendida</option><option value="rented">Rentada</option></select>
+          <select value={ownVisibility} onChange={e=>setOwnVisibility(e.target.value)}><option value="">Toda visibilidad</option><option value="public">Pública</option><option value="agents">Solo agentes</option><option value="private">Privada</option></select>
+        </div>
+        <p className="drg-agent-filter-summary">{filteredOwnProperties.length} de {properties.length} propiedades</p>
+        <div className="drg-agent-inventory-list">{filteredOwnProperties.map(property=>{
+          const legal=property.raw.legalDocument&&typeof property.raw.legalDocument==="object"?property.raw.legalDocument as Record<string,unknown>:null;
+          const rejection=String(property.raw.rejectionReason||"").trim();
+          const contract=getContractStatus(String(property.raw.contractStartDate||""),String(property.raw.contractEndDate||""));
+          return <article key={property.id}>
           <div className="drg-agent-inventory-image">{property.coverImage?<img src={property.coverImage} alt=""/>:<span>DRG</span>}</div>
-          <div><span className={"drg-agent-publication is-"+String(property.raw.publicationStatus||"approved")}>{publicationLabel(property)}</span><h2>{property.title}</h2><p>{property.location}</p><strong>{property.priceUsd?"$"+property.priceUsd.toLocaleString("en-US")+" USD":"Precio no disponible"}</strong><small>{property.typeLabel} · {property.operation==="alquiler"?"Alquiler":"Venta"} · {String(property.raw.visibility||"public")}</small><span className={"drg-contract-chip is-"+getContractStatus(String(property.raw.contractStartDate||""),String(property.raw.contractEndDate||"")).key}>{getContractStatus(String(property.raw.contractStartDate||""),String(property.raw.contractEndDate||"")).label}</span></div>
-          <div className="drg-agent-inventory-actions"><button onClick={()=>editProperty(property)}>Editar</button><Link href={"/propiedad/"+property.id} target="_blank">Vista pública</Link><Link href={"/property-sheet/"+property.id} target="_blank">Ficha PDF</Link><button onClick={()=>void markSold(property)}>Marcar vendida</button><button className="is-danger" onClick={()=>void remove(property)}>Eliminar</button></div>
-        </article>)}</div>
+          <div><span className={"drg-agent-publication is-"+String(property.raw.publicationStatus||"approved")}>{publicationLabel(property)}</span><h2>{property.title}</h2><p>{property.location}</p><strong>{property.priceUsd?"$"+property.priceUsd.toLocaleString("en-US")+" USD":"Precio no disponible"}</strong><small>{property.typeLabel} · {property.operation==="alquiler"?"Alquiler":"Venta"} · {String(property.raw.visibility||"public")}</small><span className={"drg-contract-chip is-"+contract.key}>{contract.label}</span>{rejection?<p className="drg-agent-rejection"><b>Motivo de rechazo:</b> {rejection}</p>:null}{legal?.fileUrl?<a className="drg-agent-legal-link" href={String(legal.fileUrl)} target="_blank" rel="noreferrer">Documento legal ↗</a>:null}</div>
+          <div className="drg-agent-inventory-actions"><button onClick={()=>editProperty(property)}>Editar</button>{property.publicVisible?<Link href={"/propiedad/"+property.id} target="_blank">Vista pública</Link>:null}<Link href={"/property-sheet/"+property.id} target="_blank">Ficha PDF</Link><button onClick={()=>void markSold(property)}>Marcar vendida</button><button className="is-danger" onClick={()=>void remove(property)}>Eliminar</button></div>
+        </article>})}</div>
         {!loading&&!properties.length?<div className="drg-agent-empty">No encontramos propiedades asociadas a esta cuenta.</div>:null}
+        {!loading&&properties.length>0&&!filteredOwnProperties.length?<div className="drg-agent-empty">No hay propiedades que coincidan con los filtros.</div>:null}
       </section>:null}
     </main>
   </section>;
