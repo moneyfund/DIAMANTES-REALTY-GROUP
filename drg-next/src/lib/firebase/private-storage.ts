@@ -40,3 +40,13 @@ export async function deleteStoragePath(path:string){
   const firebase=getFirebaseClient(); if(!firebase||!path) return;
   await deleteObject(ref(firebase.storage,path));
 }
+
+export async function uploadAdminPropertyImage(file:File,propertyId:string){
+  assertDrgWritesEnabled();
+  const firebase=getFirebaseClient(); if(!firebase) throw new Error("Firebase Storage no está disponible.");
+  if(!file.type.startsWith("image/")) throw new Error("Selecciona un archivo de imagen válido.");
+  if(file.size>15*1024*1024) throw new Error("La imagen no puede superar 15 MB.");
+  const path=`properties/${propertyId}/admin/${Date.now()}-${safeFileName(file.name||"image")}`;
+  const snapshot=await uploadBytes(ref(firebase.storage,path),file,{contentType:file.type||"image/jpeg"});
+  return {url:await getDownloadURL(snapshot.ref),path};
+}

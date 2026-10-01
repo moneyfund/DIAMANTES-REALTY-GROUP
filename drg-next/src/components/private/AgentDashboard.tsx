@@ -16,6 +16,7 @@ import { AgentSharedLists } from "./AgentSharedLists";
 import { AgentBrokerageInventory } from "./AgentBrokerageInventory";
 import { AvaluosPlaceholder } from "./AvaluosPlaceholder";
 import { PropertyLocationPicker } from "@/components/properties/PropertyLocationPicker";
+import { PropertyImageManager, propertyImageFileKey } from "@/components/properties/PropertyImageManager";
 
 type View="inicio"|"perfil"|"propiedad"|"listas"|"inventario"|"red-agentes"|"avaluos";
 const departments=["Boaco","Carazo","Chinandega","Chontales","Estelí","Granada","Jinotega","León","Madriz","Managua","Masaya","Matagalpa","Nueva Segovia","Rivas","Río San Juan"];
@@ -57,6 +58,7 @@ export function AgentDashboard() {
   const [editingId,setEditingId]=useState("");
   const [draft,setDraft]=useState<AgentPropertyDraft>(emptyAgentPropertyDraft());
   const [pendingImages,setPendingImages]=useState<File[]>([]);
+  const [pendingCoverKey,setPendingCoverKey]=useState("");
   const [pendingLegalPdf,setPendingLegalPdf]=useState<File|null>(null);
   const [uploadProgress,setUploadProgress]=useState("");
   const [pendingProfilePhoto,setPendingProfilePhoto]=useState<File|null>(null);
@@ -102,13 +104,13 @@ export function AgentDashboard() {
   }),[properties]);
 
   function editProperty(property:Property){
-    setEditingId(property.id);setDraft(propertyToDraft(property));setPendingImages([]);setPendingLegalPdf(null);setRemoveExistingLegal(false);setUploadProgress("");setView("propiedad");setMessage("");
+    setEditingId(property.id);setDraft(propertyToDraft(property));setPendingImages([]);setPendingCoverKey("");setPendingLegalPdf(null);setRemoveExistingLegal(false);setUploadProgress("");setView("propiedad");setMessage("");
     const raw=property.raw;const ids=[raw.agentId,raw.agenteId,raw.ownerId,raw.userId,raw.createdBy].map(v=>String(v||""));const emails=[raw.agentEmail,raw.ownerEmail,raw.createdByEmail].map(v=>String(v||"").toLowerCase());
     const owner=allAgents.find(item=>[item.id,item.raw.uid,item.raw.userId,item.raw.agentId].map(v=>String(v||"")).some(id=>ids.includes(id)))||allAgents.find(item=>item.email&&emails.includes(item.email.toLowerCase()));
     setListingOwnerId(owner?.id||agent?.id||"");
   }
   function newProperty(){
-    setEditingId("");setDraft(emptyAgentPropertyDraft());setPendingImages([]);setPendingLegalPdf(null);setRemoveExistingLegal(false);setUploadProgress("");setView("propiedad");setMessage("");
+    setEditingId("");setDraft(emptyAgentPropertyDraft());setPendingImages([]);setPendingCoverKey("");setPendingLegalPdf(null);setRemoveExistingLegal(false);setUploadProgress("");setView("propiedad");setMessage("");
     const current=allAgents.find(item=>item.id===agent?.id)||allAgents.find(item=>item.email&&item.email.toLowerCase()===String(user?.email||"").toLowerCase());
     setListingOwnerId(current?.id||agent?.id||"");
   }
@@ -142,7 +144,9 @@ export function AgentDashboard() {
         uploadedUrls.push(uploaded.url); uploadedPaths.push(uploaded.path);
       }
       const images=[...draft.images,...uploadedUrls];
-      const nextDraft={...draft,images,coverImage:draft.coverImage&&images.includes(draft.coverImage)?draft.coverImage:(images[0]||"")};
+      const pendingCoverIndex=pendingCoverKey?pendingImages.findIndex(file=>propertyImageFileKey(file)===pendingCoverKey):-1;
+      const requestedPendingCover=pendingCoverIndex>=0?uploadedUrls[pendingCoverIndex]:"";
+      const nextDraft={...draft,images,coverImage:requestedPendingCover||(draft.coverImage&&images.includes(draft.coverImage)?draft.coverImage:(images[0]||""))};
       setUploadProgress("Guardando propiedad…");
       const listingOwner=isNew?allAgents.find(item=>item.id===listingOwnerId)||agent:null;
       const id=await saveAgentProperty({id:propertyId,draft:nextDraft,user,agent,createIfMissing:isNew,listingOwner});
@@ -157,7 +161,7 @@ export function AgentDashboard() {
         uploadedPaths.push(legal.path);
         await attachLegalDocumentToAgentProperty(id,user,{fileName:pendingLegalPdf.name,fileUrl:legal.url,storagePath:legal.path},agent);
       }
-      setDraft(nextDraft);setEditingId(id);setPendingImages([]);setPendingLegalPdf(null);setRemoveExistingLegal(false);setUploadProgress("");
+      setDraft(nextDraft);setEditingId(id);setPendingImages([]);setPendingCoverKey("");setPendingLegalPdf(null);setRemoveExistingLegal(false);setUploadProgress("");
       await reload();setMessage(isNew?"Propiedad enviada a revisión.":"Propiedad actualizada.");
     }catch(error){
       for(const path of uploadedPaths){try{await deleteStoragePath(path)}catch{}}
@@ -249,9 +253,7 @@ export function AgentDashboard() {
         <fieldset className="drg-agent-editor-section"><legend>04 · Multimedia</legend><div className="drg-agent-form-grid">
           <label>Tipo de video<select value={draft.videoType} onChange={e=>setDraft({...draft,videoType:e.target.value as AgentPropertyDraft["videoType"]})}><option value="">Sin video</option><option value="youtube">YouTube</option><option value="tiktok">TikTok</option></select></label>
           <label>URL de video<input type="url" value={draft.videoUrl} onChange={e=>setDraft({...draft,videoUrl:e.target.value})}/></label>
-          <label className="is-wide">Imágenes actuales / URLs<textarea rows={5} value={draft.images.join("\n")} onChange={e=>{const images=e.target.value.split(/\n+/).map(v=>v.trim()).filter(Boolean);setDraft({...draft,images,coverImage:images.includes(draft.coverImage)?draft.coverImage:(images[0]||"")})}} placeholder="Una URL por línea"/></label>
-          {draft.images.length?<label className="is-wide">Imagen de portada<select value={draft.coverImage} onChange={e=>setDraft({...draft,coverImage:e.target.value})}>{draft.images.map((image,index)=><option value={image} key={image}>Imagen {index+1}</option>)}</select></label>:null}
-          <label className="is-wide drg-agent-upload-placeholder">Subida directa desde dispositivo<input type="file" accept="image/*" multiple disabled={!drgWritesEnabled} onChange={e=>setPendingImages(Array.from(e.target.files||[]))}/><span>{pendingImages.length?pendingImages.length+" imagen(es) seleccionadas":drgWritesEnabled?"Selecciona una o varias imágenes; se subirán al guardar.":"Deshabilitado mientras DRG 2.0 permanezca en modo seguro."}</span></label>
+          <div className="is-wide"><PropertyImageManager images={draft.images} coverImage={draft.coverImage} pendingFiles={pendingImages} pendingCoverKey={pendingCoverKey} writesEnabled={drgWritesEnabled} onImagesChange={images=>setDraft({...draft,images,coverImage:images.includes(draft.coverImage)?draft.coverImage:(images[0]||"")})} onCoverChange={coverImage=>setDraft({...draft,coverImage})} onPendingFilesChange={setPendingImages} onPendingCoverChange={setPendingCoverKey}/></div>
           <label className="is-wide drg-agent-upload-placeholder">Documento legal privado (PDF)<input type="file" accept="application/pdf,.pdf" disabled={!drgWritesEnabled} onChange={e=>{setPendingLegalPdf(e.target.files?.[0]||null);if(e.target.files?.[0])setRemoveExistingLegal(false)}}/><span>{pendingLegalPdf?pendingLegalPdf.name:"PDF privado · máximo 20 MB"}</span></label>
           {editingId&&properties.find(p=>p.id===editingId)?.raw.legalDocument?<div className="is-wide drg-agent-legal-existing"><div><strong>Documento legal existente</strong><span>{String((properties.find(p=>p.id===editingId)?.raw.legalDocument as Record<string,unknown>)?.fileName||"Documento PDF")}</span></div>{(properties.find(p=>p.id===editingId)?.raw.legalDocument as Record<string,unknown>)?.fileUrl?<a href={String((properties.find(p=>p.id===editingId)?.raw.legalDocument as Record<string,unknown>)?.fileUrl)} target="_blank" rel="noreferrer">Abrir PDF</a>:null}<label><input type="checkbox" checked={removeExistingLegal} onChange={e=>{setRemoveExistingLegal(e.target.checked);if(e.target.checked)setPendingLegalPdf(null)}}/>Quitar al guardar</label></div>:null}
         </div></fieldset>

@@ -9,6 +9,8 @@ import { propertyToDraft, validateContractDates, type AgentPropertyDraft } from 
 import type { Agent } from "@/types/agent";
 import type { Property } from "@/types/property";
 import { PropertyLocationPicker } from "@/components/properties/PropertyLocationPicker";
+import { PropertyImageManager, propertyImageFileKey } from "@/components/properties/PropertyImageManager";
+import { deleteStoragePath, uploadAdminPropertyImage } from "@/lib/firebase/private-storage";
 
 const propertyTypes=[["house","Casa"],["apartment","Apartamento"],["land","Terreno"],["farm","Finca"],["quinta","Quinta"],["warehouse","Bodega"],["commercial","Comercial"],["office","Oficina"],["investment","Inversión"],["other","Otro"]] as const;
 const departments=["Boaco","Carazo","Chinandega","Chontales","Estelí","Granada","Jinotega","León","Madriz","Managua","Masaya","Matagalpa","Nueva Segovia","Rivas","Río San Juan"];
@@ -19,6 +21,9 @@ export function AdminPropertyEditor({property,agents,onClose,onSaved}:{property:
   const [draft,setDraft]=useState<AgentPropertyDraft>(()=>propertyToDraft(property));
   const [agentId,setAgentId]=useState("");
   const [message,setMessage]=useState("");
+  const [pendingImages,setPendingImages]=useState<File[]>([]);
+  const [pendingCoverKey,setPendingCoverKey]=useState("");
+  const [uploading,setUploading]=useState("");
   const fields=useMemo(()=>getDynamicFieldsForType(draft.type),[draft.type]);
 
   useEffect(()=>{
@@ -41,8 +46,23 @@ export function AdminPropertyEditor({property,agents,onClose,onSaved}:{property:
     if(!contract.valid){setMessage(contract.message);return}
     if(!draft.title.trim()||!draft.location.trim()||draft.priceUsd<=0){setMessage("Título, ubicación y precio son obligatorios.");return}
     if(!drgWritesEnabled){setMessage("La edición administrativa está lista, pero las escrituras siguen bloqueadas en esta Preview.");return}
-    try{await updatePropertyAsAdmin({propertyId:property.id,draft,assignedAgent:assigned,adminUser:profile.user});await onSaved();setMessage("Propiedad actualizada.");}
-    catch(error){setMessage(error instanceof Error?error.message:"No fue posible actualizar la propiedad.")}
+    const uploadedPaths:string[]=[];
+    try{
+      const uploadedUrls:string[]=[];
+      for(let index=0;index<pendingImages.length;index+=1){
+        setUploading(`Subiendo imagen ${index+1} de ${pendingImages.length}…`);
+        const uploaded=await uploadAdminPropertyImage(pendingImages[index],property.id);uploadedUrls.push(uploaded.url);uploadedPaths.push(uploaded.path);
+      }
+      const images=[...draft.images,...uploadedUrls];
+      const pendingIndex=pendingCoverKey?pendingImages.findIndex(file=>propertyImageFileKey(file)===pendingCoverKey):-1;
+      const nextDraft={...draft,images,coverImage:pendingIndex>=0?uploadedUrls[pendingIndex]:(draft.coverImage&&images.includes(draft.coverImage)?draft.coverImage:(images[0]||""))};
+      setUploading("Guardando propiedad…");
+      await updatePropertyAsAdmin({propertyId:property.id,draft:nextDraft,assignedAgent:assigned,adminUser:profile.user});
+      setPendingImages([]);setPendingCoverKey("");setUploading("");await onSaved();setMessage("Propiedad actualizada.");
+    }catch(error){
+      for(const path of uploadedPaths){try{await deleteStoragePath(path)}catch{}}
+      setUploading("");setMessage(error instanceof Error?error.message:"No fue posible actualizar la propiedad.");
+    }
   }
 
   return <div className="drg-admin-modal drg-admin-property-editor-modal" onMouseDown={e=>{if(e.currentTarget===e.target)onClose()}}><form className="drg-admin-property-editor" onSubmit={submit}>
@@ -71,10 +91,9 @@ export function AdminPropertyEditor({property,agents,onClose,onSaved}:{property:
       <label>Latitud<input type="number" step="any" value={draft.lat??""} onChange={e=>setDraft({...draft,lat:num(e.target.value)})}/></label><label>Longitud<input type="number" step="any" value={draft.lng??""} onChange={e=>setDraft({...draft,lng:num(e.target.value)})}/></label>
       <label>Emisión contrato<input type="date" value={draft.contractStartDate} onChange={e=>setDraft({...draft,contractStartDate:e.target.value})}/></label><label>Vencimiento contrato<input type="date" value={draft.contractEndDate} onChange={e=>setDraft({...draft,contractEndDate:e.target.value})}/></label>
       <label>Video<select value={draft.videoType} onChange={e=>setDraft({...draft,videoType:e.target.value as AgentPropertyDraft["videoType"]})}><option value="">Sin video</option><option value="youtube">YouTube</option><option value="tiktok">TikTok</option></select></label><label>URL video<input value={draft.videoUrl} onChange={e=>setDraft({...draft,videoUrl:e.target.value})}/></label>
-      <label className="is-wide">URLs de imágenes<textarea rows={5} value={draft.images.join("\n")} onChange={e=>{const images=e.target.value.split(/\n+/).map(v=>v.trim()).filter(Boolean);setDraft({...draft,images,coverImage:images.includes(draft.coverImage)?draft.coverImage:(images[0]||"")})}}/></label>
-      {draft.images.length?<label className="is-wide">Portada<select value={draft.coverImage} onChange={e=>setDraft({...draft,coverImage:e.target.value})}>{draft.images.map((url,index)=><option key={url} value={url}>Imagen {index+1}</option>)}</select></label>:null}
+      <div className="is-wide"><PropertyImageManager images={draft.images} coverImage={draft.coverImage} pendingFiles={pendingImages} pendingCoverKey={pendingCoverKey} writesEnabled={drgWritesEnabled} onImagesChange={images=>setDraft({...draft,images,coverImage:images.includes(draft.coverImage)?draft.coverImage:(images[0]||"")})} onCoverChange={coverImage=>setDraft({...draft,coverImage})} onPendingFilesChange={setPendingImages} onPendingCoverChange={setPendingCoverKey}/></div>
       {property.raw.legalDocument&&typeof property.raw.legalDocument==="object"?<div className="is-wide drg-agent-legal-existing"><div><strong>Documento legal privado</strong><span>{String((property.raw.legalDocument as Record<string,unknown>).fileName||"PDF registrado")}</span></div>{(property.raw.legalDocument as Record<string,unknown>).fileUrl?<a href={String((property.raw.legalDocument as Record<string,unknown>).fileUrl)} target="_blank" rel="noreferrer">Abrir PDF</a>:null}</div>:null}
     </div></fieldset>
-    <footer><button type="button" onClick={onClose}>Cancelar</button><button type="submit">{drgWritesEnabled?"Guardar cambios":"Guardado bloqueado en Preview"}</button></footer>
+    {uploading?<p className="drg-agent-upload-progress">{uploading}</p>:null}<footer><button type="button" onClick={onClose}>Cancelar</button><button type="submit">{drgWritesEnabled?"Guardar cambios":"Guardado bloqueado en Preview"}</button></footer>
   </form></div>;
 }
