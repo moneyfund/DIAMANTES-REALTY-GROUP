@@ -1,22 +1,18 @@
-# Propuesta de reglas DRG 2.0
+# Seguridad DRG 2.0 — estado de preparación
 
-Estos archivos son BORRADORES y NO se despliegan automáticamente.
+La auditoría read-only confirma que las 28 propiedades actuales tienen ownership fuerte:
+- 28 con identificador de agente/propietario;
+- 28 con email asociado;
+- 0 dependientes solo del nombre;
+- 0 sin correspondencia;
+- 0 documentos con modelo legacy de publicación.
 
-- security/firestore.rules.proposed
-- security/storage.rules.proposed
+Esto permite diseñar reglas de propiedad sin depender de nombres editables.
 
-Objetivos:
-- mantener lectura pública de propiedades aprobadas;
-- permitir a agentes trabajar únicamente con propiedades que les pertenecen;
-- reservar aprobación/rechazo y administración global para administradores;
-- proteger documentos legales;
-- permitir comentarios/reseñas autenticados por usuario;
-- separar formularios públicos de su bandeja administrativa.
+Los archivos de `security/` siguen siendo propuestas. No existe workflow de deploy de reglas y no deben publicarse hasta:
+1. validar Google Auth en Preview;
+2. crear backup;
+3. probar reglas en staging/emulador;
+4. obtener aprobación explícita para modificar reglas reales.
 
-Antes de desplegar:
-1. ejecutar auditoría de ownership;
-2. corregir propiedades sin UID/email fuerte;
-3. realizar backup Firestore + Storage;
-4. validar login admin/agente desde staging;
-5. probar reglas con emulador o proyecto de staging;
-6. desplegar a producción únicamente tras aprobación explícita.
+`sharedPropertyLists` queda intencionalmente restringido a agentes/admin en esta propuesta. Antes de migrar enlaces públicos compartibles hay que diseñar una ruta segura basada en token que no permita enumerar listas activas.

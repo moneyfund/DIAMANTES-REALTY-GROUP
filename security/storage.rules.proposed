@@ -6,34 +6,50 @@ service firebase.storage {
     function email(){ return signedIn() ? request.auth.token.email : ""; }
     function isAdmin(){ return verifiedEmail() && email() in ["norvingarcia220@gmail.com", "diego.valdivia.52056@gmail.com", "diamantesrealtygroup@gmail.com"]; }
     function isAgent(){ return verifiedEmail() && (isAdmin() || email() in ["norvingarcia220@gmail.com", "valop27@gmail.com", "dra.nazarethbravo@gmail.com", "diego.valdivia.52056@gmail.com", "27marvin@gmail.com", "rubenn2121@gmail.com", "dr.americamora@gmail.com", "norlanflores3@gmail.com", "amyblandon.as@gmail.com", "marccenarokarel@gmail.com", "caguadamuzmoreno@gmail.com", "agentenorvingarcia@gmail.com", "valenzuela.ing120@gmail.com", "nazarethbravo.realestate@gmail.com", "uh243384@gmail.com"]); }
-    function image(){ return request.resource == null || request.resource.contentType.matches('image/.*'); }
-    function pdf(){ return request.resource == null || request.resource.contentType == 'application/pdf'; }
+    function propertyData(propertyId){ return firestore.get(/databases/(default)/documents/properties/$(propertyId)).data; }
+    function ownsProperty(propertyId){
+      return signedIn() && (
+        propertyData(propertyId).get("agentId","")==request.auth.uid ||
+        propertyData(propertyId).get("agenteId","")==request.auth.uid ||
+        propertyData(propertyId).get("ownerId","")==request.auth.uid ||
+        propertyData(propertyId).get("userId","")==request.auth.uid ||
+        propertyData(propertyId).get("createdBy","")==request.auth.uid ||
+        propertyData(propertyId).get("agentEmail","")==email() ||
+        propertyData(propertyId).get("createdByEmail","")==email() ||
+        propertyData(propertyId).get("ownerEmail","")==email()
+      );
+    }
+    function isImage(){ return request.resource.contentType.matches('image/.*'); }
+    function isPdf(){ return request.resource.contentType=="application/pdf"; }
 
     match /properties/{agentId}/{propertyId}/{fileName} {
       allow read: if true;
-      allow write: if isAdmin() || (isAgent() && agentId==request.auth.uid && image() && request.resource.size < 15 * 1024 * 1024);
+      allow create, update: if isAdmin() || (
+        isAgent() && agentId==request.auth.uid && isImage() && request.resource.size < 15 * 1024 * 1024
+      );
+      allow delete: if isAdmin() || (isAgent() && agentId==request.auth.uid);
     }
 
     match /properties/{propertyId}/admin/{fileName} {
       allow read: if true;
-      allow write: if isAdmin() && image() && request.resource.size < 15 * 1024 * 1024;
+      allow create, update: if isAdmin() && isImage() && request.resource.size < 15 * 1024 * 1024;
+      allow delete: if isAdmin();
     }
 
     match /agents/{userId}/profile/{fileName} {
       allow read: if true;
-      allow write: if isAdmin() || (isAgent() && userId==request.auth.uid && image() && request.resource.size < 5 * 1024 * 1024);
+      allow create, update: if isAdmin() || (
+        isAgent() && userId==request.auth.uid && isImage() && request.resource.size < 5 * 1024 * 1024
+      );
+      allow delete: if isAdmin() || (isAgent() && userId==request.auth.uid);
     }
 
     match /property-legal-documents/{propertyId}/{fileName} {
-      allow read: if isAdmin() || (
-        isAgent() &&
-        firestore.get(/databases/(default)/documents/properties/$(propertyId)).data.get("agentId","")==request.auth.uid
+      allow read: if isAdmin() || (isAgent() && ownsProperty(propertyId));
+      allow create, update: if isAdmin() || (
+        isAgent() && ownsProperty(propertyId) && isPdf() && request.resource.size < 20 * 1024 * 1024
       );
-      allow write: if isAdmin() || (
-        isAgent() &&
-        firestore.get(/databases/(default)/documents/properties/$(propertyId)).data.get("agentId","")==request.auth.uid &&
-        pdf() && request.resource.size < 20 * 1024 * 1024
-      );
+      allow delete: if isAdmin() || (isAgent() && ownsProperty(propertyId));
     }
 
     match /{allPaths=**} {

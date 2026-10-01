@@ -4,62 +4,72 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     function verifiedEmail() { return signedIn() && request.auth.token.email_verified == true; }
     function email() { return signedIn() ? request.auth.token.email : ""; }
-    function isAdmin() { return verifiedEmail() && email() in ["norvingarcia220@gmail.com", "diego.valdivia.52056@gmail.com", "diamantesrealtygroup@gmail.com"]; }
-    function isLegacyAgent() { return verifiedEmail() && email() in ["norvingarcia220@gmail.com", "valop27@gmail.com", "dra.nazarethbravo@gmail.com", "diego.valdivia.52056@gmail.com", "27marvin@gmail.com", "rubenn2121@gmail.com", "dr.americamora@gmail.com", "norlanflores3@gmail.com", "amyblandon.as@gmail.com", "marccenarokarel@gmail.com", "caguadamuzmoreno@gmail.com", "agentenorvingarcia@gmail.com", "valenzuela.ing120@gmail.com", "nazarethbravo.realestate@gmail.com", "uh243384@gmail.com"]; }
-    function hasUidAgentDoc() { return signedIn() && exists(/databases/$(database)/documents/agents/$(request.auth.uid)); }
-    function isAgent() { return isAdmin() || isLegacyAgent() || hasUidAgentDoc(); }
-    function field(data, key) { return data.get(key, ""); }
+    function accessExists() { return signedIn() && exists(/databases/$(database)/documents/access/$(request.auth.uid)); }
+    function accessRole() { return accessExists() ? get(/databases/$(database)/documents/access/$(request.auth.uid)).data.get("role","") : ""; }
+    function isAdmin() { return verifiedEmail() && (email() in ["norvingarcia220@gmail.com", "diego.valdivia.52056@gmail.com", "diamantesrealtygroup@gmail.com"] || accessRole()=="admin"); }
+    function isAgent() {
+      return verifiedEmail() && (
+        isAdmin() ||
+        email() in ["norvingarcia220@gmail.com", "valop27@gmail.com", "dra.nazarethbravo@gmail.com", "diego.valdivia.52056@gmail.com", "27marvin@gmail.com", "rubenn2121@gmail.com", "dr.americamora@gmail.com", "norlanflores3@gmail.com", "amyblandon.as@gmail.com", "marccenarokarel@gmail.com", "caguadamuzmoreno@gmail.com", "agentenorvingarcia@gmail.com", "valenzuela.ing120@gmail.com", "nazarethbravo.realestate@gmail.com", "uh243384@gmail.com"] ||
+        accessRole()=="agent" ||
+        exists(/databases/$(database)/documents/agents/$(request.auth.uid))
+      );
+    }
+    function f(data,key) { return data.get(key,""); }
     function ownProperty(data) {
       return signedIn() && (
-        field(data,"agentId")==request.auth.uid ||
-        field(data,"agenteId")==request.auth.uid ||
-        field(data,"ownerId")==request.auth.uid ||
-        field(data,"userId")==request.auth.uid ||
-        field(data,"createdBy")==request.auth.uid ||
-        field(data,"agentEmail")==email() ||
-        field(data,"createdByEmail")==email() ||
-        field(data,"ownerEmail")==email()
+        f(data,"agentId")==request.auth.uid ||
+        f(data,"agenteId")==request.auth.uid ||
+        f(data,"ownerId")==request.auth.uid ||
+        f(data,"userId")==request.auth.uid ||
+        f(data,"createdBy")==request.auth.uid ||
+        f(data,"agentEmail")==email() ||
+        f(data,"createdByEmail")==email() ||
+        f(data,"ownerEmail")==email()
       );
     }
     function publicProperty(data) {
-      return field(data,"visibility") in ["","public"] && (
-        (field(data,"publicationStatus")=="approved" && data.get("publicVisible",false)==true) ||
+      return f(data,"visibility") in ["","public"] && (
+        (f(data,"publicationStatus")=="approved" && data.get("publicVisible",false)==true) ||
         (!("publicationStatus" in data) && !("publicVisible" in data))
       );
     }
-    function agentCanSee(data) {
-      return isAgent() && (field(data,"visibility") in ["","public","agents"] || ownProperty(data));
+    function agentReadable(data) {
+      return isAgent() && (f(data,"visibility") in ["","public","agents"] || ownProperty(data));
+    }
+    function samePublicationState(before,after) {
+      return f(after,"publicationStatus")==f(before,"publicationStatus") &&
+        after.get("publicVisible",false)==before.get("publicVisible",false);
+    }
+    function rejectedResubmission(before,after) {
+      return f(before,"publicationStatus")=="rejected" &&
+        f(after,"publicationStatus")=="pending_review" &&
+        after.get("publicVisible",false)==false;
+    }
+    function legacyApprovalTransition(before,after) {
+      return !("publicationStatus" in before) &&
+        f(after,"publicationStatus")=="approved" &&
+        after.get("publicVisible",false)==true;
     }
 
     match /properties/{propertyId} {
-      allow read: if publicProperty(resource.data) || isAdmin() || agentCanSee(resource.data);
-
+      allow read: if publicProperty(resource.data) || isAdmin() || agentReadable(resource.data);
       allow create: if isAdmin() || (
-        isAgent() && ownProperty(request.resource.data) &&
-        field(request.resource.data,"publicationStatus") in ["draft","pending_review"] &&
+        isAgent() &&
+        ownProperty(request.resource.data) &&
+        f(request.resource.data,"publicationStatus") in ["draft","pending_review"] &&
         request.resource.data.get("publicVisible",false)==false
       );
-
       allow update: if isAdmin() || (
-        isAgent() && ownProperty(resource.data) && ownProperty(request.resource.data) &&
+        isAgent() &&
+        ownProperty(resource.data) &&
+        ownProperty(request.resource.data) &&
         (
-          (
-            field(request.resource.data,"publicationStatus")==field(resource.data,"publicationStatus") &&
-            request.resource.data.get("publicVisible",false)==resource.data.get("publicVisible",false)
-          ) ||
-          (
-            field(resource.data,"publicationStatus")=="rejected" &&
-            field(request.resource.data,"publicationStatus")=="pending_review" &&
-            request.resource.data.get("publicVisible",false)==false
-          ) ||
-          (
-            !("publicationStatus" in resource.data) &&
-            field(request.resource.data,"publicationStatus")=="approved" &&
-            request.resource.data.get("publicVisible",false)==true
-          )
+          samePublicationState(resource.data,request.resource.data) ||
+          rejectedResubmission(resource.data,request.resource.data) ||
+          legacyApprovalTransition(resource.data,request.resource.data)
         )
       );
-
       allow delete: if isAdmin() || (isAgent() && ownProperty(resource.data));
 
       match /comments/{commentId} {
@@ -67,7 +77,6 @@ service cloud.firestore {
         allow create: if signedIn() && request.resource.data.get("userId","")==request.auth.uid;
         allow update, delete: if isAdmin() || (signedIn() && resource.data.get("userId","")==request.auth.uid);
       }
-
       match /reviews/{reviewId} {
         allow read: if true;
         allow create: if signedIn() && request.resource.data.get("userId","")==request.auth.uid;
@@ -103,7 +112,7 @@ service cloud.firestore {
           resource.data.get("createdByAgentEmail","")==email() ||
           resource.data.get("agentEmail","")==email()
         )
-      ) || resource.data.get("status","")=="active";
+      );
       allow update, delete: if isAdmin() || (
         isAgent() && (
           resource.data.get("createdByAgentId","")==request.auth.uid ||
@@ -114,7 +123,7 @@ service cloud.firestore {
 
     match /access/{uid} {
       allow read: if signedIn() && (uid==request.auth.uid || isAdmin());
-      allow write: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     match /{document=**} {
