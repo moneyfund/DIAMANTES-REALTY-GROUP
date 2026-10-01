@@ -11,22 +11,22 @@ const slides = [
   { src: "/assets/imagenhero3.jpeg" },
   { src: "/assets/imagenhero4.jpeg" },
   {
-    src: "https://upload.wikimedia.org/wikipedia/commons/f/f1/Esteli_Nicaragua_full_Skyline_from_Tisey.jpg",
+    src: "https://upload.wikimedia.org/wikipedia/commons/5/56/Esteli_Nicaragua_Skyline_from_Tisey_4.jpg",
     city: "Estelí",
     credit: "Tisey · CC BY-SA 4.0",
-    source: "https://commons.wikimedia.org/wiki/File:Esteli_Nicaragua_full_Skyline_from_Tisey.jpg"
+    source: "https://commons.wikimedia.org/wiki/File:Esteli_Nicaragua_Skyline_from_Tisey_4.jpg"
   },
   {
-    src: "https://upload.wikimedia.org/wikipedia/commons/b/b5/Matagalpa_landscape.jpg",
+    src: "https://upload.wikimedia.org/wikipedia/commons/d/df/Matagalpa_Feb_2010.jpg",
     city: "Matagalpa",
-    credit: "Byralaal · CC BY-SA 4.0",
-    source: "https://commons.wikimedia.org/wiki/File:Matagalpa_landscape.jpg"
+    credit: "Armando Gonzalez Sr. · CC BY 3.0",
+    source: "https://commons.wikimedia.org/wiki/File:Matagalpa_Feb_2010.jpg"
   },
   {
-    src: "https://upload.wikimedia.org/wikipedia/commons/d/db/Lake_Managua_after_a_storm.jpg",
+    src: "https://upload.wikimedia.org/wikipedia/commons/e/ee/Nicaragua_-_Managua_201308_-_panoramio.jpg",
     city: "Managua",
-    credit: "Byralaal · CC BY-SA 4.0",
-    source: "https://commons.wikimedia.org/wiki/File:Lake_Managua_after_a_storm.jpg"
+    credit: "randreu · CC BY 3.0",
+    source: "https://commons.wikimedia.org/wiki/File:Nicaragua_-_Managua_201308_-_panoramio.jpg"
   }
 ];
 const departments = ["Boaco","Carazo","Chinandega","Chontales","Estelí","Granada","Jinotega","León","Madriz","Managua","Masaya","Matagalpa","Nueva Segovia","Rivas","Río San Juan"];
