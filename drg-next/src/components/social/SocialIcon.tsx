@@ -12,7 +12,7 @@ export function SocialIcon({network,size=18,className}:SocialIconProps){
 
   if(key.includes("instagram"))return <svg {...common} fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3.2" y="3.2" width="17.6" height="17.6" rx="5"/><circle cx="12" cy="12" r="4.1"/><circle cx="17.4" cy="6.7" r="1.1" fill="currentColor" stroke="none"/></svg>;
 
-  if(key.includes("youtube"))return <svg {...common} fill="none"><rect x="2.5" y="5.3" width="19" height="13.4" rx="4.2" fill="currentColor"/><path d="m10.1 9 5.1 3-5.1 3V9Z" fill="white"/></svg>;
+  if(key.includes("youtube"))return <svg {...common} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"><rect x="2.8" y="5.8" width="18.4" height="12.4" rx="3.5"/><path d="m10.2 9.1 5 2.9-5 2.9V9.1Z" fill="currentColor" stroke="none"/></svg>;
 
   if(key.includes("tiktok"))return <svg {...common} fill="currentColor"><path d="M14.1 3h3.05c.28 1.62 1.27 2.88 2.85 3.53V9.7a8.18 8.18 0 0 1-2.98-.92v6.07A6.15 6.15 0 1 1 11 8.71v3.2a2.96 2.96 0 1 0 2.97 2.94L14.1 3Z"/></svg>;
 
