@@ -50,3 +50,18 @@ export async function uploadAdminPropertyImage(file:File,propertyId:string){
   const snapshot=await uploadBytes(ref(firebase.storage,path),file,{contentType:file.type||"image/jpeg"});
   return {url:await getDownloadURL(snapshot.ref),path};
 }
+
+export async function deleteStorageUrlIfOwned(url:string){
+  assertDrgWritesEnabled();
+  const firebase=getFirebaseClient(); if(!firebase||!url)return false;
+  let parsed:URL;
+  try{parsed=new URL(url)}catch{return false}
+  const host=parsed.hostname.toLowerCase();
+  if(host!=="firebasestorage.googleapis.com"&&host!=="storage.googleapis.com")return false;
+  try{await deleteObject(ref(firebase.storage,url));return true}
+  catch(error){
+    const code=(error as {code?:string})?.code;
+    if(code==="storage/object-not-found")return true;
+    throw error;
+  }
+}

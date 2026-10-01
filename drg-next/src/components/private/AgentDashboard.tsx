@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useDrgAuth } from "@/components/auth/AuthProvider";
 import { drgWritesEnabled } from "@/lib/config/writes";
 import { attachLegalDocumentToAgentProperty, readAgentProperties, reserveAgentPropertyId, saveAgentProperty, markAgentPropertySold, deleteAgentProperty, removeLegalDocumentFromAgentProperty } from "@/lib/firebase/private-properties";
-import { deleteStoragePath, uploadAgentProfilePhoto, uploadAgentPropertyImage, uploadLegalPdf } from "@/lib/firebase/private-storage";
+import { deleteStoragePath, deleteStorageUrlIfOwned, uploadAgentProfilePhoto, uploadAgentPropertyImage, uploadLegalPdf } from "@/lib/firebase/private-storage";
 import { saveAgentProfile, type AgentProfileDraft } from "@/lib/firebase/private-agents";
 import { readAgents } from "@/lib/firebase/agents";
 import type { Agent } from "@/types/agent";
@@ -18,6 +18,8 @@ import { AvaluosPlaceholder } from "./AvaluosPlaceholder";
 import { readOwnSharedLists } from "@/lib/firebase/shared-lists";
 import { PropertyLocationPicker } from "@/components/properties/PropertyLocationPicker";
 import { PropertyImageManager, propertyImageFileKey } from "@/components/properties/PropertyImageManager";
+import { PropertyVideoPreview } from "@/components/properties/PropertyVideoPreview";
+import { validatePropertyVideo } from "@/lib/properties/video";
 
 type View="inicio"|"perfil"|"propiedad"|"listas"|"inventario"|"red-agentes"|"avaluos";
 const departments=["Boaco","Carazo","Chinandega","Chontales","Estelí","Granada","Jinotega","León","Madriz","Managua","Masaya","Matagalpa","Nueva Segovia","Rivas","Río San Juan"];
@@ -65,6 +67,7 @@ export function AgentDashboard() {
   const [pendingLegalPdf,setPendingLegalPdf]=useState<File|null>(null);
   const [uploadProgress,setUploadProgress]=useState("");
   const [pendingProfilePhoto,setPendingProfilePhoto]=useState<File|null>(null);
+  const [removeProfilePhoto,setRemoveProfilePhoto]=useState(false);
   const [removeExistingLegal,setRemoveExistingLegal]=useState(false);
   const [profileDraft,setProfileDraft]=useState<AgentProfileDraft>({
     name:"",description:"",email:"",phone:"",licenseNumber:"",instagram:"",facebook:"",tiktok:"",whatsapp:""
@@ -127,11 +130,18 @@ export function AgentDashboard() {
     event.preventDefault();
     if(!user)return;
     if(!drgWritesEnabled){setMessage("La edición está preparada, pero las escrituras siguen bloqueadas en esta Preview.");return}
+    let uploadedUrl="";
+    const previousPhoto=agent?.photo||"";
     try{
-      let photo=profileDraft.photo??agent?.photo??"";
-      if(pendingProfilePhoto){const uploaded=await uploadAgentProfilePhoto(pendingProfilePhoto,user.uid);photo=uploaded.url}
-      await saveAgentProfile(user,agent?.id,{...profileDraft,photo});setPendingProfilePhoto(null);await refresh();setMessage("Perfil guardado correctamente.");
-    }catch(error){setMessage(error instanceof Error?error.message:"No fue posible guardar el perfil.");}
+      let photo=removeProfilePhoto?"":(profileDraft.photo??previousPhoto);
+      if(pendingProfilePhoto){const uploaded=await uploadAgentProfilePhoto(pendingProfilePhoto,user.uid);photo=uploaded.url;uploadedUrl=uploaded.url}
+      await saveAgentProfile(user,agent?.id,{...profileDraft,photo});
+      if(previousPhoto&&previousPhoto!==photo){try{await deleteStorageUrlIfOwned(previousPhoto)}catch(error){console.warn("[DRG profile photo cleanup]",error)}}
+      setPendingProfilePhoto(null);setRemoveProfilePhoto(false);await refresh();setMessage("Perfil guardado correctamente.");
+    }catch(error){
+      if(uploadedUrl){try{await deleteStorageUrlIfOwned(uploadedUrl)}catch{}}
+      setMessage(error instanceof Error?error.message:"No fue posible guardar el perfil.");
+    }
   }
 
   async function submitProperty(event:FormEvent){
@@ -139,6 +149,8 @@ export function AgentDashboard() {
     if(!user)return;
     const contract=validateContractDates(draft.contractStartDate,draft.contractEndDate);
     if(!contract.valid){setMessage(contract.message);return}
+    const videoValidation=validatePropertyVideo(draft.videoType,draft.videoUrl);
+    if(!videoValidation.valid){setMessage(videoValidation.message);return}
     if(!draft.title.trim()||!draft.location.trim()||draft.priceUsd<=0){setMessage("Título, ubicación y precio son obligatorios.");return}
     if(!drgWritesEnabled){setMessage("El formulario ya está listo, pero el guardado sigue bloqueado hasta aprobar las reglas nuevas.");return}
     const uploadedPaths:string[]=[];
@@ -218,7 +230,7 @@ export function AgentDashboard() {
       </section>:null}
 
       {view==="perfil"?<form className="drg-agent-editor" onSubmit={submitProfile}>
-        <fieldset className="drg-agent-editor-section"><legend>Información pública</legend><div className="drg-profile-photo-editor"><div>{pendingProfilePhoto?<img src={URL.createObjectURL(pendingProfilePhoto)} alt="Vista previa"/>:agent?.photo?<img src={agent.photo} alt="Foto de perfil"/>:<span>{(profileDraft.name||"DR").split(/\s+/).slice(0,2).map(v=>v[0]).join("").toUpperCase()}</span>}</div><label>Foto de perfil<input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>setPendingProfilePhoto(e.target.files?.[0]||null)}/><small>JPG, PNG o WEBP · máximo 5 MB</small></label>{pendingProfilePhoto?<button type="button" onClick={()=>setPendingProfilePhoto(null)}>Cancelar selección</button>:null}</div><div className="drg-agent-form-grid">
+        <fieldset className="drg-agent-editor-section"><legend>Información pública</legend><div className="drg-profile-photo-editor"><div>{pendingProfilePhoto?<img src={URL.createObjectURL(pendingProfilePhoto)} alt="Vista previa"/>:!removeProfilePhoto&&agent?.photo?<img src={agent.photo} alt="Foto de perfil"/>:<span>{(profileDraft.name||"DR").split(/\s+/).slice(0,2).map(v=>v[0]).join("").toUpperCase()}</span>}</div><label>Foto de perfil<input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>{setPendingProfilePhoto(e.target.files?.[0]||null);if(e.target.files?.[0])setRemoveProfilePhoto(false)}}/><small>JPG, PNG o WEBP · máximo 5 MB</small></label>{pendingProfilePhoto?<button type="button" onClick={()=>setPendingProfilePhoto(null)}>Cancelar selección</button>:agent?.photo&&!removeProfilePhoto?<button type="button" onClick={()=>{setPendingProfilePhoto(null);setRemoveProfilePhoto(true)}}>Quitar foto</button>:removeProfilePhoto?<button type="button" onClick={()=>setRemoveProfilePhoto(false)}>Conservar foto</button>:null}</div><div className="drg-agent-form-grid">
           <label>Nombre<input value={profileDraft.name} onChange={e=>setProfileDraft({...profileDraft,name:e.target.value})}/></label>
           <label>Correo<input type="email" value={profileDraft.email} onChange={e=>setProfileDraft({...profileDraft,email:e.target.value})}/></label>
           <label>Teléfono<input value={profileDraft.phone} onChange={e=>setProfileDraft({...profileDraft,phone:e.target.value})}/></label>
@@ -262,6 +274,7 @@ export function AgentDashboard() {
         <fieldset className="drg-agent-editor-section"><legend>04 · Multimedia</legend><div className="drg-agent-form-grid">
           <label>Tipo de video<select value={draft.videoType} onChange={e=>setDraft({...draft,videoType:e.target.value as AgentPropertyDraft["videoType"]})}><option value="">Sin video</option><option value="youtube">YouTube</option><option value="tiktok">TikTok</option></select></label>
           <label>URL de video<input type="url" value={draft.videoUrl} onChange={e=>setDraft({...draft,videoUrl:e.target.value})}/></label>
+          <div className="is-wide"><PropertyVideoPreview type={draft.videoType} url={draft.videoUrl}/></div>
           <div className="is-wide"><PropertyImageManager images={draft.images} coverImage={draft.coverImage} pendingFiles={pendingImages} pendingCoverKey={pendingCoverKey} writesEnabled={drgWritesEnabled} onImagesChange={images=>setDraft({...draft,images,coverImage:images.includes(draft.coverImage)?draft.coverImage:(images[0]||"")})} onCoverChange={coverImage=>setDraft({...draft,coverImage})} onPendingFilesChange={setPendingImages} onPendingCoverChange={setPendingCoverKey}/></div>
           <label className="is-wide drg-agent-upload-placeholder">Documento legal privado (PDF)<input type="file" accept="application/pdf,.pdf" disabled={!drgWritesEnabled} onChange={e=>{setPendingLegalPdf(e.target.files?.[0]||null);if(e.target.files?.[0])setRemoveExistingLegal(false)}}/><span>{pendingLegalPdf?pendingLegalPdf.name:"PDF privado · máximo 20 MB"}</span></label>
           {editingId&&properties.find(p=>p.id===editingId)?.raw.legalDocument?<div className="is-wide drg-agent-legal-existing"><div><strong>Documento legal existente</strong><span>{String((properties.find(p=>p.id===editingId)?.raw.legalDocument as Record<string,unknown>)?.fileName||"Documento PDF")}</span></div>{(properties.find(p=>p.id===editingId)?.raw.legalDocument as Record<string,unknown>)?.fileUrl?<a href={String((properties.find(p=>p.id===editingId)?.raw.legalDocument as Record<string,unknown>)?.fileUrl)} target="_blank" rel="noreferrer">Abrir PDF</a>:null}<label><input type="checkbox" checked={removeExistingLegal} onChange={e=>{setRemoveExistingLegal(e.target.checked);if(e.target.checked)setPendingLegalPdf(null)}}/>Quitar al guardar</label></div>:null}

@@ -170,3 +170,17 @@ export async function deletePropertyAsAdmin(propertyId:string){
   }
   return paths;
 }
+
+export async function setPropertyLegalDocumentAsAdmin(
+  propertyId:string,
+  legalDocument:{fileName:string;fileUrl:string;storagePath:string}|null
+){
+  assertDrgWritesEnabled();
+  const firebase=getFirebaseClient(); if(!firebase)throw new Error("Firebase no está disponible.");
+  const ref=doc(firebase.db,"properties",propertyId);
+  const snapshot=await getDoc(ref); if(!snapshot.exists())throw new Error("La propiedad no existe.");
+  await updateDoc(ref,{
+    legalDocument:legalDocument ? {...legalDocument,visibility:"private"} : null,
+    updatedAt:serverTimestamp()
+  });
+}

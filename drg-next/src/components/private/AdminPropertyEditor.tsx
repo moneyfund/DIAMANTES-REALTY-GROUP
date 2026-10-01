@@ -3,14 +3,16 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useDrgAuth } from "@/components/auth/AuthProvider";
 import { drgWritesEnabled } from "@/lib/config/writes";
-import { updatePropertyAsAdmin } from "@/lib/firebase/admin-data";
+import { setPropertyLegalDocumentAsAdmin, updatePropertyAsAdmin } from "@/lib/firebase/admin-data";
 import { getDynamicFieldsForType } from "@/lib/properties/fields";
 import { propertyToDraft, validateContractDates, type AgentPropertyDraft } from "@/lib/properties/private";
 import type { Agent } from "@/types/agent";
 import type { Property } from "@/types/property";
 import { PropertyLocationPicker } from "@/components/properties/PropertyLocationPicker";
 import { PropertyImageManager, propertyImageFileKey } from "@/components/properties/PropertyImageManager";
-import { deleteStoragePath, uploadAdminPropertyImage } from "@/lib/firebase/private-storage";
+import { deleteStoragePath, uploadAdminPropertyImage, uploadLegalPdf } from "@/lib/firebase/private-storage";
+import { PropertyVideoPreview } from "@/components/properties/PropertyVideoPreview";
+import { validatePropertyVideo } from "@/lib/properties/video";
 
 const propertyTypes=[["house","Casa"],["apartment","Apartamento"],["land","Terreno"],["farm","Finca"],["quinta","Quinta"],["warehouse","Bodega"],["commercial","Comercial"],["office","Oficina"],["investment","Inversión"],["other","Otro"]] as const;
 const departments=["Boaco","Carazo","Chinandega","Chontales","Estelí","Granada","Jinotega","León","Madriz","Managua","Masaya","Matagalpa","Nueva Segovia","Rivas","Río San Juan"];
@@ -24,6 +26,8 @@ export function AdminPropertyEditor({property,agents,onClose,onSaved}:{property:
   const [pendingImages,setPendingImages]=useState<File[]>([]);
   const [pendingCoverKey,setPendingCoverKey]=useState("");
   const [uploading,setUploading]=useState("");
+  const [pendingLegalPdf,setPendingLegalPdf]=useState<File|null>(null);
+  const [removeLegal,setRemoveLegal]=useState(false);
   const fields=useMemo(()=>getDynamicFieldsForType(draft.type),[draft.type]);
 
   useEffect(()=>{
@@ -44,6 +48,8 @@ export function AdminPropertyEditor({property,agents,onClose,onSaved}:{property:
     if(!assigned){setMessage("Selecciona el agente responsable.");return}
     const contract=validateContractDates(draft.contractStartDate,draft.contractEndDate);
     if(!contract.valid){setMessage(contract.message);return}
+    const videoValidation=validatePropertyVideo(draft.videoType,draft.videoUrl);
+    if(!videoValidation.valid){setMessage(videoValidation.message);return}
     if(!draft.title.trim()||!draft.location.trim()||draft.priceUsd<=0){setMessage("Título, ubicación y precio son obligatorios.");return}
     if(!drgWritesEnabled){setMessage("La edición administrativa está lista, pero las escrituras siguen bloqueadas en esta Preview.");return}
     const uploadedPaths:string[]=[];
@@ -58,7 +64,19 @@ export function AdminPropertyEditor({property,agents,onClose,onSaved}:{property:
       const nextDraft={...draft,images,coverImage:pendingIndex>=0?uploadedUrls[pendingIndex]:(draft.coverImage&&images.includes(draft.coverImage)?draft.coverImage:(images[0]||""))};
       setUploading("Guardando propiedad…");
       await updatePropertyAsAdmin({propertyId:property.id,draft:nextDraft,assignedAgent:assigned,adminUser:profile.user});
-      setPendingImages([]);setPendingCoverKey("");setUploading("");await onSaved();setMessage("Propiedad actualizada.");
+      const existingLegal=property.raw.legalDocument&&typeof property.raw.legalDocument==="object" ? property.raw.legalDocument as Record<string,unknown> : null;
+      const oldLegalPath=String(existingLegal?.storagePath||"");
+      if(pendingLegalPdf){
+        setUploading("Subiendo documento legal…");
+        const legal=await uploadLegalPdf(pendingLegalPdf,property.id);
+        uploadedPaths.push(legal.path);
+        await setPropertyLegalDocumentAsAdmin(property.id,{fileName:pendingLegalPdf.name,fileUrl:legal.url,storagePath:legal.path});
+        if(oldLegalPath&&oldLegalPath!==legal.path){try{await deleteStoragePath(oldLegalPath)}catch{}}
+      }else if(removeLegal&&existingLegal){
+        await setPropertyLegalDocumentAsAdmin(property.id,null);
+        if(oldLegalPath){try{await deleteStoragePath(oldLegalPath)}catch{}}
+      }
+      setPendingImages([]);setPendingCoverKey("");setPendingLegalPdf(null);setRemoveLegal(false);setUploading("");await onSaved();setMessage("Propiedad actualizada.");
     }catch(error){
       for(const path of uploadedPaths){try{await deleteStoragePath(path)}catch{}}
       setUploading("");setMessage(error instanceof Error?error.message:"No fue posible actualizar la propiedad.");
@@ -91,8 +109,10 @@ export function AdminPropertyEditor({property,agents,onClose,onSaved}:{property:
       <label>Latitud<input type="number" step="any" value={draft.lat??""} onChange={e=>setDraft({...draft,lat:num(e.target.value)})}/></label><label>Longitud<input type="number" step="any" value={draft.lng??""} onChange={e=>setDraft({...draft,lng:num(e.target.value)})}/></label>
       <label>Emisión contrato<input type="date" value={draft.contractStartDate} onChange={e=>setDraft({...draft,contractStartDate:e.target.value})}/></label><label>Vencimiento contrato<input type="date" value={draft.contractEndDate} onChange={e=>setDraft({...draft,contractEndDate:e.target.value})}/></label>
       <label>Video<select value={draft.videoType} onChange={e=>setDraft({...draft,videoType:e.target.value as AgentPropertyDraft["videoType"]})}><option value="">Sin video</option><option value="youtube">YouTube</option><option value="tiktok">TikTok</option></select></label><label>URL video<input value={draft.videoUrl} onChange={e=>setDraft({...draft,videoUrl:e.target.value})}/></label>
+      <div className="is-wide"><PropertyVideoPreview type={draft.videoType} url={draft.videoUrl}/></div>
       <div className="is-wide"><PropertyImageManager images={draft.images} coverImage={draft.coverImage} pendingFiles={pendingImages} pendingCoverKey={pendingCoverKey} writesEnabled={drgWritesEnabled} onImagesChange={images=>setDraft({...draft,images,coverImage:images.includes(draft.coverImage)?draft.coverImage:(images[0]||"")})} onCoverChange={coverImage=>setDraft({...draft,coverImage})} onPendingFilesChange={setPendingImages} onPendingCoverChange={setPendingCoverKey}/></div>
-      {property.raw.legalDocument&&typeof property.raw.legalDocument==="object"?<div className="is-wide drg-agent-legal-existing"><div><strong>Documento legal privado</strong><span>{String((property.raw.legalDocument as Record<string,unknown>).fileName||"PDF registrado")}</span></div>{(property.raw.legalDocument as Record<string,unknown>).fileUrl?<a href={String((property.raw.legalDocument as Record<string,unknown>).fileUrl)} target="_blank" rel="noreferrer">Abrir PDF</a>:null}</div>:null}
+      <label className="is-wide drg-agent-upload-placeholder">Reemplazar / cargar documento legal (PDF)<input type="file" accept="application/pdf,.pdf" disabled={!drgWritesEnabled} onChange={e=>{setPendingLegalPdf(e.target.files?.[0]||null);if(e.target.files?.[0])setRemoveLegal(false)}}/><span>{pendingLegalPdf?pendingLegalPdf.name:"PDF privado · máximo 20 MB"}</span></label>
+      {property.raw.legalDocument&&typeof property.raw.legalDocument==="object"?<div className="is-wide drg-agent-legal-existing"><div><strong>Documento legal privado actual</strong><span>{String((property.raw.legalDocument as Record<string,unknown>).fileName||"PDF registrado")}</span></div>{(property.raw.legalDocument as Record<string,unknown>).fileUrl?<a href={String((property.raw.legalDocument as Record<string,unknown>).fileUrl)} target="_blank" rel="noreferrer">Abrir PDF</a>:null}<label><input type="checkbox" checked={removeLegal} onChange={e=>{setRemoveLegal(e.target.checked);if(e.target.checked)setPendingLegalPdf(null)}}/>Quitar al guardar</label></div>:null}
     </div></fieldset>
     {uploading?<p className="drg-agent-upload-progress">{uploading}</p>:null}<footer><button type="button" onClick={onClose}>Cancelar</button><button type="submit">{drgWritesEnabled?"Guardar cambios":"Guardado bloqueado en Preview"}</button></footer>
   </form></div>;
