@@ -1,0 +1,1 @@
+import { RoutePlaceholder } from "@/components/migration/RoutePlaceholder"; export default function Page(){return <RoutePlaceholder title="Condiciones de Uso" legacyPath="condiciones-de-uso.html"/>;}

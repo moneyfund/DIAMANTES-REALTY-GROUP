@@ -52,6 +52,16 @@ export function OriginalHero() {
           {departments.map((department) => <option key={department}>{department}</option>)}
         </select>
       </label>
+      <label>
+        <span>Rango de precio</span>
+        <select name="precio" defaultValue="">
+          <option value="">Rango de precio</option>
+          <option value="0-100000">Hasta $100K</option>
+          <option value="100000-300000">$100K - $300K</option>
+          <option value="300000-700000">$300K - $700K</option>
+          <option value="700000+">$700K+</option>
+        </select>
+      </label>
       <button className="drg-search-submit" type="submit">BUSCAR</button>
     </form>
   );

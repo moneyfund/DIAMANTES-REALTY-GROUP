@@ -1,0 +1,1 @@
+import { RoutePlaceholder } from "@/components/migration/RoutePlaceholder"; export default function Page(){return <RoutePlaceholder title="Licencia de Operación" legacyPath="licencia-de-operacion.html"/>;}
