@@ -1,0 +1,81 @@
+name: DRG Next CI
+
+on:
+  push:
+    branches:
+      - migration/drg-next
+  pull_request:
+    paths:
+      - "drg-next/**"
+      - "security/**"
+      - "firebase.validation.json"
+      - ".github/workflows/drg-next-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: drg-next
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: drg-next/package.json
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Tests
+        run: npm test
+
+      - name: Live Firestore parity (read-only)
+        run: npx tsx scripts/check-production-readonly.ts
+
+      - name: Ownership audit (read-only)
+        run: npx tsx scripts/audit-property-ownership-readonly.ts
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+
+  validate-security-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install DRG test dependencies
+        working-directory: drg-next
+        run: npm install --no-audit --no-fund
+
+      - name: Java for Firebase emulators
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Compile proposed Firestore and Storage rules
+        run: >
+          npx --yes firebase-tools
+          emulators:exec
+          --project demo-drg-next
+          --config firebase.validation.json
+          --only firestore,storage
+          "cd drg-next && npm run test:rules"

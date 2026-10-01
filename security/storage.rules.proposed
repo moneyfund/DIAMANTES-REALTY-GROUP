@@ -1,0 +1,70 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn(){ return request.auth != null; }
+    function verifiedEmail(){ return signedIn() && request.auth.token.email_verified == true; }
+    function email(){ return signedIn() && request.auth.token.email is string ? request.auth.token.email.lower() : ""; }
+    function isAdmin(){ return verifiedEmail() && email() in ["norvingarcia220@gmail.com", "agentenorvingarcia@gmail.com", "diego.valdivia.52056@gmail.com", "diamantesrealtygroup@gmail.com"]; }
+    function isAgent(){ return verifiedEmail() && (isAdmin() || email() in ["norvingarcia220@gmail.com", "valop27@gmail.com", "dra.nazarethbravo@gmail.com", "diego.valdivia.52056@gmail.com", "27marvin@gmail.com", "rubenn2121@gmail.com", "dr.americamora@gmail.com", "norlanflores3@gmail.com", "amyblandon.as@gmail.com", "marccenarokarel@gmail.com", "caguadamuzmoreno@gmail.com", "agentenorvingarcia@gmail.com", "valenzuela.ing120@gmail.com", "nazarethbravo.realestate@gmail.com", "uh243384@gmail.com"]); }
+    function propertyData(propertyId){ return firestore.get(/databases/(default)/documents/properties/$(propertyId)).data; }
+    function ownsProperty(propertyId){
+      return signedIn() && (
+        propertyData(propertyId).get("agentId","")==request.auth.uid ||
+        propertyData(propertyId).get("agenteId","")==request.auth.uid ||
+        propertyData(propertyId).get("ownerId","")==request.auth.uid ||
+        propertyData(propertyId).get("userId","")==request.auth.uid ||
+        propertyData(propertyId).get("createdBy","")==request.auth.uid ||
+        propertyData(propertyId).get("agentEmail","")==email() ||
+        propertyData(propertyId).get("createdByEmail","")==email() ||
+        propertyData(propertyId).get("ownerEmail","")==email()
+      );
+    }
+    function assistedUploader(propertyId){
+      return signedIn() &&
+        firestore.exists(/databases/(default)/documents/propertyListingAudit/$(propertyId)) &&
+        firestore.get(/databases/(default)/documents/propertyListingAudit/$(propertyId)).data.get("uploadedByAgentId","")==request.auth.uid;
+    }
+    function isImage(){ return request.resource.contentType.matches('image/.*'); }
+    function isPdf(){ return request.resource.contentType=="application/pdf"; }
+
+    match /properties/{agentId}/{propertyId}/{fileName} {
+      allow read: if true;
+      allow create, update: if isAdmin() || (
+        isAgent() && agentId==request.auth.uid && isImage() && request.resource.size < 15 * 1024 * 1024
+      );
+      allow delete: if isAdmin() || (
+        isAgent() && (
+          agentId==request.auth.uid ||
+          ownsProperty(propertyId) ||
+          assistedUploader(propertyId)
+        )
+      );
+    }
+
+    match /properties/{propertyId}/admin/{fileName} {
+      allow read: if true;
+      allow create, update: if isAdmin() && isImage() && request.resource.size < 15 * 1024 * 1024;
+      allow delete: if isAdmin();
+    }
+
+    match /agents/{userId}/profile/{fileName} {
+      allow read: if true;
+      allow create, update: if isAdmin() || (
+        isAgent() && userId==request.auth.uid && isImage() && request.resource.size < 5 * 1024 * 1024
+      );
+      allow delete: if isAdmin() || (isAgent() && userId==request.auth.uid);
+    }
+
+    match /property-legal-documents/{propertyId}/{fileName} {
+      allow read: if isAdmin() || (isAgent() && ownsProperty(propertyId));
+      allow create, update: if isAdmin() || (
+        isAgent() && (ownsProperty(propertyId) || assistedUploader(propertyId)) && isPdf() && request.resource.size < 20 * 1024 * 1024
+      );
+      allow delete: if isAdmin() || (isAgent() && (ownsProperty(propertyId) || assistedUploader(propertyId)));
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
