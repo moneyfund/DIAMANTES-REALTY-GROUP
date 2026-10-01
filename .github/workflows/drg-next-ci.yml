@@ -38,6 +38,9 @@ jobs:
       - name: Live Firestore parity (read-only)
         run: npx tsx scripts/check-production-readonly.ts
 
+      - name: Ownership audit (read-only)
+        run: npx tsx scripts/audit-property-ownership-readonly.ts
+
       - name: Typecheck
         run: npm run typecheck
 

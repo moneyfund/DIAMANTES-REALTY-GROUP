@@ -1,0 +1,124 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function verifiedEmail() { return signedIn() && request.auth.token.email_verified == true; }
+    function email() { return signedIn() ? request.auth.token.email : ""; }
+    function isAdmin() { return verifiedEmail() && email() in ["norvingarcia220@gmail.com", "diego.valdivia.52056@gmail.com", "diamantesrealtygroup@gmail.com"]; }
+    function isLegacyAgent() { return verifiedEmail() && email() in ["norvingarcia220@gmail.com", "valop27@gmail.com", "dra.nazarethbravo@gmail.com", "diego.valdivia.52056@gmail.com", "27marvin@gmail.com", "rubenn2121@gmail.com", "dr.americamora@gmail.com", "norlanflores3@gmail.com", "amyblandon.as@gmail.com", "marccenarokarel@gmail.com", "caguadamuzmoreno@gmail.com", "agentenorvingarcia@gmail.com", "valenzuela.ing120@gmail.com", "nazarethbravo.realestate@gmail.com", "uh243384@gmail.com"]; }
+    function hasUidAgentDoc() { return signedIn() && exists(/databases/$(database)/documents/agents/$(request.auth.uid)); }
+    function isAgent() { return isAdmin() || isLegacyAgent() || hasUidAgentDoc(); }
+    function field(data, key) { return data.get(key, ""); }
+    function ownProperty(data) {
+      return signedIn() && (
+        field(data,"agentId")==request.auth.uid ||
+        field(data,"agenteId")==request.auth.uid ||
+        field(data,"ownerId")==request.auth.uid ||
+        field(data,"userId")==request.auth.uid ||
+        field(data,"createdBy")==request.auth.uid ||
+        field(data,"agentEmail")==email() ||
+        field(data,"createdByEmail")==email() ||
+        field(data,"ownerEmail")==email()
+      );
+    }
+    function publicProperty(data) {
+      return field(data,"visibility") in ["","public"] && (
+        (field(data,"publicationStatus")=="approved" && data.get("publicVisible",false)==true) ||
+        (!("publicationStatus" in data) && !("publicVisible" in data))
+      );
+    }
+    function agentCanSee(data) {
+      return isAgent() && (field(data,"visibility") in ["","public","agents"] || ownProperty(data));
+    }
+
+    match /properties/{propertyId} {
+      allow read: if publicProperty(resource.data) || isAdmin() || agentCanSee(resource.data);
+
+      allow create: if isAdmin() || (
+        isAgent() && ownProperty(request.resource.data) &&
+        field(request.resource.data,"publicationStatus") in ["draft","pending_review"] &&
+        request.resource.data.get("publicVisible",false)==false
+      );
+
+      allow update: if isAdmin() || (
+        isAgent() && ownProperty(resource.data) && ownProperty(request.resource.data) &&
+        (
+          (
+            field(request.resource.data,"publicationStatus")==field(resource.data,"publicationStatus") &&
+            request.resource.data.get("publicVisible",false)==resource.data.get("publicVisible",false)
+          ) ||
+          (
+            field(resource.data,"publicationStatus")=="rejected" &&
+            field(request.resource.data,"publicationStatus")=="pending_review" &&
+            request.resource.data.get("publicVisible",false)==false
+          ) ||
+          (
+            !("publicationStatus" in resource.data) &&
+            field(request.resource.data,"publicationStatus")=="approved" &&
+            request.resource.data.get("publicVisible",false)==true
+          )
+        )
+      );
+
+      allow delete: if isAdmin() || (isAgent() && ownProperty(resource.data));
+
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if signedIn() && request.resource.data.get("userId","")==request.auth.uid;
+        allow update, delete: if isAdmin() || (signedIn() && resource.data.get("userId","")==request.auth.uid);
+      }
+
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if signedIn() && request.resource.data.get("userId","")==request.auth.uid;
+        allow update, delete: if isAdmin() || (signedIn() && resource.data.get("userId","")==request.auth.uid);
+      }
+    }
+
+    match /agents/{agentId} {
+      allow read: if true;
+      allow create: if isAdmin() || (
+        isAgent() &&
+        request.resource.data.get("uid","")==request.auth.uid &&
+        request.resource.data.get("email","")==email()
+      );
+      allow update: if isAdmin() || (
+        isAgent() &&
+        (resource.data.get("uid","")==request.auth.uid || resource.data.get("email","")==email()) &&
+        (request.resource.data.get("uid","")==request.auth.uid || request.resource.data.get("email","")==email())
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /formularios/{formId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /sharedPropertyLists/{listId} {
+      allow create: if isAgent() && request.resource.data.get("createdByAgentId","")==request.auth.uid;
+      allow read: if isAdmin() || (
+        isAgent() && (
+          resource.data.get("createdByAgentId","")==request.auth.uid ||
+          resource.data.get("createdByAgentEmail","")==email() ||
+          resource.data.get("agentEmail","")==email()
+        )
+      ) || resource.data.get("status","")=="active";
+      allow update, delete: if isAdmin() || (
+        isAgent() && (
+          resource.data.get("createdByAgentId","")==request.auth.uid ||
+          resource.data.get("createdByAgentEmail","")==email()
+        )
+      );
+    }
+
+    match /access/{uid} {
+      allow read: if signedIn() && (uid==request.auth.uid || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
