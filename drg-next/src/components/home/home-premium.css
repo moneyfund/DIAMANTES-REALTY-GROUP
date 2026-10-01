@@ -18,13 +18,15 @@
   user-select: none;
 }
 .drg-brand-stage {
+  --brand-size: min(720px, 74vw, 76svh);
+  --brand-depth-step: 1.4px;
   position: sticky;
-  top: 110px;
-  width: min(660px, 57vw);
+  top: max(100px, calc((100svh - var(--brand-size)) / 2));
+  width: var(--brand-size);
   aspect-ratio: 1;
-  margin-left: auto;
-  margin-right: -1.5%;
+  margin-inline: auto;
   perspective: 1100px;
+  opacity: .38;
 }
 .drg-brand-stage::before {
   content: "";
@@ -35,29 +37,36 @@
 .drg-brand-object {
   position: absolute;
   inset: 0;
-  opacity: .42;
   transform-style: preserve-3d;
-  transform: translate3d(0, var(--brand-y, 0px), 0) rotateX(9deg) rotateY(var(--brand-rotate, -18deg)) rotateZ(-5deg);
-  transition: transform 350ms ease-out;
+  will-change: transform;
 }
-.drg-brand-object::before,
-.drg-brand-object::after {
+.drg-brand-object::before {
   content: "";
   position: absolute;
   inset: 0;
   background: url("/assets/logo.png") center / contain no-repeat;
-  filter: brightness(.34) saturate(.7);
-  transform: translate3d(4px, 4px, -9px);
+  filter: brightness(.25) drop-shadow(0 22px 14px #071a3347);
+  transform: translateZ(calc(var(--brand-depth-step) * -21));
 }
-.drg-brand-object::after {
-  filter: brightness(.58) saturate(.8);
-  transform: translate3d(2px, 2px, -4px);
+.drg-brand-depth,
+.drg-brand-sheen {
+  position: absolute;
+  inset: 0;
+  -webkit-mask: url("/assets/logo.png") center / contain no-repeat;
+  mask: url("/assets/logo.png") center / contain no-repeat;
+}
+.drg-brand-depth {
+  background: linear-gradient(135deg, #760711 5%, #c32a35 34%, #51020a 65%, #9d111b 87%);
+  transform: translateZ(calc(var(--brand-layer) * var(--brand-depth-step) * -1));
+}
+.drg-brand-sheen {
+  background: linear-gradient(130deg, #ffffff30 8%, transparent 27%, #ffffff75 42%, transparent 55%, #ffffff20 78%, transparent);
+  transform: translateZ(2px);
 }
 .drg-brand-face {
-  z-index: 2;
   object-fit: contain;
   transform: translateZ(1px);
-  filter: drop-shadow(0 26px 18px #071a3329) drop-shadow(-1px -1px 0 #ffffffb0);
+  filter: drop-shadow(-.6px -.6px 0 #ffaab2) drop-shadow(.6px .6px 0 #720711);
 }
 .drg-home-page .drg-signature {
   padding: 70px 0 55px;
@@ -139,7 +148,7 @@
   .drg-home-page .drg-signature-grid { grid-template-columns: 1fr; gap: 26px; }
   .drg-home-page .drg-signature-grid > div { max-width: 75%; }
   .drg-home-page .drg-signature nav { margin-top: 0; }
-  .drg-brand-stage { width: 480px; opacity: .65; margin-right: -10%; }
+  .drg-brand-stage { --brand-size: min(620px, 86vw, 74svh); }
 }
 @media (max-width: 768px) {
   .drg-home-page .drg-signature { padding: 46px 0 36px; }
@@ -150,8 +159,7 @@
   .drg-home-page .drg-signature nav a { min-height: 106px; padding: 26px 12px 14px; }
   .drg-home-page .drg-signature nav b { font-size: 12px; }
   .drg-home-page .drg-signature nav small { font-size: 9px; }
-  .drg-brand-stage { top: 90px; width: 420px; margin-right: -35%; opacity: .22; }
-  .drg-brand-object::after { display: none; }
+  .drg-brand-stage { --brand-size: min(420px, 92vw, 64svh); --brand-depth-step: .9px; top: max(84px, calc((100svh - var(--brand-size)) / 2)); opacity: .25; }
   .drg-brand-ribbon { height: 58px; margin-bottom: 20px; }
   .drg-brand-ribbon-group li { gap: 24px; padding-right: 24px; font-size: 9px; }
   .drg-brand-ribbon-control { margin-inline: 4px 8px; }
@@ -163,7 +171,7 @@
   .drg-home-page .drg-trust { padding-block: 54px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .drg-brand-object { transition: none; }
+  .drg-brand-object { will-change: auto; }
   .drg-brand-ribbon-track { animation: none; width: auto; }
   .drg-brand-ribbon { height: auto; padding: 20px 16px; }
   .drg-brand-ribbon-window { mask-image: none; }

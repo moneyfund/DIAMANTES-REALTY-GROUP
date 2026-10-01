@@ -1,43 +1,41 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { motion, useReducedMotion, useScroll, useSpring, useTransform } from "motion/react";
+import type { CSSProperties } from "react";
+
+const depthLayers = Array.from({ length: 20 }, (_, index) => 20 - index);
 
 /** Decorative only: never observes, intercepts or changes the hero's controls. */
 export function BrandDepthScene() {
-  const object = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let frame = 0;
-
-    const paint = () => {
-      frame = 0;
-      const node = object.current;
-      if (!node) return;
-      const progress = Math.min(1, Math.max(0, window.scrollY / 1800));
-      node.style.setProperty("--brand-y", `${motion.matches ? 0 : progress * -48}px`);
-      node.style.setProperty("--brand-rotate", `${motion.matches ? -12 : -18 + progress * 12}deg`);
-    };
-    const schedule = () => {
-      if (!frame && !document.hidden) frame = requestAnimationFrame(paint);
-    };
-    paint();
-    window.addEventListener("scroll", schedule, { passive: true });
-    motion.addEventListener("change", schedule);
-    return () => {
-      window.removeEventListener("scroll", schedule);
-      motion.removeEventListener("change", schedule);
-      cancelAnimationFrame(frame);
-    };
-  }, []);
+  const reducedMotion = useReducedMotion();
+  const { scrollY } = useScroll();
+  const smoothScroll = useSpring(scrollY, { stiffness: 120, damping: 30, mass: .6 });
+  const phase = useTransform(smoothScroll, value => Math.max(0, value) / 720);
+  // Bounded angles reveal the solid edge without turning the official mark over.
+  const rotateY = useTransform(phase, value => Math.sin(value - .65) * 38);
+  const rotateX = useTransform(phase, value => 8 + Math.cos(value) * 8);
+  const rotateZ = useTransform(phase, value => Math.sin(value * .7 - .4) * 12);
+  const y = useTransform(phase, value => Math.sin(value * .6) * -24);
 
   return (
     <div className="drg-brand-atmosphere" aria-hidden="true">
       <div className="drg-brand-stage">
-        <div ref={object} className="drg-brand-object">
-          <Image src="/assets/logo.png" alt="" fill sizes="(max-width: 768px) 420px, 660px" className="drg-brand-face" />
-        </div>
+        <motion.div
+          className="drg-brand-object"
+          style={{
+            y: reducedMotion ? 0 : y,
+            rotateX: reducedMotion ? 8 : rotateX,
+            rotateY: reducedMotion ? -12 : rotateY,
+            rotateZ: reducedMotion ? 0 : rotateZ,
+          }}
+        >
+          {depthLayers.map(layer => (
+            <span key={layer} className="drg-brand-depth" style={{ "--brand-layer": layer } as CSSProperties} />
+          ))}
+          <Image src="/assets/logo.png" alt="" fill sizes="(max-width: 460px) 92vw, (max-width: 768px) 420px, 720px" className="drg-brand-face" />
+          <span className="drg-brand-sheen" />
+        </motion.div>
       </div>
     </div>
   );
