@@ -72,7 +72,7 @@
     }, 0);
   });
 
-  ['filterType', 'filterOperation', 'filterBudget'].forEach((id) => {
+  ['filterType', 'filterOperation', 'filterBudget', 'filterBedrooms', 'filterBathrooms', 'filterMinPrice', 'propertiesSort'].forEach((id) => {
     document.getElementById(id)?.addEventListener('change', () => submitFilters());
   });
 

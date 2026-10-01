@@ -19,7 +19,7 @@ test('Home is excluded from both global navbar surfaces', () => {
 });
 
 test('home navbar is transparent from the first paint', () => {
-  assert.match(home, /<body class="home-page navbar-over-hero">/);
+  assert.match(home, /<body class="home-page navbar-over-hero(?: drg-premium)?">/);
   assert.match(home, /<header class="site-header public-navbar">/);
 
   const start = theme.indexOf(`${initialSelector} {`);

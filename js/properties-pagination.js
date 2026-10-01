@@ -79,6 +79,7 @@
 
   function applyPagination(options = {}) {
     const { updateHistory = false, scrollToGrid = false } = options;
+    if (grid.getAttribute('aria-busy') === 'true' || grid.dataset.loadState === 'error') return;
     const cards = getCards();
     const totalPages = Math.max(1, Math.ceil(cards.length / PAGE_SIZE));
 

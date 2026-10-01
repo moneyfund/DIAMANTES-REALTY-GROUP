@@ -1,0 +1,8 @@
+{
+  "name": "diamantes-home-visual-build",
+  "private": true,
+  "type": "module",
+  "description": "Optional local rebuild of vendored Home-only visual dependencies; not a Vercel build step.",
+  "scripts": { "build": "node build.mjs" },
+  "devDependencies": { "esbuild": "0.25.10", "gsap": "3.13.0", "three": "0.180.0" }
+}
