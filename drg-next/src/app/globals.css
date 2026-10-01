@@ -877,8 +877,9 @@
 @media(max-width:480px){
   .drg-header .drg-nav-links.is-open,
   .drg-header.is-home .drg-nav-links.is-open{
+    left:10px;
     right:10px;
-    width:min(205px,calc(100vw - 20px));
+    width:auto;
     padding:7px;
     border-radius:14px;
     background:rgba(255,255,255,.70);
