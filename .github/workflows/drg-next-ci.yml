@@ -35,6 +35,9 @@ jobs:
       - name: Tests
         run: npm test
 
+      - name: Live Firestore parity (read-only)
+        run: npx tsx scripts/check-production-readonly.ts
+
       - name: Typecheck
         run: npm run typecheck
 
