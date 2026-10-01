@@ -92,7 +92,7 @@ export function HomeCurtain() {
       <PublicHeader home />
       <OriginalHero />
       <button className={"drg-scroll-cue" + (offset > 42 ? " is-hidden" : "")} type="button" onClick={() => animateTo(viewportHeight())}>
-        <span>Desliza</span><span className="drg-cue-arrows">⌃<i>⌃</i></span>
+        <span>Desliza</span><span className="drg-scroll-icon" aria-hidden="true"><i /></span>
       </button>
     </div>
   );

@@ -2,22 +2,27 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-const links = [
+const primaryLinks = [
   ["/", "Inicio"],
   ["/propiedades", "Propiedades"],
   ["/mapa", "Mapa"],
+  ["/quieres-vender", "¿Quieres vender?"]
+] as const;
+
+const moreLinks = [
   ["/nosotros", "Nosotros"],
   ["/agentes", "Agentes"],
   ["/educacion", "Educación"],
-  ["/quieres-vender", "¿Quieres vender?"],
   ["/contacto", "Contacto"]
 ] as const;
 
 export function PublicHeader({ home = false }: { home?: boolean }) {
   const [open, setOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const update = () => setScrolled(window.scrollY > (home ? 12 : 4));
@@ -26,19 +31,74 @@ export function PublicHeader({ home = false }: { home?: boolean }) {
     return () => window.removeEventListener("scroll", update);
   }, [home]);
 
+  useEffect(() => {
+    const closeFromOutside = (event: PointerEvent) => {
+      if (moreRef.current && !moreRef.current.contains(event.target as Node)) {
+        setMoreOpen(false);
+      }
+    };
+    const closeFromEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMoreOpen(false);
+    };
+
+    document.addEventListener("pointerdown", closeFromOutside);
+    document.addEventListener("keydown", closeFromEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeFromOutside);
+      document.removeEventListener("keydown", closeFromEscape);
+    };
+  }, []);
+
+  const closeNavigation = () => {
+    setOpen(false);
+    setMoreOpen(false);
+  };
+
   const classes = ["drg-header", home ? "is-home" : "", scrolled ? "is-scrolled" : ""].filter(Boolean).join(" ");
 
   return (
     <header className={classes}>
       <div className="drg-container drg-nav">
         <Link href="/" className="drg-brand" aria-label="Diamantes Realty Group - Inicio">
-          <Image src="/assets/logo.png" alt="Logo Diamantes Realty Group" width={72} height={72} priority />
+          <Image src="/assets/logo.png" alt="Logo Diamantes Realty Group" width={82} height={82} priority />
         </Link>
-        <button className="drg-menu-toggle" type="button" aria-label="Abrir menú" aria-expanded={open} onClick={() => setOpen((value) => !value)}>☰</button>
+
+        <button
+          className="drg-menu-toggle"
+          type="button"
+          aria-label="Abrir menú"
+          aria-expanded={open}
+          onClick={() => {
+            setOpen((value) => !value);
+            setMoreOpen(false);
+          }}
+        >
+          ☰
+        </button>
+
         <nav className={"drg-nav-links" + (open ? " is-open" : "")} aria-label="Navegación principal">
-          {links.map(([href, label]) => (
-            <Link key={href} href={href} onClick={() => setOpen(false)}>{label}</Link>
+          {primaryLinks.map(([href, label]) => (
+            <Link key={href} href={href} onClick={closeNavigation}>{label}</Link>
           ))}
+
+          <div className={"drg-more-menu" + (moreOpen ? " is-open" : "")} ref={moreRef}>
+            <button
+              className="drg-more-trigger"
+              type="button"
+              aria-expanded={moreOpen}
+              aria-haspopup="menu"
+              onClick={() => setMoreOpen((value) => !value)}
+            >
+              Ver más
+              <span className="drg-more-chevron" aria-hidden="true" />
+            </button>
+
+            <div className="drg-more-dropdown" role="menu">
+              {moreLinks.map(([href, label]) => (
+                <Link key={href} href={href} role="menuitem" onClick={closeNavigation}>{label}</Link>
+              ))}
+            </div>
+          </div>
         </nav>
       </div>
     </header>
