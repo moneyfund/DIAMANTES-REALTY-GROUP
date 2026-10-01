@@ -104,3 +104,15 @@ export async function attachLegalDocumentToAgentProperty(
   if(!ownsPropertyForUser(property,user,agent)) throw new Error("No tienes permisos para modificar esta propiedad.");
   await updateDoc(ref,{legalDocument:{...legalDocument,visibility:"private"},updatedAt:serverTimestamp()});
 }
+
+export async function removeLegalDocumentFromAgentProperty(id:string,user:User,agent?:Agent|null){
+  assertDrgWritesEnabled();
+  const firebase=getFirebaseClient(); if(!firebase) throw new Error("Firebase no está disponible.");
+  const ref=doc(firebase.db,"properties",id);
+  const snapshot=await getDoc(ref); if(!snapshot.exists()) throw new Error("La propiedad no existe.");
+  const property=normalizeProperty(snapshot.id,snapshot.data());
+  if(!ownsPropertyForUser(property,user,agent)) throw new Error("No tienes permisos para modificar esta propiedad.");
+  const legal=property.raw.legalDocument && typeof property.raw.legalDocument==="object" ? property.raw.legalDocument as Record<string,unknown> : null;
+  await updateDoc(ref,{legalDocument:null,updatedAt:serverTimestamp()});
+  return String(legal?.storagePath||"");
+}

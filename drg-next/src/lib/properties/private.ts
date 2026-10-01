@@ -160,3 +160,26 @@ export function emptyAgentPropertyDraft(): AgentPropertyDraft {
     videoType:"",videoUrl:"",images:[],coverImage:""
   };
 }
+
+export type ContractStatus={key:"none"|"future"|"expired"|"today"|"urgent"|"soon"|"active";label:string;daysRemaining:number|null};
+
+function parseDateOnly(value:string){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return null;
+  const [year,month,day]=value.split("-").map(Number);
+  const date=new Date(year,month-1,day);
+  return date.getFullYear()===year&&date.getMonth()===month-1&&date.getDate()===day?date:null;
+}
+function dayNumber(date:Date){return Date.UTC(date.getFullYear(),date.getMonth(),date.getDate())/86400000}
+export function getContractStatus(start:string,end:string,now=new Date()):ContractStatus{
+  const validation=validateContractDates(start,end);
+  if(!validation.valid||(!start&&!end))return{key:"none",label:"Contrato no registrado",daysRemaining:null};
+  const startDate=parseDateOnly(start),endDate=parseDateOnly(end);
+  if(!startDate||!endDate)return{key:"none",label:"Contrato no registrado",daysRemaining:null};
+  const today=dayNumber(now),starts=dayNumber(startDate),ends=dayNumber(endDate),daysRemaining=ends-today,daysUntilStart=starts-today;
+  if(daysUntilStart>0)return{key:"future",label:`Inicia en ${daysUntilStart} día${daysUntilStart===1?"":"s"}`,daysRemaining};
+  if(daysRemaining<0)return{key:"expired",label:`Vencido hace ${Math.abs(daysRemaining)} día${Math.abs(daysRemaining)===1?"":"s"}`,daysRemaining};
+  if(daysRemaining===0)return{key:"today",label:"Vence hoy",daysRemaining};
+  if(daysRemaining<=7)return{key:"urgent",label:`Vence en ${daysRemaining} día${daysRemaining===1?"":"s"}`,daysRemaining};
+  if(daysRemaining<=30)return{key:"soon",label:`Vence en ${daysRemaining} días`,daysRemaining};
+  return{key:"active",label:`${daysRemaining} días restantes`,daysRemaining};
+}
