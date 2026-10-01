@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useDrgAuth } from "@/components/auth/AuthProvider";
-import { drgDeploymentEnvironment, drgWritesEnabled } from "@/lib/config/writes";
+import { drgDeploymentBranch, drgDeploymentEnvironment, drgWritesEnabled } from "@/lib/config/writes";
 import { runMigrationSmokeTest, type MigrationSmokeStep } from "@/lib/firebase/migration-smoke";
 
 const baseSteps:MigrationSmokeStep[]=[
@@ -20,6 +20,10 @@ const baseSteps:MigrationSmokeStep[]=[
 
 export function MigrationCheckClient(){
   const {profile}=useDrgAuth();
+  const migrationSmokeEnabled=
+    drgDeploymentEnvironment==="preview" &&
+    drgDeploymentBranch==="migration/drg-next" &&
+    drgWritesEnabled;
   const [steps,setSteps]=useState<MigrationSmokeStep[]>(baseSteps);
   const [running,setRunning]=useState(false);
   const [result,setResult]=useState("");
@@ -41,10 +45,10 @@ export function MigrationCheckClient(){
 
   return <section className="drg-migration-check">
     <header><div><p className="drg-kicker">DRG 2.0 · Migración</p><h1>Prueba controlada de escritura</h1><p>Esta herramienta crea únicamente registros temporales identificados como MIGRATION TEST y luego los elimina.</p></div><Link href="/admin">Volver al Admin</Link></header>
-    <div className="drg-migration-status"><article><small>Entorno Vercel</small><strong>{drgDeploymentEnvironment}</strong></article><article><small>Escrituras</small><strong>{drgWritesEnabled?"HABILITADAS":"BLOQUEADAS"}</strong></article><article><small>Cuenta</small><strong>{profile.user?.email||"—"}</strong></article></div>
+    <div className="drg-migration-status"><article><small>Entorno Vercel</small><strong>{drgDeploymentEnvironment}</strong></article><article><small>Prueba de migración</small><strong>{migrationSmokeEnabled?"HABILITADA":"BLOQUEADA"}</strong></article><article><small>Cuenta</small><strong>{profile.user?.email||"—"}</strong></article></div>
     <div className="drg-migration-warning"><strong>No ejecutar antes del backup.</strong><p>Las reglas propuestas deben estar desplegadas y las variables de Preview deben estar activas. Producción permanece bloqueada por código.</p></div>
     <div className="drg-migration-steps">{steps.map(step=><article key={step.key} className={"is-"+step.status}><span>{step.status==="success"?"✓":step.status==="error"?"!":step.status==="running"?"…":"○"}</span><div><strong>{step.label}</strong>{step.detail?<small>{step.detail}</small>:null}</div></article>)}</div>
-    <button className="drg-migration-run" disabled={running||!drgWritesEnabled} onClick={()=>void run()}>{running?"Ejecutando…":drgWritesEnabled?"Ejecutar prueba controlada":"Escrituras bloqueadas"}</button>
+    <button className="drg-migration-run" disabled={running||!migrationSmokeEnabled} onClick={()=>void run()}>{running?"Ejecutando…":migrationSmokeEnabled?"Ejecutar prueba controlada":"Prueba bloqueada en Producción"}</button>
     {result?<p className="drg-migration-result">{result}</p>:null}
   </section>;
 }

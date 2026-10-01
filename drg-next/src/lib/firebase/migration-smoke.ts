@@ -9,7 +9,7 @@ import {
 import { deleteObject, getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import type { User } from "firebase/auth";
 import { getFirebaseClient } from "./client";
-import { assertDrgWritesEnabled } from "@/lib/config/writes";
+import { drgDeploymentBranch, drgDeploymentEnvironment } from "@/lib/config/writes";
 
 export type MigrationSmokeStep={
   key:string;
@@ -22,8 +22,14 @@ function stamp(){
   return new Date().toISOString().replace(/[-:.TZ]/g,"").slice(0,14);
 }
 
+function assertMigrationSmokeEnabled(){
+  if(!(drgDeploymentEnvironment==="preview"&&drgDeploymentBranch==="migration/drg-next")){
+    throw new Error("La prueba de migración solo está disponible en la Preview de migración.");
+  }
+}
+
 export async function runMigrationSmokeTest(user:User,onStep:(step:MigrationSmokeStep)=>void){
-  assertDrgWritesEnabled();
+  assertMigrationSmokeEnabled();
   const firebase=getFirebaseClient();
   if(!firebase)throw new Error("Firebase no está disponible.");
 
