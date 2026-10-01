@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Property } from "@/types/property";
 import { getPropertyCoordinates } from "@/lib/properties/detail";
 
@@ -25,6 +25,7 @@ export function PropertiesMapCanvas({
   const elementRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("leaflet").Map | null>(null);
   const layerRef = useRef<import("leaflet").LayerGroup | null>(null);
+  const [mapReady, setMapReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -37,6 +38,7 @@ export function PropertiesMapCanvas({
       }).addTo(map);
       mapRef.current = map;
       layerRef.current = L.layerGroup().addTo(map);
+      setMapReady(true);
       window.setTimeout(() => map.invalidateSize(), 80);
     });
     return () => {
@@ -44,13 +46,14 @@ export function PropertiesMapCanvas({
       mapRef.current?.remove();
       mapRef.current = null;
       layerRef.current = null;
+      setMapReady(false);
     };
   }, []);
 
   useEffect(() => {
     const map = mapRef.current;
     const layer = layerRef.current;
-    if (!map || !layer) return;
+    if (!mapReady || !map || !layer) return;
 
     void import("leaflet").then((L) => {
       layer.clearLayers();
@@ -74,13 +77,13 @@ export function PropertiesMapCanvas({
 
       if (focus) {
         map.setView(focus, 13, { animate: true });
-      } else if (bounds.length === 1) {
+      } else if (!activeId && bounds.length === 1) {
         map.setView(bounds[0], 13);
-      } else if (bounds.length > 1) {
+      } else if (!activeId && bounds.length > 1) {
         map.fitBounds(bounds, { padding: [42, 42], maxZoom: 13 });
       }
     });
-  }, [properties, activeId, focus, onSelect]);
+  }, [properties, activeId, focus, onSelect, mapReady]);
 
   return <div ref={elementRef} className="drg-map-canvas" aria-label="Mapa interactivo de propiedades" />;
 }

@@ -113,7 +113,7 @@ export function MapExperienceClient() {
           <div className="drg-map-search-input">
             <input value={search} onChange={(event) => { setSearch(event.target.value); setFocus(null); }} placeholder="Busca ciudad, barrio, zona o dirección" aria-label="Buscar ubicación" />
             {search ? <button type="button" onClick={() => { setSearch(""); setGeoResults([]); setFocus(null); }}>×</button> : null}
-            {geoResults.length ? <div className="drg-geo-results">{geoResults.map((result) => <button type="button" key={result.display_name} onClick={() => { setSearch(result.display_name); setFocus([result.lat, result.lon]); setGeoResults([]); }}>{result.display_name}</button>)}</div> : null}
+            {geoResults.length ? <div className="drg-geo-results">{geoResults.map((result) => <button type="button" key={result.display_name} onClick={() => { setSearch(result.display_name.split(",")[0]?.trim() || result.display_name); setFocus([result.lat, result.lon]); setGeoResults([]); }}>{result.display_name}</button>)}</div> : null}
           </div>
           <details className="drg-map-filters">
             <summary>Filtros <small>Ajustar búsqueda</small></summary>
