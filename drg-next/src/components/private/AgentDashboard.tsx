@@ -265,7 +265,7 @@ export function AgentDashboard() {
     {mobileNavOpen?<button className="drg-agent-sidebar-overlay" type="button" aria-label="Cerrar menú" onClick={()=>setMobileNavOpen(false)}/>:null}
     <aside className={"drg-agent-sidebar"+(mobileNavOpen?" is-mobile-open":"")}>
       <button className="drg-agent-sidebar-close" type="button" aria-label="Cerrar menú" onClick={()=>setMobileNavOpen(false)}><X size={20}/></button>
-      <Link className="drg-agent-sidebar-brand" href="/"><strong>DIAMANTES</strong><span>Realty Group</span></Link>
+      <Link className="drg-agent-sidebar-brand" href="/" aria-label="Diamantes Realty Group - Inicio"><img src="/assets/logo.png" alt="Diamantes Realty Group"/></Link>
       <div className="drg-agent-sidebar-person"><div className="drg-agent-sidebar-avatar">{agent?.photo?<img src={agent.photo} alt="" />:<span>{(agent?.name||user?.displayName||"DR").split(/\s+/).slice(0,2).map(v=>v[0]).join("").toUpperCase()}</span>}</div><strong>{agent?.name||user?.displayName||"Agente DRG"}</strong><span>{user?.email}</span></div>
       <nav>
         <button className={view==="inicio"?"is-active":""} onClick={()=>{setView("inicio");setMobileNavOpen(false)}}><House size={18} aria-hidden="true"/><span>Inicio</span></button>
