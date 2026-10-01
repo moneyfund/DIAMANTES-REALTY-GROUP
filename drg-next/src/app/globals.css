@@ -511,3 +511,41 @@
   .drg-btn{min-height:41px}
   .drg-mobile-search-trigger{min-height:39px}
 }
+
+
+/* Agent brokerage inventory — reuse public property card proportions */
+.drg-brokerage-inventory{margin-top:24px}
+.drg-brokerage-property-grid{align-items:stretch}
+.drg-brokerage-property-grid .drg-property-card{width:100%;min-width:0}
+.drg-brokerage-property-grid .drg-property-shell{height:100%}
+.drg-brokerage-property-grid .drg-property-media{aspect-ratio:4/3}
+@media(max-width:1100px){.drg-brokerage-property-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.drg-brokerage-property-grid{grid-template-columns:1fr}}
+
+/* Scroll cue: gesture clearly moves upward */
+.drg-scroll-cue>span:first-child{font-size:8px;letter-spacing:.14em}
+.drg-scroll-icon.is-up:before{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:-10px;
+  width:6px;
+  height:6px;
+  border-left:1.5px solid rgba(255,255,255,.9);
+  border-top:1.5px solid rgba(255,255,255,.9);
+  transform:translateX(-50%) rotate(45deg);
+}
+.drg-scroll-icon.is-up i{
+  top:auto;
+  bottom:6px;
+  animation:drg-scroll-wheel-up 1.55s cubic-bezier(.45,0,.2,1) infinite;
+}
+@keyframes drg-scroll-wheel-up{
+  0%{opacity:0;transform:translate(-50%,1px)}
+  20%{opacity:1}
+  65%{opacity:1}
+  100%{opacity:0;transform:translate(-50%,-11px)}
+}
+@media(prefers-reduced-motion:reduce){
+  .drg-scroll-icon.is-up i{animation:none;top:auto;bottom:11px}
+}

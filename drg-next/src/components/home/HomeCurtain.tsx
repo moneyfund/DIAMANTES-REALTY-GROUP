@@ -95,7 +95,7 @@ export function HomeCurtain() {
       <div className={"drg-home-curtain" + (open ? " is-open" : "")} style={curtainStyle}>
         <OriginalHero />
         <button className={"drg-scroll-cue" + (offset > 42 ? " is-hidden" : "")} type="button" onClick={() => animateTo(viewportHeight())}>
-          <span>Desliza</span><span className="drg-scroll-icon" aria-hidden="true"><i /></span>
+          <span>Desliza hacia arriba</span><span className="drg-scroll-icon is-up" aria-hidden="true"><i /></span>
         </button>
       </div>
     </>
