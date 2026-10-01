@@ -6,7 +6,7 @@ const rawMode = process.env.NEXT_PUBLIC_DRG_DATA_MODE;
 export const drgDataMode: DrgDataMode =
   rawMode === "readonly" || rawMode === "staging" || rawMode === "production"
     ? rawMode
-    : "disabled";
+    : "readonly";
 
 export const firebasePublicConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || firebaseProductionPublicConfig.apiKey,
