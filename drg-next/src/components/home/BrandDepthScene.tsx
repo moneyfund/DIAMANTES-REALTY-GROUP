@@ -9,14 +9,10 @@ const depthLayers = Array.from({ length: 20 }, (_, index) => 20 - index);
 /** Decorative only: never observes, intercepts or changes the hero's controls. */
 export function BrandDepthScene() {
   const reducedMotion = useReducedMotion();
-  const { scrollY } = useScroll();
-  const smoothScroll = useSpring(scrollY, { stiffness: 120, damping: 30, mass: .6 });
-  const phase = useTransform(smoothScroll, value => Math.max(0, value) / 720);
-  // Bounded angles reveal the solid edge without turning the official mark over.
-  const rotateY = useTransform(phase, value => Math.sin(value - .65) * 38);
-  const rotateX = useTransform(phase, value => 8 + Math.cos(value) * 8);
-  const rotateZ = useTransform(phase, value => Math.sin(value * .7 - .4) * 12);
-  const y = useTransform(phase, value => Math.sin(value * .6) * -24);
+  const { scrollYProgress } = useScroll();
+  // Start front-facing and stay level; scrolling only turns the vertical axis.
+  const scrollRotation = useTransform(scrollYProgress, [0, 1], [0, 360]);
+  const rotateY = useSpring(scrollRotation, { stiffness: 120, damping: 30, mass: .6 });
 
   return (
     <div className="drg-brand-atmosphere" aria-hidden="true">
@@ -24,10 +20,7 @@ export function BrandDepthScene() {
         <motion.div
           className="drg-brand-object"
           style={{
-            y: reducedMotion ? 0 : y,
-            rotateX: reducedMotion ? 8 : rotateX,
-            rotateY: reducedMotion ? -12 : rotateY,
-            rotateZ: reducedMotion ? 0 : rotateZ,
+            rotateY: reducedMotion ? 0 : rotateY,
           }}
         >
           {depthLayers.map(layer => (
