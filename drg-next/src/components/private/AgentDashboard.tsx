@@ -10,8 +10,11 @@ import { saveAgentProfile, type AgentProfileDraft } from "@/lib/firebase/private
 import { emptyAgentPropertyDraft, propertyToDraft, validateContractDates, type AgentPropertyDraft } from "@/lib/properties/private";
 import { getDynamicFieldsForType } from "@/lib/properties/fields";
 import type { Property } from "@/types/property";
+import { AgentSharedLists } from "./AgentSharedLists";
+import { AgentBrokerageInventory } from "./AgentBrokerageInventory";
+import { AvaluosPlaceholder } from "./AvaluosPlaceholder";
 
-type View="inicio"|"perfil"|"propiedad"|"inventario";
+type View="inicio"|"perfil"|"propiedad"|"listas"|"inventario"|"red-agentes"|"avaluos";
 const departments=["Boaco","Carazo","Chinandega","Chontales","Estelí","Granada","Jinotega","León","Madriz","Managua","Masaya","Matagalpa","Nueva Segovia","Rivas","Río San Juan"];
 const propertyTypes=[["house","Casa"],["apartment","Apartamento"],["land","Terreno"],["farm","Finca"],["quinta","Quinta"],["warehouse","Bodega"],["commercial","Comercial"],["office","Oficina"],["investment","Inversión"],["other","Otro"]] as const;
 
@@ -155,13 +158,16 @@ export function AgentDashboard() {
         <button className={view==="inicio"?"is-active":""} onClick={()=>setView("inicio")}>Inicio</button>
         <button className={view==="perfil"?"is-active":""} onClick={()=>setView("perfil")}>Mi perfil</button>
         <button className={view==="propiedad"?"is-active":""} onClick={newProperty}>Subir propiedad</button>
+        <button className={view==="listas"?"is-active":""} onClick={()=>setView("listas")}>Listas compartidas</button>
         <button className={view==="inventario"?"is-active":""} onClick={()=>setView("inventario")}>Mis propiedades</button>
+        <button className={view==="red-agentes"?"is-active":""} onClick={()=>setView("red-agentes")}>Propiedades de agentes</button>
+        <button className={view==="avaluos"?"is-active":""} onClick={()=>setView("avaluos")}>Avalúos</button>
       </nav>
       <div className="drg-agent-sidebar-foot"><span className={drgWritesEnabled?"is-write":"is-readonly"}>{drgWritesEnabled?"Escritura habilitada":"Modo seguro · solo lectura"}</span><button onClick={()=>void logout()}>Cerrar sesión</button></div>
     </aside>
 
     <main className="drg-agent-workspace">
-      <header className="drg-agent-topbar"><div><p className="drg-kicker">Panel de agente · DRG 2.0</p><h1>{view==="inicio"?"Resumen":view==="perfil"?"Perfil profesional":view==="propiedad"?(editingId?"Editar propiedad":"Nueva propiedad"):"Mis propiedades"}</h1></div><button onClick={()=>void reload()}>Actualizar datos</button></header>
+      <header className="drg-agent-topbar"><div><p className="drg-kicker">Panel de agente · DRG 2.0</p><h1>{view==="inicio"?"Resumen":view==="perfil"?"Perfil profesional":view==="propiedad"?(editingId?"Editar propiedad":"Nueva propiedad"):view==="listas"?"Listas compartidas":view==="inventario"?"Mis propiedades":view==="red-agentes"?"Propiedades de agentes":"Avalúos"}</h1></div><button onClick={()=>void reload()}>Actualizar datos</button></header>
       {message?<div className="drg-agent-message">{message}<button onClick={()=>setMessage("")}>×</button></div>:null}
 
       {view==="inicio"?<section className="drg-agent-home">
@@ -220,6 +226,10 @@ export function AgentDashboard() {
         {uploadProgress?<p className="drg-agent-upload-progress">{uploadProgress}</p>:null}
         <div className="drg-agent-editor-actions"><button type="submit">{drgWritesEnabled?(editingId?"Actualizar propiedad":"Enviar a revisión"):"Guardado bloqueado en Preview"}</button>{editingId?<button type="button" className="is-secondary" onClick={()=>{setEditingId("");setDraft(emptyAgentPropertyDraft())}}>Cancelar edición</button>:null}</div>
       </form>:null}
+
+      {view==="listas"?<AgentSharedLists/>:null}
+      {view==="red-agentes"?<AgentBrokerageInventory/>:null}
+      {view==="avaluos"?<AvaluosPlaceholder/>:null}
 
       {view==="inventario"?<section className="drg-agent-inventory">
         <header><div><p>{loading?"Cargando…":properties.length+" propiedades asociadas a tu cuenta"}</p></div><button onClick={newProperty}>Nueva propiedad</button></header>
