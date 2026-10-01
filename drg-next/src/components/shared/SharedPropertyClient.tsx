@@ -9,6 +9,7 @@ import { getPropertyCoordinates, getPropertyFeatures, getPropertyVideo } from "@
 import type { Agent } from "@/types/agent";
 import type { Property } from "@/types/property";
 import { PropertyDetailGallery } from "@/components/properties/PropertyDetailGallery";
+import { PropertyFeatureIcon } from "@/components/properties/PropertyFeatureIcon";
 
 function waHref(phone:string,message:string){const digits=String(phone||"").replace(/\D/g,"");return digits?"https://wa.me/"+digits+"?text="+encodeURIComponent(message):""}
 function operationLabel(value:string){return value==="alquiler"?"Alquiler":value==="venta_renta"?"Venta / Renta":"Venta"}
@@ -47,7 +48,7 @@ export function SharedPropertyClient({token,propertyId}:{token:string;propertyId
       <section className="drg-shared-detail-top"><PropertyDetailGallery images={property.images.length?property.images:(property.coverImage?[property.coverImage]:[])} title={property.title}/><aside><p className="drg-kicker">{property.typeLabel} · {operationLabel(property.operation)}</p><h1>{property.title}</h1><p className="drg-shared-detail-location"><MapPin size={14}/>{property.location}</p><strong className="drg-shared-detail-price">{property.priceUsd?"$"+property.priceUsd.toLocaleString("en-US")+" USD":"Precio bajo consulta"}</strong><div className="drg-shared-advisor">{advisor.photo?<img src={advisor.photo} alt=""/>:<span>{advisor.name.split(/\s+/).slice(0,2).map(v=>v[0]).join("").toUpperCase()}</span>}<div><small>Asesor de tu selección</small><strong>{advisor.name}</strong>{advisor.email?<em>{advisor.email}</em>:null}</div></div>{whatsapp?<a className="drg-shared-contact-primary" href={whatsapp} target="_blank" rel="noreferrer"><MessageCircle size={15}/> Consultar esta propiedad</a>:advisor.email?<a className="drg-shared-contact-primary" href={"mailto:"+advisor.email}><Mail size={15}/> Contactar asesor</a>:null}</aside></section>
       <section className="drg-shared-detail-content">
         {property.description?<article><p className="drg-kicker">Información</p><h2>Descripción de la propiedad</h2><p>{property.description}</p></article>:null}
-        {features.length?<article><p className="drg-kicker">Datos principales</p><h2>Características</h2><div className="drg-shared-feature-grid">{features.map(feature=><div key={feature.label}><small>{feature.label}</small><strong>{feature.value}</strong></div>)}</div></article>:null}
+        {features.length?<article><p className="drg-kicker">Datos principales</p><h2>Características</h2><div className="drg-shared-feature-grid">{features.map(feature=><div key={feature.label}><PropertyFeatureIcon label={feature.label} size={19}/><span><small>{feature.label}</small><strong>{feature.value}</strong></span></div>)}</div></article>:null}
         {video?<article><p className="drg-kicker">Contenido multimedia</p><h2>Recorrido en video</h2><div className="drg-shared-video"><iframe src={video.embedUrl} title={"Video de "+property.title} allowFullScreen/></div></article>:null}
         {mapUrl?<article><p className="drg-kicker">Referencia geográfica</p><h2>Ubicación</h2><iframe className="drg-shared-map" src={mapUrl} title={"Mapa de "+property.title}/></article>:null}
       </section>

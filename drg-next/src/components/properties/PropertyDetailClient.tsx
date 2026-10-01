@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bath, BedDouble, Car, Droplets, LandPlot, MapPin, Ruler, Route, Shield, Zap } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { readPropertyById } from "@/lib/firebase/properties";
 import { readAgentById } from "@/lib/firebase/agents";
@@ -20,21 +20,7 @@ import { PropertyDetailGallery } from "./PropertyDetailGallery";
 import { PropertyShareActions } from "./PropertyShareActions";
 import { PropertyInteractions } from "./PropertyInteractions";
 
-const iconByLabel: Record<string, typeof Ruler> = {
-  "Habitaciones": BedDouble,
-  "Baños": Bath,
-  "Área": Ruler,
-  "Área de construcción": Ruler,
-  "Área de terreno": LandPlot,
-  "Parqueo": Car,
-  "Topografía": LandPlot,
-  "Acceso": Route,
-  "Agua": Droplets,
-  "Electricidad": Zap,
-  "Seguridad": Shield,
-  "Uso": LandPlot
-};
-
+import { PropertyFeatureIcon } from "./PropertyFeatureIcon";
 function operationLabel(value: string) {
   if (value === "alquiler") return "Alquiler";
   if (value === "venta_renta") return "Venta o alquiler";
@@ -131,8 +117,7 @@ export function PropertyDetailClient({ propertyId }: { propertyId: string }) {
           <h2>Características de la propiedad</h2>
           <div className="drg-detail-features">
             {features.map((feature) => {
-              const Icon = iconByLabel[feature.label] || Ruler;
-              return <article key={feature.label}><Icon aria-hidden="true" /><span><strong>{feature.label}</strong><em>{feature.value}</em></span></article>;
+              return <article key={feature.label}><PropertyFeatureIcon label={feature.label}/><span><strong>{feature.label}</strong><em>{feature.value}</em></span></article>;
             })}
             <article><MapPin aria-hidden="true" /><span><strong>Ubicación</strong><em>{property.location || "Nicaragua"}</em></span></article>
           </div>

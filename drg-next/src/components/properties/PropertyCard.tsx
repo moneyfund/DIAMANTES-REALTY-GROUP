@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Property } from "@/types/property";
 import { USD_TO_NIO_RATE } from "@/lib/properties/constants";
+import { MapPin, Share2 } from "lucide-react";
+import { PropertyFeatureIcon } from "./PropertyFeatureIcon";
 
 function operationLabel(value: string) {
   if (value === "alquiler") return "Alquiler";
@@ -26,10 +28,10 @@ export function PropertyCard({ property }: { property: Property }) {
   const rent = property.operation === "alquiler";
   const nio = property.priceUsd ? Math.round(property.priceUsd * USD_TO_NIO_RATE) : null;
   const details = [
-    property.bedrooms ? String(property.bedrooms) + " hab." : "",
-    property.bathrooms ? String(property.bathrooms) + " baños" : "",
-    property.area ? property.area.toLocaleString("en-US") + " " + (property.areaUnit || "m²") : ""
-  ].filter(Boolean).slice(0, 3);
+    property.bedrooms ? {label:"Habitaciones",value:String(property.bedrooms)} : null,
+    property.bathrooms ? {label:"Baños",value:String(property.bathrooms)} : null,
+    property.area ? {label:"Área",value:property.area.toLocaleString("en-US") + " " + (property.areaUnit || "m²")} : null
+  ].filter((item): item is {label:string;value:string} => Boolean(item)).slice(0, 3);
 
   async function share() {
     const url = window.location.origin + "/propiedad/" + property.id;
@@ -67,13 +69,13 @@ export function PropertyCard({ property }: { property: Property }) {
             ) : "Precio no disponible"}
           </p>
           <h3><Link href={"/propiedad/" + property.id}>{property.title || "Propiedad en Nicaragua"}</Link></h3>
-          <p className="drg-property-location">⌖ <span>{property.location || "Nicaragua"}</span></p>
-          <div className="drg-property-features">{details.map((detail) => <span key={detail}>{detail}</span>)}</div>
+          <p className="drg-property-location"><MapPin size={14} aria-hidden="true"/> <span>{property.location || "Nicaragua"}</span></p>
+          <div className="drg-property-features">{details.map((detail) => <span key={detail.label}><PropertyFeatureIcon label={detail.label} size={15}/>{detail.value}</span>)}</div>
         </div>
 
         <div className="drg-property-footer">
           <Link className="drg-property-cta" href={"/propiedad/" + property.id}>Ver propiedad <span>↗</span></Link>
-          <button className="drg-property-share" type="button" onClick={share} aria-label={"Compartir " + property.title}>⌯</button>
+          <button className="drg-property-share" type="button" onClick={share} aria-label={"Compartir " + property.title}><Share2 size={17} aria-hidden="true"/></button>
         </div>
       </div>
     </article>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Mail, Phone } from "lucide-react";
 import { getAgentInitials, normalizeExternalUrl } from "@/lib/agents/utils";
 import type { Agent } from "@/types/agent";
+import { SocialIcon } from "@/components/social/SocialIcon";
 
 export function AgentCard({ agent }: { agent: Agent }) {
   const socials = [
@@ -30,7 +31,7 @@ export function AgentCard({ agent }: { agent: Agent }) {
           {agent.phone ? <a href={"tel:" + agent.phone.replace(/\s+/g, "")}><Phone size={16} /> {agent.phone}</a> : null}
           {agent.email ? <a href={"mailto:" + agent.email}><Mail size={16} /> {agent.email}</a> : null}
         </div>
-        {socials.length ? <div className="drg-agent-socials">{socials.map(([label, href]) => <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label}>{label.slice(0, 2)}</a>)}</div> : null}
+        {socials.length ? <div className="drg-agent-socials">{socials.map(([label, href]) => <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label} title={label}><SocialIcon network={label} size={15}/></a>)}</div> : null}
         <div className="drg-agent-actions">
           <Link className="is-primary" href={"/propiedades?agent=" + encodeURIComponent(agent.id)}>Ver propiedades</Link>
           <Link href={"/agente/" + agent.id}>Perfil profesional</Link>

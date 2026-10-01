@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Share2 } from "lucide-react";
+import { SocialIcon } from "@/components/social/SocialIcon";
 
 export function PropertyShareActions({ title, whatsappPhone }: { title: string; whatsappPhone?: string }) {
   const [feedback, setFeedback] = useState("");
@@ -30,8 +32,8 @@ export function PropertyShareActions({ title, whatsappPhone }: { title: string; 
 
   return (
     <div className="drg-detail-actions">
-      <button type="button" onClick={share}>↗ Compartir propiedad</button>
-      {whatsappUrl ? <a className="drg-whatsapp-cta" href={whatsappUrl} target="_blank" rel="noreferrer">Más información</a> : null}
+      <button type="button" onClick={share}><Share2 size={16} aria-hidden="true"/> Compartir propiedad</button>
+      {whatsappUrl ? <a className="drg-whatsapp-cta" href={whatsappUrl} target="_blank" rel="noreferrer"><SocialIcon network="WhatsApp" size={17}/> Más información</a> : null}
       {feedback ? <small aria-live="polite">{feedback}</small> : null}
     </div>
   );
