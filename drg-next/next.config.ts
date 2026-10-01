@@ -21,7 +21,10 @@ const nextConfig: NextConfig = {
       { source: "/contacto.html", destination: "/contacto", permanent: true },
       { source: "/propiedad.html", destination: "/propiedad", permanent: true },
       { source: "/agent.html", destination: "/agent", permanent: true },
-      { source: "/agente.html", destination: "/agente", permanent: true }
+      { source: "/agente.html", destination: "/agente", permanent: true },
+      { source: "/politicas-de-privacidad.html", destination: "/politicas-de-privacidad", permanent: true },
+      { source: "/condiciones-de-uso.html", destination: "/condiciones-de-uso", permanent: true },
+      { source: "/licencia-de-operacion.html", destination: "/licencia-de-operacion", permanent: true }
     ];
   }
 };
