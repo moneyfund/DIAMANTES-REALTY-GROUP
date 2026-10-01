@@ -106,7 +106,18 @@ service cloud.firestore {
     }
 
     match /formularios/{formId} {
-      allow create: if true;
+      allow create: if
+        request.resource.data.get("tipo","") in ["contacto","quiero-vender"] &&
+        request.resource.data.get("estado","")=="nuevo" &&
+        request.resource.data.get("origen","")=="web-publica" &&
+        request.resource.data.get("nombre","").size() > 0 &&
+        request.resource.data.get("nombre","").size() <= 100 &&
+        request.resource.data.get("telefono","").size() > 0 &&
+        request.resource.data.get("telefono","").size() <= 30 &&
+        request.resource.data.get("correo","").size() > 0 &&
+        request.resource.data.get("correo","").size() <= 160 &&
+        request.resource.data.get("mensaje","").size() > 0 &&
+        request.resource.data.get("mensaje","").size() <= 3000;
       allow read, update, delete: if isAdmin();
     }
 
