@@ -87,13 +87,17 @@ export function HomeCurtain() {
   const curtainStyle = { transform: "translate3d(0," + (-offset) + "px,0)" };
   const open = typeof window !== "undefined" && offset >= viewportHeight() - 1;
 
+  const headerScrolled = offset > 44 || open;
+
   return (
-    <div className={"drg-home-curtain" + (open ? " is-open" : "")} style={curtainStyle}>
-      <PublicHeader home />
-      <OriginalHero />
-      <button className={"drg-scroll-cue" + (offset > 42 ? " is-hidden" : "")} type="button" onClick={() => animateTo(viewportHeight())}>
-        <span>Desliza</span><span className="drg-scroll-icon" aria-hidden="true"><i /></span>
-      </button>
-    </div>
+    <>
+      <PublicHeader home homeScrolled={headerScrolled} />
+      <div className={"drg-home-curtain" + (open ? " is-open" : "")} style={curtainStyle}>
+        <OriginalHero />
+        <button className={"drg-scroll-cue" + (offset > 42 ? " is-hidden" : "")} type="button" onClick={() => animateTo(viewportHeight())}>
+          <span>Desliza</span><span className="drg-scroll-icon" aria-hidden="true"><i /></span>
+        </button>
+      </div>
+    </>
   );
 }

@@ -18,7 +18,7 @@ const moreLinks = [
   ["/contacto", "Contacto"]
 ] as const;
 
-export function PublicHeader({ home = false }: { home?: boolean }) {
+export function PublicHeader({ home = false, homeScrolled = false }: { home?: boolean; homeScrolled?: boolean }) {
   const [open, setOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -54,7 +54,8 @@ export function PublicHeader({ home = false }: { home?: boolean }) {
     setMoreOpen(false);
   };
 
-  const classes = ["drg-header", home ? "is-home" : "", scrolled ? "is-scrolled" : ""].filter(Boolean).join(" ");
+  const effectiveScrolled = scrolled || homeScrolled;
+  const classes = ["drg-header", home ? "is-home" : "", effectiveScrolled ? "is-scrolled" : ""].filter(Boolean).join(" ");
 
   return (
     <header className={classes}>
