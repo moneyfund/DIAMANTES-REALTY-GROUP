@@ -1,4 +1,5 @@
 import type { Property } from "@/types/property";
+import { getDynamicFieldsForType } from "./fields";
 
 function objectValue(raw: Record<string, unknown>, key: string): unknown {
   return key.split(".").reduce<unknown>((value, part) => {
@@ -84,7 +85,37 @@ export function getPropertyFeatures(property: Property): PropertyFeature[] {
     else push(label, stringFrom(raw, keys));
   }
 
-  return features.slice(0, 12);
+  const details =
+    raw.propertyDetails && typeof raw.propertyDetails === "object"
+      ? raw.propertyDetails as Record<string, unknown>
+      : {};
+  const dynamicFields = getDynamicFieldsForType(property.type);
+  for (const [key, inputType, label] of dynamicFields) {
+    if (features.some((item) => item.label === label)) continue;
+    const direct = raw[key];
+    const nested = details[key];
+    const value = direct !== undefined && direct !== null && direct !== "" ? direct : nested;
+    if (value === undefined || value === null || value === "") continue;
+
+    if (inputType === "number") {
+      const numeric = typeof value === "number" ? value : Number(String(value).replace(/,/g, ""));
+      if (!Number.isFinite(numeric) || numeric <= 0) continue;
+      const areaKeys = new Set(["constructionArea","landArea","totalArea"]);
+      const display = areaKeys.has(key)
+        ? numeric.toLocaleString("en-US", { maximumFractionDigits: 2 }) + " " + (String(details.areaUnit || raw.areaUnit || property.areaUnit || "m²"))
+        : numeric.toLocaleString("en-US", { maximumFractionDigits: 2 });
+      push(label, display);
+      continue;
+    }
+
+    const text = String(value).replace(/\s+/g, " ").trim();
+    if (!text) continue;
+    const normalized = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (["0","false","ninguno","ninguna","n/a","na","no especificado"].includes(normalized)) continue;
+    push(label, text.length > 90 ? text.slice(0, 87).trim() + "…" : text);
+  }
+
+  return features.slice(0, 16);
 }
 
 export function getPublishingAgentId(property: Property) {
