@@ -20,6 +20,8 @@ import { PropertyLocationPicker } from "@/components/properties/PropertyLocation
 import { PropertyImageManager, propertyImageFileKey } from "@/components/properties/PropertyImageManager";
 import { PropertyVideoPreview } from "@/components/properties/PropertyVideoPreview";
 import { validatePropertyVideo } from "@/lib/properties/video";
+import { Menu, X } from "lucide-react";
+import { PropertyFormStepper } from "@/components/properties/PropertyFormStepper";
 
 type View="inicio"|"perfil"|"propiedad"|"listas"|"inventario"|"red-agentes"|"avaluos";
 const departments=["Boaco","Carazo","Chinandega","Chontales","Estelí","Granada","Jinotega","León","Madriz","Managua","Masaya","Matagalpa","Nueva Segovia","Rivas","Río San Juan"];
@@ -39,7 +41,7 @@ function propertyDate(property:Property){
 function DynamicFields({draft,setDraft}:{draft:AgentPropertyDraft;setDraft:(next:AgentPropertyDraft)=>void}){
   const fields=getDynamicFieldsForType(draft.type);
   if(!fields.length)return null;
-  return <fieldset className="drg-agent-editor-section"><legend>Características específicas</legend><div className="drg-agent-form-grid">
+  return <fieldset className="drg-agent-editor-section"><legend>02 · Características específicas</legend><div className="drg-agent-form-grid">
     {fields.map(([key,input,label,options])=>{
       const value=draft.details[key]??"";
       const set=(next:string)=>setDraft({...draft,details:{...draft.details,[key]:input==="number"?(n(next)??""):next}});
@@ -53,6 +55,8 @@ function DynamicFields({draft,setDraft}:{draft:AgentPropertyDraft;setDraft:(next
 export function AgentDashboard() {
   const {profile,logout,refresh}=useDrgAuth();
   const [view,setView]=useState<View>("inicio");
+  const [mobileNavOpen,setMobileNavOpen]=useState(false);
+  const [propertyStep,setPropertyStep]=useState(1);
   const [properties,setProperties]=useState<Property[]>([]);
   const [allAgents,setAllAgents]=useState<Agent[]>([]);
   const [listingOwnerId,setListingOwnerId]=useState("");
@@ -129,13 +133,13 @@ export function AgentDashboard() {
   const pricePerArea=draft.priceUsd>0&&primaryArea>0?draft.priceUsd/primaryArea:null;
 
   function editProperty(property:Property){
-    setEditingId(property.id);setDraft(propertyToDraft(property));setPendingImages([]);setPendingCoverKey("");setPendingLegalPdf(null);setRemoveExistingLegal(false);setUploadProgress("");setView("propiedad");setMessage("");
+    setEditingId(property.id);setDraft(propertyToDraft(property));setPendingImages([]);setPendingCoverKey("");setPendingLegalPdf(null);setRemoveExistingLegal(false);setUploadProgress("");setPropertyStep(1);setView("propiedad");setMobileNavOpen(false);setMessage("");
     const raw=property.raw;const ids=[raw.agentId,raw.agenteId,raw.ownerId,raw.userId,raw.createdBy].map(v=>String(v||""));const emails=[raw.agentEmail,raw.ownerEmail,raw.createdByEmail].map(v=>String(v||"").toLowerCase());
     const owner=allAgents.find(item=>[item.id,item.raw.uid,item.raw.userId,item.raw.agentId].map(v=>String(v||"")).some(id=>ids.includes(id)))||allAgents.find(item=>item.email&&emails.includes(item.email.toLowerCase()));
     setListingOwnerId(owner?.id||agent?.id||"");
   }
   function newProperty(){
-    setEditingId("");setDraft(emptyAgentPropertyDraft());setPendingImages([]);setPendingCoverKey("");setPendingLegalPdf(null);setRemoveExistingLegal(false);setUploadProgress("");setView("propiedad");setMessage("");
+    setEditingId("");setDraft(emptyAgentPropertyDraft());setPendingImages([]);setPendingCoverKey("");setPendingLegalPdf(null);setRemoveExistingLegal(false);setUploadProgress("");setPropertyStep(1);setView("propiedad");setMobileNavOpen(false);setMessage("");
     const current=allAgents.find(item=>item.id===agent?.id)||allAgents.find(item=>item.email&&item.email.toLowerCase()===String(user?.email||"").toLowerCase());
     setListingOwnerId(current?.id||agent?.id||"");
   }
@@ -157,6 +161,26 @@ export function AgentDashboard() {
       setMessage(error instanceof Error?error.message:"No fue posible guardar el perfil.");
     }
   }
+
+  function goToPropertyStep(next:number){
+    if(next<1||next>4)return;
+    if(next>propertyStep)return;
+    setPropertyStep(next);setMessage("");
+  }
+
+  function nextPropertyStep(){
+    if(propertyStep===1){
+      if(!draft.title.trim()||!draft.location.trim()||draft.priceUsd<=0){setMessage("Completa título, ubicación y precio antes de continuar.");return}
+      if(!listingOwnerId){setMessage("Selecciona el agente propietario del listado antes de continuar.");return}
+    }
+    if(propertyStep===3){
+      const contract=validateContractDates(draft.contractStartDate,draft.contractEndDate);
+      if(!contract.valid){setMessage(contract.message);return}
+    }
+    setMessage("");setPropertyStep(step=>Math.min(4,step+1));
+  }
+
+  function previousPropertyStep(){setMessage("");setPropertyStep(step=>Math.max(1,step-1))}
 
   async function submitProperty(event:FormEvent){
     event.preventDefault();
@@ -221,23 +245,25 @@ export function AgentDashboard() {
   }
 
   return <section className="drg-agent-app">
-    <aside className="drg-agent-sidebar">
+    {mobileNavOpen?<button className="drg-agent-sidebar-overlay" type="button" aria-label="Cerrar menú" onClick={()=>setMobileNavOpen(false)}/>:null}
+    <aside className={"drg-agent-sidebar"+(mobileNavOpen?" is-mobile-open":"")}>
+      <button className="drg-agent-sidebar-close" type="button" aria-label="Cerrar menú" onClick={()=>setMobileNavOpen(false)}><X size={20}/></button>
       <Link className="drg-agent-sidebar-brand" href="/"><strong>DIAMANTES</strong><span>Realty Group</span></Link>
       <div className="drg-agent-sidebar-person"><div>{(agent?.name||user?.displayName||"DR").split(/\s+/).slice(0,2).map(v=>v[0]).join("").toUpperCase()}</div><strong>{agent?.name||user?.displayName||"Agente DRG"}</strong><span>{user?.email}</span></div>
       <nav>
-        <button className={view==="inicio"?"is-active":""} onClick={()=>setView("inicio")}>Inicio</button>
-        <button className={view==="perfil"?"is-active":""} onClick={()=>setView("perfil")}>Mi perfil</button>
+        <button className={view==="inicio"?"is-active":""} onClick={()=>{setView("inicio");setMobileNavOpen(false)}}>Inicio</button>
+        <button className={view==="perfil"?"is-active":""} onClick={()=>{setView("perfil");setMobileNavOpen(false)}}>Mi perfil</button>
         <button className={view==="propiedad"?"is-active":""} onClick={newProperty}>Subir propiedad</button>
-        <button className={view==="listas"?"is-active":""} onClick={()=>setView("listas")}>Listas compartidas</button>
-        <button className={view==="inventario"?"is-active":""} onClick={()=>setView("inventario")}>Mis propiedades</button>
-        <button className={view==="red-agentes"?"is-active":""} onClick={()=>setView("red-agentes")}>Propiedades de agentes</button>
-        <button className={view==="avaluos"?"is-active":""} onClick={()=>setView("avaluos")}>Avalúos</button>
+        <button className={view==="listas"?"is-active":""} onClick={()=>{setView("listas");setMobileNavOpen(false)}}>Listas compartidas</button>
+        <button className={view==="inventario"?"is-active":""} onClick={()=>{setView("inventario");setMobileNavOpen(false)}}>Mis propiedades</button>
+        <button className={view==="red-agentes"?"is-active":""} onClick={()=>{setView("red-agentes");setMobileNavOpen(false)}}>Propiedades de agentes</button>
+        <button className={view==="avaluos"?"is-active":""} onClick={()=>{setView("avaluos");setMobileNavOpen(false)}}>Avalúos</button>
       </nav>
       <div className="drg-agent-sidebar-foot"><span className={drgWritesEnabled?"is-write":"is-readonly"}>{drgWritesEnabled?"Escritura habilitada":"Modo seguro · solo lectura"}</span><button onClick={()=>void logout()}>Cerrar sesión</button></div>
     </aside>
 
     <main className="drg-agent-workspace">
-      <header className="drg-agent-topbar"><div><p className="drg-kicker">Panel de agente · DRG 2.0</p><h1>{view==="inicio"?"Resumen":view==="perfil"?"Perfil profesional":view==="propiedad"?(editingId?"Editar propiedad":"Nueva propiedad"):view==="listas"?"Listas compartidas":view==="inventario"?"Mis propiedades":view==="red-agentes"?"Propiedades de agentes":"Avalúos"}</h1></div><button onClick={()=>void reload()}>Actualizar datos</button></header>
+      <header className="drg-agent-topbar"><button className="drg-agent-mobile-menu" type="button" aria-label="Abrir menú" onClick={()=>setMobileNavOpen(true)}><Menu size={20}/></button><div><p className="drg-kicker">Panel de agente · DRG 2.0</p><h1>{view==="inicio"?"Resumen":view==="perfil"?"Perfil profesional":view==="propiedad"?(editingId?"Editar propiedad":"Nueva propiedad"):view==="listas"?"Listas compartidas":view==="inventario"?"Mis propiedades":view==="red-agentes"?"Propiedades de agentes":"Avalúos"}</h1></div><button onClick={()=>void reload()}>Actualizar datos</button></header>
       {message?<div className="drg-agent-message">{message}<button onClick={()=>setMessage("")}>×</button></div>:null}
 
       {view==="inicio"?<section className="drg-agent-home">
@@ -263,8 +289,9 @@ export function AgentDashboard() {
         <div className="drg-agent-editor-actions"><button type="submit">{drgWritesEnabled?"Guardar perfil":"Guardar bloqueado en Preview"}</button><Link href={agent?"/agente/"+agent.id:"/agentes"} target="_blank">Ver perfil público</Link></div>
       </form>:null}
 
-      {view==="propiedad"?<form className="drg-agent-editor" onSubmit={submitProperty}>
-        <fieldset className="drg-agent-editor-section"><legend>01 · Información general</legend><div className="drg-agent-form-grid">
+      {view==="propiedad"?<form className="drg-agent-editor drg-progressive-property-form" onSubmit={submitProperty}>
+        <PropertyFormStepper step={propertyStep} onStepChange={goToPropertyStep}/>
+        {propertyStep===1?<fieldset className="drg-agent-editor-section"><legend>01 · Información general</legend><div className="drg-agent-form-grid">
           <label className="is-wide">Título<input required value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})}/></label>
           <label>Precio USD<input required type="number" min="1" step="0.01" value={draft.priceUsd||""} onChange={e=>setDraft({...draft,priceUsd:Number(e.target.value)||0})}/><small className="drg-calculated-value">{pricePerArea?"$"+pricePerArea.toLocaleString("en-US",{maximumFractionDigits:2})+" por "+(draft.areaUnit||String(draft.details.areaUnit||"unidad")):"Precio por área se calculará automáticamente"}</small></label>
           <label>Departamento<select value={draft.department} onChange={e=>setDraft({...draft,department:e.target.value})}><option value="">Seleccionar</option>{departments.map(d=><option key={d}>{d}</option>)}</select></label>
@@ -276,29 +303,33 @@ export function AgentDashboard() {
           <label>Visibilidad<select value={draft.visibility} onChange={e=>setDraft({...draft,visibility:e.target.value as AgentPropertyDraft["visibility"]})}><option value="public">Público</option><option value="agents">Solo agentes</option><option value="private">Solo yo</option></select></label>
           <label className="is-wide">Descripción<textarea rows={6} value={draft.description} onChange={e=>setDraft({...draft,description:e.target.value})}/></label>
           <fieldset className="drg-agent-tags is-wide"><legend>Etiquetas destacadas · máximo 2</legend>{["Nuevo ingreso","Oportunidad","Exclusiva","Negociable","Alta plusvalía"].map(tag=><label key={tag}><input type="checkbox" checked={draft.highlightedTags.includes(tag)} onChange={e=>{const next=e.target.checked?[...draft.highlightedTags,tag]:draft.highlightedTags.filter(item=>item!==tag);if(next.length<=2)setDraft({...draft,highlightedTags:next})}}/>{tag}</label>)}</fieldset>
-        </div></fieldset>
+        </div></fieldset>:null}
 
-        <DynamicFields draft={draft} setDraft={setDraft}/>
+        {propertyStep===2?<DynamicFields draft={draft} setDraft={setDraft}/>:null}
 
-        <fieldset className="drg-agent-editor-section"><legend>03 · Ubicación y contrato</legend><div className="drg-agent-form-grid">
+        {propertyStep===3?<fieldset className="drg-agent-editor-section"><legend>03 · Ubicación y contrato</legend><div className="drg-agent-form-grid">
           <div className="is-wide"><PropertyLocationPicker lat={draft.lat} lng={draft.lng} locationText={draft.location} onChange={(lat,lng)=>setDraft({...draft,lat,lng})}/></div>
           <label>Latitud<input type="number" step="any" value={draft.lat??""} onChange={e=>setDraft({...draft,lat:n(e.target.value)})}/></label>
           <label>Longitud<input type="number" step="any" value={draft.lng??""} onChange={e=>setDraft({...draft,lng:n(e.target.value)})}/></label>
           <label>Emisión de contrato<input type="date" value={draft.contractStartDate} onChange={e=>setDraft({...draft,contractStartDate:e.target.value})}/></label>
           <label>Vencimiento de contrato<input type="date" value={draft.contractEndDate} onChange={e=>setDraft({...draft,contractEndDate:e.target.value})}/></label>
-        </div></fieldset>
+        </div></fieldset>:null}
 
-        <fieldset className="drg-agent-editor-section"><legend>04 · Multimedia</legend><div className="drg-agent-form-grid">
+        {propertyStep===4?<fieldset className="drg-agent-editor-section"><legend>04 · Multimedia y revisión</legend><div className="drg-agent-form-grid">
           <label>Tipo de video<select value={draft.videoType} onChange={e=>setDraft({...draft,videoType:e.target.value as AgentPropertyDraft["videoType"]})}><option value="">Sin video</option><option value="youtube">YouTube</option><option value="tiktok">TikTok</option></select></label>
           <label>URL de video<input type="url" value={draft.videoUrl} onChange={e=>setDraft({...draft,videoUrl:e.target.value})}/></label>
           <div className="is-wide"><PropertyVideoPreview type={draft.videoType} url={draft.videoUrl}/></div>
           <div className="is-wide"><PropertyImageManager images={draft.images} coverImage={draft.coverImage} pendingFiles={pendingImages} pendingCoverKey={pendingCoverKey} writesEnabled={drgWritesEnabled} onImagesChange={images=>setDraft({...draft,images,coverImage:images.includes(draft.coverImage)?draft.coverImage:(images[0]||"")})} onCoverChange={coverImage=>setDraft({...draft,coverImage})} onPendingFilesChange={setPendingImages} onPendingCoverChange={setPendingCoverKey}/></div>
           <label className="is-wide drg-agent-upload-placeholder">Documento legal privado (PDF)<input type="file" accept="application/pdf,.pdf" disabled={!drgWritesEnabled} onChange={e=>{setPendingLegalPdf(e.target.files?.[0]||null);if(e.target.files?.[0])setRemoveExistingLegal(false)}}/><span>{pendingLegalPdf?pendingLegalPdf.name:"PDF privado · máximo 20 MB"}</span></label>
           {editingId&&properties.find(p=>p.id===editingId)?.raw.legalDocument?<div className="is-wide drg-agent-legal-existing"><div><strong>Documento legal existente</strong><span>{String((properties.find(p=>p.id===editingId)?.raw.legalDocument as Record<string,unknown>)?.fileName||"Documento PDF")}</span></div>{(properties.find(p=>p.id===editingId)?.raw.legalDocument as Record<string,unknown>)?.fileUrl?<a href={String((properties.find(p=>p.id===editingId)?.raw.legalDocument as Record<string,unknown>)?.fileUrl)} target="_blank" rel="noreferrer">Abrir PDF</a>:null}<label><input type="checkbox" checked={removeExistingLegal} onChange={e=>{setRemoveExistingLegal(e.target.checked);if(e.target.checked)setPendingLegalPdf(null)}}/>Quitar al guardar</label></div>:null}
-        </div></fieldset>
+        </div></fieldset>:null}
 
         {uploadProgress?<p className="drg-agent-upload-progress">{uploadProgress}</p>:null}
-        <div className="drg-agent-editor-actions"><button type="submit">{drgWritesEnabled?(editingId?"Actualizar propiedad":"Enviar a revisión"):"Guardado bloqueado en Preview"}</button>{editingId?<button type="button" className="is-secondary" onClick={()=>{setEditingId("");setDraft(emptyAgentPropertyDraft())}}>Cancelar edición</button>:null}</div>
+        <div className="drg-agent-editor-actions drg-property-step-actions">
+          {propertyStep>1?<button type="button" className="is-secondary" onClick={previousPropertyStep}>← Anterior</button>:null}
+          {propertyStep<4?<button type="button" onClick={nextPropertyStep}>Continuar →</button>:<button type="submit">{drgWritesEnabled?(editingId?"Actualizar propiedad":"Enviar a revisión"):"Guardado bloqueado en Preview"}</button>}
+          {editingId?<button type="button" className="is-secondary" onClick={()=>{setEditingId("");setDraft(emptyAgentPropertyDraft());setPropertyStep(1)}}>Cancelar edición</button>:null}
+        </div>
       </form>:null}
 
       {view==="listas"?<AgentSharedLists/>:null}

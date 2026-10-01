@@ -3,6 +3,7 @@ name: DRG Next CI
 on:
   push:
     branches:
+      - main
       - migration/drg-next
   pull_request:
     paths:

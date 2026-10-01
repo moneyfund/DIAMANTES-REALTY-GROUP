@@ -36,7 +36,7 @@ export function PropertySheetClient({propertyId}:{propertyId:string}){
     return()=>{cancelled=true};
   },[propertyId]);
 
-  const features=useMemo(()=>property?getPropertyFeatures(property).slice(0,10):[],[property]);
+  const features=useMemo(()=>property?getPropertyFeatures(property).slice(0,8):[],[property]);
 
   async function downloadPdf(){
     if(!sheetRef.current||!property)return;
@@ -45,25 +45,11 @@ export function PropertySheetClient({propertyId}:{propertyId:string}){
       const [{default:html2canvas},{jsPDF}]=await Promise.all([import("html2canvas"),import("jspdf")]);
       if(document.fonts?.ready)await document.fonts.ready;
       const canvas=await html2canvas(sheetRef.current,{scale:2,useCORS:true,backgroundColor:"#ffffff",logging:false});
-      const pdf=new jsPDF({orientation:"portrait",unit:"mm",format:"a4",compress:true});
-      const width=210;
-      const height=canvas.height*width/canvas.width;
+      const pdf=new jsPDF({orientation:"portrait",unit:"mm",format:"letter",compress:true});
+      const width=215.9;
+      const pageHeight=279.4;
       const image=canvas.toDataURL("image/jpeg",0.94);
-      if(height<=297){
-        pdf.addImage(image,"JPEG",0,0,width,height,undefined,"FAST");
-      }else{
-        const pageHeight=297;
-        let remaining=height;
-        let position=0;
-        pdf.addImage(image,"JPEG",0,position,width,height,undefined,"FAST");
-        remaining-=pageHeight;
-        while(remaining>0){
-          position=remaining-height;
-          pdf.addPage();
-          pdf.addImage(image,"JPEG",0,position,width,height,undefined,"FAST");
-          remaining-=pageHeight;
-        }
-      }
+      pdf.addImage(image,"JPEG",0,0,width,pageHeight,undefined,"FAST");
       pdf.save("ficha-tecnica-"+slug(property.title)+".pdf");
     }catch(error){console.error("[DRG PDF]",error);alert("No fue posible generar el PDF. Inténtalo nuevamente.");}
     finally{setGenerating(false)}
@@ -80,6 +66,8 @@ export function PropertySheetClient({propertyId}:{propertyId:string}){
   const phone=agent?.phone||getPublishingAgentPhone(property);
   const email=agent?.email||String(property.raw.agentEmail||"");
   const whatsapp=agent?.whatsapp||phone;
+  const description=(property.description||"Información descriptiva pendiente de actualización.").trim();
+  const sheetDescription=description.length>680?description.slice(0,677).trim()+"…":description;
 
   return <div className="drg-sheet-page">
     <header className="drg-sheet-toolbar"><Link href="/agent-dashboard">← Volver al panel</Link><div><Link href={"/propiedad/"+property.id} target="_blank">Ver propiedad</Link><button onClick={()=>void downloadPdf()} disabled={generating}><Download size={15}/>{generating?"Generando…":"Descargar PDF"}</button></div></header>
@@ -98,7 +86,7 @@ export function PropertySheetClient({propertyId}:{propertyId:string}){
           <div className="drg-sheet-feature-section"><h2>Características principales</h2><div>{features.map(feature=><article key={feature.label}><small>{feature.label}</small><strong>{feature.value}</strong></article>)}</div></div>
           <div className="drg-sheet-info-grid">
             <section><h2>Información general</h2><dl><div><dt>Título</dt><dd>{property.title}</dd></div><div><dt>Ubicación</dt><dd>{property.location||"Nicaragua"}</dd></div><div><dt>Operación</dt><dd>{operation(property.operation)}</dd></div><div><dt>Tipo</dt><dd>{property.typeLabel}</dd></div><div><dt>Estado</dt><dd>{property.status}</dd></div></dl></section>
-            <section><h2>Descripción</h2><p>{property.description||"Información descriptiva pendiente de actualización."}</p></section>
+            <section><h2>Descripción</h2><p>{sheetDescription}</p></section>
           </div>
         </section>
 
