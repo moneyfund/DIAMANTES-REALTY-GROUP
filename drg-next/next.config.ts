@@ -6,17 +6,22 @@ const migrationWritePreview =
   deploymentEnvironment === "preview" &&
   deploymentBranch === "migration/drg-next";
 
+const productionWriteDeployment =
+  deploymentEnvironment === "production" &&
+  deploymentBranch === "main";
+
 const nextConfig: NextConfig = {
   env: {
     DRG_DEPLOYMENT_ENV: deploymentEnvironment,
     DRG_DEPLOYMENT_BRANCH: deploymentBranch,
     NEXT_PUBLIC_DRG_DATA_MODE: migrationWritePreview
       ? "staging"
-      : (process.env.NEXT_PUBLIC_DRG_DATA_MODE ?? "readonly"),
-    NEXT_PUBLIC_DRG_ALLOW_WRITES: migrationWritePreview
-      ? "true"
-      : deploymentEnvironment === "production"
-        ? "false"
+      : productionWriteDeployment
+        ? "production"
+        : (process.env.NEXT_PUBLIC_DRG_DATA_MODE ?? "readonly"),
+    NEXT_PUBLIC_DRG_ALLOW_WRITES:
+      migrationWritePreview || productionWriteDeployment
+        ? "true"
         : (process.env.NEXT_PUBLIC_DRG_ALLOW_WRITES ?? "false"),
   },
   reactStrictMode: true,

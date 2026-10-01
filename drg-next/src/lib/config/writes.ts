@@ -6,11 +6,19 @@ export const drgDeploymentEnvironment =
 export const drgDeploymentBranch =
   process.env.DRG_DEPLOYMENT_BRANCH ?? "";
 
-export const drgWritesEnabled =
+const migrationPreviewWrites =
   drgDeploymentEnvironment === "preview" &&
   drgDeploymentBranch === "migration/drg-next" &&
-  process.env.NEXT_PUBLIC_DRG_ALLOW_WRITES === "true" &&
   drgDataMode === "staging";
+
+const productionMainWrites =
+  drgDeploymentEnvironment === "production" &&
+  drgDeploymentBranch === "main" &&
+  drgDataMode === "production";
+
+export const drgWritesEnabled =
+  process.env.NEXT_PUBLIC_DRG_ALLOW_WRITES === "true" &&
+  (migrationPreviewWrites || productionMainWrites);
 
 export function assertDrgWritesEnabled() {
   if (!drgWritesEnabled) {
