@@ -51,8 +51,8 @@ export async function saveAgentProperty({
   let exists=false;
   if(id){
     const current=await getDoc(ref);
-    exists=current.exists();
-    if(exists){
+    if(current.exists()){
+      exists=true;
       existing=normalizeProperty(current.id,current.data());
       if(!ownsPropertyForUser(existing,user,agent)) throw new Error("No tienes permisos para editar esta propiedad.");
     }else if(!createIfMissing){
