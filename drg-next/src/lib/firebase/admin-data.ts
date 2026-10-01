@@ -1,8 +1,9 @@
-import { collection, deleteDoc, doc, getDocs, serverTimestamp, updateDoc } from "firebase/firestore";
+import { collection, deleteDoc, deleteField, doc, getDoc, getDocs, serverTimestamp, updateDoc } from "firebase/firestore";
 import type { User } from "firebase/auth";
 import { getFirebaseClient } from "./client";
 import { assertDrgWritesEnabled } from "@/lib/config/writes";
 import { normalizeProperty } from "@/lib/properties/normalize";
+import { buildAgentPropertyPayload, type AgentPropertyDraft } from "@/lib/properties/private";
 import { normalizeAgent } from "@/lib/agents/normalize";
 import type { Property } from "@/types/property";
 import type { Agent } from "@/types/agent";
@@ -93,4 +94,52 @@ export async function deleteFormAsAdmin(formId:string){
   assertDrgWritesEnabled();
   const firebase=getFirebaseClient(); if(!firebase)throw new Error("Firebase no está disponible.");
   await deleteDoc(doc(firebase.db,"formularios",formId));
+}
+
+export type ListingAuditRecord={
+  id:string;uploadedByAgentName:string;uploadedByAgentEmail:string;ownerAgentName:string;ownerAgentEmail:string;raw:Record<string,unknown>;
+};
+
+export async function readListingAudit():Promise<Record<string,ListingAuditRecord>>{
+  const firebase=getFirebaseClient(); if(!firebase)return{};
+  try{
+    const snapshot=await getDocs(collection(firebase.db,"propertyListingAudit"));
+    return Object.fromEntries(snapshot.docs.map(entry=>{
+      const raw=entry.data() as Record<string,unknown>;
+      return [entry.id,{id:entry.id,uploadedByAgentName:String(raw.uploadedByAgentName||""),uploadedByAgentEmail:String(raw.uploadedByAgentEmail||""),ownerAgentName:String(raw.ownerAgentName||""),ownerAgentEmail:String(raw.ownerAgentEmail||""),raw}];
+    }));
+  }catch(error){console.warn("[DRG admin audit]",error);return{}}
+}
+
+function agentUid(agent:Agent){
+  return String(agent.raw.uid||agent.raw.userId||agent.raw.agentId||agent.id);
+}
+
+export async function updatePropertyAsAdmin({
+  propertyId,draft,assignedAgent,adminUser
+}:{propertyId:string;draft:AgentPropertyDraft;assignedAgent:Agent;adminUser:User}){
+  assertDrgWritesEnabled();
+  const firebase=getFirebaseClient(); if(!firebase)throw new Error("Firebase no está disponible.");
+  const ref=doc(firebase.db,"properties",propertyId);
+  const snapshot=await getDoc(ref); if(!snapshot.exists())throw new Error("La propiedad no existe.");
+  const current=snapshot.data() as Record<string,unknown>;
+  const ownerUser={
+    uid:agentUid(assignedAgent),
+    email:assignedAgent.email||String(current.agentEmail||current.ownerEmail||""),
+    displayName:assignedAgent.name||String(current.agentName||"Agente DRG")
+  } as User;
+  const payload=buildAgentPropertyPayload(draft,ownerUser,assignedAgent);
+  const currentPublication=String(current.publicationStatus||((current.publicVisible===true)?"approved":"pending_review"));
+  const videoPatch=draft.videoType&&draft.videoUrl
+    ? {}
+    : {video:deleteField(),videoType:deleteField(),videoUrl:deleteField()};
+  await updateDoc(ref,{
+    ...payload,
+    ...videoPatch,
+    publicationStatus:currentPublication,
+    publicVisible:currentPublication==="approved",
+    lastEditedBy:adminUser.uid,
+    lastEditedByRole:"admin",
+    updatedAt:serverTimestamp()
+  });
 }
