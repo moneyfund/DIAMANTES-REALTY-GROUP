@@ -48,7 +48,7 @@ export function PublicFooter() {
         </div>
       </section>
 
-      <div className="drg-footer-copy">©2026 diamantesrealtygroup.com <span>|</span> powered by <a href="https://xarcon-creative.vercel.app/" target="_blank" rel="noreferrer">Xarcon</a></div>
+      <div className="drg-footer-copy">©2026 diamantesrealtygroup.com <span>|</span> Desarrollado por <a className="drg-footer-xarcon" href="https://xarcon-creative.vercel.app/" target="_blank" rel="noreferrer">Xarcon <b aria-hidden="true">↗</b></a></div>
     </footer>
   );
 }
