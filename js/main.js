@@ -1,5 +1,6 @@
 
 function initializePremiumPreloader() {
+  if (document.body.classList.contains('drg-premium')) return;
   if (document.getElementById('premiumPreloader')) return;
 
   const preloader = document.createElement('div');
@@ -219,6 +220,7 @@ if (themeToggle && !TEMPORARILY_DISABLE_DARK_MODE) {
 }
 
 function initializePremiumSpotlight() {
+  if (document.body.classList.contains('drg-premium')) return;
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
   let animationFrame = null;
@@ -357,6 +359,7 @@ function renderSiteFooter() {
 renderSiteFooter();
 
 function initializePublicFooterReveal() {
+  if (document.body.classList.contains('drg-premium')) return;
   if (!isPublicSiteRoute() || !window.CSS?.supports?.('position', 'fixed')) return;
 
   const footer = document.querySelector('.drg-site-footer');
@@ -435,6 +438,7 @@ function initializeWhatsappFloat() {
     document.body.appendChild(whatsappFloat);
   }
 
+  if (document.body.classList.contains('drg-premium')) return;
   if (whatsappFloat.dataset.movementInitialized === 'true') return;
   whatsappFloat.dataset.movementInitialized = 'true';
   whatsappFloat.setAttribute('role', 'complementary');
@@ -570,6 +574,7 @@ initializeWhatsappFloat();
 
 
 function initializeHeroSlider() {
+  if (document.body.classList.contains('drg-premium')) return;
   const slides = Array.from(document.querySelectorAll('.hero-slide'));
   if (!slides.length) return;
 
@@ -744,6 +749,17 @@ if (heroSearchForm) {
 
   const setHeroOperation = (operation = '') => {
     if (operationInput) operationInput.value = operation;
+    const priceInput = document.getElementById('priceInput');
+    if (priceInput && document.body.classList.contains('drg-premium')) {
+      const rangeGroup = operation === 'alquiler' ? 'rental' : 'sale';
+      if (priceInput.dataset.rangeGroup !== rangeGroup) {
+        const ranges = rangeGroup === 'rental'
+          ? [['0-500', 'Hasta $500 / mes'], ['500-1000', '$500 – $1,000 / mes'], ['1000-2000', '$1,000 – $2,000 / mes'], ['2000+', '$2,000+ / mes']]
+          : [['0-100000', 'Hasta $100K'], ['100000-300000', '$100K – $300K'], ['300000-700000', '$300K – $700K'], ['700000+', '$700K+']];
+        priceInput.replaceChildren(new Option('Rango de precio', ''), ...ranges.map(([value, label]) => new Option(label, value)));
+        priceInput.dataset.rangeGroup = rangeGroup;
+      }
+    }
     operationTabs.forEach((tab) => {
       const isActive = tab.dataset.operation === operation;
       tab.classList.toggle('is-active', isActive);
@@ -843,6 +859,13 @@ if (heroSearchForm) {
     if (location) params.set('ubicacion', location);
     if (type) params.set('tipo', type);
     if (operation) params.set('operacion', operation);
+    const range = document.getElementById('priceInput')?.value || '';
+    if (range.endsWith('+')) params.set('minimo', range.slice(0, -1));
+    else if (range.includes('-')) {
+      const [min, max] = range.split('-');
+      if (Number(min) > 0) params.set('minimo', min);
+      if (Number(max) > 0) params.set('presupuesto', max);
+    }
 
     closeMobileSearch({ restoreFocus: false });
     window.location.href = `propiedades.html?${params.toString()}`;

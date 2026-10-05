@@ -1,0 +1,14 @@
+Locally bundled, pinned dependencies for the optional Home visual layer:
+
+Three.js 0.180.0 — Copyright © 2010-2025 three.js authors.
+MIT license: see LICENSE-three.txt.
+Source: https://github.com/mrdoob/three.js/tree/r180
+
+GSAP 3.13.0 (core + ScrollTrigger) — Copyright © 2008-2025 GreenSock.
+All rights reserved. GreenSock Standard License:
+https://gsap.com/standard-license
+Source: https://github.com/greensock/GSAP/tree/3.13.0
+Original license notices are retained in motion.js.
+
+Rebuild: cd tools/home-visual && npm install && npm run build
+The website remains static; this optional maintainer command is not a deployment build step.
