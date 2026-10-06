@@ -1,7 +1,7 @@
 import { ArrowUpRight, History, Home, MapPinned, ShieldCheck } from "lucide-react";
 
 const AVALNIC_URL = "https://avaluos-platform.vercel.app";
-const TENANT_ID = "diamantes";
+const TENANT_ID = "marvin-valdivia";
 
 const moduleLinks = [
   {
@@ -34,7 +34,7 @@ export function AvaluosPlaceholder(){
       <div className="drg-avalnic-copy">
         <p className="drg-avalnic-kicker"><ShieldCheck size={15}/> Organización conectada</p>
         <h2>Diamantes Realty Group × AVALNIC</h2>
-        <p>Tu espacio profesional de avalúos está conectado a la organización <strong>diamantes</strong>. Los cálculos, expedientes, historial y PDFs se gestionan directamente desde AVALNIC con las funciones predeterminadas de la plataforma.</p>
+        <p>Tu espacio profesional de avalúos está conectado a la organización <strong>Diamantes Realty Group</strong>. Los cálculos, expedientes, historial y PDFs se gestionan directamente desde AVALNIC con las funciones predeterminadas de la plataforma.</p>
       </div>
       <a className="drg-avalnic-primary" href={`${AVALNIC_URL}/avaluos?tenant=${TENANT_ID}`} target="_blank" rel="noreferrer">
         Abrir AVALNIC <ArrowUpRight size={17}/>
