@@ -193,3 +193,221 @@
   .drg-agent-dashboard-page .drg-private-stats article{grid-template-columns:36px 1fr}
   .drg-agent-dashboard-page .drg-agent-quick-actions{grid-template-columns:1fr}
 }
+
+
+/* AVALNIC integration — DRG agent workspace */
+.drg-agent-dashboard-page .drg-avalnic-portal{
+  --avalnic-navy:#07111f;
+  --avalnic-navy-soft:#10233a;
+  --avalnic-gold:#d6b75d;
+  --avalnic-gold-deep:#9d7a2f;
+  --avalnic-cream:#f7f5ef;
+  --avalnic-line:#e7e1d5;
+  display:grid;
+  gap:16px;
+  margin-top:20px;
+}
+.drg-agent-dashboard-page .drg-avalnic-hero{
+  position:relative;
+  overflow:hidden;
+  min-height:270px;
+  display:grid;
+  grid-template-columns:minmax(170px,.52fr) minmax(320px,1.2fr) auto;
+  align-items:center;
+  gap:28px;
+  padding:30px;
+  border:1px solid rgba(214,183,93,.2);
+  border-radius:22px;
+  background:
+    radial-gradient(circle at 86% 12%,rgba(214,183,93,.16),transparent 26rem),
+    linear-gradient(135deg,#07111f 0%,#0b192a 58%,#10233a 100%);
+  box-shadow:0 24px 60px rgba(7,17,31,.15);
+  color:#fff;
+}
+.drg-agent-dashboard-page .drg-avalnic-hero:after{
+  content:"";
+  position:absolute;
+  right:-90px;
+  bottom:-140px;
+  width:330px;
+  height:330px;
+  border:1px solid rgba(214,183,93,.11);
+  border-radius:50%;
+  box-shadow:0 0 0 60px rgba(214,183,93,.025);
+  pointer-events:none;
+}
+.drg-agent-dashboard-page .drg-avalnic-brand{
+  position:relative;
+  z-index:1;
+  display:grid;
+  justify-items:start;
+  gap:9px;
+  padding-right:22px;
+  border-right:1px solid rgba(255,255,255,.09);
+}
+.drg-agent-dashboard-page .drg-avalnic-brand img{
+  width:min(165px,100%);
+  height:82px;
+  object-fit:contain;
+  object-position:left center;
+  filter:drop-shadow(0 12px 28px rgba(0,0,0,.22));
+}
+.drg-agent-dashboard-page .drg-avalnic-brand span{
+  color:#9ea9b8;
+  font-size:8px;
+  font-weight:600;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.drg-agent-dashboard-page .drg-avalnic-copy{position:relative;z-index:1}
+.drg-agent-dashboard-page .drg-avalnic-kicker{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin:0 0 10px;
+  color:#e4c86f;
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+.drg-agent-dashboard-page .drg-avalnic-copy h2{
+  margin:0 0 10px;
+  color:#fff;
+  font-size:clamp(25px,2.6vw,38px);
+  font-weight:600;
+  line-height:1.08;
+}
+.drg-agent-dashboard-page .drg-avalnic-copy>p:last-child{
+  max-width:720px;
+  margin:0;
+  color:#aeb9c7;
+  font-size:10px;
+  line-height:1.7;
+}
+.drg-agent-dashboard-page .drg-avalnic-copy strong{color:#f0d98f;font-weight:600}
+.drg-agent-dashboard-page .drg-avalnic-primary{
+  position:relative;
+  z-index:1;
+  min-height:44px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:0 16px;
+  border:1px solid rgba(214,183,93,.42);
+  border-radius:12px;
+  background:rgba(214,183,93,.12);
+  color:#fff;
+  text-decoration:none;
+  font-size:9px;
+  font-weight:700;
+  white-space:nowrap;
+  transition:.2s ease;
+}
+.drg-agent-dashboard-page .drg-avalnic-primary:hover{
+  transform:translateY(-2px);
+  background:rgba(214,183,93,.19);
+  border-color:rgba(214,183,93,.62);
+}
+.drg-agent-dashboard-page .drg-avalnic-modules{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:13px;
+}
+.drg-agent-dashboard-page .drg-avalnic-modules>a{
+  min-height:135px;
+  display:grid;
+  grid-template-columns:42px minmax(0,1fr) auto;
+  align-items:center;
+  gap:13px;
+  padding:20px;
+  border:1px solid var(--avalnic-line);
+  border-radius:18px;
+  background:linear-gradient(145deg,#fff 0%,#fbfaf7 100%);
+  box-shadow:0 12px 30px rgba(28,32,40,.045);
+  color:#27313d;
+  text-decoration:none;
+  transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;
+}
+.drg-agent-dashboard-page .drg-avalnic-modules>a:hover{
+  transform:translateY(-3px);
+  border-color:#d7c89e;
+  box-shadow:0 18px 38px rgba(28,32,40,.075);
+}
+.drg-agent-dashboard-page .drg-avalnic-module-icon{
+  width:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  border:1px solid #e7dcc0;
+  border-radius:13px;
+  background:#fff9eb;
+  color:var(--avalnic-gold-deep);
+}
+.drg-agent-dashboard-page .drg-avalnic-module-copy{display:grid;gap:5px;min-width:0}
+.drg-agent-dashboard-page .drg-avalnic-module-copy strong{font-size:11px;font-weight:650;color:#252d36}
+.drg-agent-dashboard-page .drg-avalnic-module-copy small{color:#858d96;font-size:8px;line-height:1.5}
+.drg-agent-dashboard-page .drg-avalnic-module-arrow{color:#b79a4b}
+.drg-agent-dashboard-page .drg-avalnic-note{
+  display:flex;
+  align-items:center;
+  gap:13px;
+  padding:14px 16px;
+  border:1px solid #e8e3d9;
+  border-radius:14px;
+  background:rgba(255,255,255,.72);
+}
+.drg-agent-dashboard-page .drg-avalnic-note>span{
+  padding:6px 9px;
+  border-radius:999px;
+  background:#f4efe4;
+  color:#8b6e32;
+  font-size:7px;
+  font-weight:800;
+  letter-spacing:.12em;
+}
+.drg-agent-dashboard-page .drg-avalnic-note p{
+  margin:0;
+  color:#7d858f;
+  font-size:8px;
+  line-height:1.55;
+}
+@media(max-width:1080px){
+  .drg-agent-dashboard-page .drg-avalnic-hero{
+    grid-template-columns:160px minmax(0,1fr);
+  }
+  .drg-agent-dashboard-page .drg-avalnic-primary{
+    grid-column:2;
+    justify-self:start;
+  }
+  .drg-agent-dashboard-page .drg-avalnic-modules{grid-template-columns:1fr}
+}
+@media(max-width:640px){
+  .drg-agent-dashboard-page .drg-avalnic-portal{margin-top:14px}
+  .drg-agent-dashboard-page .drg-avalnic-hero{
+    min-height:0;
+    grid-template-columns:1fr;
+    gap:18px;
+    padding:22px 20px;
+    border-radius:18px;
+  }
+  .drg-agent-dashboard-page .drg-avalnic-brand{
+    border-right:0;
+    border-bottom:1px solid rgba(255,255,255,.09);
+    padding:0 0 15px;
+  }
+  .drg-agent-dashboard-page .drg-avalnic-brand img{width:130px;height:62px}
+  .drg-agent-dashboard-page .drg-avalnic-copy h2{font-size:26px}
+  .drg-agent-dashboard-page .drg-avalnic-copy>p:last-child{font-size:9px}
+  .drg-agent-dashboard-page .drg-avalnic-primary{
+    grid-column:auto;
+    width:100%;
+  }
+  .drg-agent-dashboard-page .drg-avalnic-modules>a{
+    min-height:112px;
+    padding:16px;
+    border-radius:16px;
+  }
+  .drg-agent-dashboard-page .drg-avalnic-note{align-items:flex-start;flex-direction:column}
+}
