@@ -101,7 +101,7 @@ export function AdminPropertyEditor({property,agents,onClose,onSaved}:{property:
     }
   }
 
-  return <div className="drg-admin-modal drg-admin-property-editor-modal" onMouseDown={e=>{if(e.currentTarget===e.target)onClose()}}><form className="drg-admin-property-editor" onSubmit={submit}>
+  return <div className="drg-admin-modal drg-admin-property-editor-modal" role="dialog" aria-modal="true"><form className="drg-admin-property-editor" onSubmit={submit} onMouseDown={e=>e.stopPropagation()}>
     <header><div><p className="drg-kicker">Editor administrativo</p><h2>{property.title}</h2><p>Actualiza inventario sin perder trazabilidad ni ownership.</p></div><button type="button" onClick={onClose}>×</button></header>
     {message?<div className="drg-agent-message">{message}</div>:null}
     <PropertyFormStepper step={step} onStepChange={goToStep}/>
@@ -137,8 +137,8 @@ export function AdminPropertyEditor({property,agents,onClose,onSaved}:{property:
     </div></fieldset>:null}
     {uploading?<p className="drg-agent-upload-progress">{uploading}</p>:null}<footer>
       <button type="button" onClick={onClose}>Cancelar</button>
-      {step>1?<button type="button" onClick={previousStep}>← Anterior</button>:null}
-      {step<4?<button type="button" className="is-primary" onClick={nextStep}>Continuar →</button>:<button type="submit">{drgWritesEnabled?"Guardar cambios":"Guardado bloqueado en Preview"}</button>}
+      {step>1?<button type="button" onClick={e=>{e.preventDefault();e.stopPropagation();previousStep()}}>← Anterior</button>:null}
+      {step<4?<button type="button" className="is-primary" onClick={e=>{e.preventDefault();e.stopPropagation();nextStep()}}>Continuar →</button>:<button type="submit">{drgWritesEnabled?"Guardar cambios":"Guardado bloqueado en Preview"}</button>}
     </footer>
   </form></div>;
 }
