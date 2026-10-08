@@ -411,3 +411,25 @@
   }
   .drg-agent-dashboard-page .drg-avalnic-note{align-items:flex-start;flex-direction:column}
 }
+
+.drg-agent-dashboard-page .drg-image-pending-notice{
+  margin:12px 0 0;
+  padding:10px 12px;
+  border:1px solid #ead9a7;
+  border-radius:10px;
+  background:#fffaf0;
+  color:#7b6740;
+  font-size:11px;
+  line-height:1.5;
+}
+.drg-agent-dashboard-page .drg-image-pending-notice strong{color:#5f4f2f}
+.drg-agent-dashboard-page .drg-agent-upload-feedback{
+  margin:10px 0 0;
+  padding:10px 12px;
+  border:1px solid #d6e0ea;
+  border-radius:10px;
+  background:#f8fbfd;
+  color:#33475b;
+  font-size:11px;
+  line-height:1.45;
+}

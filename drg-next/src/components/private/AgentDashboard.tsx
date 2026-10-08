@@ -361,6 +361,7 @@ export function AgentDashboard() {
         </div></fieldset>:null}
 
         {uploadProgress?<p className="drg-agent-upload-progress">{uploadProgress}</p>:null}
+        {propertyStep===4&&message?<p className="drg-agent-upload-feedback">{message}</p>:null}
         <div className="drg-agent-editor-actions drg-property-step-actions">
           {propertyStep>1?<button type="button" className="is-secondary" onClick={previousPropertyStep}>← Anterior</button>:null}
           {propertyStep<4?<button type="button" onClick={nextPropertyStep}>Continuar →</button>:<button type="submit">{drgWritesEnabled?(editingId?"Actualizar propiedad":"Enviar a revisión"):"Guardado bloqueado en Preview"}</button>}
