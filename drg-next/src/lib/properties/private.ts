@@ -38,13 +38,22 @@ function norm(value: unknown) {
 
 export function ownsPropertyForUser(property: Property, user: Pick<User,"uid"|"email"|"displayName">, agent?: Agent | null) {
   const raw = property.raw;
-  const uid = String(user.uid || "");
-  const email = norm(user.email);
-  const ids = [getPublishingAgentId(property), raw.agenteId, raw.ownerId, raw.userId, raw.createdBy].map(String);
-  if (uid && ids.includes(uid)) return true;
+  const propertyIds = [getPublishingAgentId(property), raw.agenteId, raw.ownerId, raw.userId, raw.createdBy]
+    .map(value => String(value || "").trim())
+    .filter(Boolean);
+  const profileIds = [
+    user.uid,
+    agent?.id,
+    agent?.raw.uid,
+    agent?.raw.userId,
+    agent?.raw.agentId,
+  ].map(value => String(value || "").trim()).filter(Boolean);
 
-  const emails = [raw.agentEmail,raw.email,raw.createdByEmail,raw.ownerEmail,raw.createdBy].map(norm);
-  if (email && emails.includes(email)) return true;
+  if (profileIds.some(id => propertyIds.includes(id))) return true;
+
+  const propertyEmails = [raw.agentEmail,raw.email,raw.createdByEmail,raw.ownerEmail,raw.createdBy].map(norm);
+  const profileEmails = [user.email,agent?.email].map(norm).filter(Boolean);
+  if (profileEmails.some(email => propertyEmails.includes(email))) return true;
 
   const names = [raw.agentName,raw.agente,raw.agent].map(norm);
   const profileName = norm(agent?.name || user.displayName);

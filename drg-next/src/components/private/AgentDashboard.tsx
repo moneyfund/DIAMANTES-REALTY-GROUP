@@ -9,7 +9,7 @@ import { deleteStoragePath, deleteStorageUrlIfOwned, uploadAgentProfilePhoto, up
 import { saveAgentProfile, type AgentProfileDraft } from "@/lib/firebase/private-agents";
 import { readAgents } from "@/lib/firebase/agents";
 import type { Agent } from "@/types/agent";
-import { emptyAgentPropertyDraft, getContractStatus, propertyToDraft, validateContractDates, type AgentPropertyDraft } from "@/lib/properties/private";
+import { emptyAgentPropertyDraft, getContractStatus, ownsPropertyForUser, propertyToDraft, validateContractDates, type AgentPropertyDraft } from "@/lib/properties/private";
 import { getDynamicFieldsForType } from "@/lib/properties/fields";
 import type { Property } from "@/types/property";
 import { AgentSharedLists } from "./AgentSharedLists";
@@ -208,9 +208,17 @@ export function AgentDashboard() {
     if(!videoValidation.valid){setMessage(videoValidation.message);return}
     if(!draft.title.trim()||!draft.location.trim()||draft.priceUsd<=0){setMessage("Título, ubicación y precio son obligatorios.");return}
     if(!drgWritesEnabled){setMessage("El formulario ya está listo, pero el guardado sigue bloqueado hasta aprobar las reglas nuevas.");return}
+    if(uploadProgress)return;
+    const isNew=!editingId;
+    if(!isNew){
+      const currentProperty=properties.find(item=>item.id===editingId);
+      if(!currentProperty||!ownsPropertyForUser(currentProperty,user,agent)){
+        setMessage("No tienes permisos para editar esta propiedad.");
+        return;
+      }
+    }
     const uploadedPaths:string[]=[];
     try{
-      const isNew=!editingId;
       const propertyId=editingId||reserveAgentPropertyId();
       const uploadedUrls:string[]=[];
       for(let index=0;index<pendingImages.length;index+=1){
@@ -239,8 +247,14 @@ export function AgentDashboard() {
         await attachLegalDocumentToAgentProperty(id,user,{fileName:pendingLegalPdf.name,fileUrl:legal.url,storagePath:legal.path},agent);
       }
       for(const url of removedOwnedImages){try{await deleteStorageUrlIfOwned(url)}catch(error){console.warn("[DRG image cleanup]",url,error)}}
-      setDraft(nextDraft);setEditingId(id);setPendingImages([]);setPendingCoverKey("");setPendingLegalPdf(null);setRemoveExistingLegal(false);setUploadProgress("");
-      await reload();setMessage(isNew?"Propiedad enviada a revisión.":"Propiedad actualizada.");
+      setPendingImages([]);setPendingCoverKey("");setPendingLegalPdf(null);setRemoveExistingLegal(false);setUploadProgress("");
+      await reload();
+      if(isNew){
+        setEditingId("");setDraft(emptyAgentPropertyDraft());setPropertyStep(1);setView("inventario");
+        setMessage("Propiedad enviada a revisión con sus imágenes.");
+      }else{
+        setDraft(nextDraft);setEditingId(id);setMessage("Propiedad actualizada con sus imágenes.");
+      }
     }catch(error){
       for(const path of uploadedPaths){try{await deleteStoragePath(path)}catch{}}
       setUploadProgress("");setMessage(error instanceof Error?error.message:"No fue posible guardar la propiedad.");
@@ -364,7 +378,7 @@ export function AgentDashboard() {
         {propertyStep===4&&message?<p className="drg-agent-upload-feedback">{message}</p>:null}
         <div className="drg-agent-editor-actions drg-property-step-actions">
           {propertyStep>1?<button type="button" className="is-secondary" onClick={previousPropertyStep}>← Anterior</button>:null}
-          {propertyStep<4?<button type="button" onClick={nextPropertyStep}>Continuar →</button>:<button type="submit">{drgWritesEnabled?(editingId?"Actualizar propiedad":"Enviar a revisión"):"Guardado bloqueado en Preview"}</button>}
+          {propertyStep<4?<button type="button" onClick={nextPropertyStep}>Continuar →</button>:<button type="submit" disabled={Boolean(uploadProgress)}>{uploadProgress?"Subiendo y guardando…":drgWritesEnabled?(editingId?"Guardar cambios":"Enviar propiedad a revisión"):"Guardado bloqueado en Preview"}</button>}
           {editingId?<button type="button" className="is-secondary" onClick={()=>{setEditingId("");setDraft(emptyAgentPropertyDraft());setPropertyStep(1)}}>Cancelar edición</button>:null}
         </div>
       </form>:null}

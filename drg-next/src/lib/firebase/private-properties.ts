@@ -58,6 +58,7 @@ export async function saveAgentProperty({
   const ref=id?doc(firebase.db,"properties",id):doc(collection(firebase.db,"properties"));
   let existing:Property|null=null;
   let exists=false;
+
   if(id){
     const current=await getDoc(ref);
     if(current.exists()){
@@ -68,40 +69,92 @@ export async function saveAgentProperty({
       throw new Error("La propiedad no existe.");
     }
   }
-  const ownerAgent=listingOwner||agent||null;
-  const owner=listingOwner?ownerIdentity(user,listingOwner):{uid:user.uid,email:user.email||"",displayName:user.displayName||""};
-  const payload=buildAgentPropertyPayload(draft,owner as Pick<User,"uid"|"email"|"displayName">,ownerAgent);
-  if(id && exists){
-    const currentStatus=String(existing?.raw.publicationStatus||"approved");
+
+  const ownershipKeys=[
+    "agentId","agenteId","createdBy","ownerId","userId",
+    "agentEmail","email","createdByEmail","ownerEmail"
+  ] as const;
+
+  if(id && exists && existing){
+    // Editing must NEVER rewrite ownership. Legacy listings may identify an
+    // agent by document id while Auth uses a Firebase UID. Preserve exactly
+    // the ownership stored in Firestore so regular agent edits remain valid.
+    const payload=buildAgentPropertyPayload(draft,user,agent);
+    for(const key of ownershipKeys){
+      if(Object.prototype.hasOwnProperty.call(existing.raw,key)) payload[key]=existing.raw[key];
+      else delete payload[key];
+    }
+
+    const currentStatus=String(existing.raw.publicationStatus||"approved");
     const reviewFields=currentStatus==="rejected"
       ? {publicationStatus:"pending_review",publicVisible:false,reviewStatus:"pending_review",rejectionReason:"",resubmittedAt:serverTimestamp(),submittedAt:serverTimestamp()}
       : {publicationStatus:currentStatus,publicVisible:currentStatus==="approved"};
+
     await updateDoc(ref,{...payload,...reviewFields,lastEditedBy:user.uid,updatedAt:serverTimestamp()});
-  }else{
-    const createPayload={...payload,publicationStatus:"pending_review",publicVisible:false,reviewStatus:"pending_review",submittedAt:serverTimestamp(),createdAt:serverTimestamp(),updatedAt:serverTimestamp()};
-    const ownerUid=String(owner.uid||"");
-    const ownerEmail=String(owner.email||"").toLowerCase();
-    const uploaderEmail=String(user.email||"").toLowerCase();
-    const assisted=Boolean(listingOwner && ownerUid && (ownerUid!==user.uid || (ownerEmail&&ownerEmail!==uploaderEmail)));
-    if(assisted){
-      const batch=writeBatch(firebase.db);
-      batch.set(ref,createPayload,{merge:true});
-      batch.set(doc(firebase.db,"propertyListingAudit",ref.id),{
-        propertyId:ref.id,
-        uploadedByAgentId:user.uid,
-        uploadedByAgentEmail:uploaderEmail,
-        uploadedByAgentName:agent?.name||user.displayName||user.email||"Agente DRG",
-        ownerAgentId:ownerUid,
-        ownerAgentEmail:ownerEmail,
-        ownerAgentName:listingOwner?.name||owner.displayName||"Agente DRG",
-        source:"drg-next-assisted-listing",
-        createdAt:serverTimestamp()
-      },{merge:true});
-      await batch.commit();
-    }else{
-      await setDoc(ref,createPayload,{merge:true});
-    }
+    return ref.id;
   }
+
+  const uploaderEmail=String(user.email||"").trim().toLowerCase();
+  const selected=listingOwner||agent||null;
+  const selectedIdentity=selected?ownerIdentity(user,selected):{uid:user.uid,email:user.email||"",displayName:user.displayName||"Agente DRG"};
+  const selectedUid=String(selectedIdentity.uid||"").trim();
+  const selectedEmail=String(selectedIdentity.email||"").trim().toLowerCase();
+
+  // Treat the current agent profile as the same owner whenever either its
+  // Firebase UID OR its email matches the authenticated account.
+  const isSameOwner=
+    !listingOwner ||
+    selectedUid===user.uid ||
+    Boolean(selectedEmail && uploaderEmail && selectedEmail===uploaderEmail);
+
+  const ownPayload=buildAgentPropertyPayload(draft,user,agent||selected);
+  const createPayload={
+    ...ownPayload,
+    publicationStatus:"pending_review",
+    publicVisible:false,
+    reviewStatus:"pending_review",
+    submittedAt:serverTimestamp(),
+    createdAt:serverTimestamp(),
+    updatedAt:serverTimestamp()
+  };
+
+  // Always create the pending listing first as the authenticated uploader.
+  // This matches Firestore create rules and guarantees images/URLs are not
+  // lost if a later assisted-owner assignment cannot be completed.
+  await setDoc(ref,createPayload,{merge:true});
+
+  if(!isSameOwner && listingOwner){
+    const targetPayload=buildAgentPropertyPayload(
+      draft,
+      selectedIdentity as Pick<User,"uid"|"email"|"displayName">,
+      listingOwner
+    );
+
+    const ownershipPatch:Record<string,unknown>={
+      updatedAt:serverTimestamp(),
+      agentName:targetPayload.agentName,
+      agentPhone:targetPayload.agentPhone,
+      agentWhatsapp:targetPayload.agentWhatsapp,
+      agentPhoto:targetPayload.agentPhoto,
+    };
+    for(const key of ownershipKeys) ownershipPatch[key]=targetPayload[key];
+
+    const batch=writeBatch(firebase.db);
+    batch.update(ref,ownershipPatch);
+    batch.set(doc(firebase.db,"propertyListingAudit",ref.id),{
+      propertyId:ref.id,
+      uploadedByAgentId:user.uid,
+      uploadedByAgentEmail:uploaderEmail,
+      uploadedByAgentName:agent?.name||user.displayName||user.email||"Agente DRG",
+      ownerAgentId:selectedUid,
+      ownerAgentEmail:selectedEmail,
+      ownerAgentName:listingOwner.name||selectedIdentity.displayName||"Agente DRG",
+      source:"agent-dashboard-assisted-listing",
+      createdAt:serverTimestamp()
+    });
+    await batch.commit();
+  }
+
   return ref.id;
 }
 
